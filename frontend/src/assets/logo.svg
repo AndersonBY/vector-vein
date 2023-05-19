@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="_图层_1" data-name="图层 1" xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1100.38 1058.54">
+  <defs>
+    <style>
+      .cls-1 {
+      fill: #28c5e5;
+      }
+
+      .cls-2 {
+      clip-path: url(#clippath-2);
+      }
+
+      .cls-3 {
+      clip-path: url(#clippath-1);
+      }
+
+      .cls-4 {
+      clip-path: url(#clippath);
+      }
+
+      .cls-5 {
+      fill: none;
+      }
+
+      .cls-6 {
+      clip-path: url(#clippath-3);
+      }
+    </style>
+    <clipPath id="clippath">
+      <polygon class="cls-5" points=".32 0 .32 0 532.65 0 532.65 508.56 .32 508.56 .32 0" />
+    </clipPath>
+    <clipPath id="clippath-1">
+      <polygon class="cls-5"
+        points="1100.38 0 1100.38 0 568.05 0 568.05 508.56 1100.38 508.56 1100.38 0" />
+    </clipPath>
+    <clipPath id="clippath-2">
+      <polygon class="cls-5"
+        points="0 1058.54 0 1058.54 532.33 1058.54 532.33 549.99 0 549.99 0 1058.54" />
+    </clipPath>
+    <clipPath id="clippath-3">
+      <polygon class="cls-5"
+        points="1100.06 1058.54 1100.06 1058.54 567.73 1058.54 567.73 549.99 1100.06 549.99 1100.06 1058.54" />
+    </clipPath>
+  </defs>
+  <g>
+    <g>
+      <g id="_镜像重复_" data-name="&amp;lt;镜像重复&amp;gt;">
+        <g class="cls-4">
+          <polygon class="cls-1" points=".32 0 271.83 508.56 532.65 420.1 .32 0" />
+        </g>
+      </g>
+      <g id="_镜像重复_-2" data-name="&amp;lt;镜像重复&amp;gt;">
+        <g class="cls-3">
+          <polygon class="cls-1" points="1100.38 0 828.87 508.56 568.05 420.1 1100.38 0" />
+        </g>
+      </g>
+    </g>
+    <g>
+      <g id="_镜像重复_-3" data-name="&amp;lt;镜像重复&amp;gt;">
+        <g class="cls-2">
+          <polygon class="cls-1" points="0 1058.54 271.51 549.99 532.33 638.44 0 1058.54" />
+        </g>
+      </g>
+      <g id="_镜像重复_-4" data-name="&amp;lt;镜像重复&amp;gt;">
+        <g class="cls-6">
+          <polygon class="cls-1"
+            points="1100.06 1058.54 828.55 549.99 567.73 638.44 1100.06 1058.54" />
+        </g>
+      </g>
+    </g>
+  </g>
+  <polygon class="cls-1" points="297.43 529.25 532.34 453.78 532.34 605.66 297.43 529.25" />
+  <polygon class="cls-1" points="802.84 529.75 567.4 453.78 567.4 605.66 802.84 529.75" />
+</svg>

@@ -1,0 +1,76 @@
+<script setup>
+import { defineComponent } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { InboxOutlined, DeleteOutlined, FileOutlined } from '@ant-design/icons-vue'
+import { message } from 'ant-design-vue'
+
+defineComponent({
+  name: 'UploaderFieldUse',
+})
+
+const props = defineProps({
+  multiple: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+})
+
+const files = defineModel()
+
+const { t } = useI18n()
+
+const remove = file => {
+  const index = files.value.indexOf(file)
+  files.value.splice(index, 1)
+}
+
+const upload = async () => {
+  try {
+    const selectedFiles = await window.pywebview.api.open_file_dialog(props.multiple)
+    selectedFiles.forEach(file => {
+      message.success(t('components.workspace.uploaderFieldUse.upload_success', { file: file }))
+      files.value.push(file)
+      if (!props.multiple && files.value.length > 1) {
+        files.value.splice(0, 1)
+      }
+    })
+  } catch (error) {
+    console.log(error)
+    message.error(t('components.workspace.uploaderFieldUse.upload_failed'))
+  }
+}
+</script>
+<template>
+  <a-row :gutter="[16, 16]">
+    <a-col :span="24">
+      <a-button type="primary" block @click="upload">
+        <template #icon>
+          <InboxOutlined />
+        </template>
+        {{ t('components.workspace.uploaderFieldUse.upload') }}
+      </a-button>
+    </a-col>
+    <a-col :span="24">
+      <a-list :data-source="files">
+        <template #renderItem="{ item }">
+          <a-list-item>
+            <template #actions>
+              <a-typography-link @click="remove(item)">
+                <DeleteOutlined />
+              </a-typography-link>
+            </template>
+            <a-list-item-meta>
+              <template #title>
+                <a-typography-text>{{ item }}</a-typography-text>
+              </template>
+              <template #avatar>
+                <FileOutlined />
+              </template>
+            </a-list-item-meta>
+          </a-list-item>
+        </template>
+      </a-list>
+    </a-col>
+  </a-row>
+</template>
