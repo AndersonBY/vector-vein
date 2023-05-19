@@ -1,3 +1,7 @@
+[English](README_en.md) | 简体中文
+
+[![向量脉络](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
+
 # 🔀 向量脉络 VectorVein
 
 利用AI的力量构建您的个人知识库+自动化工作流程。
@@ -11,8 +15,6 @@
 ## 🌐 在线体验
 
 您可以在 [这里](https://vectorvein.com) 体验向量脉络的在线版本，无需下载安装。
-
-[![在线版向量脉络](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
 
 ## 📦 安装及配置
 

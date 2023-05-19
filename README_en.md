@@ -1,3 +1,7 @@
+English | [简体中文](README_en.md)
+
+[![VectorVein](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.com)
+
 # 🔀 VectorVein
 
 Build your automation workflow with the power of AI and your personal knowledge base.
@@ -11,8 +15,6 @@ VectorVein is a no-code AI workflow software inspired by [LangChain](https://git
 ## 🌐 Online Experience
 
 You can experience VectorVein's online version [here](https://vectorvein.com/en), with no need to download or install.
-
-[![Online Version of VectorVein](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.com)
 
 ## 📦 Installation and Configuration
 
