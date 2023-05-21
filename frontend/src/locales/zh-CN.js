@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-21 18:47:54
+ * @Last Modified time: 2023-05-22 00:56:24
  */
 export default {
   lang: '中文',
@@ -622,6 +622,16 @@ export default {
           'false_output': '不满足条件时的输出',
           'output': '输出',
         },
+      },
+    },
+  },
+  layouts: {
+    workspaceLayout: {
+      tour: {
+        'workflow_button_title': '切换工作流界面',
+        'workflow_button_description': '点击此按钮可以切换到工作流界面。您的工作流以及官方模板等均可在此找到。',
+        'database_button_title': '切换知识库/数据库界面',
+        'database_button_description': '点击此按钮可以切换到数据界面。您可以在此创建您的个人知识库并上传您的数据以在工作流中使用。',
       },
     },
   },

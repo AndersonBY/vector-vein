@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-21 18:48:02
+ * @Last Modified time: 2023-05-22 00:56:33
  */
 export default {
   lang: 'English',
@@ -622,6 +622,16 @@ export default {
           'false_output': 'Output when the condition is not met',
           'output': 'Output',
         },
+      },
+    },
+  },
+  layouts: {
+    workspaceLayout: {
+      tour: {
+        'workflow_button_title': 'Switch to workflow interface',
+        'workflow_button_description': 'Click this button to switch to the workflow interface. Your workflows and official templates can be found here.',
+        'database_button_title': 'Switch to database interface',
+        'database_button_description': 'Click this button to switch to the database interface. You can create your personal knowledge base here and upload your data for use in workflows.',
       },
     },
   },
