@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-16 14:23:24
+ * @Last Modified time: 2023-05-21 23:38:47
  */
 import { defineStore } from "pinia"
 
@@ -15,6 +15,7 @@ export const useUserSettingsStore = defineStore('userSettings', {
   state: () => ({
     language: userLanguage || 'zh-CN',
     setting: {},
+    tourVersion: localStorage.getItem("userSettings.tourVersion") || 0,
   }),
   actions: {
     setLanguage(language) {
@@ -22,6 +23,10 @@ export const useUserSettingsStore = defineStore('userSettings', {
     },
     setSetting(setting) {
       this.setting = setting
-    }
+    },
+    setTourVersion(tourVersion) {
+      this.userSettings.tourVersion = tourVersion
+      localStorage.setItem("userSettings.tourVersion", tourVersion)
+    },
   },
 })

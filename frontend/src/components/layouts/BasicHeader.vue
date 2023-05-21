@@ -48,7 +48,7 @@ onBeforeMount(() => {
 
       <a-col flex="0 0">
         <router-link to="/workflow">
-          <a-button type="link">
+          <a-button type="link" id="header-workflow-button">
             {{ t('components.layout.basicHeader.workflow_space') }}
           </a-button>
         </router-link>
@@ -56,7 +56,7 @@ onBeforeMount(() => {
 
       <a-col flex="0 0">
         <router-link to="/data">
-          <a-button type="link">
+          <a-button type="link" id="header-data-button">
             {{ t('components.layout.basicHeader.data_space') }}
           </a-button>
         </router-link>
@@ -127,21 +127,10 @@ onBeforeMount(() => {
 </template>
 
 <style>
-.menu-avatar {
-  margin-right: 3px;
-}
-
 .basic-header {
   position: fixed;
   z-index: 1;
   width: 100%;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-}
-
-.basic-header .ant-menu {
-  background: transparent;
 }
 
 .logo {
@@ -153,27 +142,5 @@ onBeforeMount(() => {
 
 .logo img {
   height: 30px;
-}
-
-.scroll-top {
-  background: transparent;
-}
-
-.scroll-down {
-  background: #fff;
-}
-
-.ant-drawer-body::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.ant-drawer-body::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.ant-drawer-body::-webkit-scrollbar-track {
-  background: transparent;
 }
 </style>

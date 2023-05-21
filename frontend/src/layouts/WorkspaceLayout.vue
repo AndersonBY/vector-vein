@@ -1,7 +1,10 @@
 <script setup>
-import { defineComponent, onBeforeMount, onMounted, ref, computed } from 'vue'
+import { defineComponent, onBeforeMount, computed } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
-import { getRandomBasicLayoutBackgroundImg } from '@/utils/util'
+import { useUserSettingsStore } from "@/stores/userSettings"
+import { getRandomBackgroundImg } from '@/utils/util'
+import { currentTourVersion } from '@/utils/common'
 import { getWorkflows } from "@/utils/workflow"
 import BasicHeader from '@/components/layouts/BasicHeader.vue'
 
@@ -10,47 +13,26 @@ defineComponent({
 })
 
 const userWorkflowsStore = useUserWorkflowsStore()
-const headerClass = ref(['scroll-top', 'basic-header'])
+const userSettingsStore = useUserSettingsStore()
+const { tourVersion } = storeToRefs(userSettingsStore)
 
 onBeforeMount(async () => {
+  console.log(tourVersion.value < currentTourVersion)
   await getWorkflows(userWorkflowsStore, true)
 })
 
-onMounted(() => {
-  window.addEventListener('scroll', scrollChange, true)
-})
-
-const scrollChange = () => {
-  let scrollTop = document.documentElement.scrollTop || document.body.scrollTop
-  if (scrollTop == 0) {
-    headerClass.value = ['scroll-top', 'basic-header']
-  } else {
-    headerClass.value = ['scroll-down', 'basic-header']
-  }
-}
-
-const backgroundImgUrl = computed(() => getRandomBasicLayoutBackgroundImg())
+const backgroundImgUrl = computed(() => getRandomBackgroundImg())
 </script>
 <template>
   <a-layout style="min-height: 100vh">
     <BasicHeader />
-    <a-layout-content class="basic-layout-content-container" :style="{ marginTop: '64px' }">
+    <a-layout-content class="layout-content-container" :style="{ marginTop: '64px' }">
       <router-view class="content-view-container"></router-view>
-      <img class="basic-layout-background-img" :src="backgroundImgUrl" />
+      <img class="layout-background-img" :src="backgroundImgUrl" />
     </a-layout-content>
   </a-layout>
 </template>
 <style>
-.basic-header {
-  position: fixed;
-  z-index: 1;
-  width: 100%;
-}
-
-.basic-header .ant-menu {
-  background: transparent;
-}
-
 .logo {
   float: left;
 }
@@ -59,31 +41,22 @@ const backgroundImgUrl = computed(() => getRandomBasicLayoutBackgroundImg())
   height: 30px;
 }
 
-.basic-layout-content-container {
+.layout-content-container {
   z-index: 0;
 }
 
-.basic-layout-content-container .content-view-container {
+.layout-content-container .content-view-container {
   z-index: 1;
   position: relative;
 }
 
-.basic-layout-content-container .basic-layout-background-img {
+.layout-content-container .layout-background-img {
   position: absolute;
   z-index: 0;
   width: 50%;
   height: 50%;
   bottom: 150px;
   right: 0;
-}
-
-
-.scroll-top {
-  background: transparent;
-}
-
-.scroll-down {
-  background: #fff;
 }
 
 html::-webkit-scrollbar {

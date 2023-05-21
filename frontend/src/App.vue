@@ -43,46 +43,22 @@ const theme = {
 </script>
 
 <style>
-#app .shadow-card {
-  box-shadow: 0 2px 10px 0 rgb(0 0 0 / 8%);
-  border-radius: 12px;
-}
-
 .text-primary {
   color: #28c5e5;
 }
 
-.shadow-card {
-  box-shadow: 0 2px 10px 0 rgba(0, 0, 0, 0.08);
-  border-radius: 12px;
+.ant-drawer-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-.shadow-card .ant-card-head {
-  border-bottom: none;
-  padding: 0 24px;
+.ant-drawer-body::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 6px;
 }
 
-.shadow-card .ant-card-head+.ant-card-body {
-  padding-top: 5px;
-}
-
-.ant-modal-header .ant-modal-title {
-  font-weight: 600;
-  font-size: 18px;
-}
-
-#app .ant-statistic-content-value {
-  font-weight: 700;
-}
-
-#app .ant-btn,
-.ant-input,
-.ant-input-password,
-.ant-input-number,
-.ant-select-selector,
-.ant-select:not(.ant-select-customize-input),
-.ant-select-selector {
-  border-radius: 4px;
+.ant-drawer-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .ant-popover-inner-content p:last-child {
