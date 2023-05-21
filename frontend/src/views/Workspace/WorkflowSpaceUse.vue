@@ -251,6 +251,24 @@ const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
 const runWorkflow = async () => {
+  let checkFieldsValid = true
+  try {
+    currentWorkflow.value.data.nodes.forEach((node) => {
+      if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
+        Object.keys(node.data.template).forEach((field) => {
+          if (node.data.template[field].show && node.data.template[field].required && !node.data.template[field].value) {
+            message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
+            checkFieldsValid = false
+          }
+        })
+      }
+    })
+  } catch (errorInfo) {
+    checkFieldsValid = false
+  }
+  if (!checkFieldsValid) {
+    return
+  }
   running.value = true
   currentWorkflow.value.data.setting = setting.value.data
   const response = await workflowAPI('run', currentWorkflow.value)

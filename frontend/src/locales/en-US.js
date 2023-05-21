@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-18 14:13:56
+ * @Last Modified time: 2023-05-21 18:48:02
  */
 export default {
   lang: 'English',
@@ -200,6 +200,7 @@ export default {
       'delete_schedule_success': 'Delete schedule success',
       'delete_schedule_failed': 'Delete schedule failed',
       'brief': 'Brief',
+      'field_is_empty': '{field} is empty',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

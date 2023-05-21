@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-18 15:16:25
+ * @Last Modified time: 2023-05-21 18:47:54
  */
 export default {
   lang: '中文',
@@ -200,6 +200,7 @@ export default {
       'delete_schedule_success': '删除定时设置成功',
       'delete_schedule_failed': '删除定时设置失败',
       'brief': '简介',
+      'field_is_empty': '{field} 不能为空',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
