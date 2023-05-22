@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 02:23:23
+# @Last Modified time: 2023-05-22 21:31:34
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -48,16 +48,35 @@ def text_crawler(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    url = workflow.get_node_field_value(node_id, "url")
-    if url is None or url == "":
+    input_url = workflow.get_node_field_value(node_id, "url")
+    if input_url is None or (isinstance(input_url, str) and input_url == ""):
         raise Exception("url is empty")
-    result = crawl_text_from_url(url)
+    if isinstance(input_url, str):
+        urls = [input_url]
+    elif isinstance(input_url, list):
+        urls = input_url
+
     output_type = workflow.get_node_field_value(node_id, "output_type")
+    output_data = {
+        "text": [],
+        "title": [],
+    }
+    for url in urls:
+        result = crawl_text_from_url(url)
+        if output_type == "text":
+            output_data["text"].append(result["text"])
+            output_data["title"].append(result["title"])
+        elif output_type == "json":
+            output_data["text"].append(result)
+
     if output_type == "text":
-        workflow.update_node_field_value(node_id, "output_text", result["text"])
-        workflow.update_node_field_value(node_id, "output_title", result["title"])
+        text_value = output_data["text"] if isinstance(input_url, list) else output_data["text"][0]
+        title_value = output_data["title"] if isinstance(input_url, list) else output_data["title"][0]
+        workflow.update_node_field_value(node_id, "output_text", text_value)
+        workflow.update_node_field_value(node_id, "output_title", title_value)
     elif output_type == "json":
-        workflow.update_node_field_value(node_id, "output_text", result)
+        text_value = output_data["text"] if isinstance(input_url, list) else output_data["text"][0]
+        workflow.update_node_field_value(node_id, "output_text", text_value)
     return workflow.data
 
 
