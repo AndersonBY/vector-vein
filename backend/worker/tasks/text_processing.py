@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 15:22:38
+# @Last Modified time: 2023-05-22 21:27:40
 import markdown2
 
 from utilities.workflow import Workflow
@@ -62,7 +62,11 @@ def list_render(
 ):
     workflow = Workflow(workflow_data)
     list = workflow.get_node_field_value(node_id, "list")
-    output_text = "\n".join(list)
+    output_type = workflow.get_node_field_value(node_id, "output_type")
+    if output_type == "text":
+        output_text = "\n".join(list)
+    elif output_type == "list":
+        output_text = list
     workflow.update_node_field_value(node_id, "output", output_text)
     return workflow.data
 

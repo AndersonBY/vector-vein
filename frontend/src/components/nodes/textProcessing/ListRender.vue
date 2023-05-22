@@ -40,6 +40,30 @@ const props = defineProps({
         "list": true,
         "field_type": "list"
       },
+      "output_type": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": false,
+        "value": "text",
+        "password": false,
+        "options": [
+          {
+            "value": "text",
+            "label": "Text"
+          },
+          {
+            "value": "list",
+            "label": "List"
+          },
+        ],
+        "name": "output_type",
+        "display_name": "output_type",
+        "type": "str",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "select"
+      },
       "output": {
         "required": true,
         "placeholder": "",
@@ -62,6 +86,36 @@ const emit = defineEmits(['change', 'delete'])
 const { t } = useI18n()
 
 const fieldsData = ref(props.data.template)
+if (!fieldsData.value.output_type) {
+  fieldsData.value.output_type = {
+    "required": true,
+    "placeholder": "",
+    "show": false,
+    "multiline": false,
+    "value": "text",
+    "password": false,
+    "options": [
+      {
+        "value": "text",
+        "label": "Text"
+      },
+      {
+        "value": "list",
+        "label": "List"
+      },
+    ],
+    "name": "output_type",
+    "display_name": "output_type",
+    "type": "str",
+    "clear_after_run": true,
+    "list": false,
+    "field_type": "select"
+  }
+}
+fieldsData.value.output_type.options = fieldsData.value.output_type.options.map(item => {
+  item.label = t(`components.nodes.textProcessing.ListRender.output_type_${item.value}`)
+  return item
+})
 
 const deleteNode = () => {
   props.events.delete({
@@ -79,6 +133,14 @@ const deleteNode = () => {
           <ListField id="list" :name="t('components.nodes.textProcessing.ListRender.list')" required type="target"
             v-model:value="fieldsData.list.value" v-model:show="fieldsData.list.show">
           </ListField>
+        </a-col>
+
+        <a-col :span="24">
+          <BaseField id="output_type" :name="t('components.nodes.textProcessing.ListRender.output_type')" required
+            type="target" v-model:show="fieldsData.output_type.show">
+            <a-select style="width: 100%;" v-model:value="fieldsData.output_type.value"
+              :options="fieldsData.output_type.options" />
+          </BaseField>
         </a-col>
       </a-row>
     </template>
