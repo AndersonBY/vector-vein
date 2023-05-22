@@ -256,6 +256,9 @@ const runWorkflow = async () => {
     currentWorkflow.value.data.nodes.forEach((node) => {
       if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
         Object.keys(node.data.template).forEach((field) => {
+          if (node.data.template[field].field_type == 'checkbox') {
+            return
+          }
           if (node.data.template[field].show && node.data.template[field].required && !node.data.template[field].value) {
             message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
             checkFieldsValid = false
