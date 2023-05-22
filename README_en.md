@@ -65,6 +65,56 @@ The workflow editor interface is shown above. You can edit the name, tags, and d
 
 You can view a tutorial on creating a simple crawler + AI summary mind map workflow [here](TUTORIAL_en.md).
 
+## 🛠️ Development and Deployment
+
+### Environment Requirements
+
+- Backend
+  - Python 3.8 (currently pywebview only supports up to 3.8 on Windows)
+  - [PDM](https://pdm.fming.dev/latest/#installation) installed
+
+- Frontend
+  - Vue3
+  - Vite
+
+### Project Development
+
+Run the following command in the **backend** directory to install dependencies:
+
+```bash
+pdm install
+```
+
+Normally, PDM will automatically find the system's Python 3.8 and create a virtual environment and install dependencies.
+
+After installation, run the following command to start the backend development server and see the running effect:
+
+```bash
+pdm run dev
+```
+
+If you need to modify the frontend code, you need to run the following command in the **frontend** directory to install dependencies:
+
+```bash
+pnpm install
+```
+
+After the frontend dependencies are installed, you need to compile the frontend code into the static file directory of the backend. A shortcut instruction has been provided in the project. Run the following command in the **backend** directory to pack and copy the frontend resources:
+
+```bash
+pdm run build-front
+```
+
+### Software Packaging
+
+The project uses pyinstaller for packaging. Run the following command in the **backend** directory to package it into an executable file:
+
+```bash
+pdm run build
+```
+
+After packaging, the executable file will be generated in the**backend/dist** directory.
+
 ## 📄 License
 
 VectorVein is an open-source software that supports personal non-commercial use. Please refer to [LICENSE](LICENSE.md) for specific agreements.

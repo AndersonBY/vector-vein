@@ -65,6 +65,56 @@
 
 您可以查看一个简易的爬虫+AI总结思维导图工作流的[创建教学](TUTORIAL.md)。
 
+## 🛠️ 开发部署
+
+### 环境要求
+
+- 后端
+  - Python 3.8（目前pywebview在Windows下只支持到3.8）
+  - 安装[PDM](https://pdm.fming.dev/latest/#installation)
+
+- 前端
+  - Vue3
+  - Vite
+
+### 项目开发
+
+在**backend**目录下运行以下命令安装依赖：
+
+```bash
+pdm install
+```
+
+正常来说PDM会自动找到系统的Python3.8并创建虚拟环境以及安装依赖。
+
+安装完成后运行以下命令启动后端开发服务即可看到运行效果：
+
+```bash
+pdm run dev
+```
+
+如果需要修改前端代码，需要在**frontend**目录下运行以下命令安装依赖：
+
+```bash
+pnpm install
+```
+
+前端依赖安装完成后需要将前端代码编译到后端的静态文件目录中，项目已提供了快捷指令，在**backend**目录下运行以下命令实现前端资源打包及拷贝：
+
+```bash
+pdm run build-front
+```
+
+### 软件打包
+
+项目采用pyinstaller进行打包，在**backend**目录下运行以下命令即可打包成可执行文件：
+
+```bash
+pdm run build
+```
+
+打包完成后会在**backend/dist**目录下生成可执行文件。
+
 ## 📄 协议
 
 向量脉络是一个开源的软件，支持个人非商业使用，具体协议请参考 [LICENSE](LICENSE.md)。
