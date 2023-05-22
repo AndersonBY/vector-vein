@@ -114,7 +114,8 @@ const deleteNode = () => {
     <template #main>
       <a-row type="flex">
         <a-col :span="24">
-          <BaseField id="url" :name="t('components.nodes.webCrawlers.TextCrawler.url')" required type="target">
+          <BaseField id="url" :name="t('components.nodes.webCrawlers.TextCrawler.url')" required type="target"
+            v-model:show="fieldsData.url.show">
             <a-input v-model:value="fieldsData.url.value" placeholder="https://example.com" />
           </BaseField>
         </a-col>
