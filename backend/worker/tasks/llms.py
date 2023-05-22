@@ -2,7 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 04:50:00
+# @Last Modified time: 2023-05-22 22:59:58
+from typing import Union
+
 import openai
 
 from utilities.workflow import Workflow
@@ -17,7 +19,7 @@ def open_ai(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    prompt: str = workflow.get_node_field_value(node_id, "prompt")
+    input_prompt: Union[str, list] = workflow.get_node_field_value(node_id, "prompt")
     temperature: float = workflow.get_node_field_value(node_id, "temperature")
     if workflow.setting.get("openai_api_type") == "azure":
         openai.api_type = "azure"
@@ -32,13 +34,19 @@ def open_ai(
     openai.api_key = workflow.setting.get("openai_api_key")
     openai.proxy = proxies_for_requests
 
-    messages = [
-        {
-            "role": "system",
-            "content": prompt,
-        },
-    ]
-    try:
+    if isinstance(input_prompt, str):
+        prompts = [input_prompt]
+    elif isinstance(input_prompt, list):
+        prompts = input_prompt
+
+    results = []
+    for prompt in prompts:
+        messages = [
+            {
+                "role": "system",
+                "content": prompt,
+            },
+        ]
         response = openai.ChatCompletion.create(
             engine=engine,
             messages=messages,
@@ -47,9 +55,9 @@ def open_ai(
             top_p=0.77,
         )
         result = response.choices[0].message.content
-        workflow.update_node_field_value(node_id, "output", result)
-        workflow.set_node_status(node_id, 200)
-        return workflow.data
-    except Exception as e:
-        mprint_error(e)
-        workflow.set_node_status(node_id, 500)
+        results.append(result)
+
+    output = results[0] if isinstance(input_prompt, str) else results
+    workflow.update_node_field_value(node_id, "output", output)
+    workflow.set_node_status(node_id, 200)
+    return workflow.data
