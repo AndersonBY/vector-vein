@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-22 00:56:24
+ * @Last Modified time: 2023-05-22 20:51:55
  */
 export default {
   lang: '中文',
@@ -419,6 +419,9 @@ export default {
           'description': '将列表渲染成文本。',
           'list': '列表',
           'add_item': '添加项',
+          'output_type': '输出类型',
+          'output_type_text': '文本',
+          'output_type_list': '列表',
           'output': '输出',
         },
         TextInOut: {
