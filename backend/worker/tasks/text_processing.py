@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 02:09:08
+# @Last Modified time: 2023-05-23 02:17:16
 import markdown2
 
 from utilities.workflow import Workflow
@@ -61,7 +61,7 @@ def template_compose(
         if not isinstance(field_value, list):
             continue
         fields_has_list = True
-        if list_length == 0:
+        if list_length == 1:
             list_length = len(field_value)
         elif list_length != len(field_value):
             raise ValueError("Input fields have different list length")
