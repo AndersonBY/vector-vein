@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 22:25:34
+# @Last Modified time: 2023-05-22 14:25:52
 import re
 import time
 import urllib.request
@@ -37,11 +37,14 @@ mprint(f"Proxies for requests: {proxies_for_requests}")
 
 
 def crawl_text_from_url(url: str):
+    if not url.startswith("http"):
+        url = f"http://{url}"
+
     try_times = 0
     crawl_success = False
     while try_times < 5:
         try:
-            response = httpx.get(url, headers=headers, proxies=proxies)
+            response = httpx.get(url, headers=headers, proxies=proxies, follow_redirects=True)
             crawl_success = True
             break
         except Exception as e:
