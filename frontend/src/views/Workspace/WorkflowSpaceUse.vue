@@ -84,7 +84,7 @@
                       v-else-if="node.data.template[field].field_type == 'checkbox'" />
                     <UploaderFieldUse v-model="node.data.template[field].value"
                       v-else-if="node.data.template[field].field_type == 'file'" />
-                    <ListFieldUse v-model:value="node.data.template[field].value"
+                    <ListFieldUse v-model="node.data.template[field].value"
                       v-else-if="node.data.template[field].field_type == 'list'" />
                   </a-form-item>
                 </template>
