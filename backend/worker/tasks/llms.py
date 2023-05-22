@@ -2,13 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-22 22:59:58
+# @Last Modified time: 2023-05-23 00:07:14
 from typing import Union
 
 import openai
 
 from utilities.workflow import Workflow
-from utilities.print_utils import mprint_error
 from utilities.web_crawler import proxies_for_requests
 from worker.tasks import task
 
