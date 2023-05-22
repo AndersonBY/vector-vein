@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 01:14:59
+# @Last Modified time: 2023-05-23 02:09:08
 import markdown2
 
 from utilities.workflow import Workflow
@@ -53,7 +53,7 @@ def template_compose(
 
     # Check if input fields has list
     fields_has_list = False
-    list_length = 0
+    list_length = 1
     for field in fields:
         if field == "output":
             continue
@@ -85,6 +85,8 @@ def template_compose(
             template = template.replace(f"{{{{{field}}}}}", fields_values[field][index])
         fields_values["output"].append(template)
     workflow.update_node_field_value(node_id, "template", fields_values["template"])
+
+    print(fields_values)
 
     if not fields_has_list:
         fields_values["output"] = fields_values["output"][0]
