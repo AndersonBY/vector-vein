@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-22 20:51:55
+ * @Last Modified time: 2023-05-23 14:24:46
  */
 export default {
   lang: '中文',
@@ -523,7 +523,7 @@ export default {
         title: '触发器',
         ButtonTrigger: {
           'title': '按钮触发器',
-          'description': '用于触发工作流运行。',
+          'description': '用于触发工作流运行，作为特殊节点，可以不需要与其它节点连接。',
           'button_text': '按钮文字',
           'run': '运行',
           'output': '输出',

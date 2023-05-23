@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 15:19:37
+# @Last Modified time: 2023-05-23 14:22:44
 import queue
 import inspect
 
@@ -13,6 +13,7 @@ from worker.tasks import (
     llms,
     tools,
     output,
+    triggers,
     vector_db,
     web_crawlers,
     control_flows,
@@ -26,6 +27,7 @@ task_modules = [
     llms,
     tools,
     output,
+    triggers,
     vector_db,
     web_crawlers,
     control_flows,

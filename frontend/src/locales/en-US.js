@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-22 20:50:19
+ * @Last Modified time: 2023-05-23 14:25:16
  */
 export default {
   lang: 'English',
@@ -523,7 +523,7 @@ export default {
         title: 'Triggers',
         ButtonTrigger: {
           'title': 'Button trigger',
-          'description': 'Used to trigger the workflow by clicking the button.',
+          'description': 'Used to trigger workflow runs. As a special node, it can be used without connecting to other nodes.',
           'button_text': 'Button text',
           'run': 'Run',
           'output': 'Output',
