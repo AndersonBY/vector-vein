@@ -1,3 +1,227 @@
+<script setup>
+import { onBeforeMount, defineComponent, ref } from "vue"
+import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from "vue-router"
+import { message } from 'ant-design-vue'
+import VueMarkdown from 'vue-markdown-render'
+import { storeToRefs } from 'pinia'
+import { useUserSettingsStore } from '@/stores/userSettings'
+import { useUserWorkflowsStore } from "@/stores/userWorkflows"
+import { useUserDatabasesStore } from "@/stores/userDatabase"
+import WorkflowEditor from '@/components/workspace/WorkflowEditor.vue'
+import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
+import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
+import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
+import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
+import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
+import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
+import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
+import { databaseAPI } from "@/api/database"
+
+defineComponent({
+  name: 'WorkflowSpace',
+})
+
+const { t } = useI18n()
+const userSettingsStore = useUserSettingsStore()
+const { language, setting } = storeToRefs(userSettingsStore)
+const userDatabasesStore = useUserDatabasesStore()
+const { userDatabases } = storeToRefs(userDatabasesStore)
+const loading = ref(true)
+const updating = ref(false)
+const userWorkflowsStore = useUserWorkflowsStore()
+const route = useRoute()
+const router = useRouter()
+const workflowId = route.params.workflowId
+const briefModalOpen = ref(false)
+const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
+
+onBeforeMount(async () => {
+  const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
+  const listDatabasesRequest = databaseAPI('list', {})
+  const workflowResponse = await getWorkflowRequest
+  const listDatabasesResponse = await listDatabasesRequest
+  if (listDatabasesResponse.status == 200) {
+    userDatabasesStore.setUserDatabases(listDatabasesResponse.data)
+  }
+  if (workflowResponse.status != 200) {
+    message.error(t('workspace.workflowSpace.get_workflow_failed'))
+    router.push({ name: 'WorkflowSpaceMain' })
+    return
+  }
+  currentWorkflow.value = workflowResponse.data
+  currentWorkflow.value.data.nodes.forEach((node) => {
+    if (node.category == "vectorDb") {
+      node.data.template.database.options = userDatabases.value.filter((database) => {
+        return database.status == 'VALID'
+      }).map((item) => {
+        return {
+          value: item.vid,
+          label: item.name,
+        }
+      })
+    }
+  })
+  loading.value = false
+})
+
+const clearNodesFiles = () => {
+  currentWorkflow.value.data.nodes.forEach((node) => {
+    if (node.data.has_inputs) {
+      Object.keys(node.data.template).forEach((field) => {
+        if (node.data.template[field].field_type == 'file') {
+          node.data.template[field].value = []
+        }
+      })
+    }
+  })
+}
+
+const currentWorkflow = ref({})
+
+const running = ref(false)
+const checkStatusTimer = ref(null)
+const runRecordId = ref(null)
+const runWorkflow = async () => {
+  let checkFieldsValid = true
+  try {
+    currentWorkflow.value.data.nodes.forEach((node) => {
+      if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
+        Object.keys(node.data.template).forEach((field) => {
+          if (node.data.template[field].field_type == 'checkbox') {
+            return
+          }
+          if (node.data.template[field].show && node.data.template[field].required && !node.data.template[field].value) {
+            message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
+            checkFieldsValid = false
+          }
+        })
+      }
+    })
+  } catch (errorInfo) {
+    checkFieldsValid = false
+  }
+  if (!checkFieldsValid) {
+    return
+  }
+  running.value = true
+  currentWorkflow.value.data.setting = setting.value.data
+  const response = await workflowAPI('run', currentWorkflow.value)
+  if (response.status == 200) {
+    message.success(t('workspace.workflowSpace.submit_workflow_success'))
+    runRecordId.value = response.data.rid
+    checkStatusTimer.value = setInterval(async () => {
+      const response = await workflowAPI('check_status', { rid: runRecordId.value })
+      if (response.status == 200) {
+        message.success(t('workspace.workflowSpace.run_workflow_success'))
+        clearInterval(checkStatusTimer.value)
+        running.value = false
+        currentWorkflow.value = response.data
+        // clearNodesFiles()
+      } else if (response.status == 500) {
+        running.value = false
+        message.error(t('workspace.workflowSpace.run_workflow_failed'))
+        clearInterval(checkStatusTimer.value)
+      }
+    }, 1000)
+  } else {
+    message.error(t('workspace.workflowSpace.submit_workflow_failed'))
+    running.value = false
+  }
+}
+
+const updateWorkflowScheduleTrigger = async () => {
+  running.value = true
+  const response = await workflowScheduleTriggerAPI('update', {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ...currentWorkflow.value
+  })
+  if (response.status == 200) {
+    message.success(t('workspace.workflowSpace.update_schedule_success'))
+  } else {
+    message.error(t('workspace.workflowSpace.update_schedule_failed'))
+  }
+  running.value = false
+}
+
+const deletingSchedule = ref(false)
+const deleteWorkflowScheduleTrigger = async () => {
+  deletingSchedule.value = true
+  const response = await workflowScheduleTriggerAPI('delete', {
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    ...currentWorkflow.value
+  })
+  if (response.status == 200) {
+    message.success(t('workspace.workflowSpace.delete_schedule_success'))
+  } else {
+    message.error(t('workspace.workflowSpace.delete_schedule_failed'))
+  }
+  deletingSchedule.value = false
+}
+
+const saveWorkflow = async (data) => {
+  const { title, brief, images, tags, workflow } = data
+  updating.value = true
+  currentWorkflow.value.title = title
+  currentWorkflow.value.brief = brief
+  currentWorkflow.value.images = images
+  currentWorkflow.value.data = workflow
+  clearNodesFiles()
+  const response = await workflowAPI('update', {
+    wid: currentWorkflow.value.wid,
+    title: title,
+    brief: brief,
+    images: images,
+    tags: tags,
+    data: workflow,
+  })
+  updating.value = false
+  if (response.status == 200) {
+    message.success(t('workspace.workflowSpace.save_success'))
+    currentWorkflow.value.images = response.data.images
+    currentWorkflow.value.tags = response.data.tags
+  } else {
+    message.error(t('workspace.workflowSpace.save_failed'))
+  }
+  userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
+}
+
+const deleteWorkflow = async () => {
+  const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })
+  if (response.status == 200) {
+    message.success(t('workspace.workflowSpace.delete_success'))
+    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid)
+    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid, true)
+    router.push({ name: 'WorkflowSpaceMain' })
+  } else {
+    message.error(t('workspace.workflowSpace.delete_failed'))
+  }
+}
+
+const editorModalRef = ref(null)
+const openEditor = () => {
+  editorModalRef.value.showModal()
+}
+
+const hasShowFields = (node) => {
+  let hasShow = false
+  Object.keys(node.data.template).forEach(key => {
+    if (node.data.template[key].show) {
+      hasShow = true
+    }
+  })
+  return hasShow
+}
+
+const setWorkflowRecord = (record) => {
+  currentWorkflow.value.data = record.data
+}
+
+const openLocalFile = (file) => {
+  window.pywebview.api.open_local_file(file)
+}
+</script>
+
 <template>
   <div class="space-container" v-if="loading">
     <a-skeleton active />
@@ -178,217 +402,6 @@
       :nodes="currentWorkflow.data.nodes" :edges="currentWorkflow.data.edges" @ok="saveWorkflow" />
   </a-spin>
 </template>
-
-<script setup>
-import { onBeforeMount, defineComponent, ref } from "vue"
-import { useI18n } from 'vue-i18n'
-import { useRoute, useRouter } from "vue-router"
-import { message } from 'ant-design-vue'
-import VueMarkdown from 'vue-markdown-render'
-import { storeToRefs } from 'pinia'
-import { useUserSettingsStore } from '@/stores/userSettings'
-import { useUserWorkflowsStore } from "@/stores/userWorkflows"
-import { useUserDatabasesStore } from "@/stores/userDatabase"
-import WorkflowEditor from '@/components/workspace/WorkflowEditor.vue'
-import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
-import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
-import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
-import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
-import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
-import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
-import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
-import { databaseAPI } from "@/api/database"
-
-defineComponent({
-  name: 'WorkflowSpace',
-})
-
-const { t } = useI18n()
-const userSettingsStore = useUserSettingsStore()
-const { language, setting } = storeToRefs(userSettingsStore)
-const userDatabasesStore = useUserDatabasesStore()
-const loading = ref(true)
-const updating = ref(false)
-const userWorkflowsStore = useUserWorkflowsStore()
-const route = useRoute()
-const router = useRouter()
-const workflowId = route.params.workflowId
-const briefModalOpen = ref(false)
-const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
-
-onBeforeMount(async () => {
-  const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
-  const listDatabasesRequest = databaseAPI('list', {})
-  const workflowResponse = await getWorkflowRequest
-  const listDatabasesResponse = await listDatabasesRequest
-  if (listDatabasesResponse.status == 200) {
-    userDatabasesStore.setUserDatabases(listDatabasesResponse.data)
-  }
-  if (workflowResponse.status != 200) {
-    message.error(t('workspace.workflowSpace.get_workflow_failed'))
-    router.push({ name: 'WorkflowSpaceMain' })
-    return
-  }
-  currentWorkflow.value = workflowResponse.data
-  loading.value = false
-})
-
-const clearNodesFiles = () => {
-  currentWorkflow.value.data.nodes.forEach((node) => {
-    if (node.data.has_inputs) {
-      Object.keys(node.data.template).forEach((field) => {
-        if (node.data.template[field].field_type == 'file') {
-          node.data.template[field].value = []
-        }
-      })
-    }
-  })
-}
-
-const currentWorkflow = ref({})
-
-const running = ref(false)
-const checkStatusTimer = ref(null)
-const runRecordId = ref(null)
-const runWorkflow = async () => {
-  let checkFieldsValid = true
-  try {
-    currentWorkflow.value.data.nodes.forEach((node) => {
-      if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
-        Object.keys(node.data.template).forEach((field) => {
-          if (node.data.template[field].field_type == 'checkbox') {
-            return
-          }
-          if (node.data.template[field].show && node.data.template[field].required && !node.data.template[field].value) {
-            message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
-            checkFieldsValid = false
-          }
-        })
-      }
-    })
-  } catch (errorInfo) {
-    checkFieldsValid = false
-  }
-  if (!checkFieldsValid) {
-    return
-  }
-  running.value = true
-  currentWorkflow.value.data.setting = setting.value.data
-  const response = await workflowAPI('run', currentWorkflow.value)
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.submit_workflow_success'))
-    runRecordId.value = response.data.rid
-    checkStatusTimer.value = setInterval(async () => {
-      const response = await workflowAPI('check_status', { rid: runRecordId.value })
-      if (response.status == 200) {
-        message.success(t('workspace.workflowSpace.run_workflow_success'))
-        clearInterval(checkStatusTimer.value)
-        running.value = false
-        currentWorkflow.value = response.data
-        // clearNodesFiles()
-      } else if (response.status == 500) {
-        running.value = false
-        message.error(t('workspace.workflowSpace.run_workflow_failed'))
-        clearInterval(checkStatusTimer.value)
-      }
-    }, 1000)
-  } else {
-    message.error(t('workspace.workflowSpace.submit_workflow_failed'))
-    running.value = false
-  }
-}
-
-const updateWorkflowScheduleTrigger = async () => {
-  running.value = true
-  const response = await workflowScheduleTriggerAPI('update', {
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ...currentWorkflow.value
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.update_schedule_success'))
-  } else {
-    message.error(t('workspace.workflowSpace.update_schedule_failed'))
-  }
-  running.value = false
-}
-
-const deletingSchedule = ref(false)
-const deleteWorkflowScheduleTrigger = async () => {
-  deletingSchedule.value = true
-  const response = await workflowScheduleTriggerAPI('delete', {
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ...currentWorkflow.value
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.delete_schedule_success'))
-  } else {
-    message.error(t('workspace.workflowSpace.delete_schedule_failed'))
-  }
-  deletingSchedule.value = false
-}
-
-const saveWorkflow = async (data) => {
-  const { title, brief, images, tags, workflow } = data
-  updating.value = true
-  currentWorkflow.value.title = title
-  currentWorkflow.value.brief = brief
-  currentWorkflow.value.images = images
-  currentWorkflow.value.data = workflow
-  clearNodesFiles()
-  const response = await workflowAPI('update', {
-    wid: currentWorkflow.value.wid,
-    title: title,
-    brief: brief,
-    images: images,
-    tags: tags,
-    data: workflow,
-  })
-  updating.value = false
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.save_success'))
-    currentWorkflow.value.images = response.data.images
-    currentWorkflow.value.tags = response.data.tags
-  } else {
-    message.error(t('workspace.workflowSpace.save_failed'))
-  }
-  userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
-}
-
-const deleteWorkflow = async () => {
-  const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.delete_success'))
-    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid)
-    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid, true)
-    router.push({ name: 'WorkflowSpaceMain' })
-  } else {
-    message.error(t('workspace.workflowSpace.delete_failed'))
-  }
-}
-
-const editorModalRef = ref(null)
-const openEditor = () => {
-  editorModalRef.value.showModal()
-}
-
-const hasShowFields = (node) => {
-  let hasShow = false
-  Object.keys(node.data.template).forEach(key => {
-    if (node.data.template[key].show) {
-      hasShow = true
-    }
-  })
-  return hasShow
-}
-
-const setWorkflowRecord = (record) => {
-  currentWorkflow.value.data = record.data
-}
-
-const openLocalFile = (file) => {
-  window.pywebview.api.open_local_file(file)
-}
-</script>
 
 <style scoped>
 .space-container {
