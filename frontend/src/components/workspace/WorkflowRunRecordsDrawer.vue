@@ -2,7 +2,7 @@
 import { defineComponent, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { ControlOutlined, FieldTimeOutlined, TagsOutlined, PayCircleOutlined } from '@ant-design/icons-vue'
+import { ControlOutlined, FieldTimeOutlined, FlagOutlined, PayCircleOutlined } from '@ant-design/icons-vue'
 import { workflowRunRecordAPI } from "@/api/workflow"
 
 defineComponent({
@@ -142,17 +142,21 @@ const getWorkflowRunRecordDetail = async (rid) => {
             :customRow="workflowRunRecords.customRow" :data-source="workflowRunRecords.data"
             :pagination="workflowRunRecords.pagination" @change="workflowRunRecords.handleTableChange">
             <template #headerCell="{ column }">
-              <template v-if="column.key === 'status'">
-                <TagsOutlined />
-                {{ t('workspace.workflowSpaceMain.tags') }}
-              </template>
-              <template v-else-if="column.key === 'start_time'">
+              <template v-if="column.key === 'start_time'">
                 <FieldTimeOutlined />
                 {{ t('components.workspace.workflowRunRecordsDrawer.start_time') }}
               </template>
               <template v-else-if="column.key === 'end_time'">
                 <FieldTimeOutlined />
                 {{ t('components.workspace.workflowRunRecordsDrawer.end_time') }}
+              </template>
+              <template v-else-if="column.key === 'status'">
+                <FlagOutlined />
+                {{ t('components.workspace.workflowRunRecordsDrawer.status') }}
+              </template>
+              <template v-else-if="column.key === 'used_credits'">
+                <PayCircleOutlined />
+                {{ t('components.workspace.workflowRunRecordsDrawer.used_credits') }}
               </template>
               <template v-else-if="column.key === 'action'">
                 <ControlOutlined />
