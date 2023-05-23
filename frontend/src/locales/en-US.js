@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-23 14:25:16
+ * @Last Modified time: 2023-05-23 20:21:34
  */
 export default {
   lang: 'English',
@@ -561,7 +561,7 @@ export default {
           'delete_success': 'Delete success',
         },
         Search: {
-          'title': 'Search',
+          'title': 'Search data',
           'description': 'Used to search for data in the vector database. The search results are sorted by similarity.',
           'search_text': 'Search text',
           'data_type': 'Data type',

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-23 14:24:46
+ * @Last Modified time: 2023-05-23 20:21:30
  */
 export default {
   lang: '中文',
@@ -561,7 +561,7 @@ export default {
           'delete_success': '删除成功',
         },
         Search: {
-          'title': '搜索',
+          'title': '搜索数据',
           'description': '用于搜索向量数据库中的数据。',
           'search_text': '搜索文本',
           'data_type': '数据类型',
