@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 14:33:40
+# @Last Modified time: 2023-05-24 03:21:22
 from datetime import datetime
 
 from models import WorkflowRunRecord
@@ -172,11 +172,12 @@ class Workflow:
         node = self.get_node(node_id)
         return node.data["data"]["template"].keys()
 
-    def report_workflow_status(self, status: int):
+    def report_workflow_status(self, status: int, error_task: str = ""):
         try:
             workflow_obj = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
             workflow_obj.status = "FINISHED" if status == 200 else "FAILED"
             workflow_obj.data = self.workflow_data
+            workflow_obj.data["error_task"] = error_task
             workflow_obj.end_time = datetime.now()
             workflow_obj.save()
             return True

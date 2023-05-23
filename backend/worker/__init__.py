@@ -2,9 +2,10 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 14:22:44
+# @Last Modified time: 2023-05-24 03:25:01
 import queue
 import inspect
+import traceback
 
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint, mprint_error
@@ -73,11 +74,14 @@ def main_worker(task_queue: queue.Queue, vdb_queues: dict):
             task_chain = chain(*func_list, on_finish.s())
             task_chain(workflow.data)
         except Exception as e:
-            import traceback
-
             mprint_error(traceback.format_exc())
             mprint_error(f"main_worker error: {e}")
-            workflow.report_workflow_status(500)
+            mprint_error(f"error_task: {e.task_name}")
+            for module_name, functions in task_functions.items():
+                if e.task_name in functions:
+                    mprint_error(f"error_module: {module_name}")
+                    break
+            workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
         task_queue.task_done()
 
 

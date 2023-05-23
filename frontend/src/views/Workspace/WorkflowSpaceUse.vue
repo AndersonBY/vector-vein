@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref } from "vue"
+import { onBeforeMount, defineComponent, ref, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
@@ -83,6 +83,7 @@ const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
 const runWorkflow = async () => {
+  showingRecord.value = false
   let checkFieldsValid = true
   try {
     currentWorkflow.value.data.nodes.forEach((node) => {
@@ -160,6 +161,7 @@ const deleteWorkflowScheduleTrigger = async () => {
 }
 
 const saveWorkflow = async (data) => {
+  showingRecord.value = false
   const { title, brief, images, tags, workflow } = data
   updating.value = true
   currentWorkflow.value.title = title
@@ -213,8 +215,39 @@ const hasShowFields = (node) => {
   return hasShow
 }
 
+const showingRecord = ref(false)
+const recordStatus = ref('')
+const recordErrorTask = ref('')
+const alertType = computed(() => {
+  if (recordStatus.value == 'FINISHED') {
+    return 'success'
+  }
+  else if (recordStatus.value == 'FAILED') {
+    return 'error'
+  }
+  else {
+    return 'info'
+  }
+})
 const setWorkflowRecord = (record) => {
+  recordStatus.value = record.status
   currentWorkflow.value.data = record.data
+  let [category, node] = (record.data.error_task || '.').split('.')
+  category = category.split('_')
+    .map((word, index) => {
+      if (index === 0) {
+        return word.charAt(0).toLowerCase() + word.slice(1);
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join('')
+  node = node.split('_')
+    .map((word) => {
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    })
+    .join('')
+  recordErrorTask.value = `${category}.${node}`
+  showingRecord.value = true
 }
 
 const openLocalFile = (file) => {
@@ -281,6 +314,25 @@ const openLocalFile = (file) => {
     </a-row>
     <a-divider />
     <a-row :gutter="[16, 16]">
+      <a-col :span="24" v-if="showingRecord">
+        <a-alert :type="alertType" show-icon>
+          <template #message>
+            <span>
+              {{ t('workspace.workflowSpace.record_status', {
+                status:
+                  t(`components.workspace.workflowRunRecordsDrawer.status_${recordStatus.toLowerCase()}`)
+              }) }}
+            </span>
+            <a-divider type="vertical" />
+            <span v-if="recordStatus == 'FAILED' && recordErrorTask != '.'">
+              {{ t('workspace.workflowSpace.record_error_task', {
+                task: t('components.nodes.' + recordErrorTask + '.title')
+              }) }}
+            </span>
+          </template>
+        </a-alert>
+      </a-col>
+
       <a-col :lg="12" :md="24">
         <a-row :gutter="[16, 16]">
           <a-typography-title :level="3">{{ t('workspace.workflowSpace.inputs') }}</a-typography-title>

@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:43:01
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-15 20:43:46
+# @Last Modified time: 2023-05-24 03:20:09
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint_error
 
@@ -29,7 +29,11 @@ class Chain:
     def __call__(self, initial_data):
         result = initial_data
         for task, args, kwargs in self.tasks:
-            result = task(result, *args, **kwargs)
+            try:
+                result = task(result, *args, **kwargs)
+            except Exception as e:
+                e.task_name = task.func.__name__
+                raise e
         return result
 
 

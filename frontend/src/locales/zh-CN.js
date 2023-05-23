@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-23 20:21:30
+ * @Last Modified time: 2023-05-24 03:26:49
  */
 export default {
   lang: '中文',
@@ -201,6 +201,8 @@ export default {
       'delete_schedule_failed': '删除定时设置失败',
       'brief': '简介',
       'field_is_empty': '{field} 不能为空',
+      'record_status': '工作流运行记录状态: {status}',
+      'record_error_task': '出错任务: {task}',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
@@ -361,6 +363,7 @@ export default {
         'status_finished': '已完成',
         'status_failed': '运行失败',
         'check_record': '查看记录',
+        'check_record_and_error_task': '查看记录及错误任务',
       },
     },
     codeEditorModal: {

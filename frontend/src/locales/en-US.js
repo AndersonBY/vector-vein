@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-23 20:21:34
+ * @Last Modified time: 2023-05-24 03:26:30
  */
 export default {
   lang: 'English',
@@ -201,6 +201,8 @@ export default {
       'delete_schedule_failed': 'Delete schedule failed',
       'brief': 'Brief',
       'field_is_empty': '{field} is empty',
+      'record_status': 'Workflow run record status: {status}',
+      'record_error_task': 'Error task: {task}',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',
@@ -361,6 +363,7 @@ export default {
         'status_finished': 'Finished',
         'status_failed': 'Failed',
         'check_record': 'Check record',
+        'check_record_and_error_task': 'Check record and error task',
       },
     },
     codeEditorModal: {
