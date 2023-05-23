@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-16 16:53:22
+# @Last Modified time: 2023-05-23 14:33:40
 from datetime import datetime
 
 from models import WorkflowRunRecord
@@ -148,7 +148,7 @@ class Workflow:
         source_node = source_handle = ""
         for edge in self.edges:
             source_node = self.get_node(edge["source"])
-            if source_node.type == "Empty":
+            if source_node.type in ("Empty", "ButtonTrigger"):
                 continue
             if edge["target"] == node_id and edge["targetHandle"] == field:
                 source_node = edge["source"]
