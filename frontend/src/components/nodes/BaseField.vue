@@ -80,7 +80,7 @@ const getHandleStyle = (handleType) => ({
         <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue"
           v-if="props.type == 'target'">
           <a-typography-text type="secondary">
-            {{ innerShow ? t('components.nodes.baseField.show') : t('components.nodes.baseField.hide') }}
+            {{ t('components.nodes.baseField.show') }}
           </a-typography-text>
         </a-checkbox>
       </a-tooltip>
