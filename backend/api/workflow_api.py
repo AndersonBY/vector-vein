@@ -2,10 +2,11 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 15:52:38
+# @Last Modified time: 2023-05-24 12:10:20
 import uuid
 import pytz
 from pathlib import Path
+from datetime import datetime
 
 from models import (
     Workflow,
@@ -102,6 +103,7 @@ class WorkflowAPI:
             copied_images.append(image_url)
         workflow.images = copied_images
         workflow.data = data
+        workflow.update_time = datetime.now()
         workflow.save()
         response = {"status": 200, "msg": "success", "data": model_serializer(workflow, manytomany=True)}
         return response
