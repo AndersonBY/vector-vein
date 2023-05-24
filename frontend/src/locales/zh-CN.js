@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 03:26:49
+ * @Last Modified time: 2023-05-24 13:29:06
  */
 export default {
   lang: '中文',
@@ -414,6 +414,8 @@ export default {
           'text': '文本',
           'split_method': '分割方法',
           'split_method_general': '通用分割',
+          'split_method_delimiter': '分隔符分割',
+          'delimiter': '分隔符',
           'chunk_length': '分割长度',
           'output': '输出',
         },

@@ -2,7 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 03:20:34
+# @Last Modified time: 2023-05-24 13:37:59
+import re
+
 import markdown2
 
 from utilities.workflow import Workflow
@@ -114,10 +116,15 @@ def text_splitters(
     workflow = Workflow(workflow_data)
     text = workflow.get_node_field_value(node_id, "text")
     split_method = workflow.get_node_field_value(node_id, "split_method")
-    chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
     if split_method == "general":
+        chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
         text_splitter = TokenTextSplitter(chunk_size=chunk_length, chunk_overlap=30, model_name="gpt-3.5-turbo")
         paragraphs = text_splitter.create_documents([text])
+    elif split_method == "delimiter":
+        delimiter = workflow.get_node_field_value(node_id, "delimiter")
+        delimiter = re.sub(r'\\\\(.)', r'\1', delimiter)
+        text = re.sub(r'\\\\(.)', r'\1', text)
+        paragraphs = re.split(delimiter, text)
     workflow.update_node_field_value(node_id, "output", paragraphs)
     return workflow.data
 

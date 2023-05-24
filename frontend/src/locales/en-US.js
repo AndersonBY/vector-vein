@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 03:26:30
+ * @Last Modified time: 2023-05-24 13:28:25
  */
 export default {
   lang: 'English',
@@ -414,6 +414,8 @@ export default {
           'text': 'Text',
           'split_method': 'Split method',
           'split_method_general': 'General',
+          'split_method_delimiter': 'Delimiter',
+          'delimiter': 'Delimiter',
           'chunk_length': 'Chunk length',
           'output': 'Output',
         },

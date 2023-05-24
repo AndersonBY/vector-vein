@@ -1,5 +1,5 @@
 <script setup>
-import { defineComponent, ref, reactive } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -51,6 +51,10 @@ const props = defineProps({
             "value": "general",
             "label": "general"
           },
+          {
+            "value": "delimiter",
+            "label": "delimiter"
+          }
         ],
         "name": "split_method",
         "display_name": "split_method",
@@ -72,6 +76,20 @@ const props = defineProps({
         "clear_after_run": true,
         "list": false,
         "field_type": "number"
+      },
+      "delimiter": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": "\\n",
+        "password": false,
+        "name": "delimiter",
+        "display_name": "delimiter",
+        "type": "str",
+        "clear_after_run": true,
+        "list": true,
+        "field_type": "input"
       },
       "output": {
         "required": true,
@@ -99,6 +117,22 @@ fieldsData.value.split_method.options = fieldsData.value.split_method.options.ma
   item.label = t(`components.nodes.textProcessing.TextSplitters.split_method_${item.value}`)
   return item
 })
+if (!fieldsData.value.delimiter) {
+  fieldsData.value.delimiter = {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "multiline": true,
+    "value": "\\n",
+    "password": false,
+    "name": "delimiter",
+    "display_name": "delimiter",
+    "type": "str",
+    "clear_after_run": true,
+    "list": true,
+    "field_type": "input"
+  }
+}
 
 const deleteNode = () => {
   props.events.delete({
@@ -128,11 +162,19 @@ const deleteNode = () => {
           </BaseField>
         </a-col>
 
-        <a-col :span="24">
+        <a-col :span="24" v-if="fieldsData.split_method.value == 'general'">
           <BaseField id="chunk_length" :name="t('components.nodes.textProcessing.TextSplitters.chunk_length')" required
             type="target" v-model:show="fieldsData.chunk_length.show">
             <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.chunk_length.value"
               :placeholder="fieldsData.chunk_length.placeholder" />
+          </BaseField>
+        </a-col>
+
+        <a-col :span="24" v-if="fieldsData.split_method.value == 'delimiter'">
+          <BaseField id="delimiter" :name="t('components.nodes.textProcessing.TextSplitters.delimiter')" required
+            type="target" v-model:show="fieldsData.delimiter.show">
+            <a-input style="width: 100%;" class="field-content" v-model:value="fieldsData.delimiter.value"
+              :placeholder="fieldsData.delimiter.placeholder" />
           </BaseField>
         </a-col>
       </a-row>
