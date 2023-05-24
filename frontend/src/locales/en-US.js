@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 13:28:25
+ * @Last Modified time: 2023-05-24 20:09:32
  */
 export default {
   lang: 'English',
@@ -517,6 +517,16 @@ export default {
           'title': 'Bilibili crawler',
           'description': 'Used to crawl videos from Bilibili.',
           'url_or_bvid': 'URL or BVID',
+          'output_type': 'Output type',
+          'str': 'String',
+          'list': 'List',
+          'output_subtitle': 'Subtitle',
+          'output_title': 'Title',
+        },
+        YoutubeCrawler: {
+          'title': 'Youtube ',
+          'description': 'Used to crawl videos from youtube.',
+          'url_or_video_id': 'URL or video ID',
           'output_type': 'Output type',
           'str': 'String',
           'list': 'List',

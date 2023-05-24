@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 13:29:06
+ * @Last Modified time: 2023-05-24 20:09:40
  */
 export default {
   lang: '中文',
@@ -517,6 +517,16 @@ export default {
           'title': 'Bilibili爬虫',
           'description': '用于爬取Bilibili视频信息。',
           'url_or_bvid': '视频网址或BVID',
+          'output_type': '输出类型',
+          'str': '文本',
+          'list': '列表',
+          'output_subtitle': '字幕',
+          'output_title': '标题',
+        },
+        YoutubeCrawler: {
+          'title': 'Youtube爬虫',
+          'description': '用于爬取Youtube视频信息。',
+          'url_or_video_id': '视频网址或视频ID',
           'output_type': '输出类型',
           'str': '文本',
           'list': '列表',

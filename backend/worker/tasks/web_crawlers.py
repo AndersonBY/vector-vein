@@ -2,13 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 11:32:25
+# @Last Modified time: 2023-05-24 22:50:54
 from urllib.parse import urlparse, parse_qs
 
 import httpx
+import yt_dlp
 
 from utilities.workflow import Workflow
-from utilities.web_crawler import crawl_text_from_url
+from utilities.web_crawler import crawl_text_from_url, proxies
 from worker.tasks import task
 
 
@@ -120,4 +121,74 @@ def bilibili_crawler(
 
     workflow.update_node_field_value(node_id, "output_subtitle", subtitle_data)
     workflow.update_node_field_value(node_id, "output_title", title)
+    return workflow.data
+
+
+@task
+def youtube_crawler(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    url_or_video_id = workflow.get_node_field_value(node_id, "url_or_video_id")
+    output_type = workflow.get_node_field_value(node_id, "output_type")
+
+    if isinstance(url_or_video_id, list):
+        urls = url_or_video_id
+    else:
+        urls = [url_or_video_id]
+
+    formatted_urls = []
+    for url in urls:
+        if "youtube.com" in url:
+            if not url.startswith("http"):
+                url = "https://" + url
+        elif "youtu.be" in url:
+            if not url.startswith("http"):
+                url = "https://" + url
+        else:
+            url = "https://www.youtube.com/watch?v=" + url
+        formatted_urls.append(url)
+
+    text_results = []
+    title_results = []
+    for url in formatted_urls:
+        ydl_opts = {"writeautomaticsub": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            title = info["title"]
+
+        # TODO: 这里直接选择列表第一个作为字幕了，对于多语言字幕未来要考虑让用户选择语言？
+        if len(info["subtitles"]) > 0:
+            subtitle_key = list(info["subtitles"].keys())[0]
+            subtitle_file_list = info["subtitles"][subtitle_key]
+            for subtitle_file in subtitle_file_list:
+                if subtitle_file["ext"] == "json3":
+                    subtitle_url = subtitle_file["url"]
+                    break
+        elif len(info["automatic_captions"]) > 0:
+            for caption_key in info["automatic_captions"]:
+                if not caption_key.startswith("en"):
+                    continue
+                caption_file_list = info["automatic_captions"][caption_key]
+                for caption_file in caption_file_list:
+                    if caption_file["ext"] == "json3":
+                        subtitle_url = caption_file["url"]
+                        break
+                break
+        else:
+            raise Exception("No subtitle found")
+
+        subtitle_resp = httpx.get(subtitle_url, proxies=proxies, headers=headers)
+        subtitle_data_list = subtitle_resp.json()["events"]
+        subtitle_data_list = [item["segs"][0]["utf8"] for item in subtitle_data_list]
+        subtitle_data = "\n".join(subtitle_data_list) if output_type == "str" else subtitle_data_list
+
+        text_results.append(subtitle_data)
+        title_results.append(title)
+
+    title_value = title_results if isinstance(url_or_video_id, list) else title_results[0]
+    workflow.update_node_field_value(node_id, "output_title", title_value)
+    text_value = text_results if isinstance(url_or_video_id, list) else text_results[0]
+    workflow.update_node_field_value(node_id, "output_subtitle", text_value)
     return workflow.data
