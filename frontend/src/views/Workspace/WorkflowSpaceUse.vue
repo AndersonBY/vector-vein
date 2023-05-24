@@ -89,10 +89,25 @@ const runWorkflow = async () => {
     currentWorkflow.value.data.nodes.forEach((node) => {
       if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
         Object.keys(node.data.template).forEach((field) => {
+          let currentFieldValid = true
           if (node.data.template[field].field_type == 'checkbox') {
             return
           }
-          if (node.data.template[field].show && node.data.template[field].required && !node.data.template[field].value) {
+          if (!node.data.template[field].show) {
+            return
+          }
+          if (!node.data.template[field].required) {
+            return
+          }
+
+          if (node.data.template[field].field_type == 'file' && node.data.template[field].value.length == 0) {
+            currentFieldValid = false
+          } else if (node.data.template[field].field_type == 'number' && typeof node.data.template[field].value != 'number') {
+            currentFieldValid = false
+          } else if (!node.data.template[field].value && !node.data.template[field].value === 0) {
+            currentFieldValid = false
+          }
+          if (!currentFieldValid) {
             message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
             checkFieldsValid = false
           }
