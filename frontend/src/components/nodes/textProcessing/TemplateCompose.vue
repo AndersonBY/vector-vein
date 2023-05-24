@@ -119,8 +119,8 @@ const deleteNode = () => {
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.textProcessing.TemplateCompose.title')" :description="props.data.description"
-    @delete="deleteNode">
+  <BaseNode style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
+    :description="props.data.description" @delete="deleteNode">
     <template #main>
       <a-row style="display:block;">
         <a-tooltip :title="t('components.nodes.textProcessing.TemplateCompose.click_to_add_to_template')">
@@ -131,8 +131,8 @@ const deleteNode = () => {
                 <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
                   :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
                   v-if="fieldsData[field].field_type == 'select'" />
-                <a-textarea class="field-content" v-model:value="fieldsData[field].value" :autoSize="true"
-                  :showCount="true" :placeholder="fieldsData[field].placeholder"
+                <a-textarea class="field-content" v-model:value="fieldsData[field].value"
+                  :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
                   v-else-if="fieldsData[field].field_type == 'textarea'" />
                 <a-input class="field-content" v-model:value="fieldsData[field].value"
                   :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
@@ -177,8 +177,8 @@ const deleteNode = () => {
 
       <BaseField id="template" :name="t('components.nodes.textProcessing.TemplateCompose.template')" required
         type="target" v-model:show="fieldsData.template.show">
-        <a-textarea id="template-textarea" v-model:value="fieldsData.template.value" :autoSize="true" :showCount="true"
-          :placeholder="fieldsData.template.placeholder" />
+        <a-textarea id="template-textarea" v-model:value="fieldsData.template.value"
+          :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData.template.placeholder" />
       </BaseField>
       <a-divider></a-divider>
 
