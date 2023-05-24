@@ -125,7 +125,7 @@ const deleteNode = () => {
         <a-col :span="24">
           <BaseField id="temperature" :name="t('components.nodes.llms.OpenAI.temperature')" required type="target"
             v-model:show="fieldsData.temperature.show">
-            <TemperatureInput v-model:value="fieldsData.temperature.value" />
+            <TemperatureInput v-model="fieldsData.temperature.value" />
           </BaseField>
         </a-col>
       </a-row>

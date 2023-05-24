@@ -343,7 +343,7 @@ const openLocalFile = (file) => {
                   v-for="(field, templateIndex) in Object.keys(node.data.template)">
                   <a-form-item :key="`field-${field}-${templateIndex}`" :label="node.data.template[field].display_name"
                     v-if="node.data.template[field].show">
-                    <TemperatureInput v-model:value="node.data.template[field].value"
+                    <TemperatureInput v-model="node.data.template[field].value"
                       v-if="node.category == 'llms' && field == 'temperature'" />
                     <a-select v-model:value="node.data.template[field].value" :options="node.data.template[field].options"
                       v-else-if="node.data.template[field].field_type == 'select'" />
