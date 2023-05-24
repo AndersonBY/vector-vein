@@ -183,8 +183,7 @@ const codeEditorModal = reactive({
             </template>
             <a-form>
               <a-form-item :label="t('components.nodes.tools.ProgrammingFunction.add_parameter_type')">
-                <a-select ref="select" v-model:value="newFieldData.type" style="width: 120px"
-                  @change="newFieldDataTypeChange">
+                <a-select v-model:value="newFieldData.type" style="width: 120px" @change="newFieldDataTypeChange">
                   <a-select-option value="str">
                     {{ t('components.nodes.tools.ProgrammingFunction.parameter_type_str') }}
                   </a-select-option>
