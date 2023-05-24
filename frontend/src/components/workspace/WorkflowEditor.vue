@@ -78,6 +78,7 @@ const { t } = useI18n()
 const { addEdges, updateEdge, onConnect, toObject } = useVueFlow()
 onConnect((params) => {
   params.animated = true
+  params.style = { strokeWidth: 3, stroke: '#565656' }
   addEdges([params])
 })
 const onEdgeUpdate = ({ edge, connection }) => {
@@ -223,10 +224,10 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
         <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial' }">
           <VueFlow v-model="elements" :default-edge-options="{ type: 'smoothstep' }" :node-types="nodeTypes"
             :edgesUpdatable="true" @edge-update="onEdgeUpdate" @pane-ready="onPaneReady" @dragover="onNewNodeDragOver"
-            @edge-double-click="onEdgeDoubleClick">
+            @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true" :snap-grid="[20, 20]">
             <MiniMap />
             <Controls />
-            <Background :variant="BackgroundVariant.Lines" />
+            <Background :variant="BackgroundVariant.Dots" />
           </VueFlow>
         </a-layout-content>
       </a-layout>
