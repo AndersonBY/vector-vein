@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 02:35:54
+# @Last Modified time: 2023-05-25 03:03:18
 import re
 import json
 
@@ -68,31 +68,39 @@ def image_search(
     count = workflow.get_node_field_value(node_id, "count")
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
+    results = []
     if search_engine == "bing":
-        params = {
-            "q": search_text,
-            "first": "-",
-            "count": 30,
-            "cw": 1920,
-            "ch": 929,
-            "relp": 59,
-            "tsc": "ImageHoverTitle",
-            "datsrc": "I",
-            "layout": "RowBased_Landscape",
-            "mmasync": 1,
-        }
-        response = httpx.get("https://cn.bing.com/images/async", params=params, headers=headers, proxies=proxies)
-        soup = BeautifulSoup(response.text, "lxml")
-        images = []
-        images_elements = soup.select(".imgpt>a")
-        for image_element in images_elements[:count]:
-            image_data = json.loads(image_element["m"])
-            title = image_data["t"]
-            url = image_data["murl"]
-            if output_type == "text":
-                images.append(url)
-            elif output_type == "markdown":
-                images.append(f"![{title}]({url})")
+        if isinstance(search_text, list):
+            search_texts = search_text
+        else:
+            search_texts = [search_text]
+        for text in search_texts:
+            params = {
+                "q": text,
+                "first": "-",
+                "count": 30,
+                "cw": 1920,
+                "ch": 929,
+                "relp": 59,
+                "tsc": "ImageHoverTitle",
+                "datsrc": "I",
+                "layout": "RowBased_Landscape",
+                "mmasync": 1,
+            }
+            images = []
+            response = httpx.get("https://cn.bing.com/images/async", params=params, headers=headers, proxies=proxies)
+            soup = BeautifulSoup(response.text, "lxml")
+            images_elements = soup.select(".imgpt>a")
+            for image_element in images_elements[:count]:
+                image_data = json.loads(image_element["m"])
+                title = image_data["t"]
+                url = image_data["murl"]
+                if output_type == "text":
+                    images.append(url)
+                elif output_type == "markdown":
+                    images.append(f"![{title}]({url})")
+            results.append(images)
 
-    workflow.update_node_field_value(node_id, "output", images)
+    output = results if isinstance(search_text, list) else results[0]
+    workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
