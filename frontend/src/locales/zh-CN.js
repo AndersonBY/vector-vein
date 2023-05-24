@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 20:09:40
+ * @Last Modified time: 2023-05-25 02:30:23
  */
 export default {
   lang: '中文',
@@ -604,6 +604,18 @@ export default {
           'parameter_type_bool': '布尔值',
           'parameter_type_list': '列表',
           'add_parameter_name': '参数名称',
+          'output': '输出',
+        },
+        ImageSearch: {
+          'title': '图片搜索',
+          'description': '用于搜索图片。',
+          'search_text': '搜索词',
+          'search_engine': '搜索引擎',
+          'search_engine_bing': 'Bing',
+          'count': '搜索结果数量',
+          'output_type': '输出类型',
+          'output_type_text': '文本',
+          'output_type_markdown': 'Markdown',
           'output': '输出',
         },
       },

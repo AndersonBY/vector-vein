@@ -2,10 +2,15 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 16:27:23
+# @Last Modified time: 2023-05-25 02:35:54
 import re
+import json
+
+import httpx
+from bs4 import BeautifulSoup
 
 from utilities.workflow import Workflow
+from utilities.web_crawler import proxies, headers
 from worker.tasks import task
 
 
@@ -49,4 +54,45 @@ def programming_function(
     else:
         result = "Not implemented"
     workflow.update_node_field_value(node_id, "output", result)
+    return workflow.data
+
+
+@task
+def image_search(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    search_text = workflow.get_node_field_value(node_id, "search_text")
+    search_engine = workflow.get_node_field_value(node_id, "search_engine")
+    count = workflow.get_node_field_value(node_id, "count")
+    output_type = workflow.get_node_field_value(node_id, "output_type")
+
+    if search_engine == "bing":
+        params = {
+            "q": search_text,
+            "first": "-",
+            "count": 30,
+            "cw": 1920,
+            "ch": 929,
+            "relp": 59,
+            "tsc": "ImageHoverTitle",
+            "datsrc": "I",
+            "layout": "RowBased_Landscape",
+            "mmasync": 1,
+        }
+        response = httpx.get("https://cn.bing.com/images/async", params=params, headers=headers, proxies=proxies)
+        soup = BeautifulSoup(response.text, "lxml")
+        images = []
+        images_elements = soup.select(".imgpt>a")
+        for image_element in images_elements[:count]:
+            image_data = json.loads(image_element["m"])
+            title = image_data["t"]
+            url = image_data["murl"]
+            if output_type == "text":
+                images.append(url)
+            elif output_type == "markdown":
+                images.append(f"![{title}]({url})")
+
+    workflow.update_node_field_value(node_id, "output", images)
     return workflow.data

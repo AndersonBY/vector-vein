@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-24 20:09:32
+ * @Last Modified time: 2023-05-25 02:30:55
  */
 export default {
   lang: 'English',
@@ -604,6 +604,18 @@ export default {
           'parameter_type_bool': 'Boolean',
           'parameter_type_list': 'List',
           'add_parameter_name': 'Parameter name',
+          'output': 'Output',
+        },
+        ImageSearch: {
+          'title': 'Image search',
+          'description': 'Used to search for images on the Internet.',
+          'search_text': 'Search text',
+          'search_engine': 'Search engine',
+          'search_engine_bing': 'Bing',
+          'count': 'Search results count',
+          'output_type': 'Output type',
+          'output_type_text': 'Text',
+          'output_type_markdown': 'Markdown',
           'output': 'Output',
         },
       },
