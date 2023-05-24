@@ -2,7 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 15:22:49
+# @Last Modified time: 2023-05-24 16:27:23
+import re
+
 from utilities.workflow import Workflow
 from worker.tasks import task
 
@@ -33,8 +35,16 @@ def programming_function(
         else:
             parameters[field] = parameter
 
+    pattern = r"```.*?\n(.*?)\n```"
+    code_block_search = re.search(pattern, code, re.DOTALL)
+
+    if code_block_search:
+        pure_code = code_block_search.group(1)
+    else:
+        pure_code = code
+
     if language == "python":
-        exec(code, globals())
+        exec(pure_code, globals())
         result = main(**parameters)
     else:
         result = "Not implemented"
