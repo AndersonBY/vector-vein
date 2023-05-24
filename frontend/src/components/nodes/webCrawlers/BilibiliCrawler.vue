@@ -118,7 +118,7 @@ const deleteNode = () => {
       <a-row type="flex">
         <a-col :span="24">
           <BaseField id="url_or_bvid" :name="t('components.nodes.webCrawlers.BilibiliCrawler.url_or_bvid')" required
-            type="target">
+            type="target" v-model:show="fieldsData.url_or_bvid.show">
             <a-input v-model:value="fieldsData.url_or_bvid.value" />
           </BaseField>
         </a-col>
