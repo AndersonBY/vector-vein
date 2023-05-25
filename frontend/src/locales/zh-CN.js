@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 13:28:53
+ * @Last Modified time: 2023-05-25 14:00:34
  */
 export default {
   lang: '中文',
@@ -652,6 +652,12 @@ export default {
           'operator_ends_with': '左边以右边结尾',
           'true_output': '满足条件时的输出',
           'false_output': '不满足条件时的输出',
+          'output': '输出',
+        },
+        RandomChoice: {
+          'title': '随机选择',
+          'description': '用于从列表中随机选择一个元素。',
+          'input': '输入',
           'output': '输出',
         },
       },

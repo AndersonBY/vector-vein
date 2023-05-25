@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 13:29:05
+ * @Last Modified time: 2023-05-25 14:00:22
  */
 export default {
   lang: 'English',
@@ -652,6 +652,12 @@ export default {
           'operator_ends_with': 'Left ends with right',
           'true_output': 'Output when the condition is met',
           'false_output': 'Output when the condition is not met',
+          'output': 'Output',
+        },
+        RandomChoice: {
+          'title': 'Random choice',
+          'description': 'Used to randomly select an element from a list.',
+          'input': 'Input',
           'output': 'Output',
         },
       },

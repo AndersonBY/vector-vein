@@ -2,7 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-16 02:49:26
+# @Last Modified time: 2023-05-25 14:08:15
+import random
+
 from utilities.workflow import Workflow
 from worker.tasks import task
 
@@ -67,4 +69,21 @@ def conditional(
     else:
         workflow.update_node_field_value(node_id, "output", false_output)
 
+    return workflow.data
+
+
+@task
+def random_choice(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    input_list = workflow.get_node_field_value(node_id, "input")
+    if isinstance(input_list, str):
+        output = random.choice(input_list)
+    elif isinstance(input_list, list):
+        output = []
+        for item in input_list:
+            output.append(random.choice(item))
+    workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
