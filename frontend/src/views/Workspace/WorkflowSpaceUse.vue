@@ -3,6 +3,7 @@ import { onBeforeMount, defineComponent, ref, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
+import { FullscreenOutlined, FullscreenExitOutlined } from "@ant-design/icons-vue"
 import VueMarkdown from 'vue-markdown-render'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -35,6 +36,7 @@ const router = useRouter()
 const workflowId = route.params.workflowId
 const briefModalOpen = ref(false)
 const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
+const outputMaximized = ref(false)
 
 onBeforeMount(async () => {
   const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
@@ -83,6 +85,7 @@ const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
 const runWorkflow = async () => {
+  runRecordId.value = null
   showingRecord.value = false
   let checkFieldsValid = true
   try {
@@ -245,6 +248,7 @@ const alertType = computed(() => {
   }
 })
 const setWorkflowRecord = (record) => {
+  runRecordId.value = record.rid
   recordStatus.value = record.status
   currentWorkflow.value.data = record.data
   let [category, node] = (record.data.error_task || '.').split('.')
@@ -348,7 +352,7 @@ const openLocalFile = (file) => {
         </a-alert>
       </a-col>
 
-      <a-col :lg="12" :md="24">
+      <a-col :lg="12" :md="24" v-show="!outputMaximized">
         <a-row :gutter="[16, 16]">
           <a-typography-title :level="3">{{ t('workspace.workflowSpace.inputs') }}</a-typography-title>
           <template v-for="(node) in currentWorkflow.data.nodes" :key="`node-${node.id}`">
@@ -419,8 +423,18 @@ const openLocalFile = (file) => {
         </a-row>
       </a-col>
 
-      <a-col :lg="12" :md="24">
-        <a-typography-title :level="3">{{ t('workspace.workflowSpace.outputs') }}</a-typography-title>
+      <a-col :lg="outputMaximized ? 24 : 12" :md="24">
+        <a-typography-title :level="3" style="display: flex; justify-content: space-between;">
+          <span>{{ t('workspace.workflowSpace.outputs') }}</span>
+          <span>
+            <a-tooltip :title="t('workspace.workflowSpace.maximize_output')">
+              <FullscreenOutlined @click="outputMaximized = !outputMaximized" v-show="!outputMaximized" />
+            </a-tooltip>
+            <a-tooltip :title="t('workspace.workflowSpace.normalize_output')">
+              <FullscreenExitOutlined @click="outputMaximized = !outputMaximized" v-show="outputMaximized" />
+            </a-tooltip>
+          </span>
+        </a-typography-title>
         <a-spin :spinning="running">
           <a-row :gutter="[16, 16]">
             <template v-for="(node) in currentWorkflow.data.nodes" :key="`node-${node.id}`">

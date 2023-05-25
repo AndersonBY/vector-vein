@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 14:00:22
+ * @Last Modified time: 2023-05-25 21:34:01
  */
 export default {
   lang: 'English',
@@ -203,6 +203,8 @@ export default {
       'field_is_empty': '{field} is empty',
       'record_status': 'Workflow run record status: {status}',
       'record_error_task': 'Error task: {task}',
+      'maximize_output': 'Maximize output area',
+      'normalize_output': 'Restore output area size',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

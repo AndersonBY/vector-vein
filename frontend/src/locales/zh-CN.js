@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 14:00:34
+ * @Last Modified time: 2023-05-25 21:33:47
  */
 export default {
   lang: '中文',
@@ -203,6 +203,8 @@ export default {
       'field_is_empty': '{field} 不能为空',
       'record_status': '工作流运行记录状态: {status}',
       'record_error_task': '出错任务: {task}',
+      'maximize_output': '最大化输出区域',
+      'normalize_output': '恢复输出区域尺寸',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
