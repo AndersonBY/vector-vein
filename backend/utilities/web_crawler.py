@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-22 14:25:52
+# @Last Modified time: 2023-05-25 11:37:34
 import re
 import time
 import urllib.request
@@ -64,6 +64,32 @@ def crawl_text_from_url(url: str):
         content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
         result = {
             "title": soup.select_one("#activity-name").text.strip(),
+            "text": content,
+            "url": url,
+        }
+    elif url.startswith("https://zhuanlan.zhihu.com"):
+        soup = BeautifulSoup(response.text, "lxml")
+        content = str(soup.select_one(".Post-RichText"))
+        content = markdownify(content)
+        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        content = content.replace("![]()", "").replace("*\n", "")
+        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        result = {
+            "title": soup.select_one(".Post-Title").text.strip(),
+            "text": content,
+            "url": url,
+        }
+    elif url.startswith("https://www.zhihu.com/question/"):
+        soup = BeautifulSoup(response.text, "lxml")
+        content = soup.select_one(".RichContent-inner")
+        for style in content.select("style"):
+            style.decompose()
+        content = markdownify(str(content))
+        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        content = content.replace("![]()", "").replace("*\n", "")
+        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        result = {
+            "title": soup.select_one(".QuestionHeader-title").text.strip(),
             "text": content,
             "url": url,
         }
