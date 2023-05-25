@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 14:08:15
+# @Last Modified time: 2023-05-25 14:32:00
 import random
 
 from utilities.workflow import Workflow
@@ -79,11 +79,11 @@ def random_choice(
 ):
     workflow = Workflow(workflow_data)
     input_list = workflow.get_node_field_value(node_id, "input")
-    if isinstance(input_list, str):
-        output = random.choice(input_list)
-    elif isinstance(input_list, list):
+    if isinstance(input_list[0], list):
         output = []
         for item in input_list:
             output.append(random.choice(item))
+    else:
+        output = random.choice(input_list)
     workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
