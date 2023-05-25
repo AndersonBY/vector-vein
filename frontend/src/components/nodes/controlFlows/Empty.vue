@@ -37,7 +37,7 @@ const props = defineProps({
         "type": "str",
         "clear_after_run": true,
         "list": false,
-        "field_type": "inputy"
+        "field_type": "input"
       },
       "output": {
         "required": true,
