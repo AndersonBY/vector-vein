@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 02:30:23
+ * @Last Modified time: 2023-05-25 13:28:53
  */
 export default {
   lang: '中文',
@@ -299,6 +299,7 @@ export default {
         'email_smtp_host': '发信服务器',
         'email_smtp_port': '发信端口号',
         'email_smtp_ssl': 'SMTP SSL',
+        'pexels_api_key': 'Pexels API Key',
       },
       helpDropdown: {
         'help': '帮助',
@@ -612,6 +613,7 @@ export default {
           'search_text': '搜索词',
           'search_engine': '搜索引擎',
           'search_engine_bing': 'Bing',
+          'search_engine_pexels': 'Pexels',
           'count': '搜索结果数量',
           'output_type': '输出类型',
           'output_type_text': '文本',

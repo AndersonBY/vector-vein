@@ -51,6 +51,10 @@ const props = defineProps({
             "value": "bing",
             "label": "bing"
           },
+          {
+            "value": "pexels",
+            "label": "pexels"
+          }
         ],
         "name": "search_engine",
         "display_name": "search_engine",

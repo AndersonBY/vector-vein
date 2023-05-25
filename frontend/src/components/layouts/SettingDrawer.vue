@@ -27,6 +27,7 @@ onBeforeMount(async () => {
   settingForm.data.email_smtp_host = res.data.data.email_smtp_host || ''
   settingForm.data.email_smtp_port = res.data.data.email_smtp_port || ''
   settingForm.data.email_smtp_ssl = res.data.data.email_smtp_ssl || true
+  settingForm.data.pexels_api_key = res.data.data.pexels_api_key || ''
   loading.value = false
   open.value = false
 })
@@ -44,6 +45,7 @@ const settingForm = reactive({
     email_smtp_host: '',
     email_smtp_port: '',
     email_smtp_ssl: true,
+    pexels_api_key: '',
   }
 })
 const open = ref(false)
@@ -165,6 +167,12 @@ const saveSetting = async () => {
 
             <a-form-item :label="t('components.layout.settingDrawer.email_smtp_ssl')">
               <a-switch v-model:checked="settingForm.data.email_smtp_ssl" />
+            </a-form-item>
+
+            <a-divider></a-divider>
+
+            <a-form-item :label="t('components.layout.settingDrawer.pexels_api_key')">
+              <a-input-password v-model:value="settingForm.data.pexels_api_key" />
             </a-form-item>
 
           </a-form>

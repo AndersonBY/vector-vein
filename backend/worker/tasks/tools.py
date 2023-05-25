@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 03:03:18
+# @Last Modified time: 2023-05-25 13:38:31
 import re
 import json
 
@@ -88,7 +88,12 @@ def image_search(
                 "mmasync": 1,
             }
             images = []
-            response = httpx.get("https://cn.bing.com/images/async", params=params, headers=headers, proxies=proxies)
+            response = httpx.get(
+                "https://cn.bing.com/images/async",
+                params=params,
+                headers=headers,
+                proxies=proxies,
+            )
             soup = BeautifulSoup(response.text, "lxml")
             images_elements = soup.select(".imgpt>a")
             for image_element in images_elements[:count]:
@@ -99,6 +104,37 @@ def image_search(
                     images.append(url)
                 elif output_type == "markdown":
                     images.append(f"![{title}]({url})")
+            results.append(images)
+    elif search_engine == "pexels":
+        pexels_api_key = workflow.setting.get("pexels_api_key")
+        if isinstance(search_text, list):
+            search_texts = search_text
+        else:
+            search_texts = [search_text]
+        for text in search_texts:
+            params = {
+                "query": text,
+                "per_page": 30,
+            }
+            images = []
+            response = httpx.get(
+                "https://api.pexels.com/v1/search",
+                params=params,
+                headers={"Authorization": pexels_api_key},
+                proxies=proxies,
+            )
+            data = response.json()
+            for image_data in data["photos"][:count]:
+                title = image_data["photographer"]
+                url = image_data["src"]["original"]
+                photographer = image_data["photographer"]
+                pexels_photo_url = image_data["url"]
+                if output_type == "text":
+                    images.append(f"{url}\nPexels {photographer}: {pexels_photo_url}")
+                elif output_type == "markdown":
+                    images.append(
+                        f"![{title}]({url})\nPexels {photographer}: [{pexels_photo_url}]({pexels_photo_url})"
+                    )
             results.append(images)
 
     output = results if isinstance(search_text, list) else results[0]
