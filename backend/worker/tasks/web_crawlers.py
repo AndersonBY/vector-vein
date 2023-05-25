@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 10:49:30
+# @Last Modified time: 2023-05-25 12:16:26
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -181,8 +181,15 @@ def youtube_crawler(
 
         subtitle_resp = httpx.get(subtitle_url, proxies=proxies, headers=headers)
         subtitle_data_list = subtitle_resp.json()["events"]
-        subtitle_data_list = [item["segs"][0]["utf8"] for item in subtitle_data_list]
-        subtitle_data = "\n".join(subtitle_data_list) if output_type == "str" else subtitle_data_list
+        formated_subtitle = []
+        for item in subtitle_data_list:
+            if "segs" not in item:
+                continue
+            line = "".join([seg["utf8"] for seg in item["segs"]]).strip()
+            if len(line) == 0:
+                continue
+            formated_subtitle.append(line)
+        subtitle_data = "\n".join(formated_subtitle) if output_type == "str" else formated_subtitle
 
         text_results.append(subtitle_data)
         title_results.append(title)
