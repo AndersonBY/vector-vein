@@ -64,6 +64,7 @@ onBeforeMount(async () => {
       })
     }
   })
+  savedWorkflow.value = JSON.parse(JSON.stringify(currentWorkflow.value))
   loading.value = false
 })
 
@@ -80,6 +81,7 @@ const clearNodesFiles = () => {
 }
 
 const currentWorkflow = ref({})
+const savedWorkflow = ref({})
 
 const running = ref(false)
 const checkStatusTimer = ref(null)
@@ -123,9 +125,22 @@ const runWorkflow = async () => {
   if (!checkFieldsValid) {
     return
   }
+  let workflowDataForRun = JSON.parse(JSON.stringify(savedWorkflow.value))
+  // 遍历workflowDataForRun，找出currentWorkflow中放在了input中展示的让用户填写的字段，将其值替换为currentWorkflow中的值
+  workflowDataForRun.data.nodes.forEach((node) => {
+    if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
+      Object.keys(node.data.template).forEach((field) => {
+        if (node.data.template[field].show) {
+          node.data.template[field].value = currentWorkflow.value.data.nodes.find((item) => {
+            return item.id == node.id
+          }).data.template[field].value
+        }
+      })
+    }
+  })
   running.value = true
-  currentWorkflow.value.data.setting = setting.value.data
-  const response = await workflowAPI('run', currentWorkflow.value)
+  workflowDataForRun.data.setting = setting.value.data
+  const response = await workflowAPI('run', workflowDataForRun)
   if (response.status == 200) {
     message.success(t('workspace.workflowSpace.submit_workflow_success'))
     runRecordId.value = response.data.rid
@@ -204,6 +219,7 @@ const saveWorkflow = async (data) => {
     message.error(t('workspace.workflowSpace.save_failed'))
   }
   userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
+  savedWorkflow.value = currentWorkflow.value
 }
 
 const deleteWorkflow = async () => {
