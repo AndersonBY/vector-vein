@@ -209,7 +209,7 @@ dependencies = [
 
 [[package]]
 name = "httpx"
-version = "0.24.0"
+version = "0.24.1"
 requires_python = ">=3.7"
 summary = "The next generation HTTP client."
 dependencies = [
@@ -221,13 +221,13 @@ dependencies = [
 
 [[package]]
 name = "httpx"
-version = "0.24.0"
+version = "0.24.1"
 extras = ["http2"]
 requires_python = ">=3.7"
 summary = "The next generation HTTP client."
 dependencies = [
     "h2<5,>=3",
-    "httpx==0.24.0",
+    "httpx==0.24.1",
 ]
 
 [[package]]
@@ -300,7 +300,7 @@ summary = "Fundamental package for array computing in Python"
 
 [[package]]
 name = "openai"
-version = "0.27.6"
+version = "0.27.7"
 requires_python = ">=3.7.1"
 summary = "Python client library for the OpenAI API"
 dependencies = [
@@ -458,7 +458,7 @@ summary = "Python parsing module"
 
 [[package]]
 name = "pypdf"
-version = "3.8.1"
+version = "3.9.0"
 requires_python = ">=3.6"
 summary = "A pure-python PDF library capable of splitting, merging, cropping, and transforming PDF files"
 dependencies = [
@@ -531,7 +531,7 @@ summary = "UNKNOWN"
 
 [[package]]
 name = "qdrant-client"
-version = "1.1.7"
+version = "1.2.0"
 requires_python = ">=3.7,<3.12"
 summary = "Client library for the Qdrant vector search engine"
 dependencies = [
@@ -541,7 +541,7 @@ dependencies = [
     "numpy>=1.21; python_version >= \"3.8\"",
     "portalocker<3.0.0,>=2.7.0",
     "pydantic<2.0,>=1.8",
-    "typing-extensions<5.0.0,>=4.0.0",
+    "typing-extensions<4.6.0,>=4.0.0",
     "urllib3<2.0.0,>=1.26.14",
 ]
 
@@ -1291,9 +1291,9 @@ content_hash = "sha256:d64d813e3c808dc13c23fc3e8d1afeaaf9e96a7492c99fb88eb7ccf48
     {url = "https://files.pythonhosted.org/packages/41/16/c809655d32fd93e688b9e2a1aaba1008118369d1eda00818f6f65eb509f8/httpcore-0.17.0.tar.gz", hash = "sha256:cc045a3241afbf60ce056202301b4d8b6af08845e3294055eb26b09913ef903c"},
     {url = "https://files.pythonhosted.org/packages/6c/39/05ebe30333ec66bba849d3c25c85d759b94c43bb03b2222de051c50d4390/httpcore-0.17.0-py3-none-any.whl", hash = "sha256:0fdfea45e94f0c9fd96eab9286077f9ff788dd186635ae61b312693e4d943599"},
 ]
-"httpx 0.24.0" = [
-    {url = "https://files.pythonhosted.org/packages/4e/c1/692013f1e6115a061a14f6c7d05947515a1eb7b85ef6e9bf0ffbf0e92738/httpx-0.24.0-py3-none-any.whl", hash = "sha256:447556b50c1921c351ea54b4fe79d91b724ed2b027462ab9a329465d147d5a4e"},
-    {url = "https://files.pythonhosted.org/packages/ae/23/f7beaf11a8b95fc173b8979c4bfd23ea7711c5ebd458d657d24a59df7e9f/httpx-0.24.0.tar.gz", hash = "sha256:507d676fc3e26110d41df7d35ebd8b3b8585052450f4097401c9be59d928c63e"},
+"httpx 0.24.1" = [
+    {url = "https://files.pythonhosted.org/packages/ec/91/e41f64f03d2a13aee7e8c819d82ee3aa7cdc484d18c0ae859742597d5aa0/httpx-0.24.1-py3-none-any.whl", hash = "sha256:06781eb9ac53cde990577af654bd990a4949de37a28bdb4a230d434f3a30b9bd"},
+    {url = "https://files.pythonhosted.org/packages/f8/2a/114d454cb77657dbf6a293e69390b96318930ace9cd96b51b99682493276/httpx-0.24.1.tar.gz", hash = "sha256:5853a43053df830c20f8110c5e69fe44d035d850b2dfe795e196f00fdb774bdd"},
 ]
 "hyperframe 6.0.1" = [
     {url = "https://files.pythonhosted.org/packages/5a/2a/4747bff0a17f7281abe73e955d60d80aae537a5d203f417fa1c2e7578ebb/hyperframe-6.0.1.tar.gz", hash = "sha256:ae510046231dc8e9ecb1a6586f63d2347bf4c8905914aa84ba585ae85f28a914"},
@@ -1508,9 +1508,9 @@ content_hash = "sha256:d64d813e3c808dc13c23fc3e8d1afeaaf9e96a7492c99fb88eb7ccf48
     {url = "https://files.pythonhosted.org/packages/f3/23/7cc851bae09cf4db90d42a701dfe525780883ada86bece45e3da7a07e76b/numpy-1.24.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:3c1104d3c036fb81ab923f507536daedc718d0ad5a8707c6061cdfd6d184e570"},
     {url = "https://files.pythonhosted.org/packages/fa/7d/8dfb40eecbb6bc83ca00ef979f5cdeca5909a250cb8b642dcf1fbd34c078/numpy-1.24.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:202de8f38fc4a45a3eea4b63e2f376e5f2dc64ef0fa692838e31a808520efaf7"},
 ]
-"openai 0.27.6" = [
-    {url = "https://files.pythonhosted.org/packages/41/85/5260c76a6a2b0e9c106c7716b21447c76162df2bc797bd411bf6ce63d2fd/openai-0.27.6.tar.gz", hash = "sha256:63ca9f6ac619daef8c1ddec6d987fe6aa1c87a9bfdce31ff253204d077222375"},
-    {url = "https://files.pythonhosted.org/packages/9f/87/838149e472c58a141fa81e2eb4cc8828cb134054b59d67637031985ca770/openai-0.27.6-py3-none-any.whl", hash = "sha256:1f07ed06f1cfc6c25126107193726fe4cf476edcc4e1485cd9eb708f068f2606"},
+"openai 0.27.7" = [
+    {url = "https://files.pythonhosted.org/packages/35/c3/de7124146c3edbe8fd8163028d9ac998f2fd5dcda9225655f1d4ed684bbc/openai-0.27.7-py3-none-any.whl", hash = "sha256:788fb7fa85bf7caac6c1ed7eea5984254a1bdaf09ef485acf0e5718c8b2dc25a"},
+    {url = "https://files.pythonhosted.org/packages/ce/52/9e5b78fe0897815521cf803b3310d861923cea9dccb70349d39d47ff3d02/openai-0.27.7.tar.gz", hash = "sha256:bca95fd4c3054ef38924def096396122130454442ec52005915ecf8269626b1d"},
 ]
 "openpyxl 3.1.2" = [
     {url = "https://files.pythonhosted.org/packages/42/e8/af028681d493814ca9c2ff8106fc62a4a32e4e0ae14602c2a98fc7b741c8/openpyxl-3.1.2.tar.gz", hash = "sha256:a6f5977418eff3b2d5500d54d9db50c8277a368436f4e4f8ddb1be3422870184"},
@@ -1756,9 +1756,9 @@ content_hash = "sha256:d64d813e3c808dc13c23fc3e8d1afeaaf9e96a7492c99fb88eb7ccf48
     {url = "https://files.pythonhosted.org/packages/80/c1/23fd82ad3121656b585351aba6c19761926bb0db2ebed9e4ff09a43a3fcc/pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
     {url = "https://files.pythonhosted.org/packages/d6/60/9bed18f43275b34198eb9720d4c1238c68b3755620d20df0afd89424d32b/pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
 ]
-"pypdf 3.8.1" = [
-    {url = "https://files.pythonhosted.org/packages/ca/e9/d31f82a026d06deeddd0055094258bec9dc1deba2ad475de40fb53476c19/pypdf-3.8.1.tar.gz", hash = "sha256:761ad6dc33abb78d358b4ae42206c5f185798f8b537be9b8fdecd9ee834a894d"},
-    {url = "https://files.pythonhosted.org/packages/cd/c8/f4c9c9f3a8ac2ad58606739d9a49a53de7bf738b1f9d14f901f7b81cae0a/pypdf-3.8.1-py3-none-any.whl", hash = "sha256:0c34620e4bbceaf9632b6b7a8ec6d4a4d5b0cdee6e39bdb86dc91a8c44cb0f19"},
+"pypdf 3.9.0" = [
+    {url = "https://files.pythonhosted.org/packages/55/a7/42ee32368c40ed6604c84f48c7904959366191c80c227e9cc99af8f9e63c/pypdf-3.9.0-py3-none-any.whl", hash = "sha256:a2a0859483687deb01c29180587a5028bc3595402001107c870085a1976131e3"},
+    {url = "https://files.pythonhosted.org/packages/58/b7/63717fa462e8f54e66e460d95092e242d66d628e885773f4348e50faf0dd/pypdf-3.9.0.tar.gz", hash = "sha256:06136b9ed99525159482a1397a49f3fc0fd55ffd700d1ad4393e3f42d192a035"},
 ]
 "python-dateutil 2.8.2" = [
     {url = "https://files.pythonhosted.org/packages/36/7a/87837f39d0296e723bb9b62bbb257d0355c7f6128853c78955f57342a56d/python_dateutil-2.8.2-py2.py3-none-any.whl", hash = "sha256:961d03dc3453ebbc59dbdea9e4e11c5651520a876d0f4db161e8674aae935da9"},
@@ -1811,9 +1811,9 @@ content_hash = "sha256:d64d813e3c808dc13c23fc3e8d1afeaaf9e96a7492c99fb88eb7ccf48
     {url = "https://files.pythonhosted.org/packages/7a/7d/0dbc4c99379452a819b0fb075a0ffbb98611df6b6d59f54db67367af5bc0/pywin32-ctypes-0.2.0.tar.gz", hash = "sha256:24ffc3b341d457d48e8922352130cf2644024a4ff09762a2261fd34c36ee5942"},
     {url = "https://files.pythonhosted.org/packages/9e/4b/3ab2720f1fa4b4bc924ef1932b842edf10007e4547ea8157b0b9fc78599a/pywin32_ctypes-0.2.0-py2.py3-none-any.whl", hash = "sha256:9dc2d991b3479cc2df15930958b674a48a227d5361d413827a4cfd0b5876fc98"},
 ]
-"qdrant-client 1.1.7" = [
-    {url = "https://files.pythonhosted.org/packages/49/a7/4fa8600e8f81bfad69768103d106ce782a5162cec23265f48a02072a6cf9/qdrant_client-1.1.7.tar.gz", hash = "sha256:686d86934bec2ebb70676fc0650c9a44a9e552e0149124ca5a22ee8533879deb"},
-    {url = "https://files.pythonhosted.org/packages/5b/6d/cbca29335edc1e50677a45b73b4d2899e2f049c221aa6eaf6d9b7a200e37/qdrant_client-1.1.7-py3-none-any.whl", hash = "sha256:4f5d883660b8193840d8982919ab813a0470ace9a7ff46ee730f909841be5319"},
+"qdrant-client 1.2.0" = [
+    {url = "https://files.pythonhosted.org/packages/26/dd/61d571b9d0b27b7da542a73006da511d4ea5adb4c7070235d2cc2c59e20d/qdrant_client-1.2.0.tar.gz", hash = "sha256:5a3d9f89adce392a2ba619cfd5b9f7afb13e5146c49e88ed80469993f0fadbf0"},
+    {url = "https://files.pythonhosted.org/packages/70/ac/4575e2ca8d215d8dcb0ca2ef0c1c809b5c4504c883a26095f4ef88fe9a2f/qdrant_client-1.2.0-py3-none-any.whl", hash = "sha256:e84e43bee529e27990aa5bad487bab4204eb20bda0414916498d8bb80ce601e6"},
 ]
 "qtpy 2.0.1" = [
     {url = "https://files.pythonhosted.org/packages/ae/b0/56e602873b05108f0ef9189a237fefcfbcd2fa3d84130b59e50c84fc90e8/QtPy-2.0.1-py3-none-any.whl", hash = "sha256:d93f2c98e97387fcc9d623d509772af5b6c15ab9d8f9f4c5dfbad9a73ad34812"},
