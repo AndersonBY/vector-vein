@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 20:38:01
+# @Last Modified time: 2023-05-27 14:00:55
 import os
 import queue
 import threading
@@ -22,6 +22,7 @@ from api.database_api import DatabaseAPI, DatabaseObjectAPI
 from api.user_api import SettingAPI
 from api.remote_api import OfficialSiteAPI
 from utilities.print_utils import mprint
+from utilities.web_crawler import proxies_for_requests
 from utilities.static_file_server import StaticFileServer
 from models import create_tables
 from worker import main_worker, main_vector_database
@@ -76,6 +77,9 @@ for api_class in api_class_list:
     api.add_apis(api_class)
 setattr(API, "open_file_dialog", open_file_dialog)
 setattr(API, "open_folder_dialog", open_folder_dialog)
+
+os.environ["http_proxy"] = proxies_for_requests["http"]
+os.environ["https_proxy"] = proxies_for_requests["https"]
 
 worker_thread = threading.Thread(target=main_worker, args=(task_queue, vdb_queues), daemon=True)
 worker_thread.start()
