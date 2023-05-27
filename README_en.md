@@ -20,7 +20,7 @@ You can experience VectorVein's online version [here](https://vectorvein.com/en)
 
 ### Installation
 
-After downloading VectorVein, the program will create a "data" folder in the installation directory to store the database and static file resources.
+After downloading VectorVein from [Release](https://github.com/AndersonBY/vector-vein/releases/), the program will create a "data" folder in the installation directory to store the database and static file resources.
 
 VectorVein is built using pywebview, based on the webview2 kernel, so you need to install the webview2 runtime. If the software cannot be opened, you may need to download the webview2 runtime manually from [https://developer.microsoft.com/en-us/microsoft-edge/webview2/](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 

@@ -20,7 +20,7 @@
 
 ### 安装
 
-下载后打开VectorVein软件，初次打开时程序会在安装目录下创建data文件夹，用于存放数据库及静态文件资源。
+在[Release页下载](https://github.com/AndersonBY/vector-vein/releases/)后打开VectorVein软件，初次打开时程序会在安装目录下创建data文件夹，用于存放数据库及静态文件资源。
 
 软件采用了pywebview搭建，基于webview2内核，因此需要安装webview2运行时，如果出现软件无法打开，可能需要手动下载webview2运行时，下载地址：[https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/](https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/)
 
