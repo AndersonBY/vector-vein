@@ -16,6 +16,8 @@ VectorVein is a no-code AI workflow software inspired by [LangChain](https://git
 
 You can experience VectorVein's online version [here](https://vectorvein.com/en), with no need to download or install.
 
+Official website [Online Documentation](https://vectorvein.com/help/docs/introduction)
+
 ## 📦 Installation and Configuration
 
 ### Installation
