@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-29 15:30:27
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-29 16:30:50
+# @Last Modified time: 2023-05-29 20:35:06
 import uuid
 import base64
 from pathlib import Path
@@ -58,6 +58,11 @@ def stable_diffusion(
         negative_prompts = [input_negative_prompt]
     elif isinstance(input_negative_prompt, list):
         negative_prompts = input_negative_prompt
+
+    if len(prompts) < len(negative_prompts) and len(prompts) == 1:
+        prompts = prompts * len(negative_prompts)
+    elif len(prompts) > len(negative_prompts) and len(negative_prompts) == 1:
+        negative_prompts = negative_prompts * len(prompts)
 
     results = []
     for index, prompt in enumerate(prompts):
