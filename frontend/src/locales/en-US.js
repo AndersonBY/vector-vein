@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 21:34:01
+ * @Last Modified time: 2023-05-29 16:29:50
  */
 export default {
   lang: 'English',
@@ -302,6 +302,7 @@ export default {
         'email_smtp_port': 'SMTP port',
         'email_smtp_ssl': 'SMTP SSL',
         'pexels_api_key': 'Pexels API Key',
+        'stable_diffusion_base_url': 'Stable Diffusion URL',
       },
       helpDropdown: {
         'help': 'Help',
@@ -450,6 +451,25 @@ export default {
           'creative': 'Creative',
           'balanced': 'Balanced',
           'precise': 'Precise',
+          'output': 'Output',
+        },
+      },
+      imageGeneration: {
+        title: 'Image generation',
+        StableDiffusion: {
+          'title': 'Stable Diffusion',
+          'description': 'Stable Diffusion is a deep learning text-to-image generation model released in 2022.',
+          'prompt': 'Prompt',
+          'negative_prompt': 'Negative prompt',
+          'model': 'Model',
+          'cfg_scale': 'CFG Scale',
+          'sampler': 'Sampler',
+          'width': 'Width',
+          'height': 'Height',
+          'output_type': 'Output type',
+          'output_type_only_link': 'Only link',
+          'output_type_markdown': 'Markdown',
+          'output_type_html': 'HTML',
           'output': 'Output',
         },
       },

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-25 21:33:47
+ * @Last Modified time: 2023-05-29 16:29:23
  */
 export default {
   lang: '中文',
@@ -302,6 +302,7 @@ export default {
         'email_smtp_port': '发信端口号',
         'email_smtp_ssl': 'SMTP SSL',
         'pexels_api_key': 'Pexels API Key',
+        'stable_diffusion_base_url': 'Stable Diffusion URL',
       },
       helpDropdown: {
         'help': '帮助',
@@ -450,6 +451,25 @@ export default {
           'creative': '创意',
           'balanced': '平衡',
           'precise': '精准',
+          'output': '输出',
+        },
+      },
+      imageGeneration: {
+        title: '图像生成',
+        StableDiffusion: {
+          'title': 'Stable Diffusion',
+          'description': 'Stable Diffusion是2022年发布的深度学习文本到图像生成模型。',
+          'prompt': '提示词',
+          'negative_prompt': '负面提示词',
+          'model': '模型',
+          'cfg_scale': '提示遵循强度',
+          'sampler': '采样器',
+          'width': '宽度',
+          'height': '高度',
+          'output_type': '输出类型',
+          'output_type_only_link': '仅路径',
+          'output_type_markdown': 'Markdown',
+          'output_type_html': 'HTML',
           'output': '输出',
         },
       },

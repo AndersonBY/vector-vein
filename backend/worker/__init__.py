@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 03:25:01
+# @Last Modified time: 2023-05-29 15:30:39
 import queue
 import inspect
 import traceback
@@ -20,6 +20,7 @@ from worker.tasks import (
     control_flows,
     file_processing,
     text_processing,
+    image_generation,
 )
 
 
@@ -34,6 +35,7 @@ task_modules = [
     control_flows,
     file_processing,
     text_processing,
+    image_generation,
 ]
 for module in task_modules:
     functions = {}
