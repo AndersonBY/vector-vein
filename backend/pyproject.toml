@@ -29,6 +29,9 @@ name = ""
 requires-python = ">=3.8,<3.9"
 version = "0.0.3"
 
+[project.optional-dependencies]
+mac = ["pyobjc"]
+
 [tool.pdm.scripts]
 build = "python build.py -v 0.0.3 -t p"
 build-debug = "pyinstaller debug.spec --noconfirm"
