@@ -83,8 +83,14 @@ You can view a tutorial on creating a simple crawler + AI summary mind map workf
 
 Run the following command in the **backend** directory to install dependencies:
 
+#### Windows
 ```bash
 pdm install
+```
+
+#### Mac
+```bash
+pdm install -G mac
 ```
 
 Normally, PDM will automatically find the system's Python 3.8 and create a virtual environment and install dependencies.

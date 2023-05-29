@@ -83,8 +83,14 @@
 
 在**backend**目录下运行以下命令安装依赖：
 
+#### Windows
 ```bash
 pdm install
+```
+
+#### Mac
+```bash
+pdm install -G mac
 ```
 
 正常来说PDM会自动找到系统的Python3.8并创建虚拟环境以及安装依赖。
