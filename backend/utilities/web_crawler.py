@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 11:37:34
+# @Last Modified time: 2023-05-31 15:23:49
 import re
 import time
 import urllib.request
@@ -36,6 +36,13 @@ mprint(f"Proxies: {proxies}")
 mprint(f"Proxies for requests: {proxies_for_requests}")
 
 
+def clean_markdown(text: str):
+    content = "\n\n".join([s.strip() for s in text.split("\n") if s.strip()])
+    content = content.replace("![]()", "").replace("*\n", "")
+    content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+    return content
+
+
 def crawl_text_from_url(url: str):
     if not url.startswith("http"):
         url = f"http://{url}"
@@ -58,10 +65,7 @@ def crawl_text_from_url(url: str):
     if "https://mp.weixin.qq.com/" in url:
         soup = BeautifulSoup(response.content, "lxml")
         content = str(soup.select_one("#js_content"))
-        content = markdownify(content)
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
-        content = content.replace("![]()", "").replace("*\n", "")
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        content = clean_markdown(markdownify(content))
         result = {
             "title": soup.select_one("#activity-name").text.strip(),
             "text": content,
@@ -70,10 +74,7 @@ def crawl_text_from_url(url: str):
     elif url.startswith("https://zhuanlan.zhihu.com"):
         soup = BeautifulSoup(response.text, "lxml")
         content = str(soup.select_one(".Post-RichText"))
-        content = markdownify(content)
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
-        content = content.replace("![]()", "").replace("*\n", "")
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        content = clean_markdown(markdownify(content))
         result = {
             "title": soup.select_one(".Post-Title").text.strip(),
             "text": content,
@@ -84,12 +85,18 @@ def crawl_text_from_url(url: str):
         content = soup.select_one(".RichContent-inner")
         for style in content.select("style"):
             style.decompose()
-        content = markdownify(str(content))
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
-        content = content.replace("![]()", "").replace("*\n", "")
-        content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+        content = clean_markdown(markdownify(content))
         result = {
             "title": soup.select_one(".QuestionHeader-title").text.strip(),
+            "text": content,
+            "url": url,
+        }
+    elif "substack.com" in url:
+        soup = BeautifulSoup(response.text, "lxml")
+        content = str(soup.select_one(".available-content"))
+        content = clean_markdown(markdownify(content))
+        result = {
+            "title": soup.select_one(".post-title").text.strip(),
             "text": content,
             "url": url,
         }
