@@ -2,10 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-31 15:23:49
+# @Last Modified time: 2023-06-04 01:41:57
 import re
+import json
 import time
+import base64
 import urllib.request
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import unpad
 
 import httpx
 from bs4 import BeautifulSoup
@@ -34,6 +38,12 @@ for protocol, proxy in system_proxies.items():
 
 mprint(f"Proxies: {proxies}")
 mprint(f"Proxies for requests: {proxies_for_requests}")
+
+
+def decrypt_aes_ecb_base64(ciphertext_base64, key):
+    cipher = AES.new(key, AES.MODE_ECB)
+    ciphertext = base64.b64decode(ciphertext_base64)
+    return unpad(cipher.decrypt(ciphertext), AES.block_size).decode("utf-8")
 
 
 def clean_markdown(text: str):
@@ -97,6 +107,22 @@ def crawl_text_from_url(url: str):
         content = clean_markdown(markdownify(content))
         result = {
             "title": soup.select_one(".post-title").text.strip(),
+            "text": content,
+            "url": url,
+        }
+    elif "36kr.com" in url:
+        script_content = re.findall(r"<script>window.initialState=(.*?)</script>", response.text)[0]
+        encrypted_data = json.loads(script_content)
+        if encrypted_data["isEncrypt"]:
+            key = "efabccee-b754-4c"  # 不确定这个key是不是固定的
+            decrypted_data = decrypt_aes_ecb_base64(encrypted_data["state"], key.encode("utf-8"))
+        else:
+            decrypted_data = encrypted_data["state"]
+        decrypted_data_json = json.loads(decrypted_data)
+        html_content = decrypted_data_json["articleDetail"]["articleDetailData"]["data"]["widgetContent"]
+        content = clean_markdown(markdownify(html_content))
+        result = {
+            "title": decrypted_data_json["articleDetail"]["articleDetailData"]["data"]["widgetTitle"].strip(),
             "text": content,
             "url": url,
         }
