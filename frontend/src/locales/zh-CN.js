@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-29 16:29:23
+ * @Last Modified time: 2023-06-03 23:34:49
  */
 export default {
   lang: '中文',
@@ -307,6 +307,7 @@ export default {
       helpDropdown: {
         'help': '帮助',
         'about': '关于',
+        'documentation': '文档',
         'software_update': '软件更新',
         'check_update': '检查更新',
         'update_available': '有新版本可用',

@@ -45,6 +45,11 @@ const openUpdateInfo = ref(false)
     </a>
     <template #overlay>
       <a-menu>
+        <a-menu-item>
+          <a href="https://vectorvein.com/help/docs/introduction" target="_blank">
+            {{ t('components.layout.helpDropdown.documentation') }}
+          </a>
+        </a-menu-item>
         <a-menu-item v-if="updateInfo.updatable" @click="openUpdateInfo = true">
           {{ t('components.layout.helpDropdown.update_available') }}
           <a-modal
