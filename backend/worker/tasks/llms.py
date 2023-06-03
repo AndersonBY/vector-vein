@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-23 00:07:14
+# @Last Modified time: 2023-06-03 23:31:09
 from typing import Union
 
 import openai
@@ -27,7 +27,7 @@ def open_ai(
         engine = workflow.setting.get("openai_chat_engine")
     else:
         openai.api_type = "open_ai"
-        openai.api_base = "https://api.openai.com/v1"
+        openai.api_base = workflow.setting.get("openai_api_base", "https://api.openai.com/v1")
         openai.api_version = None
         engine = None
     openai.api_key = workflow.setting.get("openai_api_key")

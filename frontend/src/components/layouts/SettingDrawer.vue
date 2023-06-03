@@ -18,7 +18,7 @@ onBeforeMount(async () => {
   settingForm.id = res.data.id
   settingForm.data.openai_api_type = res.data.data.openai_api_type || 'open_ai'
   settingForm.data.openai_api_key = res.data.data.openai_api_key || ''
-  settingForm.data.openai_api_base = res.data.data.openai_api_base || ''
+  settingForm.data.openai_api_base = res.data.data.openai_api_base || 'https://api.openai.com/v1'
   settingForm.data.openai_chat_engine = res.data.data.openai_chat_engine || ''
   settingForm.data.openai_embedding_engine = res.data.data.openai_embedding_engine || ''
   settingForm.data.output_folder = res.data.data.output_folder || './'
@@ -37,7 +37,7 @@ const settingForm = reactive({
   data: {
     openai_api_type: 'openai',
     openai_api_key: '',
-    openai_api_base: '',
+    openai_api_base: 'https://api.openai.com/v1',
     openai_chat_engine: '',
     openai_embedding_engine: '',
     output_folder: './',
@@ -112,8 +112,7 @@ const saveSetting = async () => {
               <a-input-password v-model:value="settingForm.data.openai_api_key" />
             </a-form-item>
 
-            <a-form-item :label="t('components.layout.settingDrawer.openai_api_base')"
-              v-if="settingForm.data.openai_api_type == 'azure'">
+            <a-form-item :label="t('components.layout.settingDrawer.openai_api_base')">
               <a-input v-model:value="settingForm.data.openai_api_base" />
             </a-form-item>
 
