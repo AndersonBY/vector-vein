@@ -2,13 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-27 14:00:55
+# @Last Modified time: 2023-06-03 23:20:22
 import os
 import queue
 import threading
 from pathlib import Path
 
 import webview
+import mimetypes
 
 from api import API
 from api.workflow_api import (
@@ -27,6 +28,9 @@ from utilities.static_file_server import StaticFileServer
 from models import create_tables
 from worker import main_worker, main_vector_database
 
+
+# Some mimetypes are not correctly registered in Windows. Register them manually.
+mimetypes.add_type("application/javascript", ".js")
 
 if not Path("./data").exists():
     Path("./data").mkdir()
@@ -78,8 +82,10 @@ for api_class in api_class_list:
 setattr(API, "open_file_dialog", open_file_dialog)
 setattr(API, "open_folder_dialog", open_folder_dialog)
 
-os.environ["http_proxy"] = proxies_for_requests["http"]
-os.environ["https_proxy"] = proxies_for_requests["https"]
+if "http" in proxies_for_requests:
+    os.environ["http_proxy"] = proxies_for_requests["http"]
+if "https" in proxies_for_requests:
+    os.environ["https_proxy"] = proxies_for_requests["https"]
 
 worker_thread = threading.Thread(target=main_worker, args=(task_queue, vdb_queues), daemon=True)
 worker_thread.start()

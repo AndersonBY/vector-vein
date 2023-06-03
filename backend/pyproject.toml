@@ -27,14 +27,14 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.8,<3.9"
-version = "0.0.3"
+version = "0.0.4"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.0.3 -t p"
+build = "python build.py -v 0.0.4 -t p"
 build-debug = "pyinstaller debug.spec --noconfirm"
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.3"}
+dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.4"}
