@@ -9,10 +9,10 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        (".\\web\\index.html", "web\\."),
-        (".\\web\\favicon.ico", "web\\."),
-        (".\\web\\logo.svg", "web\\."),
-        (".\\web\\assets", "web\\assets"),
+        ("./web/index.html", "web/."),
+        ("./web/favicon.ico", "web/."),
+        ("./web/logo.svg", "web/."),
+        ("./web/assets", "web/assets"),
     ],
     hiddenimports=[
         "api",
@@ -49,7 +49,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    icon="web\\assets\\favicon.ico",
+    icon="web/assets/favicon.ico",
 )
 coll = COLLECT(
     exe,
