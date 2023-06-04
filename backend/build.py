@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 13:34:28
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 18:39:13
+# @Last Modified time: 2023-06-05 01:48:21
 import shlex
 import shutil
 import argparse
@@ -22,6 +22,9 @@ def run_cmd(cmd: str, split=False):
 def build_production(version):
     run_cmd("pyinstaller main.spec --noconfirm", split=True)
     # Create a version file in ./dist/vector-vein/
+    version_txt_path = Path("./dist/vector-vein/version.txt")
+    if not version_txt_path.parent.exists():
+        version_txt_path.parent.mkdir(parents=True, exist_ok=True)
     with open("./dist/vector-vein/version.txt", "w") as f:
         f.write(version)
 
