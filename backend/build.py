@@ -2,7 +2,8 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 13:34:28
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-05 01:48:21
+# @Last Modified time: 2023-06-05 02:29:56
+import os
 import shlex
 import shutil
 import argparse
@@ -20,7 +21,7 @@ def run_cmd(cmd: str, split=False):
 
 
 def build_production(version):
-    run_cmd("pyinstaller main.spec --noconfirm", split=True)
+    run_cmd("pyinstaller main.spec --noconfirm", split=False)
     # Create a version file in ./dist/vector-vein/
     version_txt_path = Path("./dist/vector-vein/version.txt")
     if not version_txt_path.parent.exists():
@@ -34,7 +35,11 @@ def build_development(version):
 
 
 def build_frontend():
-    run_cmd("cd '../frontend' && pnpm run build", split=True)
+    if os.name == "nt":
+        split = True
+    else:
+        split = False
+    run_cmd("cd '../frontend' && pnpm run build", split=split)
     web_path = Path("./web")
     if web_path.exists():
         shutil.rmtree(web_path)
