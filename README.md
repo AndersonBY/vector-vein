@@ -26,6 +26,8 @@
 
 软件采用了pywebview搭建，基于webview2内核，因此需要安装webview2运行时，如果出现软件无法打开，可能需要手动下载webview2运行时，下载地址：[https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/](https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/)
 
+注意中文路径可能会导致软件无法正常打开，建议安装在英文路径下。
+
 ### 配置
 
 软件正常打开后点击打开设置按钮，请填入OpenAI的API Key以使用AI功能，并选择输出文件夹用于存放工作流输出时的文件。如果需要用到邮件发送的功能请在设置页面一并填入邮箱信息。
