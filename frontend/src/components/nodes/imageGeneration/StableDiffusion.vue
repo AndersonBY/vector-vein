@@ -247,7 +247,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.imageGeneration.StableDiffusion.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/image-generation#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

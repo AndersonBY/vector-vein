@@ -126,7 +126,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.textProcessing.ListRender.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/text-processing#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

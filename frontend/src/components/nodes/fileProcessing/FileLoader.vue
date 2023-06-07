@@ -71,7 +71,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.fileProcessing.FileLoader.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/file-processing#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

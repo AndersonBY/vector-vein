@@ -71,7 +71,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.outputs.Mindmap.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/outputs#h2-11" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
 

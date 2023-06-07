@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-03 23:34:56
+ * @Last Modified time: 2023-06-08 02:26:41
  */
 export default {
   lang: 'English',
@@ -376,6 +376,9 @@ export default {
       'please_enter_code': 'Please enter the code, the function name is fixed to main, and the input parameters should be consistent with the set name.',
     },
     nodes: {
+      baseNode: {
+        'document_link': 'Document link',
+      },
       baseField: {
         'show_in_use_interface': 'Whether to display in the use interface',
         'show': 'Show',

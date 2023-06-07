@@ -143,7 +143,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.outputs.Document.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/outputs#h2-4" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

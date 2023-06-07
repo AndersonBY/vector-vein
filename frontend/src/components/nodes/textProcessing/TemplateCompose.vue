@@ -120,7 +120,8 @@ const deleteNode = () => {
 
 <template>
   <BaseNode style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
-    :description="props.data.description" @delete="deleteNode">
+    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/text-processing#h2-8"
+    @delete="deleteNode">
     <template #main>
       <a-row style="display:block;">
         <a-tooltip :title="t('components.nodes.textProcessing.TemplateCompose.click_to_add_to_template')">

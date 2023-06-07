@@ -58,7 +58,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.triggers.ButtonTrigger.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/triggers#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type=" flex">
         <a-col :span="24">

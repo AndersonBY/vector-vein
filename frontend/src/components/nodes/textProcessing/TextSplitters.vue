@@ -143,7 +143,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.textProcessing.TextSplitters.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/text-processing#h2-16" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

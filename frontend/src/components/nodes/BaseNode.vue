@@ -1,6 +1,8 @@
 <script setup>
 import { defineComponent } from 'vue'
 import { DeleteOutlined } from '@ant-design/icons-vue'
+import { useI18n } from 'vue-i18n'
+import QuestionPopover from '@/components/QuestionPopover.vue'
 
 defineComponent({
   name: 'BaseNode',
@@ -14,8 +16,15 @@ const props = defineProps({
     type: String,
     required: false,
   },
+  documentLink: {
+    type: String,
+    required: false,
+    default: '',
+  },
 })
 const emit = defineEmits(['delete'])
+
+const { t } = useI18n()
 </script>
 
 <template>
@@ -24,12 +33,13 @@ const emit = defineEmits(['delete'])
       <div class="title-container">
         <a-typography-title :level="3">
           {{ props.title }}
+          <QuestionPopover
+            :contents="[{ type: 'link', text: t('components.nodes.baseNode.document_link'), url: props.documentLink }]"
+            v-if="props.documentLink.length > 0" class="hint-popover" />
         </a-typography-title>
-        <a-typography-title :level="3">
-          <a-typography-link @click="emit('delete')">
-            <DeleteOutlined />
-          </a-typography-link>
-        </a-typography-title>
+        <a-typography-link @click="emit('delete')" class="delete-button">
+          <DeleteOutlined />
+        </a-typography-link>
       </div>
 
       <div class="description-container">
@@ -69,10 +79,16 @@ const emit = defineEmits(['delete'])
   align-items: center;
   gap: 10px;
   padding: 10px;
+  padding-top: 20px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
   border-bottom: 1px solid #e2e2e2;
   background: #f8f8f8;
+}
+
+.node .title-container .hint-popover {
+  font-size: 14px;
+  color: #a0a0a0;
 }
 
 .node .description-container {
@@ -92,7 +108,6 @@ const emit = defineEmits(['delete'])
 .node .output-container:empty {
   padding: 0;
 }
-
 
 .node .output-container span {
   float: right;

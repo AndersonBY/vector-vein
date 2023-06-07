@@ -143,7 +143,7 @@ const codeEditorModal = reactive({
 
 <template>
   <BaseNode :title="t('components.nodes.tools.ProgrammingFunction.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/tools#h2-4" @delete="deleteNode">
     <template #main>
       <a-row style="display:block;">
 

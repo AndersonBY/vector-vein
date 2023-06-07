@@ -105,7 +105,8 @@ const deleteNode = () => {
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.llms.OpenAI.title')" :description="props.data.description" @delete="deleteNode">
+  <BaseNode :title="t('components.nodes.llms.OpenAI.title')" :description="props.data.description"
+    documentLink="https://vectorvein.com/help/docs/language-models#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

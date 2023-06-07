@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-03 23:34:49
+ * @Last Modified time: 2023-06-08 02:26:27
  */
 export default {
   lang: '中文',
@@ -376,6 +376,9 @@ export default {
       'please_enter_code': '请输入代码，函数名固定为 main，输入参数与设定名称请一致。',
     },
     nodes: {
+      baseNode: {
+        'document_link': '文档链接',
+      },
       baseField: {
         'show_in_use_interface': '是否在使用界面显示',
         'show': '显示',

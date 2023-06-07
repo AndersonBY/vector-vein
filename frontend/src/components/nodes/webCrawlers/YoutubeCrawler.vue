@@ -113,7 +113,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.webCrawlers.YoutubeCrawler.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/web-crawlers#h2-8" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

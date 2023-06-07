@@ -142,7 +142,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.tools.ImageSearch.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/tools#h2-0" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">
@@ -170,8 +170,8 @@ const deleteNode = () => {
         </a-col>
 
         <a-col :span="24">
-          <BaseField id="output_type" :name="t('components.nodes.tools.ImageSearch.output_type')" required
-            type="target" v-model:show="fieldsData.output_type.show">
+          <BaseField id="output_type" :name="t('components.nodes.tools.ImageSearch.output_type')" required type="target"
+            v-model:show="fieldsData.output_type.show">
             <a-select style="width: 100%;" v-model:value="fieldsData.output_type.value"
               :options="fieldsData.output_type.options" />
           </BaseField>

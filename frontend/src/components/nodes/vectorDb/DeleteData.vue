@@ -98,7 +98,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.vectorDb.DeleteData.title')" :description="props.data.description"
-    @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/vector-db#h2-4" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">
