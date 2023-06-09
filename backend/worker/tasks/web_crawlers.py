@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 12:16:26
+# @Last Modified time: 2023-06-10 02:57:16
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -89,6 +89,11 @@ def bilibili_crawler(
     workflow = Workflow(workflow_data)
     url_or_bvid = workflow.get_node_field_value(node_id, "url_or_bvid")
     output_type = workflow.get_node_field_value(node_id, "output_type")
+
+    if "b23.tv" in url_or_bvid:
+        resp = httpx.get(url_or_bvid, headers=headers, proxies=proxies, follow_redirects=True)
+        url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
+
     if "bilibili.com" in url_or_bvid:
         if not url_or_bvid.startswith("http"):
             url_or_bvid = "https://" + url_or_bvid
