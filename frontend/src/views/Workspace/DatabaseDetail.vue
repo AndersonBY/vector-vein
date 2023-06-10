@@ -114,7 +114,8 @@
             </template>
           </a-table>
 
-          <a-modal v-model:open="objectDetailModal.open" @ok="objectDetailModal.create" :footer="null">
+          <a-modal v-model:open="objectDetailModal.open" @ok="objectDetailModal.create" :footer="null"
+            style="max-width: 1280px; width: 80vw;">
             <template #title>
               {{ objectDetailModal.data.title }}
             </template>
@@ -123,9 +124,8 @@
                 v-if="objectDetailModal.data.source_url?.length > 0">
                 {{ t('workspace.databaseDetail.source_url') }}
               </a-typography-link>
-              <a-typography-paragraph>
-                {{ objectDetailModal.data.raw_data?.text }}
-              </a-typography-paragraph>
+              <VueMarkdown v-highlight :source="objectDetailModal.data.raw_data?.text || ''"
+                class="custom-scrollbar markdown-body custom-hljs" />
             </a-spin>
           </a-modal>
 
@@ -141,6 +141,7 @@ import { ref, reactive, defineComponent, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { message } from 'ant-design-vue'
+import VueMarkdown from 'vue-markdown-render'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 
