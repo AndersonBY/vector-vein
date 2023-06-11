@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-08 02:26:41
+ * @Last Modified time: 2023-06-11 14:03:12
  */
 export default {
   lang: 'English',
@@ -375,6 +375,12 @@ export default {
       'title': 'Code editor',
       'please_enter_code': 'Please enter the code, the function name is fixed to main, and the input parameters should be consistent with the set name.',
     },
+    templateEditorModal: {
+      'title': 'Template editor',
+      'variable_fields': 'Variable fields',
+      'template': 'Template',
+      'drag_to_insert': 'Drag to insert',
+    },
     nodes: {
       baseNode: {
         'document_link': 'Document link',
@@ -409,6 +415,7 @@ export default {
           'field_type_textarea': 'Multi-line input box',
           'add_field_display_name': 'Display name',
           'click_to_add_to_template': 'Click to add variables to the template',
+          'open_template_editor': 'Open template editor',
         },
         MarkdownToHtml: {
           'title': 'Markdown to HTML',

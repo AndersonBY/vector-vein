@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-08 02:26:27
+ * @Last Modified time: 2023-06-11 14:02:52
  */
 export default {
   lang: '中文',
@@ -375,6 +375,12 @@ export default {
       'title': '代码编辑器',
       'please_enter_code': '请输入代码，函数名固定为 main，输入参数与设定名称请一致。',
     },
+    templateEditorModal: {
+      'title': '模板编辑器',
+      'variable_fields': '变量字段',
+      'template': '模板',
+      'drag_to_insert': '拖拽插入',
+    },
     nodes: {
       baseNode: {
         'document_link': '文档链接',
@@ -409,6 +415,7 @@ export default {
           'field_type_textarea': '多行输入框',
           'add_field_display_name': '显示名称',
           'click_to_add_to_template': '点击可将变量添加到模板',
+          'open_template_editor': '打开模板编辑器',
         },
         MarkdownToHtml: {
           'title': 'Markdown转HTML',

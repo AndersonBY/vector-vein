@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
+import TemplateEditorModal from '@/components/TemplateEditorModal.vue'
 
 defineComponent({
   name: 'TemplateCompose',
@@ -116,6 +117,8 @@ const deleteNode = () => {
     id: props.id,
   })
 }
+
+const openTemplateEditor = ref(false)
 </script>
 
 <template>
@@ -124,26 +127,24 @@ const deleteNode = () => {
     @delete="deleteNode">
     <template #main>
       <a-row style="display:block;">
-        <a-tooltip :title="t('components.nodes.textProcessing.TemplateCompose.click_to_add_to_template')">
-          <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
-            <a-col :span="24" @click="insertFieldVariable(field, $event)" v-if="!['template', 'output'].includes(field)">
-              <BaseField :id="field" :name="fieldsData[field].display_name" required type="target" deletable
-                @delete="removeField(field)" v-model:show="fieldsData[field].show">
-                <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
-                  :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
-                  v-if="fieldsData[field].field_type == 'select'" />
-                <a-textarea class="field-content" v-model:value="fieldsData[field].value"
-                  :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
-                  v-else-if="fieldsData[field].field_type == 'textarea'" />
-                <a-input class="field-content" v-model:value="fieldsData[field].value"
-                  :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
-              </BaseField>
-            </a-col>
-          </template>
-        </a-tooltip>
+        <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
+          <a-col :span="24" v-if="!['template', 'output'].includes(field)">
+            <BaseField :id="field" :name="fieldsData[field].display_name" required type="target" deletable
+              @delete="removeField(field)" v-model:show="fieldsData[field].show">
+              <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
+                :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
+                v-if="fieldsData[field].field_type == 'select'" />
+              <a-textarea class="field-content" v-model:value="fieldsData[field].value"
+                :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
+                v-else-if="fieldsData[field].field_type == 'textarea'" />
+              <a-input class="field-content" v-model:value="fieldsData[field].value"
+                :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
+            </BaseField>
+          </a-col>
+        </template>
 
         <a-col :span="24" style="padding: 10px">
-          <a-button type="dashed" style="width: 100%;" @click="openAddField">
+          <a-button type="dashed" block @click="openAddField">
             <PlusOutlined />
             {{ t('components.nodes.textProcessing.TemplateCompose.add_field') }}
           </a-button>
@@ -178,8 +179,13 @@ const deleteNode = () => {
 
       <BaseField id="template" :name="t('components.nodes.textProcessing.TemplateCompose.template')" required
         type="target" v-model:show="fieldsData.template.show">
-        <a-textarea id="template-textarea" v-model:value="fieldsData.template.value"
-          :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData.template.placeholder" />
+        <a-typography-paragraph :ellipsis="{ row: 1, expandable: false }"
+          :content="fieldsData.template.value"></a-typography-paragraph>
+        <a-button block type="primary" @click="openTemplateEditor = true">
+          {{ t('components.nodes.textProcessing.TemplateCompose.open_template_editor') }}
+        </a-button>
+        <TemplateEditorModal v-model:open="openTemplateEditor" v-model:template="fieldsData.template.value"
+          :fields="fieldsData" />
       </BaseField>
       <a-divider></a-divider>
 
