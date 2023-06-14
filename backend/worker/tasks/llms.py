@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-15 00:31:10
+# @Last Modified time: 2023-06-15 00:50:22
 from typing import Union
 
 import openai
@@ -30,12 +30,12 @@ def open_ai(
         openai.api_type = "azure"
         openai.api_base = workflow.setting.get("openai_api_base")
         openai.api_version = "2023-03-15-preview"
-        engin_model_param = {"engine": workflow.setting.get("openai_chat_engine")}
+        engine_model_param = {"engine": workflow.setting.get("openai_chat_engine")}
     else:
         openai.api_type = "open_ai"
         openai.api_base = workflow.setting.get("openai_api_base", "https://api.openai.com/v1")
         openai.api_version = None
-        engin_model_param = {"model": model_name_map.get(workflow.setting.get("llm_model"))}
+        engine_model_param = {"model": model_name_map.get(workflow.get_node_field_value(node_id, "llm_model"))}
     openai.api_key = workflow.setting.get("openai_api_key")
     openai.proxy = proxies_for_requests
 
@@ -52,8 +52,9 @@ def open_ai(
                 "content": prompt,
             },
         ]
+        print(engine_model_param)
         response = openai.ChatCompletion.create(
-            **engin_model_param,
+            **engine_model_param,
             messages=messages,
             temperature=temperature,
             max_tokens=2048,
