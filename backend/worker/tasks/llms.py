@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-15 00:50:22
+# @Last Modified time: 2023-06-15 01:03:44
 from typing import Union
 
 import openai
@@ -52,7 +52,6 @@ def open_ai(
                 "content": prompt,
             },
         ]
-        print(engine_model_param)
         response = openai.ChatCompletion.create(
             **engine_model_param,
             messages=messages,
