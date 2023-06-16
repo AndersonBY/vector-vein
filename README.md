@@ -74,7 +74,7 @@
 ### 环境要求
 
 - 后端
-  - Python 3.8（目前pywebview在Windows下只支持到3.8）
+  - Python 3.8 ~ Python 3.11
   - 安装[PDM](https://pdm.fming.dev/latest/#installation)
 
 - 前端
@@ -95,7 +95,7 @@ pdm install
 pdm install -G mac
 ```
 
-正常来说PDM会自动找到系统的Python3.8并创建虚拟环境以及安装依赖。
+正常来说PDM会自动找到系统的Python并创建虚拟环境以及安装依赖。
 
 安装完成后运行以下命令启动后端开发服务即可看到运行效果：
 

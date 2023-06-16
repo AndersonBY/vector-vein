@@ -27,7 +27,7 @@ dependencies = [
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
-requires-python = ">=3.8,<3.9"
+requires-python = ">=3.8,<3.12"
 version = "0.0.6"
 
 [project.optional-dependencies]

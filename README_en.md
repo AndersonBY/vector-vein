@@ -72,7 +72,7 @@ You can view a tutorial on creating a simple crawler + AI summary mind map workf
 ### Environment Requirements
 
 - Backend
-  - Python 3.8 (currently pywebview only supports up to 3.8 on Windows)
+  - Python 3.8 ~ Python 3.11
   - [PDM](https://pdm.fming.dev/latest/#installation) installed
 
 - Frontend
@@ -93,7 +93,7 @@ pdm install
 pdm install -G mac
 ```
 
-Normally, PDM will automatically find the system's Python 3.8 and create a virtual environment and install dependencies.
+Normally, PDM will automatically find the system's Python and create a virtual environment and install dependencies.
 
 After installation, run the following command to start the backend development server and see the running effect:
 
