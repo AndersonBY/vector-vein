@@ -82,7 +82,7 @@ const deleteNode = () => {
       </a-row>
     </template>
     <template #output>
-      <BaseField id="output" :name="t('components.nodes.fileProcessing.FileLoader.output')" type="source">
+      <BaseField id="output" :name="t('components.nodes.fileProcessing.FileLoader.output')" type="source" nameOnly>
       </BaseField>
     </template>
   </BaseNode>

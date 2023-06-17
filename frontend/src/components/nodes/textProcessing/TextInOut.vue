@@ -84,7 +84,7 @@ const deleteNode = () => {
       </a-row>
     </template>
     <template #output>
-      <BaseField id="output" :name="t('components.nodes.textProcessing.TextInOut.output')" type="source">
+      <BaseField id="output" :name="t('components.nodes.textProcessing.TextInOut.output')" type="source" nameOnly>
       </BaseField>
     </template>
   </BaseNode>
