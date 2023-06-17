@@ -89,22 +89,23 @@ const getHandleStyle = (handleType) => ({
       </a-typography-link>
     </div>
     <Handle :style="getHandleStyle(props.type)" :id="id" :type="props.type"
-      :position="props.type == 'target' ? Position.Left : Position.Right" v-if="nameOnly" />
+      :position="props.type == 'target' ? Position.Left : Position.Right" :connectable-start="props.type != 'target'"
+      :connectable-end="props.type == 'target'" v-if="nameOnly" />
     <div style="position: relative;">
       <div class="template-item-field-content">
         <slot>
         </slot>
       </div>
       <template v-if="props.type == 'target'">
-        <Handle :style="getHandleStyle('target')" :id="id" type="target" :position="Position.Left" v-if="!nameOnly" />
-        <Handle :style="getHandleStyle('source')" :id="id" type="source" :position="Position.Right" v-if="!nameOnly" />
+        <Handle :style="getHandleStyle('target')" :id="id" type="target" :position="Position.Left"
+          :connectable-start="false" :connectable-end="true" v-if="!nameOnly" />
+        <Handle :style="getHandleStyle('source')" :id="id" type="source" :position="Position.Right"
+          :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
       </template>
       <template v-else>
         <Handle :style="getHandleStyle(props.type)" :id="id" :type="props.type" :position="Position.Right"
-          v-if="!nameOnly" />
+          :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
       </template>
-      <!-- <Handle :style="getHandleStyle()" :id="id" :type="props.type"
-        :position="props.type == 'target' ? Position.Left : Position.Right" v-if="!nameOnly" /> -->
     </div>
   </div>
 </template>
