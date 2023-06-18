@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-11 14:02:52
+ * @Last Modified time: 2023-06-19 03:44:32
  */
 export default {
   lang: '中文',
@@ -73,6 +73,7 @@ export default {
     'create_time': '创建时间',
     'update_time': '更新时间',
     'update_time_format': '更新时间: {time}',
+    'back': '返回',
   },
   email: {
     verify: {
@@ -205,6 +206,16 @@ export default {
       'record_error_task': '出错任务: {task}',
       'maximize_output': '最大化输出区域',
       'normalize_output': '恢复输出区域尺寸',
+    },
+    workflowEditor: {
+      'exit_not_saved_confirm': '工作流尚未保存，确认退出？',
+      'save_and_exit': '保存并退出',
+      'exit_without_save': '不保存退出',
+      'workflow_info': '基本信息',
+      'workflow_canvas': '工作流画布',
+      'tags': '标签',
+      'brief_info': '简介信息',
+      'brief_images': '简介图片',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',

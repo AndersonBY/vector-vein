@@ -2,13 +2,21 @@
  * @Author: Bi Ying
  * @Date:   2022-02-05 01:38:00
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-17 13:23:48
+ * @Last Modified time: 2023-06-19 03:17:12
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
 
 
 const routes = [
+  {
+    path: '/workflow/editor/:workflowId',
+    name: 'WorkflowEditor',
+    meta: {
+      login: true
+    },
+    component: () => import('@/views/Workspace/WorkflowEditor.vue')
+  },
   {
     path: '/',
     component: WorkspaceLayout,

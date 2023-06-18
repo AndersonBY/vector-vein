@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-11 14:03:12
+ * @Last Modified time: 2023-06-19 03:44:40
  */
 export default {
   lang: 'English',
@@ -73,6 +73,7 @@ export default {
     'create_time': 'Create time',
     'update_time': 'Update time',
     'update_time_format': 'Update time: {time}',
+    'back': 'Back',
   },
   email: {
     verify: {
@@ -205,6 +206,16 @@ export default {
       'record_error_task': 'Error task: {task}',
       'maximize_output': 'Maximize output area',
       'normalize_output': 'Restore output area size',
+    },
+    workflowEditor: {
+      'exit_not_saved_confirm': 'Workflow not saved, confirm exit?',
+      'save_and_exit': 'Save and exit',
+      'exit_without_save': 'Exit without save',
+      'workflow_info': 'Basic info',
+      'workflow_canvas': 'Workflow canvas',
+      'tags': 'Tags',
+      'brief_info': 'Brief info',
+      'brief_images': 'Brief images',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

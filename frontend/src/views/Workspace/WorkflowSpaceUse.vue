@@ -9,7 +9,6 @@ import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { useUserDatabasesStore } from "@/stores/userDatabase"
-import WorkflowEditor from '@/components/workspace/WorkflowEditor.vue'
 import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
@@ -234,9 +233,8 @@ const deleteWorkflow = async () => {
   }
 }
 
-const editorModalRef = ref(null)
 const openEditor = () => {
-  editorModalRef.value.showModal()
+  router.push({ name: 'WorkflowEditor', params: { workflowId: workflowId } })
 }
 
 const hasShowFields = (node) => {
@@ -494,9 +492,6 @@ const openLocalFile = (file) => {
         </a-spin>
       </a-col>
     </a-row>
-    <WorkflowEditor ref="editorModalRef" :title="currentWorkflow.title" :brief="currentWorkflow.brief"
-      :images="currentWorkflow.images" :tags="currentWorkflow.tags" :key="currentWorkflow.wid"
-      :nodes="currentWorkflow.data.nodes" :edges="currentWorkflow.data.edges" @ok="saveWorkflow" />
   </a-spin>
 </template>
 

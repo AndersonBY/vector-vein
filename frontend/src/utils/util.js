@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-09 03:05:56
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-21 23:43:30
+ * @Last Modified time: 2023-06-19 03:16:05
  */
 export function zip(rows) {
   return rows[0].map((_, c) => rows.map(row => row[c]))
@@ -47,4 +47,14 @@ export function getRandomInt(min, max) {
 export function getRandomBackgroundImg() {
   const random = getRandomInt(1, 5)
   return new URL(`/src/assets/imgs/basic-layout-background/img${random}.svg`, import.meta.url).href
+}
+
+export function hashObject(obj) {
+  const str = JSON.stringify(obj);
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = ((hash << 5) - hash) + str.charCodeAt(i);
+    hash &= hash; // Convert to 32bit integer
+  }
+  return hash;
 }
