@@ -93,6 +93,7 @@ const addField = () => {
     id: props.id,
     data: props.data,
   })
+  newFieldData.display_name = ''
 }
 const removeField = (field) => {
   delete fieldsData.value[field]
