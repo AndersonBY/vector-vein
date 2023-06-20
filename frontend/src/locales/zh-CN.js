@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-19 03:44:32
+ * @Last Modified time: 2023-06-21 00:04:54
  */
 export default {
   lang: '中文',
@@ -304,6 +304,7 @@ export default {
         'openai_api_base': 'OpenAI API Base',
         'openai_chat_engine': 'OpenAI Chat Engine',
         'openai_embedding_engine': 'OpenAI Embedding Engine',
+        'chatglm6b_api_base': 'ChatGLM-6B API Base',
         'output_folder': '输出文件夹',
         'select_folder': '选择文件夹',
         'email_settings': '邮件设置',
@@ -467,6 +468,17 @@ export default {
         OpenAI: {
           'title': 'OpenAI',
           'description': 'OpenAI是一个非营利性的研究机构，致力于推动人工智能的安全发展。OpenAI的研究团队由世界顶级的人工智能专家组成，他们致力于开发人工智能技术，以解决人类面临的最重要的挑战。',
+          'prompt': '输入内容（Prompt）',
+          'llm_model': '模型',
+          'temperature': 'AI偏好（温度）',
+          'creative': '创意',
+          'balanced': '平衡',
+          'precise': '精准',
+          'output': '输出',
+        },
+        ChatGLM: {
+          'title': 'ChatGLM',
+          'description': 'ChatGLM系列模型，通过注入代码预训练，有监督微调等技术对齐人类意图，具备问答、多轮对话、代码生成等能力。',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
           'temperature': 'AI偏好（温度）',

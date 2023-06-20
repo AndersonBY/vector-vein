@@ -21,6 +21,7 @@ onBeforeMount(async () => {
   settingForm.data.openai_api_base = res.data.data.openai_api_base || 'https://api.openai.com/v1'
   settingForm.data.openai_chat_engine = res.data.data.openai_chat_engine || ''
   settingForm.data.openai_embedding_engine = res.data.data.openai_embedding_engine || ''
+  settingForm.data.chatglm6b_api_base = res.data.data.chatglm6b_api_base || 'http://127.0.0.1:8000'
   settingForm.data.output_folder = res.data.data.output_folder || './'
   settingForm.data.email_user = res.data.data.email_user || ''
   settingForm.data.email_password = res.data.data.email_password || ''
@@ -40,6 +41,7 @@ const settingForm = reactive({
     openai_api_base: 'https://api.openai.com/v1',
     openai_chat_engine: '',
     openai_embedding_engine: '',
+    chatglm6b_api_base: 'http://127.0.0.1:8000',
     output_folder: './',
     email_user: '',
     email_password: '',
@@ -124,6 +126,12 @@ const saveSetting = async () => {
             <a-form-item :label="t('components.layout.settingDrawer.openai_embedding_engine')"
               v-if="settingForm.data.openai_api_type == 'azure'">
               <a-input v-model:value="settingForm.data.openai_embedding_engine" />
+            </a-form-item>
+
+            <a-divider />
+
+            <a-form-item :label="t('components.layout.settingDrawer.chatglm6b_api_base')">
+              <a-input v-model:value="settingForm.data.chatglm6b_api_base" />
             </a-form-item>
 
             <a-divider />

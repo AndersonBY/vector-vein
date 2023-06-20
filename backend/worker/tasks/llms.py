@@ -2,13 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-15 01:03:44
+# @Last Modified time: 2023-06-21 01:45:42
 from typing import Union
 
+import httpx
 import openai
 
 from utilities.workflow import Workflow
-from utilities.web_crawler import proxies_for_requests
+from utilities.web_crawler import proxies, proxies_for_requests
 from worker.tasks import task
 
 
@@ -60,6 +61,38 @@ def open_ai(
             top_p=0.77,
         )
         result = response.choices[0].message.content
+        results.append(result)
+
+    output = results[0] if isinstance(input_prompt, str) else results
+    workflow.update_node_field_value(node_id, "output", output)
+    workflow.set_node_status(node_id, 200)
+    return workflow.data
+
+
+@task
+def chat_glm(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    input_prompt: Union[str, list] = workflow.get_node_field_value(node_id, "prompt")
+    temperature: float = workflow.get_node_field_value(node_id, "temperature")
+    model = workflow.get_node_field_value(node_id, "llm_model")
+    if model == "chatglm-6b":
+        api_base = workflow.setting.get("chatglm6b_api_base")
+    else:
+        raise ValueError("model not supported")
+
+    if isinstance(input_prompt, str):
+        prompts = [input_prompt]
+    elif isinstance(input_prompt, list):
+        prompts = input_prompt
+
+    results = []
+    for prompt in prompts:
+        messages = {"prompt": prompt, "history": [], "temperature": temperature}
+        response = httpx.post(api_base, json=messages, proxies=proxies, timeout=None)
+        result = response.json()["response"]
         results.append(result)
 
     output = results[0] if isinstance(input_prompt, str) else results

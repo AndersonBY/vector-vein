@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-19 03:44:40
+ * @Last Modified time: 2023-06-21 00:05:06
  */
 export default {
   lang: 'English',
@@ -304,6 +304,7 @@ export default {
         'openai_api_base': 'OpenAI API Base',
         'openai_chat_engine': 'OpenAI Chat Engine',
         'openai_embedding_engine': 'OpenAI Embedding Engine',
+        'chatglm6b_api_base': 'ChatGLM-6B API Base',
         'output_folder': 'Output folder',
         'select_folder': 'Select folder',
         'email_settings': 'Email settings',
@@ -467,6 +468,17 @@ export default {
         OpenAI: {
           'title': 'OpenAI',
           'description': 'OpenAI is a non-profit artificial intelligence research company founded in 2015 by Elon Musk, Sam Altman, and Greg Brockman. It is dedicated to ensuring that artificial general intelligence benefits all of humanity.',
+          'prompt': 'Prompt',
+          'llm_model': 'Model',
+          'temperature': 'AI preference (temperature)',
+          'creative': 'Creative',
+          'balanced': 'Balanced',
+          'precise': 'Precise',
+          'output': 'Output',
+        },
+        ChatGLM: {
+          'title': 'ChatGLM',
+          'description': 'ChatGLM series models, through the injection of code pre-training, supervised fine-tuning and other technologies to align human intentions, with question and answer, multi-round dialogue, code generation and other capabilities.',
           'prompt': 'Prompt',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',
