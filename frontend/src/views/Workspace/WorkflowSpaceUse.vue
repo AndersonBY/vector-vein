@@ -279,6 +279,11 @@ const setWorkflowRecord = (record) => {
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join('')
+  if (node == 'OpenAi') {
+    node = 'OpenAI'
+  } else if (node == 'ChatGlm') {
+    node = 'ChatGLM'
+  }
   recordErrorTask.value = `${category}.${node}`
   showingRecord.value = true
 }
