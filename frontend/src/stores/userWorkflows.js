@@ -2,16 +2,16 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-10 21:54:15
+ * @Last Modified time: 2023-06-24 20:18:15
  */
 import { defineStore } from "pinia"
 
 
 export const useUserWorkflowsStore = defineStore('userWorkflows', {
   state: () => ({
-    userWorkflows: localStorage.getItem("userWorkflows") || [],
+    userWorkflows: JSON.parse(localStorage.getItem("userWorkflows") || '[]'),
     userWorkflowsTotal: localStorage.getItem("userWorkflowsTotal") || 0,
-    userFastAccessWorkflows: localStorage.getItem("userFastAccessWorkflows") || [],
+    userFastAccessWorkflows: JSON.parse(localStorage.getItem("userFastAccessWorkflows") || '[]'),
   }),
   actions: {
     setUserWorkflowsTotal(userWorkflowsTotal) {

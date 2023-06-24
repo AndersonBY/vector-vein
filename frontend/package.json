@@ -40,6 +40,7 @@
     "uuid": "^9.0.0",
     "vue": "^3.3.4",
     "vue-codemirror": "^6.1.1",
+    "vue-draggable-plus": "0.2.0-beta.2",
     "vue-i18n": "^9.2.2",
     "vue-markdown-render": "^2.0.1",
     "vue-router": "^4.2.2"

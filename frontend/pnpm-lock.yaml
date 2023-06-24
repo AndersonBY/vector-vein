@@ -101,6 +101,9 @@ dependencies:
   vue-codemirror:
     specifier: ^6.1.1
     version: 6.1.1(codemirror@6.0.1)(vue@3.3.4)
+  vue-draggable-plus:
+    specifier: 0.2.0-beta.2
+    version: 0.2.0-beta.2
   vue-i18n:
     specifier: ^9.2.2
     version: 9.2.2(vue@3.3.4)
@@ -3538,6 +3541,15 @@ packages:
         optional: true
     dependencies:
       vue: 3.3.4
+
+  /vue-draggable-plus@0.2.0-beta.2:
+    resolution: {integrity: sha512-ASa++JzCySOtB1m3TFWB31KsU+qoJpnUqCphgoP1T2cutL+Ph44xz7WQULCrXz2MeW+HSpoRJMR84nVHn0FAOA==}
+    peerDependencies:
+      '@vue/composition-api': '*'
+    peerDependenciesMeta:
+      '@vue/composition-api':
+        optional: true
+    dev: false
 
   /vue-eslint-parser@9.3.1(eslint@8.43.0):
     resolution: {integrity: sha512-Clr85iD2XFZ3lJ52/ppmUDG/spxQu6+MAeHXjjyI4I1NUYZ9xmenQp4N0oaHJhrA8OOxltCVxMRfANGa70vU0g==}

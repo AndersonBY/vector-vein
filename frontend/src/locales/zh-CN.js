@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-21 00:04:54
+ * @Last Modified time: 2023-06-25 01:54:28
  */
 export default {
   lang: '中文',
@@ -213,6 +213,7 @@ export default {
       'exit_without_save': '不保存退出',
       'workflow_info': '基本信息',
       'workflow_canvas': '工作流画布',
+      'workflow_ui_design': '界面设计',
       'tags': '标签',
       'brief_info': '简介信息',
       'brief_images': '简介图片',
@@ -338,6 +339,13 @@ export default {
         'add_tag': '添加标签',
         'brief_editor': '描述编辑器',
         'brief_images': '图片',
+      },
+      uiDesign: {
+        'typography-paragraph': {
+          'title': '文字内容',
+          'value': '请修改文字内容',
+          'tip': '可用于在使用界面中放置提示性信息',
+        }
       },
       uploaderFieldUse: {
         'upload': '上传',

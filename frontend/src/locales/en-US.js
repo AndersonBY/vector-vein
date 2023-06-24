@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-21 00:05:06
+ * @Last Modified time: 2023-06-25 01:54:59
  */
 export default {
   lang: 'English',
@@ -213,6 +213,7 @@ export default {
       'exit_without_save': 'Exit without save',
       'workflow_info': 'Basic info',
       'workflow_canvas': 'Workflow canvas',
+      'workflow_ui_design': 'UI design',
       'tags': 'Tags',
       'brief_info': 'Brief info',
       'brief_images': 'Brief images',
@@ -338,6 +339,13 @@ export default {
         'add_tag': 'Add tag',
         'brief_editor': 'Brief editor',
         'brief_images': 'Brief images',
+      },
+      uiDesign: {
+        'typography-paragraph': {
+          'title': 'Text Content',
+          'value': 'Please modify the text content',
+          'tip': 'Can be used to place tips in the interface',
+        }
       },
       uploaderFieldUse: {
         'upload': 'Upload',

@@ -1,9 +1,9 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref, computed } from "vue"
+import { onBeforeMount, defineComponent, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { FullscreenOutlined, FullscreenExitOutlined } from "@ant-design/icons-vue"
+import { FullscreenOutlined, FullscreenExitOutlined, FormOutlined, ThunderboltOutlined } from "@ant-design/icons-vue"
 import VueMarkdown from 'vue-markdown-render'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -15,6 +15,7 @@ import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
+import { getUIDesignFromWorkflow } from '@/utils/workflow'
 import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
 import { databaseAPI } from "@/api/database"
 
@@ -36,6 +37,10 @@ const workflowId = route.params.workflowId
 const briefModalOpen = ref(false)
 const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
 const outputMaximized = ref(false)
+const nonFormItemsTypes = ["typography-paragraph"]
+const inputFields = ref([])
+const outputNodes = ref([])
+const triggerNodes = ref([])
 
 onBeforeMount(async () => {
   const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
@@ -63,6 +68,12 @@ onBeforeMount(async () => {
       })
     }
   })
+  const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+  const reactiveUIDesign = reactive(uiDesign)
+  inputFields.value = reactiveUIDesign.inputFields
+  outputNodes.value = reactiveUIDesign.outputNodes
+  triggerNodes.value = reactiveUIDesign.triggerNodes
+
   savedWorkflow.value = JSON.parse(JSON.stringify(currentWorkflow.value))
   loading.value = false
 })
@@ -285,6 +296,11 @@ const setWorkflowRecord = (record) => {
     node = 'ChatGLM'
   }
   recordErrorTask.value = `${category}.${node}`
+  const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+  const reactiveUIDesign = reactive(uiDesign)
+  inputFields.value = reactiveUIDesign.inputFields
+  outputNodes.value = reactiveUIDesign.outputNodes
+  triggerNodes.value = reactiveUIDesign.triggerNodes
   showingRecord.value = true
 }
 
@@ -371,48 +387,47 @@ const openLocalFile = (file) => {
         </a-alert>
       </a-col>
 
-      <a-col :lg="12" :md="24" v-show="!outputMaximized">
+      <a-col :xxl="6" :xl="8" :lg="10" :md="24" v-show="!outputMaximized">
         <a-row :gutter="[16, 16]">
-          <a-typography-title :level="3">{{ t('workspace.workflowSpace.inputs') }}</a-typography-title>
-          <template v-for="(node) in currentWorkflow.data.nodes" :key="`node-${node.id}`">
-            <a-col :span="24" v-if="node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)">
-              <a-form layout="vertical">
-                <template :key="`field-${field}-${templateIndex}`"
-                  v-for="(field, templateIndex) in Object.keys(node.data.template)">
-                  <a-form-item :key="`field-${field}-${templateIndex}`" :label="node.data.template[field].display_name"
-                    v-if="node.data.template[field].show">
-                    <TemperatureInput v-model="node.data.template[field].value"
-                      v-if="node.category == 'llms' && field == 'temperature'" />
-                    <a-select v-model:value="node.data.template[field].value" :options="node.data.template[field].options"
-                      v-else-if="node.data.template[field].field_type == 'select'" />
-                    <a-textarea v-model:value="node.data.template[field].value" :autoSize="true" :showCount="true"
-                      :placeholder="node.data.template[field].placeholder"
-                      v-else-if="node.data.template[field].field_type == 'textarea'" />
-                    <a-input v-model:value="node.data.template[field].value"
-                      :placeholder="node.data.template[field].placeholder"
-                      v-else-if="node.data.template[field].field_type == 'input'" />
-                    <a-input-number v-model:value="node.data.template[field].value"
-                      :placeholder="node.data.template[field].placeholder"
-                      v-else-if="node.data.template[field].field_type == 'number'" />
-                    <a-checkbox v-model:checked="node.data.template[field].value"
-                      v-else-if="node.data.template[field].field_type == 'checkbox'" />
-                    <UploaderFieldUse v-model="node.data.template[field].value"
-                      v-else-if="node.data.template[field].field_type == 'file'" />
-                    <ListFieldUse v-model="node.data.template[field].value"
-                      v-else-if="node.data.template[field].field_type == 'list'" />
-                  </a-form-item>
-                </template>
-              </a-form>
-            </a-col>
-          </template>
+          <a-typography-title :level="3">
+            <FormOutlined class="text-primary" />
+            {{ t('workspace.workflowSpace.inputs') }}
+          </a-typography-title>
+          <a-col :span="24">
+            <a-form layout="vertical">
+              <div v-for="( field, fieldIndex ) in inputFields " :key="`field-${field}-${fieldIndex}`">
+                <a-form-item v-if="!nonFormItemsTypes.includes(field.field_type)">
+                  <template #label>
+                    {{ field.display_name }}
+                  </template>
+                  <TemperatureInput v-model="field.value" v-if="field.category == 'llms' && field == 'temperature'" />
+                  <a-select v-model:value="field.value" :options="field.options"
+                    v-else-if="field.field_type == 'select'" />
+                  <a-textarea v-model:value="field.value" :autoSize="true" :showCount="true"
+                    :placeholder="field.placeholder" v-else-if="field.field_type == 'textarea'" />
+                  <a-input v-model:value="field.value" :placeholder="field.placeholder"
+                    v-else-if="field.field_type == 'input'" />
+                  <a-input-number v-model:value="field.value" :placeholder="field.placeholder"
+                    v-else-if="field.field_type == 'number'" />
+                  <a-checkbox v-model:checked="field.value" v-else-if="field.field_type == 'checkbox'" />
+                  <UploaderFieldUse v-model="field.value" v-else-if="field.field_type == 'file'" />
+                  <ListFieldUse v-model="field.value" v-else-if="field.field_type == 'list'" />
+                </a-form-item>
+                <a-row v-if="field.field_type == 'typography-paragraph'">
+                  <a-col :span="24" class="ui-special-item-container">
+                    <a-typography-paragraph class="ui-special-item" v-model:content="field.value" />
+                  </a-col>
+                </a-row>
+              </div>
+            </a-form>
+          </a-col>
 
           <a-divider />
 
-          <a-typography-title :level="3">{{ t('workspace.workflowSpace.triggers') }}</a-typography-title>
           <a-col :span="24">
             <a-row :gutter="[16, 16]">
-              <template v-for="(node) in currentWorkflow.data.nodes" :key="`node-${node.id}`">
-                <a-col :span="24" v-if="node.category == 'triggers'">
+              <template v-for="(node) in triggerNodes" :key="`node-${node.id}`">
+                <a-col :span="24">
                   <a-button type="primary" block @click="runWorkflow" :loading="running"
                     v-if="node.type == 'ButtonTrigger'">
                     {{ node.data.template.button_text.value }}
@@ -442,9 +457,12 @@ const openLocalFile = (file) => {
         </a-row>
       </a-col>
 
-      <a-col :lg="outputMaximized ? 24 : 12" :md="24">
+      <a-col :xxl="outputMaximized ? 24 : 18" :xl="outputMaximized ? 24 : 16" :lg="outputMaximized ? 24 : 14" :md="24">
         <a-typography-title :level="3" style="display: flex; justify-content: space-between;">
-          <span>{{ t('workspace.workflowSpace.outputs') }}</span>
+          <span>
+            <ThunderboltOutlined class="text-primary" />
+            {{ t('workspace.workflowSpace.outputs') }}
+          </span>
           <span>
             <a-tooltip :title="t('workspace.workflowSpace.maximize_output')">
               <FullscreenOutlined @click="outputMaximized = !outputMaximized" v-show="!outputMaximized" />
@@ -456,43 +474,42 @@ const openLocalFile = (file) => {
         </a-typography-title>
         <a-spin :spinning="running">
           <a-row :gutter="[16, 16]">
-            <template v-for="(node) in currentWorkflow.data.nodes" :key="`node-${node.id}`">
-              <template v-if="node.type == 'Text'">
-                <a-col :span="24" v-if="node.data.template.text.show">
-                  <a-typography-title :level="5">
-                    {{ node.data.template.output_title.value }}
-                  </a-typography-title>
-                  <template v-if="node.data.template.render_markdown.value">
-                    <vue-markdown v-highlight :source="node.data.template.text.value" class="markdown-body custom-hljs" />
-                    <a-typography-paragraph :copyable="{ text: node.data.template.text.value }">
-                    </a-typography-paragraph>
-                  </template>
-                  <a-typography-paragraph :copyable="{ text: node.data.template.text.value }" v-else>
-                    {{ node.data.template.text.value }}
+            <a-col :span="24" class="draggable-item" v-for="(node, index) in outputNodes"
+              :key="`node-${node.id}-${index}`">
+              <div v-if="node.type == 'Text'">
+                <a-typography-title :level="5">
+                  {{ node.data.template.output_title.value }}
+                </a-typography-title>
+                <template v-if="node.data.template.render_markdown.value">
+                  <vue-markdown v-highlight :source="node.data.template.text.value" class="markdown-body custom-hljs" />
+                  <a-typography-paragraph :copyable="{ text: node.data.template.text.value }">
                   </a-typography-paragraph>
-                </a-col>
-              </template>
+                </template>
+                <a-typography-paragraph :copyable="{ text: node.data.template.text.value }" v-else>
+                  {{ node.data.template.text.value }}
+                </a-typography-paragraph>
+              </div>
 
-              <template v-else-if="node.type == 'Document'">
-                <a-col :span="24" v-if="node.data.template.show_local_file.value">
-                  <a-typography-link @click="openLocalFile(node.data.template.output.value)">
-                    {{ node.data.template.output.value }}
-                  </a-typography-link>
-                </a-col>
-              </template>
+              <div v-else-if="node.type == 'Document'">
+                <a-typography-link @click="openLocalFile(node.data.template.output.value)">
+                  {{ node.data.template.output.value }}
+                </a-typography-link>
+              </div>
 
-              <template v-else-if="node.type == 'Audio'">
-                <a-col :span="24" v-if="node.data.template.show_player.value">
-                  <AudioPlayer :audios="[node.data.template.audio_url.value]" />
-                </a-col>
-              </template>
+              <div v-else-if="node.type == 'Audio'">
+                <AudioPlayer :audios="[node.data.template.audio_url?.value]" />
+              </div>
 
-              <template v-else-if="node.type == 'Mindmap'">
-                <a-col :span="24" v-if="node.data.template.show_mind_map.value">
-                  <MindmapRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
-                </a-col>
-              </template>
-            </template>
+              <div v-else-if="node.type == 'Mindmap'">
+                <MindmapRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+              </div>
+
+              <div v-else>
+                <div v-if="node.field_type == 'typography-paragraph'">
+                  <a-typography-paragraph v-model:content="node.value" />
+                </div>
+              </div>
+            </a-col>
           </a-row>
         </a-spin>
       </a-col>

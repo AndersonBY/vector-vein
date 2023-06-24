@@ -16,6 +16,7 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
+import UIDesign from '@/components/workspace/UIDesign.vue'
 import { workflowAPI } from "@/api/workflow"
 import { hashObject } from "@/utils/util"
 import { databaseAPI } from "@/api/database"
@@ -37,6 +38,7 @@ const activeTab = ref(t('workspace.workflowEditor.workflow_canvas'))
 const tabs = reactive([
   t('workspace.workflowEditor.workflow_info'),
   t('workspace.workflowEditor.workflow_canvas'),
+  t('workspace.workflowEditor.workflow_ui_design'),
 ])
 
 const userAccountStore = useUserAccountStore()
@@ -91,7 +93,12 @@ onBeforeMount(async () => {
 const saving = ref(false)
 const saveWorkflow = async () => {
   saving.value = true
-  currentWorkflow.value.data = toObject()
+  const uiDesign = currentWorkflow.value.data.ui || {}
+  const workflowData = toObject()
+  currentWorkflow.value.data = {
+    ...workflowData,
+    ui: uiDesign,
+  }
   const response = await workflowAPI('update', {
     wid: workflowId,
     ...currentWorkflow.value,
@@ -107,7 +114,12 @@ const saveWorkflow = async () => {
 }
 
 const exitConfirm = () => {
-  currentWorkflow.value.data = toObject()
+  const uiDesign = currentWorkflow.value.data.ui || {}
+  const workflowData = toObject()
+  currentWorkflow.value.data = {
+    ...workflowData,
+    ui: uiDesign,
+  }
   if (savedWorkflowHash.value != hashObject(currentWorkflow.value)) {
     Modal.confirm({
       title: t('common.back'),
@@ -311,6 +323,9 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
         </a-layout-content>
       </a-layout>
     </a-layout>
+
+    <UIDesign v-model="currentWorkflow" v-if="activeTab == t('workspace.workflowEditor.workflow_ui_design')">
+    </UIDesign>
   </div>
 </template>
 
