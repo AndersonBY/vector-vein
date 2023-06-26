@@ -161,6 +161,11 @@ const runWorkflow = async () => {
         clearInterval(checkStatusTimer.value)
         running.value = false
         currentWorkflow.value = response.data
+        const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+        const reactiveUIDesign = reactive(uiDesign)
+        inputFields.value = reactiveUIDesign.inputFields
+        outputNodes.value = reactiveUIDesign.outputNodes
+        triggerNodes.value = reactiveUIDesign.triggerNodes
         // clearNodesFiles()
       } else if (response.status == 500) {
         running.value = false
