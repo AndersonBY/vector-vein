@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-25 01:54:28
+ * @Last Modified time: 2023-06-26 21:02:43
  */
 export default {
   lang: '中文',
@@ -561,6 +561,14 @@ export default {
           'description': '用于生成思维导图。',
           'content': 'Markdown内容',
           'show_mind_map': '显示思维导图',
+          'output_type': '输出类型',
+          'output': '输出',
+        },
+        Mermaid: {
+          'title': 'Mermaid',
+          'description': '用于生成Mermaid图表。',
+          'content': 'Mermaid内容',
+          'show_mermaid': '显示Mermaid',
           'output_type': '输出类型',
           'output': '输出',
         },

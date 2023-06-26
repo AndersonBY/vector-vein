@@ -13,6 +13,7 @@ import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
+import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'
@@ -206,35 +207,6 @@ const deleteWorkflowScheduleTrigger = async () => {
     message.error(t('workspace.workflowSpace.delete_schedule_failed'))
   }
   deletingSchedule.value = false
-}
-
-const saveWorkflow = async (data) => {
-  showingRecord.value = false
-  const { title, brief, images, tags, workflow } = data
-  updating.value = true
-  currentWorkflow.value.title = title
-  currentWorkflow.value.brief = brief
-  currentWorkflow.value.images = images
-  currentWorkflow.value.data = workflow
-  clearNodesFiles()
-  const response = await workflowAPI('update', {
-    wid: currentWorkflow.value.wid,
-    title: title,
-    brief: brief,
-    images: images,
-    tags: tags,
-    data: workflow,
-  })
-  updating.value = false
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.save_success'))
-    currentWorkflow.value.images = response.data.images
-    currentWorkflow.value.tags = response.data.tags
-  } else {
-    message.error(t('workspace.workflowSpace.save_failed'))
-  }
-  userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
-  savedWorkflow.value = currentWorkflow.value
 }
 
 const deleteWorkflow = async () => {
@@ -507,6 +479,10 @@ const openLocalFile = (file) => {
 
               <div v-else-if="node.type == 'Mindmap'">
                 <MindmapRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+              </div>
+
+              <div v-else-if="node.type == 'Mermaid'">
+                <MermaidRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
               </div>
 
               <div v-else>

@@ -9,6 +9,7 @@ import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
+import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 
 defineComponent({
@@ -224,6 +225,10 @@ const deleteField = (list, index) => {
 
                   <div v-else-if="node.type == 'Mindmap'">
                     <MindmapRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+                  </div>
+
+                  <div v-else-if="node.type == 'Mermaid'">
+                    <MermaidRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
                   </div>
 
                   <div v-else>

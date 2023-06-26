@@ -28,7 +28,7 @@ import '@vue-flow/controls/dist/style.css'
 defineComponent({
   name: 'WorkflowEditor',
 })
-console.log("in workflow editor")
+
 const { t } = useI18n()
 const loading = ref(true)
 const route = useRoute()
@@ -89,6 +89,14 @@ onBeforeMount(async () => {
   savedWorkflowHash.value = hashObject(currentWorkflow.value)
   loading.value = false
 })
+
+const updateWorkflowData = () => {
+  const workflowData = toObject()
+  currentWorkflow.value.data = {
+    ...workflowData,
+    ui: currentWorkflow.value.data.ui || {},
+  }
+}
 
 const saving = ref(false)
 const saveWorkflow = async () => {
@@ -268,7 +276,7 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
         </a-col>
 
         <a-col flex="1 0" style="display: flex; justify-content: center;">
-          <a-segmented v-model:value="activeTab" :options="tabs" />
+          <a-segmented v-model:value="activeTab" :options="tabs" @change="updateWorkflowData" />
         </a-col>
 
         <a-col flex="0 0" style="display: flex; justify-content: end;">

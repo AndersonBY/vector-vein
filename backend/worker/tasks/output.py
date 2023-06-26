@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 15:20:24
+# @Last Modified time: 2023-06-26 21:15:02
 from pathlib import Path
 from datetime import datetime
 
@@ -118,6 +118,16 @@ def audio(
 
 @task
 def mindmap(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    workflow.get_node_field_value(node_id, "content")
+    return workflow.data
+
+
+@task
+def mermaid(
     workflow_data: dict,
     node_id: str,
 ):

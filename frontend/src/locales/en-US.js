@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-25 01:54:59
+ * @Last Modified time: 2023-06-26 21:02:54
  */
 export default {
   lang: 'English',
@@ -561,6 +561,14 @@ export default {
           'description': 'Used to generate mind maps.',
           'content': 'Markdown content',
           'show_mind_map': 'Show mind map',
+          'output_type': 'Output type',
+          'output': 'Output',
+        },
+        Mermaid: {
+          'title': 'Mermaid',
+          'description': 'Used to generate Mermaid diagrams.',
+          'content': 'Mermaid content',
+          'show_mermaid': 'Show Mermaid diagram',
           'output_type': 'Output type',
           'output': 'Output',
         },
