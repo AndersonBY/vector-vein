@@ -2,12 +2,21 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 13:57:36
+ * @Last Modified time: 2023-06-27 16:43:04
  */
 'use strict';
 import { message } from 'ant-design-vue'
 import { workflowAPI } from "@/api/workflow"
-import { hasShowFields } from '@/utils/util'
+
+export function hasShowFields(node) {
+  let hasShow = false
+  Object.keys(node.data.template).forEach(key => {
+    if (node.data.template[key].show) {
+      hasShow = true
+    }
+  })
+  return hasShow
+}
 
 export const getWorkflows = async (
   userWorkflowsStore,
@@ -32,6 +41,8 @@ export const getWorkflows = async (
     message.error(response.msg)
   }
 }
+
+export const nonFormItemsTypes = ["typography-paragraph"]
 
 export const getUIDesignFromWorkflow = (workflowData) => {
   let inputFields = workflowData.data?.ui?.inputFields || []
@@ -113,12 +124,12 @@ export const getUIDesignFromWorkflow = (workflowData) => {
   })
 
   // 删除没有用到的inputFields
-  unusedInputFields.forEach((field) => {
+  unusedInputFields.filter(field => !nonFormItemsTypes.includes(field.field_type)).forEach((field) => {
     const fieldIndex = inputFields.findIndex((n) => n.nodeId == field.nodeId && n.fieldName == field.fieldName)
     inputFields.splice(fieldIndex, 1)
   })
   // 删除没有用到的outputNodes
-  unusedOutputNodes.forEach((node) => {
+  unusedOutputNodes.filter(field => !nonFormItemsTypes.includes(field.field_type)).forEach((node) => {
     const nodeIndex = outputNodes.findIndex((n) => n.id == node.id)
     outputNodes.splice(nodeIndex, 1)
   })
