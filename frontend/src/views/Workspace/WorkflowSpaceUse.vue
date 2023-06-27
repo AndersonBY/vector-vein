@@ -17,7 +17,7 @@ import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
-import { getUIDesignFromWorkflow } from '@/utils/workflow'
+import { getUIDesignFromWorkflow, hasShowFields, nonFormItemsTypes } from '@/utils/workflow'
 import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
 import { databaseAPI } from "@/api/database"
 
@@ -39,7 +39,6 @@ const workflowId = route.params.workflowId
 const briefModalOpen = ref(false)
 const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
 const outputMaximized = ref(false)
-const nonFormItemsTypes = ["typography-paragraph"]
 const inputFields = ref([])
 const outputNodes = ref([])
 const triggerNodes = ref([])
@@ -103,32 +102,28 @@ const runWorkflow = async () => {
   showingRecord.value = false
   let checkFieldsValid = true
   try {
-    currentWorkflow.value.data.nodes.forEach((node) => {
-      if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
-        Object.keys(node.data.template).forEach((field) => {
-          let currentFieldValid = true
-          if (node.data.template[field].field_type == 'checkbox') {
-            return
-          }
-          if (!node.data.template[field].show) {
-            return
-          }
-          if (!node.data.template[field].required) {
-            return
-          }
+    inputFields.value.forEach((field) => {
+      let currentFieldValid = true
+      if (field.field_type == 'checkbox') {
+        return
+      }
+      if (!field.show) {
+        return
+      }
+      if (!field.required) {
+        return
+      }
 
-          if (node.data.template[field].field_type == 'file' && node.data.template[field].value.length == 0) {
-            currentFieldValid = false
-          } else if (node.data.template[field].field_type == 'number' && typeof node.data.template[field].value != 'number') {
-            currentFieldValid = false
-          } else if (!node.data.template[field].value && !node.data.template[field].value === 0) {
-            currentFieldValid = false
-          }
-          if (!currentFieldValid) {
-            message.error(t('workspace.workflowSpace.field_is_empty', { field: node.data.template[field].display_name }))
-            checkFieldsValid = false
-          }
-        })
+      if (field.field_type == 'file' && field.value.length == 0) {
+        currentFieldValid = false
+      } else if (field.field_type == 'number' && typeof field.value != 'number') {
+        currentFieldValid = false
+      } else if (!field.value && !field.value === 0) {
+        currentFieldValid = false
+      }
+      if (!currentFieldValid) {
+        message.error(t('workspace.workflowSpace.field_is_empty', { field: field.display_name }))
+        checkFieldsValid = false
       }
     })
   } catch (errorInfo) {
@@ -224,16 +219,6 @@ const deleteWorkflow = async () => {
 
 const openEditor = () => {
   router.push({ name: 'WorkflowEditor', params: { workflowId: workflowId } })
-}
-
-const hasShowFields = (node) => {
-  let hasShow = false
-  Object.keys(node.data.template).forEach(key => {
-    if (node.data.template[key].show) {
-      hasShow = true
-    }
-  })
-  return hasShow
 }
 
 const showingRecord = ref(false)
@@ -396,7 +381,7 @@ const openLocalFile = (file) => {
                 </a-form-item>
                 <a-row v-if="field.field_type == 'typography-paragraph'">
                   <a-col :span="24" class="ui-special-item-container">
-                    <a-typography-paragraph class="ui-special-item" v-model:content="field.value" />
+                    <vue-markdown v-highlight :source="field.value" class="markdown-body custom-hljs ui-special-item" />
                   </a-col>
                 </a-row>
               </div>
@@ -495,7 +480,7 @@ const openLocalFile = (file) => {
 
               <div v-else>
                 <div v-if="node.field_type == 'typography-paragraph'">
-                  <a-typography-paragraph v-model:content="node.value" />
+                  <vue-markdown v-highlight :source="node.value" class="markdown-body custom-hljs ui-special-item" />
                 </div>
               </div>
             </a-col>
@@ -509,6 +494,10 @@ const openLocalFile = (file) => {
 <style scoped>
 .space-container {
   height: calc(100vh - 64px);
+}
+
+.ui-special-item {
+  margin-bottom: 24px;
 }
 
 :deep(.slick-dots) {

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 14:00:37
+ * @Last Modified time: 2023-06-27 17:24:49
  */
 export default {
   lang: 'English',
@@ -343,7 +343,7 @@ export default {
       uiDesign: {
         'typography-paragraph': {
           'title': 'Text Content',
-          'value': 'Please modify the text content',
+          'placehoder': 'Supports Markdown syntax, which will be rendered directly in the interface',
           'tip': 'Can be used to place tips in the interface',
         }
       },

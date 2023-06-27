@@ -4,7 +4,7 @@ import { DragOutlined, CloseOutlined, FormOutlined, ThunderboltOutlined } from "
 import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'
 import { VueDraggable, useDraggable } from 'vue-draggable-plus'
-import { getUIDesignFromWorkflow } from '@/utils/workflow'
+import { getUIDesignFromWorkflow, nonFormItemsTypes } from '@/utils/workflow'
 import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
@@ -26,15 +26,14 @@ const inputFields = ref(reactiveUIDesign.inputFields)
 const outputNodes = ref(reactiveUIDesign.outputNodes)
 const triggerNodes = ref(reactiveUIDesign.triggerNodes)
 
-const nonFormItemsTypes = ["typography-paragraph"]
 const uiItems = ref([
   {
     id: 'typography-paragraph',
     required: true,
-    placeholder: "",
+    placeholder: t('components.workspace.uiDesign.typography-paragraph.placeholder'),
     show: false,
     multiline: true,
-    value: t('components.workspace.uiDesign.typography-paragraph.value'),
+    value: '',
     password: false,
     name: "typography-paragraph",
     display_name: "typography-paragraph",
@@ -130,7 +129,7 @@ const deleteField = (list, index) => {
                 <a-form layout="vertical" ref="inputFieldsEl">
                   <div class="draggable-item" v-for="( field, fieldIndex ) in inputFields "
                     :key="`field-${field}-${fieldIndex}`">
-                    <DragOutlined class="handle" style="margin-bottom: 1em;" />
+                    <DragOutlined class="handle" />
                     <a-form-item class="draggable-item-content" v-if="!nonFormItemsTypes.includes(field.field_type)">
                       <template #label>
                         {{ field.display_name }}
@@ -150,8 +149,8 @@ const deleteField = (list, index) => {
                     </a-form-item>
                     <a-row class="draggable-item-content" v-if="field.field_type == 'typography-paragraph'">
                       <a-col :span="24" class="ui-special-item-container">
-                        <a-typography-paragraph class="ui-special-item" v-model:content="field.value" editable
-                          @onChange="updateWorkflowUi" />
+                        <a-textarea class="ui-special-item" v-model:value="field.value" :placeholder="field.placeholder"
+                          auto-size @change="updateWorkflowUi" />
                         <CloseOutlined class="ui-special-item-delete" @click="deleteField(inputFields, fieldIndex)" />
                       </a-col>
                     </a-row>
@@ -203,7 +202,7 @@ const deleteField = (list, index) => {
             <a-row :gutter="[16, 16]" ref="outputNodesEl">
               <a-col :span="24" class="draggable-item" v-for="(node, index) in outputNodes"
                 :key="`node-${node.id}-${index}`">
-                <DragOutlined class="handle" style="margin-bottom: 1em;" />
+                <DragOutlined class="handle" />
                 <div class="draggable-item-content">
                   <div v-if="node.type == 'Text'">
                     <a-typography-title :level="5">
@@ -238,8 +237,8 @@ const deleteField = (list, index) => {
 
                   <div v-else>
                     <div class="ui-special-item-container" v-if="node.field_type == 'typography-paragraph'">
-                      <a-typography-paragraph class="ui-special-item" v-model:content="node.value" editable
-                        @onChange="updateWorkflowUi" />
+                      <a-textarea class="ui-special-item" v-model:value="node.value" :placeholder="node.placeholder"
+                        auto-size @change="updateWorkflowUi" />
                       <CloseOutlined class="ui-special-item-delete" @click="deleteField(outputNodes, index)" />
                     </div>
                   </div>
@@ -285,7 +284,7 @@ const deleteField = (list, index) => {
 
 .ui-special-item-delete {
   flex-grow: 0;
-  margin-bottom: 1em;
+  margin-left: 10px;
 }
 </style>
 
