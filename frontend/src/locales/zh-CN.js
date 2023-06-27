@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 17:24:34
+ * @Last Modified time: 2023-06-27 20:13:51
  */
 export default {
   lang: '中文',
@@ -343,7 +343,7 @@ export default {
       uiDesign: {
         'typography-paragraph': {
           'title': '文字内容',
-          'placehoder': '支持Markdown语法，在使用界面中会被直接渲染',
+          'placeholder': '支持Markdown语法，在使用界面中会被直接渲染',
           'tip': '可用于在使用界面中放置提示性信息',
         }
       },
