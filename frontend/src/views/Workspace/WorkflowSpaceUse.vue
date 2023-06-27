@@ -14,6 +14,7 @@ import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
 import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
+import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'
@@ -252,7 +253,10 @@ const alertType = computed(() => {
 const setWorkflowRecord = (record) => {
   runRecordId.value = record.rid
   recordStatus.value = record.status
-  currentWorkflow.value.data = record.data
+  currentWorkflow.value.data = {
+    ...record.data,
+    ui: savedWorkflow.value.data.ui || {}
+  }
   let [category, node] = (record.data.error_task || '.').split('.')
   category = category.split('_')
     .map((word, index) => {
@@ -483,6 +487,10 @@ const openLocalFile = (file) => {
 
               <div v-else-if="node.type == 'Mermaid'">
                 <MermaidRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+              </div>
+
+              <div v-else-if="node.type == 'Echarts'">
+                <EchartsRenderer :option="node.data.template.option.value" style="width: 100%;min-height: 50vh;" />
               </div>
 
               <div v-else>

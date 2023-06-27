@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-26 21:02:54
+ * @Last Modified time: 2023-06-27 14:00:37
  */
 export default {
   lang: 'English',
@@ -357,6 +357,9 @@ export default {
       mindmapRenderer: {
         'download_svg': 'Download svg',
       },
+      echartsRenderer: {
+        'download_image': 'Download image',
+      },
       newWorkflowModal: {
         'create_new_workflow': 'Create new workflow',
         'empty_workflow': 'Create empty workflow',
@@ -569,6 +572,14 @@ export default {
           'description': 'Used to generate Mermaid diagrams.',
           'content': 'Mermaid content',
           'show_mermaid': 'Show Mermaid diagram',
+          'output_type': 'Output type',
+          'output': 'Output',
+        },
+        Echarts: {
+          'title': 'Charts',
+          'description': 'Used to generate Echarts charts.',
+          'option': 'Echarts option',
+          'show_echarts': 'Show Echarts',
           'output_type': 'Output type',
           'output': 'Output',
         },
