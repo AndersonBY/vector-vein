@@ -10,7 +10,6 @@ import { Background, BackgroundVariant } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
-import { useUserAccountStore } from '@/stores/userAccount'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import TagInput from '@/components/workspace/TagInput.vue'
@@ -41,8 +40,6 @@ const tabs = reactive([
   t('workspace.workflowEditor.workflow_ui_design'),
 ])
 
-const userAccountStore = useUserAccountStore()
-const { userAccount } = storeToRefs(userAccountStore)
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
 const userWorkflowsStore = useUserWorkflowsStore()
@@ -240,13 +237,6 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
   const name = path.match(/\/([^/]+)\.vue$/)[1]
   nodeTypes[name] = markRaw(component.default)
   const categoryName = path.match(/\/([^/]+)\/[^/]+\.vue$/)[1]
-  // 工作人员提前测试用
-  // if (!userAccount.value.is_staff && categoryName === 'mediaProcessing') {
-  //   return
-  // }
-  // if (!userAccount.value.is_staff && name === 'MpWeixinTemplateMsg') {
-  //   return
-  // }
   if (!nodesCategories[categoryName]) {
     nodesCategories[categoryName] = []
   }
@@ -301,7 +291,9 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
           <a-divider>
             {{ t('workspace.workflowEditor.brief_images') }}
           </a-divider>
-          <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" />
+          <div>
+            <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" />
+          </div>
         </a-col>
       </a-row>
     </div>
