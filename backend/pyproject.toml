@@ -24,6 +24,7 @@ dependencies = [
   "yt-dlp>=2023.3.4",
   "pycryptodome>=3.18.0",
   "clr-loader @ git+https://github.com/AndersonBY/clr-loader.git",
+  "pyecharts>=2.0.3",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
