@@ -1,7 +1,7 @@
 <script setup>
 import { defineComponent, ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PlusOutlined } from '@ant-design/icons-vue'
+import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import TemplateEditorModal from '@/components/TemplateEditorModal.vue'
@@ -70,6 +70,7 @@ const newFieldData = reactive({
   "show": false,
   "multiline": false,
   "value": "",
+  "options": [],
   "password": false,
   "name": "",
   "display_name": "",
@@ -94,6 +95,7 @@ const addField = () => {
     data: props.data,
   })
   newFieldData.display_name = ''
+  newFieldData.options = []
 }
 const removeField = (field) => {
   delete fieldsData.value[field]
@@ -103,14 +105,14 @@ const removeField = (field) => {
   })
 }
 
-const insertFieldVariable = (field, event) => {
-  const variable = `{{${field}}}`
-  const templateElement = document.getElementById('template-textarea')
-  const cursorPosition = templateElement.selectionStart
-  if (!event.target.classList.contains('ant-checkbox-input') && !event.target.classList.contains('field-content')) {
-    const newText = fieldsData.value.template.value.slice(0, cursorPosition) + variable + fieldsData.value.template.value.slice(cursorPosition);
-    fieldsData.value.template.value = newText
+const addListOptionsItem = (newValue, index) => {
+  newFieldData.options[index] = {
+    "value": newValue,
+    "label": newValue
   }
+}
+const deleteListOptionsItem = (index) => {
+  newFieldData.options.splice(index, 1)
 }
 
 const deleteNode = () => {
@@ -145,11 +147,11 @@ const openTemplateEditor = ref(false)
         </template>
 
         <a-col :span="24" style="padding: 10px">
-          <a-button type="dashed" block @click="openAddField">
+          <a-button type="dashed" block @click="openAddField" class="add-field-button">
             <PlusOutlined />
             {{ t('components.nodes.textProcessing.TemplateCompose.add_field') }}
           </a-button>
-          <a-drawer v-model:open="showAddField" class="custom-class" style="color: red"
+          <a-drawer v-model:open="showAddField" class="custom-class"
             :title="t('components.nodes.textProcessing.TemplateCompose.add_field')" placement="right">
             <template #extra>
               <a-button type="primary" @click="addField">
@@ -166,11 +168,32 @@ const openTemplateEditor = ref(false)
                   <a-select-option value="textarea">
                     {{ t('components.nodes.textProcessing.TemplateCompose.field_type_textarea') }}
                   </a-select-option>
+                  <a-select-option value="select">
+                    {{ t('components.nodes.textProcessing.TemplateCompose.field_type_select') }}
+                  </a-select-option>
                 </a-select>
               </a-form-item>
 
               <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_display_name')">
                 <a-input v-model:value="newFieldData.display_name" />
+              </a-form-item>
+
+              <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_list_options')"
+                v-if="newFieldData.field_type == 'select'">
+                <a-row type="flex" :gutter="[12, 12]">
+                  <a-col :span="24" :key="index" v-for="(item, index) in newFieldData.options">
+                    <div style="display: flex; gap: 5px;">
+                      <a-input :value="item.value" @input="addListOptionsItem($event.target.value, index)" />
+                      <MinusCircleOutlined @click="deleteListOptionsItem(index)" />
+                    </div>
+                  </a-col>
+                  <a-col :span="24">
+                    <a-button type="dashed" style="width: 100%;" @click="newFieldData.options.push('')">
+                      <PlusOutlined />
+                      {{ t('components.nodes.listField.add_item') }}
+                    </a-button>
+                  </a-col>
+                </a-row>
               </a-form-item>
 
             </a-form>
@@ -182,7 +205,7 @@ const openTemplateEditor = ref(false)
         type="target" v-model:show="fieldsData.template.show">
         <a-typography-paragraph :ellipsis="{ row: 1, expandable: false }"
           :content="fieldsData.template.value"></a-typography-paragraph>
-        <a-button block type="primary" @click="openTemplateEditor = true">
+        <a-button block type="primary" class="open-template-editor-button" @click="openTemplateEditor = true">
           {{ t('components.nodes.textProcessing.TemplateCompose.open_template_editor') }}
         </a-button>
         <TemplateEditorModal v-model:open="openTemplateEditor" v-model:template="fieldsData.template.value"

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 20:13:54
+ * @Last Modified time: 2023-07-01 17:43:51
  */
 export default {
   lang: 'English',
@@ -436,7 +436,9 @@ export default {
           'add_field_type': 'Add field type',
           'field_type_input': 'Single line input box',
           'field_type_textarea': 'Multi-line input box',
+          'field_type_select': 'List selection input',
           'add_field_display_name': 'Display name',
+          'add_field_list_options': 'List options',
           'click_to_add_to_template': 'Click to add variables to the template',
           'open_template_editor': 'Open template editor',
         },

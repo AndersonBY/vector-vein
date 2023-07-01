@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 20:13:51
+ * @Last Modified time: 2023-07-01 17:43:38
  */
 export default {
   lang: '中文',
@@ -436,7 +436,9 @@ export default {
           'add_field_type': '输入类型',
           'field_type_input': '单行输入框',
           'field_type_textarea': '多行输入框',
+          'field_type_select': '列表选择输入',
           'add_field_display_name': '显示名称',
+          'add_field_list_options': '列表选项',
           'click_to_add_to_template': '点击可将变量添加到模板',
           'open_template_editor': '打开模板编辑器',
         },
