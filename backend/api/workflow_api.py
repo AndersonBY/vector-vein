@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 12:10:20
+# @Last Modified time: 2023-07-06 17:05:45
 import uuid
 import pytz
 from pathlib import Path
@@ -310,15 +310,13 @@ class WorkflowRunRecordAPI:
         sort_field = payload.get("sort_field", "start_time")
         sort_order = payload.get("sort_order", "descend")
         sort_field = getattr(WorkflowRunRecord, sort_field)
+        wid = payload.get("wid", "")
+        status = payload.get("status", [])
         if sort_order == "descend":
             sort_field = sort_field.desc()
-        records = (
-            WorkflowRunRecord.select()
-            .join(Workflow)
-            .where(Workflow.wid == payload.get("wid", None))
-            .order_by(sort_field)
-        )
-        status = payload.get("status", [])
+        records = WorkflowRunRecord.select().join(Workflow).order_by(sort_field)
+        if len(wid) > 0:
+            records = records.where(WorkflowRunRecord.workflow == wid)
         if status:
             records = records.filter(status__in=status)
         records_count = records.count()
