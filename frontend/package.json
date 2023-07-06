@@ -12,22 +12,21 @@
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-python": "^6.1.3",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.14.0",
+    "@codemirror/view": "^6.14.1",
     "@liripeng/vue-audio-player": "^1.5.1",
-    "@milkdown/core": "^7.2.3",
-    "@milkdown/ctx": "^7.2.3",
-    "@milkdown/plugin-listener": "^7.2.3",
-    "@milkdown/preset-commonmark": "^7.2.3",
-    "@milkdown/prose": "^7.2.3",
-    "@milkdown/theme-nord": "^7.2.3",
-    "@milkdown/transformer": "^7.2.3",
-    "@milkdown/vue": "^7.2.3",
+    "@milkdown/core": "^7.2.4",
+    "@milkdown/ctx": "^7.2.4",
+    "@milkdown/plugin-listener": "^7.2.4",
+    "@milkdown/preset-commonmark": "^7.2.4",
+    "@milkdown/prose": "^7.2.4",
+    "@milkdown/theme-nord": "^7.2.4",
+    "@milkdown/transformer": "^7.2.4",
+    "@milkdown/vue": "^7.2.4",
     "@vue-flow/background": "^1.2.0",
     "@vue-flow/controls": "^1.1.0",
     "@vue-flow/minimap": "^1.1.1",
     "@vue-js-cron/ant": "^1.1.3",
-    "ant-design-vue": "4.0.0-rc.5",
-    "axios": "^1.4.0",
+    "ant-design-vue": "4.0.0-rc.6",
     "codemirror": "^6.0.1",
     "echarts": "^5.4.2",
     "file-saver": "^2.0.5",
@@ -46,7 +45,7 @@
     "vue-echarts": "^6.6.0",
     "vue-i18n": "^9.2.2",
     "vue-markdown-render": "^2.0.1",
-    "vue-router": "^4.2.2"
+    "vue-router": "^4.2.3"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.3.2",
@@ -57,6 +56,6 @@
     "eslint-plugin-vue": "^9.15.1",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^4.3.9"
+    "vite": "^4.4.0"
   }
 }
