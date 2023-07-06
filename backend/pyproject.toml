@@ -30,14 +30,14 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.8,<3.12"
-version = "0.0.11"
+version = "0.0.12"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.0.11 -t p"
+build = "python build.py -v 0.0.12 -t p"
 build-debug = "pyinstaller debug.spec --noconfirm"
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.11"}
+dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.12"}
