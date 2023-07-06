@@ -2,7 +2,7 @@
 import { defineComponent, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { ControlOutlined, FieldTimeOutlined, FlagOutlined, PayCircleOutlined } from '@ant-design/icons-vue'
+import { ControlOutlined, FieldTimeOutlined, FlagOutlined, PayCircleOutlined, NumberOutlined } from '@ant-design/icons-vue'
 import { workflowRunRecordAPI } from "@/api/workflow"
 
 defineComponent({
@@ -17,7 +17,24 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  buttonType: {
+    type: String,
+    required: false,
+    default: 'primary',
+  },
+  showWorkflowTitle: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+  openType: {
+    type: String,
+    required: false,
+    default: 'detail', // detail or simple
+  },
 })
+
+const drawerWidth = props.showWorkflowTitle ? '80vw' : '70vw'
 
 const statusColor = {
   NOT_STARTED: 'purple',
@@ -47,32 +64,47 @@ const statusOptions = [
   { text: t('components.workspace.workflowRunRecordsDrawer.status_finished'), value: 'FINISHED' },
   { text: t('components.workspace.workflowRunRecordsDrawer.status_failed'), value: 'FAILED' },
 ]
-const workflowRunRecords = reactive({
-  columns: [{
-    title: t('components.workspace.workflowRunRecordsDrawer.start_time'),
-    key: 'start_time',
-    dataIndex: 'start_time',
-    sorter: true,
-    sortDirections: ['descend', 'ascend'],
-    width: '156px',
-  }, {
-    title: t('components.workspace.workflowRunRecordsDrawer.end_time'),
-    key: 'end_time',
-    dataIndex: 'end_time',
-    sorter: true,
-    sortDirections: ['descend', 'ascend'],
-    width: '156px',
-  }, {
-    title: t('components.workspace.workflowRunRecordsDrawer.status'),
-    key: 'status',
-    dataIndex: 'status',
-    filters: statusOptions,
-    width: '60px',
-  }, {
-    title: t('common.action'),
-    key: 'action',
+const columns = ref([{
+  title: t('components.workspace.workflowRunRecordsDrawer.start_time'),
+  key: 'start_time',
+  dataIndex: 'start_time',
+  sorter: true,
+  sortDirections: ['descend', 'ascend'],
+  width: '156px',
+}, {
+  title: t('components.workspace.workflowRunRecordsDrawer.end_time'),
+  key: 'end_time',
+  dataIndex: 'end_time',
+  sorter: true,
+  sortDirections: ['descend', 'ascend'],
+  width: '156px',
+}, {
+  title: t('components.workspace.workflowRunRecordsDrawer.status'),
+  key: 'status',
+  dataIndex: 'status',
+  filters: statusOptions,
+  width: '60px',
+}, {
+  title: t('components.workspace.workflowRunRecordsDrawer.used_credits'),
+  key: 'used_credits',
+  dataIndex: 'used_credits',
+  sorter: true,
+  sortDirections: ['descend', 'ascend'],
+  width: '100px',
+}, {
+  title: t('common.action'),
+  key: 'action',
+  width: '100px',
+}])
+if (props.showWorkflowTitle) {
+  columns.value.splice(0, 0, {
+    title: t('components.workspace.workflowRunRecordsDrawer.workflow_title'),
+    key: 'workflow_title',
+    dataIndex: 'workflow_title',
     width: '100px',
-  }],
+  })
+}
+const workflowRunRecords = reactive({
   data: [],
   loading: false,
   current: 1,
@@ -114,35 +146,44 @@ const workflowRunRecords = reactive({
   }
 })
 
-const getWorkflowRunRecordDetail = async (rid) => {
+const getWorkflowRunRecordDetail = async (rid, workflow) => {
   loading.value = true
-  const res = await workflowRunRecordAPI('get', {
-    rid: rid
-  })
-  if (res.status == 200) {
-    emit('open-record', res.data)
-    open.value = false
+  if (props.openType == 'detail') {
+    const res = await workflowRunRecordAPI('get', {
+      rid: rid
+    })
+    if (res.status == 200) {
+      emit('open-record', res.data)
+      open.value = false
+    } else {
+      message.error(res.msg)
+    }
   } else {
-    message.error(res.msg)
+    emit('open-record', { rid, wid: workflow.wid })
+    open.value = false
   }
   loading.value = false
 }
 </script>
 
 <template>
-  <a-button type="primary" @click="showDrawer">
+  <a-button :type="props.buttonType" @click="showDrawer">
     {{ t('components.workspace.workflowRunRecordsDrawer.workflows_run_records') }}
   </a-button>
-  <a-drawer :title="t('components.workspace.workflowRunRecordsDrawer.my_workflows_run_records')" width="50vw" :open="open"
-    @close="onClose">
+  <a-drawer :title="t('components.workspace.workflowRunRecordsDrawer.my_workflows_run_records')" :width="drawerWidth"
+    :open="open" @close="onClose">
     <a-spin :spinning="loading">
       <a-row justify="space-between" align="middle">
         <a-col :span="24">
-          <a-table :loading="workflowRunRecords.loading" :columns="workflowRunRecords.columns"
-            :customRow="workflowRunRecords.customRow" :data-source="workflowRunRecords.data"
-            :pagination="workflowRunRecords.pagination" @change="workflowRunRecords.handleTableChange">
+          <a-table :loading="workflowRunRecords.loading" :columns="columns" :customRow="workflowRunRecords.customRow"
+            :data-source="workflowRunRecords.data" :pagination="workflowRunRecords.pagination"
+            @change="workflowRunRecords.handleTableChange">
             <template #headerCell="{ column }">
-              <template v-if="column.key === 'start_time'">
+              <template v-if="column.key === 'workflow_title'">
+                <NumberOutlined />
+                {{ t('components.workspace.workflowRunRecordsDrawer.workflow_title') }}
+              </template>
+              <template v-else-if="column.key === 'start_time'">
                 <FieldTimeOutlined />
                 {{ t('components.workspace.workflowRunRecordsDrawer.start_time') }}
               </template>
@@ -165,14 +206,17 @@ const getWorkflowRunRecordDetail = async (rid) => {
             </template>
 
             <template #bodyCell="{ column, record }">
-              <template v-if="column.key === 'status'">
+              <template v-if="column.key === 'workflow_title'">
+                {{ record.workflow.title }}
+              </template>
+              <template v-else-if="column.key === 'status'">
                 <a-tag :color="statusColor[record.status]">
                   {{ t(`components.workspace.workflowRunRecordsDrawer.status_${record.status.toLowerCase()}`) }}
                 </a-tag>
               </template>
               <template v-else-if="column.key === 'action'">
                 <div class="action-container">
-                  <a-typography-link @click.prevent="getWorkflowRunRecordDetail(record.rid)">
+                  <a-typography-link @click.prevent="getWorkflowRunRecordDetail(record.rid, record.workflow)">
                     <template v-if="record.status === 'FAILED'">
                       {{ t('components.workspace.workflowRunRecordsDrawer.check_record_and_error_task') }}
                     </template>

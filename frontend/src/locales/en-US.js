@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-01 17:43:51
+ * @Last Modified time: 2023-07-06 16:58:21
  */
 export default {
   lang: 'English',
@@ -191,6 +191,7 @@ export default {
       'save_success': 'Save success',
       'save_failed': 'Save failed',
       'get_workflow_failed': 'Get workflow failed',
+      'get_workflow_record_failed': 'Get workflow record failed',
       'submit_workflow_success': 'Submit workflow request success',
       'submit_workflow_failed': 'Submit workflow request failed',
       'run_workflow_success': 'Run workflow success',
@@ -392,6 +393,7 @@ export default {
         'status_failed': 'Failed',
         'check_record': 'Check record',
         'check_record_and_error_task': 'Check record and error task',
+        'workflow_title': 'Workflow title',
       },
     },
     codeEditorModal: {

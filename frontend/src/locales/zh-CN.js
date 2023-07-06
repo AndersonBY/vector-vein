@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-01 17:43:38
+ * @Last Modified time: 2023-07-06 16:58:08
  */
 export default {
   lang: '中文',
@@ -191,6 +191,7 @@ export default {
       'save_success': '保存成功',
       'save_failed': '保存失败',
       'get_workflow_failed': '获取工作流失败',
+      'get_workflow_record_failed': '获取工作流运行记录失败',
       'submit_workflow_success': '已提交工作流运行请求',
       'submit_workflow_failed': '提交工作流运行请求失败',
       'run_workflow_success': '运行工作流成功',
@@ -392,6 +393,7 @@ export default {
         'status_failed': '运行失败',
         'check_record': '查看记录',
         'check_record_and_error_task': '查看记录及错误任务',
+        'workflow_title': '工作流标题',
       },
     },
     codeEditorModal: {

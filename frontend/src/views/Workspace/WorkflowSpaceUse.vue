@@ -18,7 +18,7 @@ import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import { getUIDesignFromWorkflow, hasShowFields, nonFormItemsTypes } from '@/utils/workflow'
-import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
+import { workflowAPI, workflowRunRecordAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
 import { databaseAPI } from "@/api/database"
 
 defineComponent({
@@ -76,6 +76,17 @@ onBeforeMount(async () => {
   triggerNodes.value = reactiveUIDesign.triggerNodes
 
   savedWorkflow.value = JSON.parse(JSON.stringify(currentWorkflow.value))
+
+  if (route.query.rid) {
+    const recordRequest = workflowRunRecordAPI('get', { rid: route.query.rid })
+    const recordResponse = await recordRequest
+    try {
+      setWorkflowRecord(recordResponse.data)
+    } catch (e) {
+      message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+    }
+  }
+
   loading.value = false
 })
 

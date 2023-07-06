@@ -10,6 +10,7 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { workflowAPI, workflowTagAPI } from "@/api/workflow"
 import ShareWorkflowModal from '@/components/workspace/ShareWorkflowModal.vue'
 import NewWorkflowModal from '@/components/workspace/NewWorkflowModal.vue'
+import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import { getWorkflows } from "@/utils/workflow"
 
 defineComponent({
@@ -203,9 +204,13 @@ const clone = async (workflowWid) => {
   }
   const workflow = createResponse.data
   getWorkflows(userWorkflowsStore, true)
-  nextTick(() => {
-    router.push(`/workflow/${workflow.wid}`)
+  nextTick(async () => {
+    await router.push(`/workflow/${workflow.wid}`)
   })
+}
+
+const openRecord = async (record) => {
+  await router.push(`/workflow/${record.wid}?rid=${record.rid}`)
 }
 </script>
 
@@ -223,11 +228,15 @@ const clone = async (workflowWid) => {
             </a-typography-title>
           </a-col>
           <a-col flex="auto" style="display: flex; justify-content: end;">
-            <a-button type="primary" @click="openNewWorkflowModal">
-              <PlusOutlined />
-              {{ t('workspace.workflowSpaceMain.create_workflow') }}
-            </a-button>
-            <NewWorkflowModal ref="newWorkflowModal" @create="add" />
+            <a-space>
+              <a-button type="primary" @click="openNewWorkflowModal">
+                <PlusOutlined />
+                {{ t('workspace.workflowSpaceMain.create_workflow') }}
+              </a-button>
+              <NewWorkflowModal ref="newWorkflowModal" @create="add" />
+              <WorkflowRunRecordsDrawer buttonType="default" openType="simple" :showWorkflowTitle="true"
+                @open-record="openRecord" />
+            </a-space>
           </a-col>
         </a-row>
       </a-col>
