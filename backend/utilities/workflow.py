@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 03:21:22
+# @Last Modified time: 2023-07-07 18:34:10
 from datetime import datetime
 
 from models import WorkflowRunRecord
@@ -134,7 +134,7 @@ class Workflow:
     def get_node(self, node_id: str) -> Node:
         return self.nodes.get(node_id)
 
-    def get_node_field_value(self, node_id: str, field: str):
+    def get_node_field_value(self, node_id: str, field: str, default: str = None):
         """
         如果节点有连接的边，则以边的另一端节点作为输入值，忽略节点自身的value。
         同时将获取到的值更新到节点的value中。
@@ -144,7 +144,7 @@ class Workflow:
         """
         node = self.get_node(node_id)
         if node is None:
-            return None
+            return default
         source_node = source_handle = ""
         for edge in self.edges:
             source_node = self.get_node(edge["source"])
@@ -155,10 +155,10 @@ class Workflow:
                 source_handle = edge["sourceHandle"]
                 break
         else:
-            return node.get_field(field).get("value")
+            return node.get_field(field).get("value", default)
 
         source_node = self.get_node(source_node)
-        input_data = source_node.get_field(source_handle).get("value")
+        input_data = source_node.get_field(source_handle).get("value", default)
         self.update_node_field_value(node_id, field, input_data)
         return input_data
 
