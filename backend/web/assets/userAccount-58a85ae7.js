@@ -1,1 +1,0 @@
-import{aF as e}from"./index-1bad6b01.js";const r=()=>{try{return JSON.parse(localStorage.getItem("userAccount")||"{}")}catch{return{}}},o=e("userAccount",{state:()=>({userAccount:r()}),actions:{setUserAccount(t){this.userAccount=t,localStorage.setItem("userAccount",JSON.stringify(this.userAccount))}}});export{o as u};
