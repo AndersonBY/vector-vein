@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 13:37:59
+# @Last Modified time: 2023-07-07 18:34:28
 import re
 
 import markdown2
@@ -88,8 +88,6 @@ def template_compose(
         fields_values["output"].append(template)
     workflow.update_node_field_value(node_id, "template", fields_values["template"])
 
-    print(fields_values)
-
     if not fields_has_list:
         fields_values["output"] = fields_values["output"][0]
     workflow.update_node_field_value(node_id, "output", fields_values["output"])
@@ -122,8 +120,7 @@ def text_splitters(
         paragraphs = text_splitter.create_documents([text])
     elif split_method == "delimiter":
         delimiter = workflow.get_node_field_value(node_id, "delimiter")
-        delimiter = re.sub(r'\\\\(.)', r'\1', delimiter)
-        text = re.sub(r'\\\\(.)', r'\1', text)
+        delimiter = delimiter.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
         paragraphs = re.split(delimiter, text)
     workflow.update_node_field_value(node_id, "output", paragraphs)
     return workflow.data
@@ -137,8 +134,10 @@ def list_render(
     workflow = Workflow(workflow_data)
     list = workflow.get_node_field_value(node_id, "list")
     output_type = workflow.get_node_field_value(node_id, "output_type")
+    separator = workflow.get_node_field_value(node_id, "separator", "\n")
+    separator = separator.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
     if output_type == "text":
-        output_text = "\n".join(list)
+        output_text = separator.join(list)
     elif output_type == "list":
         output_text = list
     workflow.update_node_field_value(node_id, "output", output_text)

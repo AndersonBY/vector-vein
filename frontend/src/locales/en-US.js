@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-06 16:58:21
+ * @Last Modified time: 2023-07-07 18:23:01
  */
 export default {
   lang: 'English',
@@ -466,6 +466,7 @@ export default {
           'description': 'Render the list into text.',
           'list': 'List',
           'add_item': 'Add item',
+          'separator': 'Merge item separator',
           'output_type': 'Output type',
           'output_type_text': 'Text',
           'output_type_list': 'List',

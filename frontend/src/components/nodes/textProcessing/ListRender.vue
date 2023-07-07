@@ -40,6 +40,20 @@ const props = defineProps({
         "list": true,
         "field_type": "list"
       },
+      "separator": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": "\\n",
+        "password": false,
+        "name": "separator",
+        "display_name": "separator",
+        "type": "str",
+        "clear_after_run": true,
+        "list": true,
+        "field_type": "input"
+      },
       "output_type": {
         "required": true,
         "placeholder": "",
@@ -112,6 +126,22 @@ if (!fieldsData.value.output_type) {
     "field_type": "select"
   }
 }
+if (!fieldsData.value.separator) {
+  fieldsData.value.separator = {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "multiline": true,
+    "value": "\\n",
+    "password": false,
+    "name": "separator",
+    "display_name": "separator",
+    "type": "str",
+    "clear_after_run": true,
+    "list": true,
+    "field_type": "input"
+  }
+}
 fieldsData.value.output_type.options = fieldsData.value.output_type.options.map(item => {
   item.label = t(`components.nodes.textProcessing.ListRender.output_type_${item.value}`)
   return item
@@ -133,6 +163,14 @@ const deleteNode = () => {
           <ListField id="list" :name="t('components.nodes.textProcessing.ListRender.list')" required type="target"
             v-model:value="fieldsData.list.value" v-model:show="fieldsData.list.show">
           </ListField>
+        </a-col>
+
+        <a-col :span="24" v-if="fieldsData.output_type.value == 'text'">
+          <BaseField id="separator" :name="t('components.nodes.textProcessing.ListRender.separator')" required
+            type="target" v-model:show="fieldsData.separator.show">
+            <a-input style="width: 100%;" class="field-content" v-model:value="fieldsData.separator.value"
+              :placeholder="fieldsData.separator.placeholder" />
+          </BaseField>
         </a-col>
 
         <a-col :span="24">
