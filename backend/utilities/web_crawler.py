@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-04 01:41:57
+# @Last Modified time: 2023-07-07 17:50:34
 import re
 import json
 import time
@@ -95,6 +95,7 @@ def crawl_text_from_url(url: str):
         content = soup.select_one(".RichContent-inner")
         for style in content.select("style"):
             style.decompose()
+        content = str(content)
         content = clean_markdown(markdownify(content))
         result = {
             "title": soup.select_one(".QuestionHeader-title").text.strip(),
