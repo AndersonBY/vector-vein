@@ -2,13 +2,13 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-07 18:22:50
+ * @Last Modified time: 2023-07-12 00:41:12
  */
 export default {
   lang: '中文',
   meta: {
     'title': '向量脉络',
-    'description': '基于AI的知识库+工作流管理系统',
+    'description': '基于 AI 的知识库 + 工作流管理系统',
   },
   router: {
     base: '向量脉络',
@@ -299,7 +299,7 @@ export default {
         'save': '保存设置',
         'save_success': '保存成功',
         'my_setting': '我的设置',
-        'openai_api_type': 'OpenAI API类型',
+        'openai_api_type': 'OpenAI API 类型',
         'openai': 'OpenAI',
         'azure': 'Azure',
         'openai_api_key': 'OpenAI API Key',
@@ -327,12 +327,12 @@ export default {
         'update_available': '有新版本可用',
         'new_version': '新版本 {version} {releaseDatetime}',
         'about_vectorvein': '关于向量脉络',
-        'about_vectorvein_description': '### 利用AI的力量构建您的自动化工作流程\n#### 无需编程，只需拖拽即可创建强大的工作流，自动化所有任务。\n\n向量脉络（VectorVein）开源版由Maker毕开发，可用于个人使用，不可用于商业使用。',
+        'about_vectorvein_description': '### 利用 AI 的力量构建您的自动化工作流程\n#### 无需编程，只需拖拽即可创建强大的工作流，自动化所有任务。\n\n向量脉络（VectorVein）开源版由 Maker毕 开发，可用于个人使用，不可用于商业使用。',
       },
     },
     markdownEditor: {
       'raw_text': '无格式文本',
-      'markdown_text': 'Markdown文本',
+      'markdown_text': 'Markdown 文本',
     },
     workspace: {
       workflowEditor: {
@@ -344,7 +344,7 @@ export default {
       uiDesign: {
         'typography-paragraph': {
           'title': '文字内容',
-          'placeholder': '支持Markdown语法，在使用界面中会被直接渲染',
+          'placeholder': '支持 Markdown 语法，在使用界面中会被直接渲染',
           'tip': '可用于在使用界面中放置提示性信息',
         }
       },
@@ -356,7 +356,7 @@ export default {
         'uploader_hint': '目前支持的文件类型：{fileTypes}',
       },
       mindmapRenderer: {
-        'download_svg': '下载SVG',
+        'download_svg': '下载 SVG',
       },
       echartsRenderer: {
         'download_image': '下载图片',
@@ -371,7 +371,7 @@ export default {
         'brief': '描述',
         'brief_min_require': '描述至少{count}个字符',
         'brief_hint1': '介绍该工作流的用途、输入输出等信息，以便其他用户更好地了解该工作流。',
-        'brief_hint2': '支持Markdown格式。',
+        'brief_hint2': '支持 Markdown 格式。',
         'share_to_community': '分享到社区',
         'share_to_community_brief': '分享到社区后，其他用户可以在社区中搜索到该工作流。否则仅可通过分享链接访问。',
         'share_success': '分享成功',
@@ -445,8 +445,8 @@ export default {
           'open_template_editor': '打开模板编辑器',
         },
         MarkdownToHtml: {
-          'title': 'Markdown转HTML',
-          'description': '将Markdown格式的文本转换为HTML格式。',
+          'title': 'MD 转 HTML',
+          'description': '将 Markdown 格式的文本转换为 HTML 格式。',
           'markdown': 'Markdown',
           'html': 'HTML',
         },
@@ -457,6 +457,7 @@ export default {
           'split_method': '分割方法',
           'split_method_general': '通用分割',
           'split_method_delimiter': '分隔符分割',
+          'split_method_markdown': 'Markdown 分割',
           'delimiter': '分隔符',
           'chunk_length': '分割长度',
           'output': '输出',
@@ -483,10 +484,10 @@ export default {
         title: 'AI模型',
         OpenAI: {
           'title': 'OpenAI',
-          'description': 'OpenAI是一个非营利性的研究机构，致力于推动人工智能的安全发展。OpenAI的研究团队由世界顶级的人工智能专家组成，他们致力于开发人工智能技术，以解决人类面临的最重要的挑战。',
+          'description': 'OpenAI 是一个非营利性的研究机构，致力于推动人工智能的安全发展。OpenAI 的研究团队由世界顶级的人工智能专家组成，他们致力于开发人工智能技术，以解决人类面临的最重要的挑战。',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
-          'temperature': 'AI偏好（温度）',
+          'temperature': 'AI 偏好（温度）',
           'creative': '创意',
           'balanced': '平衡',
           'precise': '精准',
@@ -494,10 +495,10 @@ export default {
         },
         ChatGLM: {
           'title': 'ChatGLM',
-          'description': 'ChatGLM系列模型，通过注入代码预训练，有监督微调等技术对齐人类意图，具备问答、多轮对话、代码生成等能力。',
+          'description': 'ChatGLM 系列模型，通过注入代码预训练，有监督微调等技术对齐人类意图，具备问答、多轮对话、代码生成等能力。',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
-          'temperature': 'AI偏好（温度）',
+          'temperature': 'AI 偏好（温度）',
           'creative': '创意',
           'balanced': '平衡',
           'precise': '精准',
@@ -508,7 +509,7 @@ export default {
         title: '图像生成',
         StableDiffusion: {
           'title': 'Stable Diffusion',
-          'description': 'Stable Diffusion是2022年发布的深度学习文本到图像生成模型。',
+          'description': 'Stable Diffusion 是2022年发布的深度学习文本到图像生成模型。',
           'prompt': '提示词',
           'negative_prompt': '负面提示词',
           'model': '模型',
@@ -530,7 +531,7 @@ export default {
           'description': '用于在用户使用界面呈现文本。',
           'text': '文本内容',
           'output_title': '文本标题（用于在使用界面区分模块）',
-          'render_markdown': '渲染Markdown',
+          'render_markdown': '渲染 Markdown',
           'output': '输出',
         },
         Email: {
@@ -544,7 +545,7 @@ export default {
           'title': '文档',
           'description': '用于生成文档文件。',
           'file_name': '文件名',
-          'content': '内容（文本类建议输入Markdown格式内容）',
+          'content': '内容（文本类建议输入 Markdown 格式内容）',
           'export_type': '文档类型',
           'output_type': '输出类型',
           'output_type_only_path': '仅生成文件路径',
@@ -567,23 +568,23 @@ export default {
         Mindmap: {
           'title': '思维导图',
           'description': '用于生成思维导图。',
-          'content': 'Markdown内容',
+          'content': 'Markdown 内容',
           'show_mind_map': '显示思维导图',
           'output_type': '输出类型',
           'output': '输出',
         },
         Mermaid: {
           'title': 'Mermaid',
-          'description': '用于生成Mermaid图表。',
-          'content': 'Mermaid内容',
-          'show_mermaid': '显示Mermaid',
+          'description': '用于生成 Mermaid 图表。',
+          'content': 'Mermaid 内容',
+          'show_mermaid': '显示 Mermaid',
           'output_type': '输出类型',
           'output': '输出',
         },
         Echarts: {
           'title': '图表',
-          'description': '用于生成Echarts图表。',
-          'option': 'Echarts配置项',
+          'description': '用于生成 Echarts 图表。',
+          'option': 'Echarts 配置项',
           'show_echarts': '显示图表',
           'output_type': '输出类型',
           'output': '输出',
@@ -604,8 +605,8 @@ export default {
         },
         BilibiliCrawler: {
           'title': 'Bilibili爬虫',
-          'description': '用于爬取Bilibili视频信息。',
-          'url_or_bvid': '视频网址或BVID',
+          'description': '用于爬取 Bilibili 视频信息。',
+          'url_or_bvid': '视频网址或 BVID',
           'output_type': '输出类型',
           'str': '文本',
           'list': '列表',
@@ -614,8 +615,8 @@ export default {
         },
         YoutubeCrawler: {
           'title': 'Youtube爬虫',
-          'description': '用于爬取Youtube视频信息。',
-          'url_or_video_id': '视频网址或视频ID',
+          'description': '用于爬取 Youtube 视频信息。',
+          'url_or_video_id': '视频网址或视频 ID',
           'output_type': '输出类型',
           'str': '文本',
           'list': '列表',
@@ -660,7 +661,7 @@ export default {
         DeleteData: {
           'title': '删除数据',
           'description': '用于向向量数据库中删除数据。',
-          'object_id': '数据对象ID',
+          'object_id': '数据对象 ID',
           'database': '数据库',
           'delete_success': '删除成功',
         },

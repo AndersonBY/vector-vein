@@ -54,6 +54,10 @@ const props = defineProps({
           {
             "value": "delimiter",
             "label": "delimiter"
+          },
+          {
+            "value": "markdown",
+            "label": "markdown"
           }
         ],
         "name": "split_method",
@@ -162,7 +166,7 @@ const deleteNode = () => {
           </BaseField>
         </a-col>
 
-        <a-col :span="24" v-if="fieldsData.split_method.value == 'general'">
+        <a-col :span="24" v-if="['general', 'markdown'].includes(fieldsData.split_method.value)">
           <BaseField id="chunk_length" :name="t('components.nodes.textProcessing.TextSplitters.chunk_length')" required
             type="target" v-model:show="fieldsData.chunk_length.show">
             <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.chunk_length.value"

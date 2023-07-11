@@ -2,13 +2,13 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-07 18:34:28
+# @Last Modified time: 2023-07-12 00:36:26
 import re
 
 import markdown2
 
 from utilities.workflow import Workflow
-from utilities.text_splitter import TokenTextSplitter
+from utilities.text_splitter import TokenTextSplitter, MarkdownTextSplitter
 from worker.tasks import task
 
 
@@ -122,6 +122,10 @@ def text_splitters(
         delimiter = workflow.get_node_field_value(node_id, "delimiter")
         delimiter = delimiter.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
         paragraphs = re.split(delimiter, text)
+    elif split_method == "markdown":
+        chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
+        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=30)
+        paragraphs = text_splitter.create_documents([text])
     workflow.update_node_field_value(node_id, "output", paragraphs)
     return workflow.data
 
