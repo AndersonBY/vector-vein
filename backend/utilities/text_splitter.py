@@ -2,12 +2,14 @@
 # @Author: Langchain
 # @Date:   2023-07-11 13:09:08
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-12 00:35:38
+# @Last Modified time: 2023-07-14 01:33:45
 """Functionality for splitting text. Modified from langchain."""
 from __future__ import annotations
 
-import copy
 import re
+import io
+import csv
+import copy
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -1007,3 +1009,37 @@ class LatexTextSplitter(RecursiveCharacterTextSplitter):
         """Initialize a LatexTextSplitter."""
         separators = self.get_separators_for_language(Language.LATEX)
         super().__init__(separators=separators, **kwargs)
+
+
+def general_split_text(text: str, rules: dict):
+    split_method = rules.get("split_method", "general")
+    chunk_length = rules.get("chunk_length", 1000)
+    chunk_overlap = rules.get("chunk_overlap", 30)
+    model_name = rules.get("model_name", "gpt-3.5-turbo")
+    delimiter = rules.get("delimiter", "\n")
+    remove_url_and_email = rules.get("remove_url_and_email", False)
+
+    if remove_url_and_email:
+        text = re.sub(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", "", text)
+        text = re.sub(r"https?://[\w\d\.-]+", "", text)
+
+    if split_method == "general":
+        text_splitter = TokenTextSplitter(
+            chunk_size=chunk_length,
+            chunk_overlap=chunk_overlap,
+            model_name=model_name,
+        )
+        paragraphs = text_splitter.create_documents([text])
+    elif split_method == "delimiter":
+        delimiter = delimiter.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
+        paragraphs = re.split(delimiter, text)
+    elif split_method == "markdown":
+        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=chunk_overlap)
+        paragraphs = text_splitter.create_documents([text])
+    elif split_method == "table":
+        reader = csv.DictReader(io.StringIO(text))
+        paragraphs = []
+        for row in reader:
+            paragraphs.append("\n".join([f"{key}: {value}" for key, value in row.items()]))
+
+    return [{"index": index, "text": paragraph, "word_counts": len(paragraph)} for index, paragraph in enumerate(paragraphs)]

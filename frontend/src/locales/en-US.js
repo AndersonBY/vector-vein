@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-12 00:37:46
+ * @Last Modified time: 2023-07-14 01:25:49
  */
 export default {
   lang: 'English',
@@ -25,6 +25,8 @@ export default {
         'workflow_use': 'Workflow use',
         'workflow_template': 'Workflow template',
         'database_detail': 'Database detail',
+        'database_object_create': 'Database object create',
+        'database_object_detail': 'Database object detail',
       }
     },
     account: {
@@ -51,6 +53,7 @@ export default {
     'all': 'All',
     'add': 'Add',
     'create': 'Create',
+    'delete': 'Delete',
     'status': 'Status',
     'tags': 'Tags',
     'action': 'Action',
@@ -74,6 +77,8 @@ export default {
     'update_time': 'Update time',
     'update_time_format': 'Update time: {time}',
     'back': 'Back',
+    'previous_step': 'Previous step',
+    'next_step': 'Next step',
   },
   email: {
     verify: {
@@ -245,7 +250,7 @@ export default {
       'create': 'Create',
       'create_success': 'Create success',
       'create_failed': 'Create failed',
-      'databaseName': 'Database name',
+      'database_name': 'Database name',
       'status_invalid': 'Invalid',
       'status_expired': 'Expired',
       'status_deleted': 'Deleted',
@@ -285,6 +290,51 @@ export default {
       'data_type_OTHER': 'Other',
       'delete_confirm': 'Confirm to delete this data?',
       'delete': 'Delete',
+    },
+    databaseObjectCreate: {
+      'add_object': 'Add object',
+      'add_method': 'Add method',
+      'add_method_url': 'Add from url',
+      'add_method_files': 'Upload files',
+      'add_method_text': 'Input text',
+      'split_method': 'Split method',
+      'split_method_general': 'General split',
+      'split_method_delimeter': 'Delimeter split',
+      'split_method_markdown': 'Markdown split',
+      'split_method_table': 'Table split',
+      'chunk_length': 'Chunk length',
+      'remove_url_and_email': 'Remove url and email',
+      'use_oversea_crawler': 'Use oversea crawler',
+      'object_source_url': 'Object source url',
+      'object_files': 'Object files',
+      'object_title': 'Object title',
+      'object_content': 'Object content',
+      'process_rules': 'Process rules',
+      'delimiter': 'Delimiter',
+      'finish': 'Finish',
+      'content_empty': 'Content empty!',
+      'create_success': 'Add success',
+      'create_failed': 'Add failed',
+      question: {
+        'chunk_length': {
+          '1': 'The chunk length means that the text is divided into segments according to how long it is, for example, 1000 means that every 1000 characters are divided into one segment.',
+          '2': 'The vector database will find the most relevant paragraph and return it when searching.',
+          '3': 'Note that the paragraph length here is not strictly followed, but is roughly close.',
+        },
+      },
+    },
+    databaseObjectDetail: {
+      'source_url': 'Source link',
+      'segments': 'Segments',
+      'full_document': 'Full document',
+      'params_info': 'Params info',
+      'segment_index': 'Index',
+      'segment_text': 'Text',
+      'segment_keywords': 'Keywords',
+      'segment_tokens': 'Tokens',
+      'segment_word_counts': 'Counts',
+      'paragraph_counts': 'Paragraph counts',
+      'word_counts': 'Word counts',
     },
   },
   components: {

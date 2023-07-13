@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-27 13:59:10
+# @Last Modified time: 2023-07-14 01:28:49
 from pathlib import Path
 
 from models import (
@@ -14,7 +14,7 @@ from models import (
 from api.utils import get_user_object_general
 from utilities.files import get_files_contents
 from utilities.web_crawler import crawl_text_from_url
-from utilities.text_splitter import TokenTextSplitter
+from utilities.text_splitter import general_split_text
 from utilities.embeddings import get_embedding_from_open_ai
 
 
@@ -98,6 +98,7 @@ class DatabaseObjectAPI:
         add_method = payload.get("add_method", "")
         files = payload.get("files", [])
         content = payload.get("content", "")
+        process_rules = payload.get("process_rules", {})
 
         vector_database = UserVectorDatabase.get(vid=payload.get("vid"))
         object_oids = []
@@ -147,10 +148,9 @@ class DatabaseObjectAPI:
 
         setting = Setting.select().order_by(Setting.create_time.desc()).first()
         for user_object in user_objects:
-            text_splitter = TokenTextSplitter(chunk_size=500, chunk_overlap=30, model_name="gpt-3.5-turbo")
-            paragraphs = text_splitter.create_documents([user_object.raw_data["text"]])
+            paragraphs = general_split_text(user_object.raw_data["text"], process_rules)
             for paragraph in paragraphs:
-                paragraph_embedding = get_embedding_from_open_ai(paragraph, setting.data)
+                paragraph_embedding = get_embedding_from_open_ai(paragraph["text"], setting.data)
                 self.vdb_queues["request"].put(
                     {
                         "function_name": "add_point",
@@ -158,13 +158,18 @@ class DatabaseObjectAPI:
                             vid=vector_database.vid.hex,
                             point={
                                 "object_id": user_object.oid.hex,
-                                "text": paragraph,
+                                "text": paragraph["text"],
                                 "embedding_type": user_object.data_type.lower(),
                                 "embedding": paragraph_embedding,
                             },
                         ),
                     }
                 )
+
+            user_object.info["word_counts"] = sum([paragraph["word_counts"] for paragraph in paragraphs])
+            user_object.info["paragraph_counts"] = len(paragraphs)
+            user_object.info["process_rules"] = process_rules
+            user_object.raw_data["segments"] = paragraphs
             user_object.status = "VA"
             user_object.save()
         user_object = model_serializer(user_object)

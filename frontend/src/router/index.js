@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-05 01:38:00
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-19 03:17:12
+ * @Last Modified time: 2023-07-13 02:15:54
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
@@ -81,6 +81,22 @@ const routes = [
               title: 'router.workspace.children.database_detail',
             },
             component: () => import('@/views/Workspace/DatabaseDetail.vue')
+          },
+          {
+            path: ':databaseId/create',
+            name: 'DatabaseObjectCreate',
+            meta: {
+              title: 'router.workspace.children.database_detail',
+            },
+            component: () => import('@/views/Workspace/DatabaseObjectCreate.vue')
+          },
+          {
+            path: ':databaseId/object/:objectId',
+            name: 'DatabaseObjectDetail',
+            meta: {
+              title: 'router.workspace.children.database_object_detail',
+            },
+            component: () => import('@/views/Workspace/DatabaseObjectDetail.vue')
           },
         ]
       },

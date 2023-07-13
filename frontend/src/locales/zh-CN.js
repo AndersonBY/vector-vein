@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-12 00:41:12
+ * @Last Modified time: 2023-07-14 01:25:57
  */
 export default {
   lang: '中文',
@@ -25,6 +25,8 @@ export default {
         'workflow_use': '工作流使用',
         'workflow_template': '工作流模板',
         'database_detail': '数据库详情',
+        'database_object_create': '创建对象',
+        'database_object_detail': '数据库对象详情',
       }
     },
     account: {
@@ -51,6 +53,7 @@ export default {
     'all': '全部',
     'add': '添加',
     'create': '创建',
+    'delete': '删除',
     'status': '状态',
     'tags': '标签',
     'action': '操作',
@@ -74,6 +77,8 @@ export default {
     'update_time': '更新时间',
     'update_time_format': '更新时间: {time}',
     'back': '返回',
+    'previous_step': '上一步',
+    'next_step': '下一步',
   },
   email: {
     verify: {
@@ -245,7 +250,7 @@ export default {
       'create': '新建',
       'create_success': '创建成功',
       'create_failed': '创建失败',
-      'databaseName': '数据库名称',
+      'database_name': '数据库名称',
       'status_invalid': '无效',
       'status_expired': '已过期',
       'status_deleted': '已删除',
@@ -286,12 +291,57 @@ export default {
       'delete_confirm': '确认删除该数据？',
       'delete': '删除',
     },
+    databaseObjectCreate: {
+      'add_object': '添加数据',
+      'add_method': '添加方式',
+      'add_method_url': '从链接抓取',
+      'add_method_files': '上传文件',
+      'add_method_text': '输入文本',
+      'split_method': '分割方式',
+      'split_method_general': '通用分割',
+      'split_method_delimeter': '分隔符分割',
+      'split_method_markdown': 'Markdown 分割',
+      'split_method_table': '表格分割',
+      'chunk_length': '分段长度',
+      'remove_url_and_email': '移除链接和邮箱',
+      'use_oversea_crawler': '使用海外爬虫节点',
+      'object_source_url': '来源链接',
+      'object_files': '文件',
+      'object_title': '数据名称',
+      'object_content': '数据内容',
+      'process_rules': '处理规则',
+      'delimiter': '分隔符',
+      'finish': '完成',
+      'content_empty': '内容为空！',
+      'create_success': '添加成功',
+      'create_failed': '添加失败',
+      question: {
+        'chunk_length': {
+          '1': '分段长度表示将文本按照多长进行分段，比如 1000 表示每 1000 个字符分成一段。',
+          '2': '向量数据库在进行搜索时会找到最相关的段落返回回来。',
+          '3': '注意这里的分段长度不是严格遵守的，而是大致接近。',
+        },
+      },
+    },
+    databaseObjectDetail: {
+      'source_url': '来源链接',
+      'segments': '分段内容',
+      'full_document': '完整文档',
+      'params_info': '参数信息',
+      'segment_index': '分段索引',
+      'segment_text': '文本',
+      'segment_keywords': '关键词',
+      'segment_tokens': 'Token 数',
+      'segment_word_counts': '字符数',
+      'paragraph_counts': '段落数',
+      'word_counts': '字符数',
+    },
   },
   components: {
     layout: {
       basicHeader: {
         'workflow_space': '工作流',
-        'data_space': '数据',
+        'data_space': '数据集',
       },
       settingDrawer: {
         'open': '打开设置',
