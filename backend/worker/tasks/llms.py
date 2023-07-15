@@ -2,19 +2,23 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-21 01:45:42
+# @Last Modified time: 2023-07-15 17:36:58
 from typing import Union
 
 import httpx
 import openai
 
 from utilities.workflow import Workflow
+from utilities.embeddings import get_token_counts
 from utilities.web_crawler import proxies, proxies_for_requests
 from worker.tasks import task
 
 
-model_name_map = {
-    "gpt-3.5": "gpt-3.5-turbo",
+model_max_tokens_map = {
+    "gpt-3.5-turbo": 4096,
+    "gpt-3.5-turbo-16k": 16384,
+    "gpt-4": 8192,
+    "gpt-4-32k": 32768,
 }
 
 
@@ -32,11 +36,14 @@ def open_ai(
         openai.api_base = workflow.setting.get("openai_api_base")
         openai.api_version = "2023-03-15-preview"
         engine_model_param = {"engine": workflow.setting.get("openai_chat_engine")}
+        model_max_tokens = 4096
     else:
         openai.api_type = "open_ai"
         openai.api_base = workflow.setting.get("openai_api_base", "https://api.openai.com/v1")
         openai.api_version = None
-        engine_model_param = {"model": model_name_map.get(workflow.get_node_field_value(node_id, "llm_model"))}
+        model = workflow.get_node_field_value(node_id, "llm_model")
+        engine_model_param = {"model": model}
+        model_max_tokens = model_max_tokens_map[model]
     openai.api_key = workflow.setting.get("openai_api_key")
     openai.proxy = proxies_for_requests
 
@@ -53,11 +60,13 @@ def open_ai(
                 "content": prompt,
             },
         ]
+        token_counts = get_token_counts(prompt)
+        max_tokens = model_max_tokens - token_counts - 50
         response = openai.ChatCompletion.create(
             **engine_model_param,
             messages=messages,
             temperature=temperature,
-            max_tokens=2048,
+            max_tokens=max_tokens,
             top_p=0.77,
         )
         result = response.choices[0].message.content
