@@ -85,13 +85,6 @@ const columns = ref([{
   filters: statusOptions,
   width: '60px',
 }, {
-  title: t('components.workspace.workflowRunRecordsDrawer.used_credits'),
-  key: 'used_credits',
-  dataIndex: 'used_credits',
-  sorter: true,
-  sortDirections: ['descend', 'ascend'],
-  width: '100px',
-}, {
   title: t('common.action'),
   key: 'action',
   width: '100px',
