@@ -2,8 +2,19 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:15:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-19 14:19:36
+# @Last Modified time: 2023-07-15 16:48:35
 import openai
+import tiktoken
+
+
+chatgpt_encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
+
+
+def get_token_counts(text: str, model: str = "gpt-3.5-turbo") -> int:
+    if model == "gpt-3.5-turbo":
+        return len(chatgpt_encoding.encode(text))
+    else:
+        return len(chatgpt_encoding.encode(text))
 
 
 def get_embedding_from_open_ai(text: str, setting: dict = None):
