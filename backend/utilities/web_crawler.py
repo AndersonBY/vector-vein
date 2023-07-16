@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-07 17:50:34
+# @Last Modified time: 2023-07-16 14:07:34
 import re
 import json
 import time
@@ -14,7 +14,7 @@ from Crypto.Util.Padding import unpad
 import httpx
 from bs4 import BeautifulSoup
 from readability import Document
-from markdownify import markdownify
+from markdownify import MarkdownConverter, chomp
 
 from utilities.print_utils import mprint, mprint_error
 
@@ -44,6 +44,24 @@ def decrypt_aes_ecb_base64(ciphertext_base64, key):
     cipher = AES.new(key, AES.MODE_ECB)
     ciphertext = base64.b64decode(ciphertext_base64)
     return unpad(cipher.decrypt(ciphertext), AES.block_size).decode("utf-8")
+
+
+class CustomMarkdownConverter(MarkdownConverter):
+    def convert_b(self, el, text, convert_as_inline):
+        return self.custom_bold_conversion(el, text, convert_as_inline)
+
+    convert_strong = convert_b
+
+    def custom_bold_conversion(self, el, text, convert_as_inline):
+        markup = 2 * self.options["strong_em_symbol"]
+        prefix, suffix, text = chomp(text)
+        if not text:
+            return ""
+        return "%s%s%s%s%s " % (prefix, markup, text, markup, suffix)
+
+
+def markdownify(html, **options):
+    return CustomMarkdownConverter(**options).convert(html)
 
 
 def clean_markdown(text: str):
