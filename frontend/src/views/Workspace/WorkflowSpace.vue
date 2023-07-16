@@ -18,7 +18,7 @@
               </span>
             </template>
             <a-menu-item :key="workflow.wid" v-for="workflow in userFastAccessWorkflows">
-              <a-tooltip placement="right" :title="workflow.title">
+              <a-tooltip placement="topLeft" :title="workflow.title">
                 <router-link :to="`/workflow/${workflow.wid}`">
                   {{ workflow.title }}
                 </router-link>
