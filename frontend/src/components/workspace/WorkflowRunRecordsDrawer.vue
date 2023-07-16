@@ -83,7 +83,7 @@ const columns = ref([{
   key: 'status',
   dataIndex: 'status',
   filters: statusOptions,
-  width: '60px',
+  width: '150px',
 }, {
   title: t('common.action'),
   key: 'action',
@@ -94,7 +94,6 @@ if (props.showWorkflowTitle) {
     title: t('components.workspace.workflowRunRecordsDrawer.workflow_title'),
     key: 'workflow_title',
     dataIndex: 'workflow_title',
-    width: '100px',
   })
 }
 const workflowRunRecords = reactive({

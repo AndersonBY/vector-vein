@@ -17,11 +17,14 @@
                 {{ t('workspace.workflowSpace.user_fast_access_workflows') }}
               </span>
             </template>
-            <a-menu-item :key="workflow.wid" v-for="workflow in userFastAccessWorkflows">
-              <router-link :to="`/workflow/${workflow.wid}`">
-                {{ workflow.title }}
-              </router-link>
-            </a-menu-item>
+            <a-tooltip placement="right" :title="workflow.title" :key="workflow.wid"
+              v-for="workflow in userFastAccessWorkflows">
+              <a-menu-item>
+                <router-link :to="`/workflow/${workflow.wid}`">
+                  {{ workflow.title }}
+                </router-link>
+              </a-menu-item>
+            </a-tooltip>
 
             <a-menu-item key="add" @click="openNewWorkflowModal">
               + {{ t('workspace.workflowSpace.add_new_workflow') }}
