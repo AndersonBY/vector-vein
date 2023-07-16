@@ -209,12 +209,7 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
               <template v-else-if="column.key === 'action'">
                 <div class="action-container">
                   <a-typography-link @click.prevent="getWorkflowRunRecordDetail(record.rid, record.workflow)">
-                    <template v-if="record.status === 'FAILED'">
-                      {{ t('components.workspace.workflowRunRecordsDrawer.check_record_and_error_task') }}
-                    </template>
-                    <template v-else>
-                      {{ t('components.workspace.workflowRunRecordsDrawer.check_record') }}
-                    </template>
+                    {{ t('components.workspace.workflowRunRecordsDrawer.check_record') }}
                   </a-typography-link>
                 </div>
               </template>
