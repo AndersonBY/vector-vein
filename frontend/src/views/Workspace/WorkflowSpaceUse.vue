@@ -331,7 +331,7 @@ const openLocalFile = (file) => {
       <a-col>
         <a-space>
           <WorkflowRunRecordsDrawer :workflowId="workflowId" @open-record="setWorkflowRecord" />
-          <a-button type="primary" @click="openEditor">
+          <a-button @click="openEditor">
             {{ t('workspace.workflowSpace.edit') }}
           </a-button>
           <a-popconfirm placement="leftTop" :title="t('workspace.workflowSpace.delete_confirm')"
