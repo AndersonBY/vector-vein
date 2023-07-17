@@ -106,7 +106,7 @@ const deleteNode = () => {
 
 <template>
   <BaseNode :title="t('components.nodes.llms.ChatGLM.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/language-models#h2-0" @delete="deleteNode">
+    documentLink="https://vectorvein.com/help/docs/language-models#h2-4" @delete="deleteNode">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">
