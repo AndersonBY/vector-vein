@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-17 17:18:17
+ * @Last Modified time: 2023-07-17 19:24:28
  */
 export default {
   lang: 'English',
@@ -530,6 +530,17 @@ export default {
           'title': 'Text in/out',
           'description': 'Output the input text as it is. Used when the same text is needed in multiple places.',
           'text': 'Text',
+          'output': 'Output',
+        },
+        TextTruncation: {
+          'title': 'Text truncation',
+          'description': 'Truncate the text to the specified length.',
+          'text': 'Text',
+          'truncate_method': 'Truncate method',
+          'truncate_method_general': 'General truncation',
+          'truncate_method_markdown': 'Markdown truncation',
+          'truncate_length': 'Truncate length',
+          'floating_range': 'Floating range',
           'output': 'Output',
         },
       },

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-17 17:17:58
+ * @Last Modified time: 2023-07-17 19:31:25
  */
 export default {
   lang: '中文',
@@ -530,6 +530,17 @@ export default {
           'title': '文本输入输出',
           'description': '将输入的文本原样输出。用于多个地方需要同样的文本时。',
           'text': '文本',
+          'output': '输出',
+        },
+        TextTruncation: {
+          'title': '文本截断',
+          'description': '将文本截取为指定长度。',
+          'text': '文本',
+          'truncate_method': '截取方法',
+          'truncate_method_general': '通用截取',
+          'truncate_method_markdown': 'Markdown 截取',
+          'truncate_length': '截取长度',
+          'floating_range': '浮动范围',
           'output': '输出',
         },
       },

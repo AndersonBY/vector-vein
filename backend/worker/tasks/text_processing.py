@@ -2,13 +2,18 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-12 00:36:26
+# @Last Modified time: 2023-07-17 20:06:38
 import re
 
 import markdown2
 
 from utilities.workflow import Workflow
-from utilities.text_splitter import TokenTextSplitter, MarkdownTextSplitter
+from utilities.text_splitter import (
+    TokenTextSplitter,
+    MarkdownTextSplitter,
+    RecursiveCharacterTextSplitter,
+    Language,
+)
 from worker.tasks import task
 
 
@@ -101,8 +106,19 @@ def markdown_to_html(
 ):
     workflow = Workflow(workflow_data)
     markdown = workflow.get_node_field_value(node_id, "markdown")
-    html = markdown2.markdown(markdown, extras=["fenced-code-blocks"])
-    workflow.update_node_field_value(node_id, "html", html)
+    if isinstance(markdown, list):
+        markdowns = markdown
+    else:
+        markdowns = [markdown]
+    htmls = []
+    for markdown in markdowns:
+        html = markdown2.markdown(markdown, extras=["fenced-code-blocks"])
+        htmls.append(html)
+    if isinstance(markdown, list):
+        final_output = htmls
+    else:
+        final_output = htmls[0]
+    workflow.update_node_field_value(node_id, "html", final_output)
     return workflow.data
 
 
@@ -156,4 +172,46 @@ def text_in_out(
     workflow = Workflow(workflow_data)
     text = workflow.get_node_field_value(node_id, "text")
     workflow.update_node_field_value(node_id, "output", text)
+    return workflow.data
+
+
+@task
+def text_truncation(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    text = workflow.get_node_field_value(node_id, "text")
+    truncate_length = workflow.get_node_field_value(node_id, "truncate_length")
+    floating_range = workflow.get_node_field_value(node_id, "floating_range")
+    separators = RecursiveCharacterTextSplitter.get_separators_for_language(Language.MARKDOWN)
+    if isinstance(text, str):
+        texts = [text]
+    else:
+        texts = text
+    outputs = []
+    for text in texts:
+        if len(text) <= truncate_length:
+            outputs.append(text)
+            continue
+
+        if floating_range <= 0:
+            outputs.append(text[:truncate_length])
+            continue
+
+        for separator in separators:
+            text_chunk = text[truncate_length - floating_range : truncate_length + floating_range]
+            separator_index = text_chunk.rfind(separator)
+            if separator_index > 0:
+                truncated_text = text[: truncate_length - floating_range + separator_index]
+                break
+        else:
+            truncated_text = text[:truncate_length]
+
+        outputs.append(truncated_text)
+    if isinstance(text, str):
+        final_output = outputs[0]
+    else:
+        final_output = outputs
+    workflow.update_node_field_value(node_id, "output", final_output)
     return workflow.data
