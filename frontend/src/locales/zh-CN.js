@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-14 01:25:57
+ * @Last Modified time: 2023-07-17 17:17:58
  */
 export default {
   lang: '中文',
@@ -223,6 +223,7 @@ export default {
       'tags': '标签',
       'brief_info': '简介信息',
       'brief_images': '简介图片',
+      'edit_code': '编辑代码',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
@@ -449,6 +450,8 @@ export default {
     codeEditorModal: {
       'title': '代码编辑器',
       'please_enter_code': '请输入代码，函数名固定为 main，输入参数与设定名称请一致。',
+      'copy_code': '复制代码',
+      'copy_success': '复制成功',
     },
     templateEditorModal: {
       'title': '模板编辑器',

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-14 01:25:49
+ * @Last Modified time: 2023-07-17 17:18:17
  */
 export default {
   lang: 'English',
@@ -223,6 +223,7 @@ export default {
       'tags': 'Tags',
       'brief_info': 'Brief info',
       'brief_images': 'Brief images',
+      'edit_code': 'Edit code',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',
@@ -449,6 +450,8 @@ export default {
     codeEditorModal: {
       'title': 'Code editor',
       'please_enter_code': 'Please enter the code, the function name is fixed to main, and the input parameters should be consistent with the set name.',
+      'copy_code': 'Copy code',
+      'copy_success': 'Copy success',
     },
     templateEditorModal: {
       'title': 'Template editor',

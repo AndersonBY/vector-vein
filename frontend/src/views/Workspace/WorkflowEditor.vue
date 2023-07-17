@@ -14,6 +14,7 @@ import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
+import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import { workflowAPI } from "@/api/workflow"
@@ -243,6 +244,43 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
   nodesCategories[categoryName].push(name)
   nodeCategoriesReverse[name] = categoryName
 })
+
+const codeEditorModal = reactive({
+  open: false,
+  code: '',
+  openEditor: async () => {
+    let editorData = toObject()
+    editorData.ui = currentWorkflow.value.data.ui || {}
+    codeEditorModal.code = JSON.stringify(editorData, null, 2)
+    codeEditorModal.open = true
+  },
+  updateCode: (code) => {
+    const workflowData = JSON.parse(code)
+    currentWorkflow.value.data.ui = workflowData.ui || {}
+    elements.value = [...workflowData.nodes, ...workflowData.edges]
+    elements.value.forEach((element) => {
+      element.events = {
+        change: (event) => onNodeChange(event),
+        delete: (event) => onNodeDelete(event),
+      }
+    })
+    currentWorkflow.value.data.nodes = workflowData.nodes
+    currentWorkflow.value.data.edges = workflowData.edges
+    currentWorkflow.value.data.nodes.forEach((node) => {
+      if (node.category == "vectorDb") {
+        node.data.template.database.options = userDatabases.value.filter((database) => {
+          return database.status == 'VALID'
+        }).map((item) => {
+          return {
+            value: item.vid,
+            label: item.name,
+          }
+        })
+      }
+    })
+    savedWorkflowHash.value = hashObject(currentWorkflow.value)
+  },
+})
 </script>
 
 <template>
@@ -270,9 +308,16 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
         </a-col>
 
         <a-col flex="0 0" style="display: flex; justify-content: end;">
-          <a-button type="primary" @click="saveWorkflow" :confirm-loading="saving">
-            {{ t('common.save') }}
-          </a-button>
+          <a-space>
+            <a-button @click="codeEditorModal.openEditor">
+              {{ t('workspace.workflowEditor.edit_code') }}
+              <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
+                @save="codeEditorModal.updateCode" />
+            </a-button>
+            <a-button type="primary" @click="saveWorkflow" :confirm-loading="saving">
+              {{ t('common.save') }}
+            </a-button>
+          </a-space>
         </a-col>
       </a-row>
     </div>
