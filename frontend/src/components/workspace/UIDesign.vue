@@ -53,7 +53,7 @@ const updateWorkflowUi = () => {
 
 const drag = ref(false)
 const inputFieldsEl = ref()
-useDraggable(inputFieldsEl, inputFields, {
+const draggableInputOption = reactive({
   animation: 150,
   ghostClass: 'ghost',
   handle: ".handle",
@@ -71,9 +71,10 @@ useDraggable(inputFieldsEl, inputFields, {
     })
   },
 })
+useDraggable(inputFieldsEl, inputFields, draggableInputOption)
 
 const outputNodesEl = ref()
-useDraggable(outputNodesEl, outputNodes, {
+const draggableOutputOption = reactive({
   animation: 150,
   ghostClass: 'ghost',
   handle: ".handle",
@@ -91,6 +92,7 @@ useDraggable(outputNodesEl, outputNodes, {
     })
   },
 })
+useDraggable(outputNodesEl, outputNodes, draggableOutputOption)
 
 const deleteField = (list, index) => {
   list.splice(index, 1)
