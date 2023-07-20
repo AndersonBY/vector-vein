@@ -147,7 +147,7 @@ const exitConfirm = () => {
   }
 }
 
-const { addEdges, updateEdge, onConnect, toObject } = useVueFlow()
+const { addEdges, updateEdge, onConnect, toObject, viewport, vueFlowRef } = useVueFlow()
 onConnect((params) => {
   params.animated = true
   params.style = { strokeWidth: 3, stroke: '#565656' }
@@ -182,18 +182,39 @@ const onEdgeDoubleClick = (event) => {
   })
 }
 
-let vueflowInstance = null
-const onPaneReady = (pane) => {
-  vueflowInstance = pane
+let ghostMenuItem
+const onTouchStart = (event) => {
+  if (ghostMenuItem) {
+    document.body.removeChild(ghostMenuItem)
+  }
+  let rect = event.target.getBoundingClientRect()
+  ghostMenuItem = event.target.cloneNode(true)
+  ghostMenuItem.style.position = "absolute"
+  ghostMenuItem.style.top = rect.top + "px"
+  ghostMenuItem.style.left = rect.left + "px"
+  ghostMenuItem.style.width = rect.width + "px"
+  ghostMenuItem.style.height = rect.height + "px"
+  ghostMenuItem.style.opacity = "0.5"
+  ghostMenuItem.style.zIndex = "1000"
+  document.body.appendChild(ghostMenuItem)
+}
+const onTouchMove = (event) => {
+  if (ghostMenuItem) {
+    ghostMenuItem.style.left = event.touches[0].clientX + "px"
+    ghostMenuItem.style.top = event.touches[0].clientY + "px"
+  }
 }
 
-let dropZone = null
-
-const onNewNodeDragStart = (event) => {
-  event.dataTransfer.setData('nodeType', event.target.id)
-}
 const onNewNodeDragEnd = (event) => {
-  const nodeType = event.srcElement.id
+  if (ghostMenuItem) {
+    document.body.removeChild(ghostMenuItem)
+    ghostMenuItem = null
+  }
+
+  let nodeType = event.srcElement.dataset.nodeType
+  if (!nodeType) {
+    nodeType = event.srcElement.children[0].dataset.nodeType
+  }
   const nodeCategory = nodeCategoriesReverse[nodeType]
   const nodeId = uuidv4()
   const templateData = JSON.parse(JSON.stringify(nodeTypes[nodeType].props.templateData))
@@ -202,10 +223,17 @@ const onNewNodeDragEnd = (event) => {
     templateData.template[key].display_name = t(`components.nodes.${nodeCategory}.${nodeType}.${key}`)
   })
 
-  const dropZoneRect = dropZone.getBoundingClientRect()
-  const { x, y, zoom } = vueflowInstance.viewport.value
-  const dropZoneX = event.clientX - dropZoneRect.left
-  const dropZoneY = event.clientY - dropZoneRect.top
+  const dropZoneRect = vueFlowRef.value.getBoundingClientRect()
+  const { x, y, zoom } = viewport.value
+  let dropZoneX = 0
+  let dropZoneY = 0
+  if (event.type == 'touchend') {
+    dropZoneX = event.changedTouches[0].clientX - dropZoneRect.left
+    dropZoneY = event.changedTouches[0].clientY - dropZoneRect.top
+  } else {
+    dropZoneX = event.clientX - dropZoneRect.left
+    dropZoneY = event.clientY - dropZoneRect.top
+  }
 
   const newNode = {
     id: nodeId,
@@ -223,11 +251,6 @@ const onNewNodeDragEnd = (event) => {
   }
 
   elements.value.push(newNode)
-}
-
-const onNewNodeDragOver = (event) => {
-  event.preventDefault();
-  dropZone = event.target
 }
 
 const nodeFiles = import.meta.globEager('@/components/nodes/*/*.vue')
@@ -349,9 +372,10 @@ const codeEditorModal = reactive({
           <a-sub-menu v-for="(category, categoryIndex) in Object.keys(nodesCategories)"
             :key="`category-${categoryIndex}`">
             <template #title>{{ t(`components.nodes.${category}.title`) }}</template>
-            <a-menu-item :id="node" draggable="true" @dragstart="onNewNodeDragStart" @dragend="onNewNodeDragEnd"
+            <a-menu-item :data-node-type="node" :id="node" draggable="true" @touchstart="onTouchStart"
+              @touchmove="onTouchMove" @dragend="onNewNodeDragEnd" @touchend="onNewNodeDragEnd"
               v-for="(node, nodeIndex) in nodesCategories[category]" :key="`node-${nodeIndex}`">
-              <span>{{ t(`components.nodes.${category}.${node}.title`) }}</span>
+              <span :data-node-type="node">{{ t(`components.nodes.${category}.${node}.title`) }}</span>
             </a-menu-item>
           </a-sub-menu>
         </a-menu>
@@ -359,8 +383,8 @@ const codeEditorModal = reactive({
       <a-layout>
         <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial' }">
           <VueFlow v-model="elements" :default-edge-options="{ type: 'smoothstep' }" :node-types="nodeTypes"
-            :edgesUpdatable="true" @edge-update="onEdgeUpdate" @pane-ready="onPaneReady" @dragover="onNewNodeDragOver"
-            @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true" :snap-grid="[20, 20]">
+              :edgesUpdatable="true" @edge-update="onEdgeUpdate" @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true"
+              :snap-grid="[20, 20]">
             <MiniMap />
             <Controls />
             <Background :variant="BackgroundVariant.Dots" />
@@ -395,7 +419,7 @@ const codeEditorModal = reactive({
 }
 
 .editor-container .title-container .title {
-  text-wrap: nowrap;
+  white-space: nowrap;
   font-size: 18px;
   margin-bottom: 0;
   min-width: 200px;
