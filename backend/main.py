@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-21 18:24:47
+# @Last Modified time: 2023-07-22 02:15:23
 import os
 import queue
 import threading
@@ -35,6 +35,7 @@ mimetypes.add_type("application/javascript", ".js")
 if not Path("./data").exists():
     Path("./data").mkdir()
     Path("./data/static").mkdir()
+    Path("./data/static/images").mkdir()
 
 # Create SQLite tables. Will ignore if tables already exist.
 create_tables()
