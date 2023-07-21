@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-17 19:31:25
+ * @Last Modified time: 2023-07-21 17:27:50
  */
 export default {
   lang: '中文',
@@ -368,6 +368,7 @@ export default {
         'email_smtp_ssl': 'SMTP SSL',
         'pexels_api_key': 'Pexels API Key',
         'stable_diffusion_base_url': 'Stable Diffusion URL',
+        'use_system_proxy': '使用系统代理',
       },
       helpDropdown: {
         'help': '帮助',

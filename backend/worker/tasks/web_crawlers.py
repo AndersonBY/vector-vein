@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-10 02:57:16
+# @Last Modified time: 2023-07-21 18:26:50
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -36,7 +36,7 @@ def get_aid_cid(bvid, part_number):
         aid = bvid
 
     url = f"https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp"
-    resp = httpx.get(url, headers=headers, proxies=proxies)
+    resp = httpx.get(url, headers=headers, proxies=proxies())
     info = resp.json()
     cid = info["data"][part_number - 1]["cid"]
 
@@ -91,7 +91,7 @@ def bilibili_crawler(
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
     if "b23.tv" in url_or_bvid:
-        resp = httpx.get(url_or_bvid, headers=headers, proxies=proxies, follow_redirects=True)
+        resp = httpx.get(url_or_bvid, headers=headers, proxies=proxies(), follow_redirects=True)
         url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
 
     if "bilibili.com" in url_or_bvid:
@@ -107,10 +107,10 @@ def bilibili_crawler(
         part_number = 1
 
     aid, cid = get_aid_cid(bvid, part_number=part_number)
-    resp = httpx.get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies)
+    resp = httpx.get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies())
     title = resp.json()["data"]["title"]
 
-    resp = httpx.get(f"https://api.bilibili.com/x/player/wbi/v2?aid={aid}&cid={cid}", headers=headers, proxies=proxies)
+    resp = httpx.get(f"https://api.bilibili.com/x/player/wbi/v2?aid={aid}&cid={cid}", headers=headers, proxies=proxies())
     subtitle_list = resp.json()["data"]["subtitle"]["subtitles"]
     if len(subtitle_list) == 0:
         subtitle_data = [] if output_type == "list" else ""
@@ -184,7 +184,7 @@ def youtube_crawler(
         else:
             raise Exception("No subtitle found")
 
-        subtitle_resp = httpx.get(subtitle_url, proxies=proxies, headers=headers)
+        subtitle_resp = httpx.get(subtitle_url, proxies=proxies(), headers=headers)
         subtitle_data_list = subtitle_resp.json()["events"]
         formated_subtitle = []
         for item in subtitle_data_list:

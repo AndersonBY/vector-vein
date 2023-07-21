@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 13:38:31
+# @Last Modified time: 2023-07-21 18:26:19
 import re
 import json
 
@@ -92,7 +92,7 @@ def image_search(
                 "https://cn.bing.com/images/async",
                 params=params,
                 headers=headers,
-                proxies=proxies,
+                proxies=proxies(),
             )
             soup = BeautifulSoup(response.text, "lxml")
             images_elements = soup.select(".imgpt>a")
@@ -121,7 +121,7 @@ def image_search(
                 "https://api.pexels.com/v1/search",
                 params=params,
                 headers={"Authorization": pexels_api_key},
-                proxies=proxies,
+                proxies=proxies(),
             )
             data = response.json()
             for image_data in data["photos"][:count]:

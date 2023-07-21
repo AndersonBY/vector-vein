@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-03 23:20:22
+# @Last Modified time: 2023-07-21 18:24:47
 import os
 import queue
 import threading
@@ -82,10 +82,12 @@ for api_class in api_class_list:
 setattr(API, "open_file_dialog", open_file_dialog)
 setattr(API, "open_folder_dialog", open_folder_dialog)
 
-if "http" in proxies_for_requests:
-    os.environ["http_proxy"] = proxies_for_requests["http"]
-if "https" in proxies_for_requests:
-    os.environ["https_proxy"] = proxies_for_requests["https"]
+_proxies_for_requests = proxies_for_requests()
+
+if "http" in _proxies_for_requests:
+    os.environ["http_proxy"] = _proxies_for_requests["http"]
+if "https" in _proxies_for_requests:
+    os.environ["https_proxy"] = _proxies_for_requests["https"]
 
 worker_thread = threading.Thread(target=main_worker, args=(task_queue, vdb_queues), daemon=True)
 worker_thread.start()

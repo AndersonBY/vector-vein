@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-29 15:30:27
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-29 20:35:06
+# @Last Modified time: 2023-07-21 18:22:53
 import uuid
 import base64
 from pathlib import Path
@@ -75,7 +75,7 @@ def stable_diffusion(
             "height": height,
             "cfg_scale": cfg_scale,
         }
-        response = httpx.post(url, json=data, proxies=proxies, timeout=None)
+        response = httpx.post(url, json=data, proxies=proxies(), timeout=None)
         image_base64 = response.json()["images"][0]
         image_name = f"{uuid.uuid4().hex}.jpg"
         local_file = image_folder / image_name

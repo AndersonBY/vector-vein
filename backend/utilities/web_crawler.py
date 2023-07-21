@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-16 14:07:34
+# @Last Modified time: 2023-07-22 00:49:36
 import re
 import json
 import time
@@ -16,6 +16,7 @@ from bs4 import BeautifulSoup
 from readability import Document
 from markdownify import MarkdownConverter, chomp
 
+from models import Setting, model_serializer
 from utilities.print_utils import mprint, mprint_error
 
 
@@ -24,20 +25,50 @@ headers = {
 }
 
 http_proxy_host_re = re.compile(r"http.*://(.*?)$")
-system_proxies = urllib.request.getproxies()
 
-proxies = {}
-proxies_for_requests = {}
 
-for protocol, proxy in system_proxies.items():
-    http_proxy_host = http_proxy_host_re.findall(proxy)
-    if not http_proxy_host:
-        continue
-    proxy_url = f"http://{http_proxy_host[0]}"
-    proxies[f"{protocol}://"] = proxies_for_requests[protocol] = proxy_url
+def proxies():
+    if Setting.select().count() == 0:
+        setting = Setting.create()
+    else:
+        setting = Setting.select().order_by(Setting.create_time.desc()).first()
+    setting = model_serializer(setting)
+    if not setting.get("data", {}).get("use_system_proxy"):
+        return {}
+    else:
+        system_proxies = urllib.request.getproxies()
+        proxies = {}
+        for protocol, proxy in system_proxies.items():
+            http_proxy_host = http_proxy_host_re.findall(proxy)
+            if not http_proxy_host:
+                continue
+            proxy_url = f"http://{http_proxy_host[0]}"
+            proxies[f"{protocol}://"] = proxy_url
+        return proxies
 
-mprint(f"Proxies: {proxies}")
-mprint(f"Proxies for requests: {proxies_for_requests}")
+
+def proxies_for_requests():
+    if Setting.select().count() == 0:
+        setting = Setting.create()
+    else:
+        setting = Setting.select().order_by(Setting.create_time.desc()).first()
+    setting = model_serializer(setting)
+    if not setting.get("data", {}).get("use_system_proxy"):
+        return {}
+    else:
+        system_proxies = urllib.request.getproxies()
+        proxies_for_requests = {}
+        for protocol, proxy in system_proxies.items():
+            http_proxy_host = http_proxy_host_re.findall(proxy)
+            if not http_proxy_host:
+                continue
+            proxy_url = f"http://{http_proxy_host[0]}"
+            proxies_for_requests[protocol] = proxy_url
+        return proxies_for_requests
+
+
+mprint(f"Proxies: {proxies()}")
+mprint(f"Proxies for requests: {proxies_for_requests()}")
 
 
 def decrypt_aes_ecb_base64(ciphertext_base64, key):
@@ -79,7 +110,7 @@ def crawl_text_from_url(url: str):
     crawl_success = False
     while try_times < 5:
         try:
-            response = httpx.get(url, headers=headers, proxies=proxies, follow_redirects=True)
+            response = httpx.get(url, headers=headers, proxies=proxies(), follow_redirects=True)
             crawl_success = True
             break
         except Exception as e:

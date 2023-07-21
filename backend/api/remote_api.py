@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 13:08:26
+# @Last Modified time: 2023-07-21 18:25:12
 import httpx
 
 from utilities.web_crawler import proxies
@@ -22,7 +22,7 @@ def request(method: str, path: str, payload=None):
                 method,
                 url,
                 headers=headers,
-                proxies=proxies,
+                proxies=proxies(),
                 json=payload,
                 timeout=15,
             )

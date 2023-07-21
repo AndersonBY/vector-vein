@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-15 17:36:58
+# @Last Modified time: 2023-07-21 18:25:59
 from typing import Union
 
 import httpx
@@ -45,7 +45,7 @@ def open_ai(
         engine_model_param = {"model": model}
         model_max_tokens = model_max_tokens_map[model]
     openai.api_key = workflow.setting.get("openai_api_key")
-    openai.proxy = proxies_for_requests
+    openai.proxy = proxies_for_requests()
 
     if isinstance(input_prompt, str):
         prompts = [input_prompt]
@@ -100,7 +100,7 @@ def chat_glm(
     results = []
     for prompt in prompts:
         messages = {"prompt": prompt, "history": [], "temperature": temperature}
-        response = httpx.post(api_base, json=messages, proxies=proxies, timeout=None)
+        response = httpx.post(api_base, json=messages, proxies=proxies(), timeout=None)
         result = response.json()["response"]
         results.append(result)
 
