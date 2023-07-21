@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-22 00:49:36
+# @Last Modified time: 2023-07-22 01:27:49
 import re
 import json
 import time
@@ -28,11 +28,15 @@ http_proxy_host_re = re.compile(r"http.*://(.*?)$")
 
 
 def proxies():
-    if Setting.select().count() == 0:
-        setting = Setting.create()
-    else:
-        setting = Setting.select().order_by(Setting.create_time.desc()).first()
-    setting = model_serializer(setting)
+    try:
+        if Setting.select().count() == 0:
+            setting = Setting.create()
+        else:
+            setting = Setting.select().order_by(Setting.create_time.desc()).first()
+        setting = model_serializer(setting)
+    except Exception as e:
+        mprint_error(e)
+        return {}
     if not setting.get("data", {}).get("use_system_proxy"):
         return {}
     else:
@@ -48,11 +52,15 @@ def proxies():
 
 
 def proxies_for_requests():
-    if Setting.select().count() == 0:
-        setting = Setting.create()
-    else:
-        setting = Setting.select().order_by(Setting.create_time.desc()).first()
-    setting = model_serializer(setting)
+    try:
+        if Setting.select().count() == 0:
+            setting = Setting.create()
+        else:
+            setting = Setting.select().order_by(Setting.create_time.desc()).first()
+        setting = model_serializer(setting)
+    except Exception as e:
+        mprint_error(e)
+        return {}
     if not setting.get("data", {}).get("use_system_proxy"):
         return {}
     else:
