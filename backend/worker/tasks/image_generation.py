@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-29 15:30:27
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-21 18:22:53
+# @Last Modified time: 2023-07-22 02:52:12
 import uuid
 import base64
 from pathlib import Path
@@ -45,7 +45,7 @@ def stable_diffusion(
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
     image_folder = Path("./data") / "static" / "images"
-    stable_diffusion_base_url = workflow.setting.get("stable_diffusion_base_url")
+    stable_diffusion_base_url = workflow.setting.get("stable_diffusion_base_url").rstrip("/")
 
     url = f"{stable_diffusion_base_url}/sdapi/v1/txt2img"
 
