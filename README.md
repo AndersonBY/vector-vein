@@ -83,13 +83,13 @@ set COMMANDLINE_ARGS=--api
 
 ### 环境要求
 
--   后端
-  -   Python 3.8 ~ Python 3.11
-  -   安装 [PDM](https://pdm.fming.dev/latest/#installation)
+- 后端
+  - Python 3.8 ~ Python 3.11
+  - 安装 [PDM](https://pdm.fming.dev/latest/#installation)
 
--   前端
-  -   Vue3
-  -   Vite
+- 前端
+  - Vue3
+  - Vite
 
 ### 项目开发
 
