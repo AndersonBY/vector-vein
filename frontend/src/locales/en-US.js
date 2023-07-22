@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-21 17:28:00
+ * @Last Modified time: 2023-07-22 15:38:40
  */
 export default {
   lang: 'English',
@@ -446,6 +446,15 @@ export default {
         'check_record': 'Check record',
         'check_record_and_error_task': 'Check record and error task',
         'workflow_title': 'Workflow title',
+      },
+      vueFlowStyleSettings: {
+        'title': 'Style Settings',
+        'edge_type': 'Edge type',
+        'edge_type_bezier': 'Bezier',
+        'edge_type_step': 'Step',
+        'edge_type_smoothstep': 'Smoothstep',
+        'edge_type_straight': 'Straight',
+        'edge_animated': 'Edge animated',
       },
     },
     codeEditorModal: {

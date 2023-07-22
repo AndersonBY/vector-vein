@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-21 17:27:50
+ * @Last Modified time: 2023-07-22 15:38:29
  */
 export default {
   lang: '中文',
@@ -446,6 +446,15 @@ export default {
         'check_record': '查看记录',
         'check_record_and_error_task': '查看记录及错误任务',
         'workflow_title': '工作流标题',
+      },
+      vueFlowStyleSettings: {
+        'title': '风格设置',
+        'edge_type': '连线类型',
+        'edge_type_bezier': '贝塞尔曲线',
+        'edge_type_step': '直角台阶',
+        'edge_type_smoothstep': '圆角台阶',
+        'edge_type_straight': '直线',
+        'edge_animated': '连线动画',
       },
     },
     codeEditorModal: {

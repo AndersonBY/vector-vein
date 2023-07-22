@@ -12,11 +12,13 @@ import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
+import { useUserSettingsStore } from "@/stores/userSettings"
 import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
+import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import { workflowAPI } from "@/api/workflow"
 import { hashObject } from "@/utils/util"
 import { databaseAPI } from "@/api/database"
@@ -44,10 +46,21 @@ const tabs = reactive([
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
 const userWorkflowsStore = useUserWorkflowsStore()
+const userSettingsStore = useUserSettingsStore()
+const { vueFlowStyleSettings } = storeToRefs(userSettingsStore)
 
 const savedWorkflowHash = ref('')
 const currentWorkflow = ref({})
 const elements = ref([])
+
+const onVueFlowStyleSettingsSave = () => {
+  edges.value.forEach((edge) => {
+    edge.type = vueFlowStyleSettings.value.edge.type
+    edge.animated = vueFlowStyleSettings.value.edge.animated
+    edge.style = vueFlowStyleSettings.value.edge.style
+  })
+  userSettingsStore.setVueFlowStyleSettings(vueFlowStyleSettings.value)
+}
 
 onBeforeMount(async () => {
   const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
@@ -147,10 +160,11 @@ const exitConfirm = () => {
   }
 }
 
-const { addEdges, updateEdge, onConnect, toObject, viewport, vueFlowRef } = useVueFlow()
+const { addEdges, updateEdge, onConnect, toObject, viewport, vueFlowRef, edges } = useVueFlow()
 onConnect((params) => {
-  params.animated = true
-  params.style = { strokeWidth: 3, stroke: '#565656' }
+  params.type = vueFlowStyleSettings.value.edge.type
+  params.animated = vueFlowStyleSettings.value.edge.animated
+  params.style = vueFlowStyleSettings.value.edge.style
   addEdges([params])
 })
 const onEdgeUpdate = ({ edge, connection }) => {
@@ -337,7 +351,7 @@ const codeEditorModal = reactive({
               <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
                 @save="codeEditorModal.updateCode" />
             </a-button>
-            <a-button type="primary" @click="saveWorkflow" :confirm-loading="saving">
+            <a-button type="primary" @click="saveWorkflow" :loading="saving">
               {{ t('common.save') }}
             </a-button>
           </a-space>
@@ -382,12 +396,12 @@ const codeEditorModal = reactive({
       </a-layout-sider>
       <a-layout>
         <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial' }">
-          <VueFlow v-model="elements" :default-edge-options="{ type: 'smoothstep' }" :node-types="nodeTypes"
-              :edgesUpdatable="true" @edge-update="onEdgeUpdate" @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true"
-              :snap-grid="[20, 20]">
+          <VueFlow v-model="elements" :node-types="nodeTypes" :edgesUpdatable="true" @edge-update="onEdgeUpdate"
+            @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true" :snap-grid="[20, 20]">
             <MiniMap />
             <Controls />
             <Background :variant="BackgroundVariant.Dots" />
+            <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
           </VueFlow>
         </a-layout-content>
       </a-layout>
