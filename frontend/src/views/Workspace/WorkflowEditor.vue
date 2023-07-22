@@ -132,6 +132,19 @@ const saveWorkflow = async () => {
   saving.value = false
 }
 
+const routerBack = async () => {
+  await router.push({ name: 'WorkflowUse', params: { workflowId: workflowId } })
+}
+
+const exitModalOpen = ref(false)
+const saveAndExit = async () => {
+  await saveWorkflow()
+  await routerBack()
+}
+const exitNoSave = async () => {
+  await routerBack()
+}
+
 const exitConfirm = () => {
   const uiDesign = currentWorkflow.value.data.ui || {}
   const workflowData = toObject()
@@ -140,23 +153,9 @@ const exitConfirm = () => {
     ui: uiDesign,
   }
   if (savedWorkflowHash.value != hashObject(currentWorkflow.value)) {
-    Modal.confirm({
-      title: t('common.back'),
-      icon: h(ExclamationCircleOutlined),
-      content: t('workspace.workflowEditor.exit_not_saved_confirm'),
-      okText: t('workspace.workflowEditor.save_and_exit'),
-      cancelText: t('workspace.workflowEditor.exit_without_save'),
-      onOk() {
-        saveWorkflow().then(() => {
-          router.push({ name: 'WorkflowUse', params: { workflowId: workflowId } })
-        })
-      },
-      onCancel() {
-        router.push({ name: 'WorkflowUse', params: { workflowId: workflowId } })
-      },
-    })
+    exitModalOpen.value = true
   } else {
-    router.push({ name: 'WorkflowUse', params: { workflowId: workflowId } })
+    routerBack()
   }
 }
 
@@ -331,6 +330,26 @@ const codeEditorModal = reactive({
           <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
             <LeftOutlined />
             {{ t('common.back') }}
+
+            <a-modal v-model:open="exitModalOpen">
+              <template #title>
+                <a-typography-text type="warning">
+                  <ExclamationCircleOutlined />
+                  {{ t('common.back') }}
+                </a-typography-text>
+              </template>
+
+              {{ t('workspace.workflowEditor.exit_not_saved_confirm') }}
+
+              <template #footer>
+                <a-button @click="exitNoSave">
+                  {{ t('workspace.workflowEditor.exit_without_save') }}
+                </a-button>
+                <a-button type="primary" @click="saveAndExit">
+                  {{ t('workspace.workflowEditor.save_and_exit') }}
+                </a-button>
+              </template>
+            </a-modal>
           </a-typography-link>
         </a-col>
 
