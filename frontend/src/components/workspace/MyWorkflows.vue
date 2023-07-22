@@ -182,8 +182,8 @@ const add = async (template) => {
   }
   const workflow = response.data
   getWorkflows(userWorkflowsStore, true)
-  nextTick(() => {
-    router.push(`/workflow/${workflow.wid}`)
+  nextTick(async () => {
+    await router.push(`/workflow/editor/${workflow.wid}`)
   })
 }
 
@@ -229,7 +229,7 @@ const openRecord = async (record) => {
           </a-col>
           <a-col flex="auto" style="display: flex; justify-content: end;">
             <a-space>
-              <a-button type="primary" @click="openNewWorkflowModal">
+              <a-button type="primary" @click="add">
                 <PlusOutlined />
                 {{ t('workspace.workflowSpaceMain.create_workflow') }}
               </a-button>
