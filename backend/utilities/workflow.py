@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-07 18:34:10
+# @Last Modified time: 2023-07-23 02:55:48
 from datetime import datetime
 
 from models import WorkflowRunRecord
@@ -112,7 +112,7 @@ class Workflow:
         all_nodes = self.dag.get_all_nodes()
         for node_id in self.nodes:
             node = self.get_node(node_id)
-            if node_id not in all_nodes and node.category != "triggers":
+            if node_id not in all_nodes and node.category not in ["triggers", "assistedNodes"]:
                 self.dag.add_node(node_id)
         self.workflow_id = workflow_data["wid"]
         self.record_id = workflow_data["rid"]

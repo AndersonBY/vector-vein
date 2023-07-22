@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-22 23:21:57
+ * @Last Modified time: 2023-07-23 02:58:07
  */
 export default {
   lang: '中文',
@@ -480,6 +480,14 @@ export default {
       },
       listField: {
         'add_item': '添加项',
+      },
+      assistedNodes: {
+        'title': '辅助节点',
+        CommentNode: {
+          'title': '注释节点',
+          'description': '用于添加注释，不会对工作流运行产生任何影响。',
+          'comment': '注释',
+        },
       },
       fileProcessing: {
         'title': '文件处理',

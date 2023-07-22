@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-22 23:22:08
+ * @Last Modified time: 2023-07-23 02:58:28
  */
 export default {
   lang: 'English',
@@ -480,6 +480,14 @@ export default {
       },
       listField: {
         'add_item': 'Add item',
+      },
+      assistedNodes: {
+        'title': 'Assisted nodes',
+        CommentNode: {
+          'title': 'Comment node',
+          'description': 'Used to add comments, will not have any effect on the workflow run.',
+          'comment': 'Comment',
+        },
       },
       fileProcessing: {
         'title': 'File processing',
