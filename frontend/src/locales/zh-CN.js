@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-22 15:38:29
+ * @Last Modified time: 2023-07-22 23:21:57
  */
 export default {
   lang: '中文',
@@ -523,6 +523,7 @@ export default {
           'split_method_markdown': 'Markdown 分割',
           'delimiter': '分隔符',
           'chunk_length': '分割长度',
+          'chunk_overlap': '分割重叠',
           'output': '输出',
         },
         ListRender: {

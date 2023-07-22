@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-17 20:06:38
+# @Last Modified time: 2023-07-22 23:42:09
 import re
 
 import markdown2
@@ -132,7 +132,10 @@ def text_splitters(
     split_method = workflow.get_node_field_value(node_id, "split_method")
     if split_method == "general":
         chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-        text_splitter = TokenTextSplitter(chunk_size=chunk_length, chunk_overlap=30, model_name="gpt-3.5-turbo")
+        chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
+        text_splitter = TokenTextSplitter(
+            chunk_size=chunk_length, chunk_overlap=chunk_overlap, model_name="gpt-3.5-turbo"
+        )
         paragraphs = text_splitter.create_documents([text])
     elif split_method == "delimiter":
         delimiter = workflow.get_node_field_value(node_id, "delimiter")
@@ -140,8 +143,10 @@ def text_splitters(
         paragraphs = re.split(delimiter, text)
     elif split_method == "markdown":
         chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=30)
+        chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
+        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=chunk_overlap)
         paragraphs = text_splitter.create_documents([text])
+        paragraphs = [paragraph for paragraph in paragraphs if len(paragraph) > 0]
     workflow.update_node_field_value(node_id, "output", paragraphs)
     return workflow.data
 

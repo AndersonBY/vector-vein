@@ -81,6 +81,20 @@ const props = defineProps({
         "list": false,
         "field_type": "number"
       },
+      "chunk_overlap": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": 30,
+        "password": false,
+        "name": "chunk_overlap",
+        "display_name": "chunk_overlap",
+        "type": "str",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "number"
+      },
       "delimiter": {
         "required": false,
         "placeholder": "",
@@ -137,6 +151,22 @@ if (!fieldsData.value.delimiter) {
     "field_type": "input"
   }
 }
+if (!fieldsData.value.chunk_overlap) {
+  fieldsData.value.chunk_overlap = {
+    "required": true,
+    "placeholder": "",
+    "show": false,
+    "multiline": true,
+    "value": 30,
+    "password": false,
+    "name": "chunk_overlap",
+    "display_name": "chunk_overlap",
+    "type": "str",
+    "clear_after_run": true,
+    "list": false,
+    "field_type": "number"
+  }
+}
 
 const deleteNode = () => {
   props.events.delete({
@@ -171,6 +201,14 @@ const deleteNode = () => {
             type="target" v-model:show="fieldsData.chunk_length.show">
             <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.chunk_length.value"
               :placeholder="fieldsData.chunk_length.placeholder" />
+          </BaseField>
+        </a-col>
+
+        <a-col :span="24" v-if="['general', 'markdown'].includes(fieldsData.split_method.value)">
+          <BaseField id="chunk_overlap" :name="t('components.nodes.textProcessing.TextSplitters.chunk_overlap')" required
+            type="target" v-model:show="fieldsData.chunk_overlap.show">
+            <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.chunk_overlap.value"
+              :placeholder="fieldsData.chunk_overlap.placeholder" />
           </BaseField>
         </a-col>
 

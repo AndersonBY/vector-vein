@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-22 15:38:40
+ * @Last Modified time: 2023-07-22 23:22:08
  */
 export default {
   lang: 'English',
@@ -523,6 +523,7 @@ export default {
           'split_method_markdown': 'Markdown',
           'delimiter': 'Delimiter',
           'chunk_length': 'Chunk length',
+          'chunk_overlap': 'Chunk overlap',
           'output': 'Output',
         },
         ListRender: {
