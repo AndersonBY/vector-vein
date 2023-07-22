@@ -59,6 +59,8 @@ const onTourClose = () => {
     </a-layout-content>
 
     <a-tour v-model:current="tourCurrentStep" :open="openTour" :steps="tourSteps" @close="onTourClose" />
+
+    <a-back-top />
   </a-layout>
 </template>
 <style>
