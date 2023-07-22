@@ -8,7 +8,7 @@
 
 无需编程，只需拖拽即可创建强大的工作流，自动化所有任务。
 
- [![在线版向量脉络](resources/images/demo-zh.gif) ] ( https://github.com/AndersonBY/vector-vein )
+ [![在线版向量脉络](resources/images/demo-zh.gif)](https://github.com/AndersonBY/vector-vein)
 
 向量脉络是受到 [LangChain](https://github.com/hwchase17/langchain) 以及 [langflow](https://github.com/logspace-ai/langflow) 的启发而开发的无代码 AI 工作流软件，旨在结合大语言模型的强大能力并让用户通过简单的拖拽即可实现各类日常工作流的智能化和自动化。
 
