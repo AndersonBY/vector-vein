@@ -2,11 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-06 17:05:45
+# @Last Modified time: 2023-08-07 00:53:15
 import uuid
-import pytz
 from pathlib import Path
 from datetime import datetime
+
+from peewee import fn
 
 from models import (
     Workflow,
@@ -127,6 +128,7 @@ class WorkflowAPI:
         sort_field = payload.get("sort_field", "update_time")
         sort_order = payload.get("sort_order", "descend")
         sort_field = getattr(Workflow, sort_field)
+        search_text = payload.get("search_text", "")
         if sort_order == "descend":
             sort_field = sort_field.desc()
         workflows = Workflow.select()
@@ -135,6 +137,11 @@ class WorkflowAPI:
                 workflows.join(Workflow.tags.get_through_model())
                 .where(Workflow.tags.get_through_model().workflowtag_id.in_(tags))
                 .distinct()
+            )
+        if len(search_text) > 0:
+            workflows = workflows.select().where(
+                (fn.Lower(Workflow.title).contains(search_text.lower()))
+                | (fn.Lower(Workflow.brief).contains(search_text.lower()))
             )
         workflows_count = workflows.count()
         offset = (page_num - 1) * page_size

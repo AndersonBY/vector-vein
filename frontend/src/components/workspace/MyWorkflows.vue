@@ -77,6 +77,8 @@ const workflowRecords = reactive({
     await workflowRecords.load({ tags: [workflowRecords.selectTag] })
     workflowRecords.loading = false
   },
+  searching: false,
+  searchText: '',
   hoverRowWid: null,
   customRow: (record) => {
     return {
@@ -89,6 +91,21 @@ const workflowRecords = reactive({
       onMouseenter: (event) => { workflowRecords.hoverRowWid = record.wid },
       onMouseleave: (event) => { workflowRecords.hoverRowWid = null }
     };
+  },
+  searchWorkflows: async () => {
+    workflowRecords.loading = true
+    workflowRecords.searching = true
+    await workflowRecords.load({ search_text: workflowRecords.searchText })
+    workflowRecords.searching = false
+    workflowRecords.loading = false
+  },
+  clearSearch: async () => {
+    workflowRecords.loading = true
+    workflowRecords.searching = true
+    workflowRecords.searchText = ''
+    await workflowRecords.load({})
+    workflowRecords.searching = false
+    workflowRecords.loading = false
   },
   handleTableChange: (page, filters, sorter) => {
     workflowRecords.load({
@@ -223,9 +240,15 @@ const openRecord = async (record) => {
       <a-col :span="24">
         <a-row type="flex" align="middle" justify="space-between">
           <a-col flex="auto">
-            <a-typography-title :title="3">
-              {{ t('workspace.workflowSpaceMain.my_workflows') }}
-            </a-typography-title>
+            <a-space>
+              <a-input-search v-model:value="workflowRecords.searchText"
+                :placeholder="t('workspace.workflowSpaceMain.input_search_text')" enter-button
+                @search="workflowRecords.searchWorkflows" class="search-input">
+              </a-input-search>
+              <a-button @click="workflowRecords.clearSearch">
+                {{ t('workspace.workflowSpaceMain.reset_search') }}
+              </a-button>
+            </a-space>
           </a-col>
           <a-col flex="auto" style="display: flex; justify-content: end;">
             <a-space>
@@ -315,3 +338,10 @@ const openRecord = async (record) => {
     </a-row>
   </a-spin>
 </template>
+
+<style scoped>
+.search-input {
+  min-width: 300px;
+  max-width: 500px;
+}
+</style>

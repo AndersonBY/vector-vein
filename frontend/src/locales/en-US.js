@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-23 02:58:28
+ * @Last Modified time: 2023-08-07 00:48:25
  */
 export default {
   lang: 'English',
@@ -234,6 +234,10 @@ export default {
       'create_workflow': 'Create workflow',
       'official_workflow_template': 'Official workflow template',
       'community_workflow_template': 'Community workflow template',
+      'input_search_text': 'Enter the title, brief, etc. to be searched',
+      'reset_search': 'Reset',
+      'no_workflows_1': 'You have not added or created a workflow yet',
+      'no_workflows_2': 'Add a workflow here',
     },
     workflowTemplate: {
       'template': 'Template',

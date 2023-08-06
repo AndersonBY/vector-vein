@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-23 02:58:07
+ * @Last Modified time: 2023-08-07 00:48:00
  */
 export default {
   lang: '中文',
@@ -234,6 +234,10 @@ export default {
       'create_workflow': '创建工作流',
       'official_workflow_template': '官方工作流模板',
       'community_workflow_template': '社区分享工作流模板',
+      'input_search_text': '输入待搜索的标题、简介等信息',
+      'reset_search': '重置搜索',
+      'no_workflows_1': '你还没有添加或创建工作流',
+      'no_workflows_2': '到这里添加一个工作流看看吧',
     },
     workflowTemplate: {
       'template': '模板',
