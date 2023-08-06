@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-22 01:27:49
+# @Last Modified time: 2023-08-07 01:19:22
 import re
 import json
 import time
@@ -181,6 +181,18 @@ def crawl_text_from_url(url: str):
         content = clean_markdown(markdownify(html_content))
         result = {
             "title": decrypted_data_json["articleDetail"]["articleDetailData"]["data"]["widgetTitle"].strip(),
+            "text": content,
+            "url": url,
+        }
+    elif "github.com" in url:
+        soup = BeautifulSoup(response.text, "lxml")
+        if len(soup.select("readme-toc article")) > 0:
+            content = str(soup.select_one("readme-toc article"))
+        else:
+            content = response.text
+        content = clean_markdown(markdownify(content))
+        result = {
+            "title": soup.select_one("head title").text.strip(),
             "text": content,
             "url": url,
         }
