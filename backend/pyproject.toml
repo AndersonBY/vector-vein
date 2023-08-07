@@ -23,21 +23,21 @@ dependencies = [
   "markdownify>=0.11.6",
   "yt-dlp>=2023.3.4",
   "pycryptodome>=3.18.0",
-  "clr-loader @ git+https://github.com/AndersonBY/clr-loader.git",
+  "clr-loader>=0.2.6",
   "pyecharts>=2.0.3",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.8,<3.12"
-version = "0.0.21"
+version = "0.0.22"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.0.21 -t p"
+build = "python build.py -v 0.0.22 -t p"
 build-debug = "pyinstaller debug.spec --noconfirm"
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.21"}
+dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.22"}
