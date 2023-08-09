@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-21 18:25:59
+# @Last Modified time: 2023-08-09 17:00:33
 from typing import Union
 
 import httpx
@@ -34,7 +34,7 @@ def open_ai(
     if openai_api_type == "azure":
         openai.api_type = "azure"
         openai.api_base = workflow.setting.get("openai_api_base")
-        openai.api_version = "2023-03-15-preview"
+        openai.api_version = "2023-05-15"
         engine_model_param = {"engine": workflow.setting.get("openai_chat_engine")}
         model_max_tokens = 4096
     else:
@@ -43,7 +43,7 @@ def open_ai(
         openai.api_version = None
         model = workflow.get_node_field_value(node_id, "llm_model")
         engine_model_param = {"model": model}
-        model_max_tokens = model_max_tokens_map[model]
+        model_max_tokens = model_max_tokens_map.get(model, 4096)
     openai.api_key = workflow.setting.get("openai_api_key")
     openai.proxy = proxies_for_requests()
 
