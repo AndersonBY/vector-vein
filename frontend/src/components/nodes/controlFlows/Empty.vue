@@ -1,5 +1,5 @@
 <script setup>
-import { defineComponent, ref, computed } from 'vue'
+import { defineComponent, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -30,7 +30,7 @@ const props = defineProps({
         "placeholder": "",
         "show": false,
         "multiline": true,
-        "value": "string",
+        "value": "",
         "password": false,
         "name": "input",
         "display_name": "input",
