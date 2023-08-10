@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-07 00:48:00
+ * @Last Modified time: 2023-08-10 23:54:57
  */
 export default {
   lang: '中文',
@@ -474,6 +474,10 @@ export default {
       'drag_to_insert': '拖拽插入',
     },
     nodes: {
+      common: {
+        'input': '输入',
+        'output': '输出',
+      },
       baseNode: {
         'document_link': '文档链接',
       },
@@ -834,6 +838,18 @@ export default {
           'title': '随机选择',
           'description': '用于从列表中随机选择一个元素。',
           'input': '输入',
+          'output': '输出',
+        },
+        JsonProcess: {
+          'title': 'JSON 处理',
+          'description': '用于处理 JSON 或 Python 的字典数据。',
+          'input': '输入',
+          'process_mode': '处理模式',
+          'process_mode_get_value': '根据 Key 获取值',
+          'process_mode_list_values': '列表形式列出所有值',
+          'process_mode_list_keys': '列表形式列出所有 Key',
+          'key': 'Key',
+          'default_value': '默认值（当 Key 不存在时）',
           'output': '输出',
         },
       },

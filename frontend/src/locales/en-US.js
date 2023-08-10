@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-07 00:48:25
+ * @Last Modified time: 2023-08-10 23:55:02
  */
 export default {
   lang: 'English',
@@ -474,6 +474,10 @@ export default {
       'drag_to_insert': 'Drag to insert',
     },
     nodes: {
+      common: {
+        'input': 'Input',
+        'output': 'Output',
+      },
       baseNode: {
         'document_link': 'Document link',
       },
@@ -834,6 +838,18 @@ export default {
           'title': 'Random choice',
           'description': 'Used to randomly select an element from a list.',
           'input': 'Input',
+          'output': 'Output',
+        },
+        JsonProcess: {
+          'title': 'JSON process',
+          'description': 'Used to process JSON or Python dictionary data.',
+          'input': 'Input',
+          'process_mode': 'Process mode',
+          'process_mode_get_value': 'Get value by Key',
+          'process_mode_list_values': 'List all values',
+          'process_mode_list_keys': 'List all keys',
+          'key': 'Key',
+          'default_value': 'Default value (when Key does not exist)',
           'output': 'Output',
         },
       },

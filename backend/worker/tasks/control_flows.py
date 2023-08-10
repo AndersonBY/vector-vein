@@ -2,7 +2,8 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-25 14:32:00
+# @Last Modified time: 2023-08-10 23:42:46
+import json
 import random
 
 from utilities.workflow import Workflow
@@ -85,5 +86,46 @@ def random_choice(
             output.append(random.choice(item))
     else:
         output = random.choice(input_list)
+    workflow.update_node_field_value(node_id, "output", output)
+    return workflow.data
+
+
+@task
+def json_process(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    input_data = workflow.get_node_field_value(node_id, "input")
+    if isinstance(input_data, str):
+        input_data = json.loads(input_data)
+    process_mode = workflow.get_node_field_value(node_id, "process_mode")
+    key = workflow.get_node_field_value(node_id, "key")
+    default_value = workflow.get_node_field_value(node_id, "default_value")
+
+    input_fields_has_list = isinstance(input_data, list) or isinstance(key, list)
+    output = []
+    if isinstance(input_data, dict):
+        input_data = [input_data]
+    if not isinstance(key, list):
+        key = [key]
+
+    if len(key) < len(input_data):
+        key = key * len(input_data)
+    elif len(key) > len(input_data):
+        input_data = input_data * len(key)
+
+    if process_mode == "get_value":
+        for i in range(len(input_data)):
+            output.append(input_data[i].get(key[i], default_value))
+    elif process_mode == "list_values":
+        for i in range(len(input_data)):
+            output.append(list(input_data[i].values()))
+    elif process_mode == "list_keys":
+        for i in range(len(input_data)):
+            output.append(list(input_data[i].keys()))
+
+    if not input_fields_has_list:
+        output = output[0]
     workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
