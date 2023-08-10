@@ -70,7 +70,7 @@ const deleteNode = () => {
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.controlFlows.RandomChoice.title')" :description="props.data.description"
+  <BaseNode :title="t('components.nodes.controlFlows.RandomChoice.title')" :description="props.data.description" documentLink="https://vectorvein.com/help/docs/control-flows#h2-10"
     @delete="deleteNode">
     <template #main>
       <a-row type="flex">
