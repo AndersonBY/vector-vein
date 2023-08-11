@@ -1,14 +1,10 @@
 <script setup>
-import { defineComponent, ref, reactive } from 'vue'
+import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PlusOutlined } from '@ant-design/icons-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
-
-defineComponent({
-  name: 'PythonFunction',
-})
 
 const props = defineProps({
   id: {
@@ -18,9 +14,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  events: {
-    required: false,
   },
   templateData: {
     "description": "description",
@@ -78,7 +71,6 @@ const props = defineProps({
     }
   }
 })
-const emit = defineEmits(['change', 'delete'])
 
 const { t } = useI18n()
 
@@ -109,30 +101,9 @@ const addField = () => {
   newFieldData.name = newFieldData.display_name
   fieldsData.value[newFieldData.name] = JSON.parse(JSON.stringify(newFieldData))
   showAddField.value = false
-  props.events.change({
-    id: props.id,
-    data: props.data,
-  })
 }
 const removeField = (field) => {
   delete fieldsData.value[field]
-  props.events.change({
-    id: props.id,
-    data: props.data,
-  })
-}
-
-const insertFieldVariable = (field, event) => {
-  const variable = `{{${field}}}`
-  if (!event.target.classList.contains('field-content')) {
-    fieldsData.value.template.value += variable
-  }
-}
-
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
-  })
 }
 
 const codeEditorModal = reactive({
@@ -142,8 +113,8 @@ const codeEditorModal = reactive({
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.tools.ProgrammingFunction.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/tools#h2-4" @delete="deleteNode">
+  <BaseNode :nodeId="id" :title="t('components.nodes.tools.ProgrammingFunction.title')"
+    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/tools#h2-4">
     <template #main>
       <a-row style="display:block;">
 

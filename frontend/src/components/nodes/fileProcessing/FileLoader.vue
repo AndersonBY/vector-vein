@@ -1,12 +1,8 @@
 <script setup>
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
-
-defineComponent({
-  name: 'FileLoader',
-})
 
 const props = defineProps({
   id: {
@@ -16,9 +12,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  events: {
-    required: false,
   },
   templateData: {
     "description": "description",
@@ -56,22 +49,15 @@ const props = defineProps({
     }
   }
 })
-const emit = defineEmits(['change', 'delete'])
 
 const { t } = useI18n()
 
 const fieldsData = ref(props.data.template)
-
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
-  })
-}
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.fileProcessing.FileLoader.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/file-processing#h2-0" @delete="deleteNode">
+  <BaseNode :nodeId="id" :title="t('components.nodes.fileProcessing.FileLoader.title')"
+    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/file-processing#h2-0">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

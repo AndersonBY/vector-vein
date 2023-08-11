@@ -1,10 +1,6 @@
 <script setup>
-import { defineComponent, ref, reactive, onBeforeMount } from 'vue'
+import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-defineComponent({
-  name: 'TemperatureInput',
-})
 
 const { t } = useI18n()
 const temperatureNumber = defineModel()

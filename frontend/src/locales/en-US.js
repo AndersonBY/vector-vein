@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-10 23:55:02
+ * @Last Modified time: 2023-08-11 23:03:48
  */
 export default {
   lang: 'English',
@@ -480,6 +480,8 @@ export default {
       },
       baseNode: {
         'document_link': 'Document link',
+        'clone_node': 'Clone node',
+        'delete_node': 'Delete node',
       },
       baseField: {
         'show_in_use_interface': 'Whether to display in the use interface',

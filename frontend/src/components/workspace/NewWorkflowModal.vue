@@ -1,27 +1,7 @@
-<template>
-  <a-modal v-model:open="open" width="50vw" :title="t('components.workspace.newWorkflowModal.create_new_workflow')"
-    :footer="null">
-    <a-row :gutter="[16, 16]">
-      <a-col :xs="24" :md="12" :lg="6">
-        <a-card class="template-card-small" hoverable style="width: 240px" @click="create('empty')">
-          <div class="empty-workflow-template">
-            <a-typography-text class="text-primary">
-              <PlusOutlined style="font-size: 100px;" />
-            </a-typography-text>
-            <a-typography-text>
-              {{ t('components.workspace.newWorkflowModal.empty_workflow') }}
-            </a-typography-text>
-          </div>
-        </a-card>
-      </a-col>
-    </a-row>
-  </a-modal>
-</template>
-
 <script setup>
-import { PlusOutlined } from '@ant-design/icons-vue'
 import { ref, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { AddOne } from '@icon-park/vue-next'
 
 defineComponent({
   name: 'NewWorkflowModal',
@@ -43,6 +23,26 @@ defineExpose({
   showModal,
 })
 </script>
+
+<template>
+  <a-modal v-model:open="open" width="50vw" :title="t('components.workspace.newWorkflowModal.create_new_workflow')"
+    :footer="null">
+    <a-row :gutter="[16, 16]">
+      <a-col :xs="24" :md="12" :lg="6">
+        <a-card class="template-card-small" hoverable style="width: 240px" @click="create('empty')">
+          <div class="empty-workflow-template">
+            <a-typography-text class="text-primary">
+              <AddOne style="font-size: 100px;" />
+            </a-typography-text>
+            <a-typography-text>
+              {{ t('components.workspace.newWorkflowModal.empty_workflow') }}
+            </a-typography-text>
+          </div>
+        </a-card>
+      </a-col>
+    </a-row>
+  </a-modal>
+</template>
 
 <style>
 .template-card {

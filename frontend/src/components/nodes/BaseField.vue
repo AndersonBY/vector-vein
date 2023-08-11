@@ -1,12 +1,8 @@
 <script setup>
-import { defineComponent, watch, ref } from 'vue'
+import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Handle, Position } from '@vue-flow/core'
-import { CloseCircleOutlined } from '@ant-design/icons-vue'
-
-defineComponent({
-  name: 'BaseField',
-})
+import { CloseOne } from '@icon-park/vue-next'
 
 const props = defineProps({
   id: {
@@ -85,7 +81,7 @@ const getHandleStyle = (handleType) => ({
         </a-checkbox>
       </a-tooltip>
       <a-typography-link type="danger" class="delete-field-button" @click="removeField()" v-if="props.deletable">
-        <CloseCircleOutlined style="float: right;" />
+        <CloseOne style="float: right;" />
       </a-typography-link>
     </div>
     <Handle :style="getHandleStyle(props.type)" :id="id" :type="props.type"

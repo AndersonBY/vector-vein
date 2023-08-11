@@ -1,12 +1,8 @@
 <script setup>
-import { defineComponent, defineEmits, watch } from 'vue'
+import { watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { MinusCircleOutlined, PlusOutlined } from '@ant-design/icons-vue'
+import { AddOne, ReduceOne } from '@icon-park/vue-next'
 import BaseField from '@/components/nodes/BaseField.vue'
-
-defineComponent({
-  name: 'ListField',
-})
 
 const props = defineProps({
   id: {
@@ -66,12 +62,12 @@ watch(() => props.value, (newValue) => {
       <a-col :span="24" :key="index" v-for="(item, index) in innerValue">
         <div style="display: flex; gap: 5px;">
           <a-input :value="item" @input="updateItemValue($event.target.value, index)" />
-          <MinusCircleOutlined @click="deleteItem(index)" />
+          <ReduceOne @click="deleteItem(index)" />
         </div>
       </a-col>
       <a-col :span="24">
         <a-button type="dashed" style="width: 100%;" @click="innerValue.push('')">
-          <PlusOutlined />
+          <AddOne />
           {{ t('components.nodes.listField.add_item') }}
         </a-button>
       </a-col>

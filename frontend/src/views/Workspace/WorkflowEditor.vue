@@ -1,8 +1,8 @@
 <script setup>
-import { h, ref, reactive, defineComponent, markRaw, onBeforeMount } from 'vue'
+import { ref, reactive, markRaw, onBeforeMount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
-import { Modal, message } from 'ant-design-vue'
+import { message } from 'ant-design-vue'
 import { LeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
@@ -13,6 +13,7 @@ import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { useUserSettingsStore } from "@/stores/userSettings"
+import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
@@ -26,10 +27,6 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
-
-defineComponent({
-  name: 'WorkflowEditor',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -48,6 +45,42 @@ const { userDatabases } = storeToRefs(userDatabasesStore)
 const userWorkflowsStore = useUserWorkflowsStore()
 const userSettingsStore = useUserSettingsStore()
 const { vueFlowStyleSettings } = storeToRefs(userSettingsStore)
+const useNodeMessages = useNodeMessagesStore()
+const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
+
+const nodeEvents = {
+  change: (data, nodeId) => {
+    // console.log('change', event)
+  },
+  delete: (data, nodeId) => {
+    elements.value = elements.value.filter((element) => element.id !== nodeId)
+    elements.value = elements.value.filter((element) => {
+      if (element.source && element.source === nodeId) {
+        return false
+      }
+      if (element.target && element.target === nodeId) {
+        return false
+      }
+      return true
+    })
+  },
+  clone: (data, nodeId) => {
+    const node = elements.value.find((element) => element.id === nodeId)
+    node.selected = false
+    const newNode = JSON.parse(JSON.stringify(node))
+    newNode.id = uuidv4()
+    newNode.selected = true
+    newNode.position.x += 50
+    newNode.position.y += 50
+    elements.value.push(newNode)
+  },
+}
+watch(() => nodeMessagesCount.value, () => {
+  while (nodeMessages.value.length > 0) {
+    const { action, data, nodeId } = useNodeMessages.pop()
+    nodeEvents[action](data, nodeId)
+  }
+})
 
 const savedWorkflowHash = ref('')
 const currentWorkflow = ref({})
@@ -91,12 +124,6 @@ onBeforeMount(async () => {
   })
   currentWorkflow.value.tags = currentWorkflow.value.tags.map(tag => tag.tid)
   elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
-  elements.value.forEach((element) => {
-    element.events = {
-      change: (event) => onNodeChange(event),
-      delete: (event) => onNodeDelete(event),
-    }
-  })
   savedWorkflowHash.value = hashObject(currentWorkflow.value)
   loading.value = false
 })
@@ -170,22 +197,6 @@ const onEdgeUpdate = ({ edge, connection }) => {
   updateEdge(edge, connection)
 }
 
-const onNodeChange = (event) => {
-  // console.log('change', event)
-}
-const onNodeDelete = (event) => {
-  elements.value = elements.value.filter((element) => element.id !== event.id)
-  elements.value = elements.value.filter((element) => {
-    if (element.source && element.source === event.id) {
-      return false
-    }
-    if (element.target && element.target === event.id) {
-      return false
-    }
-    return true
-  })
-}
-
 const onEdgeDoubleClick = (event) => {
   elements.value = elements.value.filter((element) => {
     if (element.source === event.edge.source && element.target === event.edge.target && element.sourceHandle === event.edge.sourceHandle && element.targetHandle === event.edge.targetHandle) {
@@ -257,10 +268,6 @@ const onNewNodeDragEnd = (event) => {
       y: (dropZoneY - y) / zoom,
     },
     data: templateData,
-    events: {
-      change: (event) => onNodeChange(event),
-      delete: (event) => onNodeDelete(event),
-    },
   }
 
   elements.value.push(newNode)
@@ -294,12 +301,6 @@ const codeEditorModal = reactive({
     const workflowData = JSON.parse(code)
     currentWorkflow.value.data.ui = workflowData.ui || {}
     elements.value = [...workflowData.nodes, ...workflowData.edges]
-    elements.value.forEach((element) => {
-      element.events = {
-        change: (event) => onNodeChange(event),
-        delete: (event) => onNodeDelete(event),
-      }
-    })
     currentWorkflow.value.data.nodes = workflowData.nodes
     currentWorkflow.value.data.edges = workflowData.edges
     currentWorkflow.value.data.nodes.forEach((node) => {

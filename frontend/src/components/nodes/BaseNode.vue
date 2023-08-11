@@ -1,13 +1,14 @@
 <script setup>
-import { defineComponent } from 'vue'
-import { DeleteOutlined } from '@ant-design/icons-vue'
+import { Delete, Copy } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
+import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 
-defineComponent({
-  name: 'BaseNode',
-})
 const props = defineProps({
+  nodeId: {
+    type: String,
+    required: true,
+  },
   title: {
     type: String,
     required: true,
@@ -22,7 +23,16 @@ const props = defineProps({
     default: '',
   },
 })
-const emit = defineEmits(['delete'])
+
+const useNodeMessages = useNodeMessagesStore()
+
+const pushMessage = (action, data) => {
+  useNodeMessages.push({
+    action,
+    data,
+    nodeId: props.nodeId,
+  })
+}
 
 const { t } = useI18n()
 </script>
@@ -31,15 +41,22 @@ const { t } = useI18n()
   <div class="node">
     <div style="width: 100%;">
       <div class="title-container">
-        <a-typography-title :level="3">
+        <a-typography-title :level="3" style="flex-grow: 1;">
           {{ props.title }}
           <QuestionPopover
             :contents="[{ type: 'link', text: t('components.nodes.baseNode.document_link'), url: props.documentLink }]"
             v-if="props.documentLink.length > 0" class="hint-popover" />
         </a-typography-title>
-        <a-typography-link @click="emit('delete')" class="delete-button">
-          <DeleteOutlined />
-        </a-typography-link>
+        <a-tooltip color="blue" :title="t('components.nodes.baseNode.clone_node')">
+          <a-typography-link @click="pushMessage('clone')">
+            <Copy />
+          </a-typography-link>
+        </a-tooltip>
+        <a-tooltip color="red" :title="t('components.nodes.baseNode.delete_node')">
+          <a-typography-link @click="pushMessage('delete')">
+            <Delete />
+          </a-typography-link>
+        </a-tooltip>
       </div>
 
       <div class="description-container">

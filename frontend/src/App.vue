@@ -15,7 +15,7 @@ import { useUserSettingsStore } from '@/stores/userSettings'
 const loading = ref(true)
 onBeforeMount(async () => {
   // Only wait when in production mode
-  if (import.meta.env.PROD) {    
+  if (import.meta.env.PROD) {
     while (!window.pywebview) {
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
@@ -45,6 +45,13 @@ const theme = {
 <style>
 .text-primary {
   color: #28c5e5;
+}
+
+.vue-flow .add-field-button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
 }
 
 .ant-drawer-body::-webkit-scrollbar {

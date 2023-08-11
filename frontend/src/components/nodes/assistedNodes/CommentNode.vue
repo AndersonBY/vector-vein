@@ -1,12 +1,9 @@
 <script setup>
-import { defineComponent, ref } from 'vue'
-import { DeleteOutlined } from '@ant-design/icons-vue'
-import { useI18n } from 'vue-i18n'
+import { ref } from 'vue'
+import { Delete } from '@icon-park/vue-next'
+import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import { NodeResizer } from '@vue-flow/node-resizer'
 
-defineComponent({
-  name: 'CommentNode',
-})
 const props = defineProps({
   id: {
     type: String,
@@ -15,9 +12,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  events: {
-    required: false,
   },
   templateData: {
     "description": "description",
@@ -41,13 +35,16 @@ const props = defineProps({
   },
 })
 
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
+const useNodeMessages = useNodeMessagesStore()
+
+const pushMessage = (action, data) => {
+  useNodeMessages.push({
+    action,
+    data,
+    nodeId: props.id,
   })
 }
 
-const { t } = useI18n()
 const fieldsData = ref(props.data.template)
 </script>
 
@@ -56,9 +53,9 @@ const fieldsData = ref(props.data.template)
     <NodeResizer min-width="100" min-height="30" />
     <div style="width: 100%;">
       <div class="title-container">
-        <a-typography-paragraph editable v-model:content="fieldsData.comment.value" />
-        <a-typography-link @click="deleteNode" class="delete-button">
-          <DeleteOutlined />
+        <a-typography-title :level="5" editable v-model:content="fieldsData.comment.value" class="comment-text" />
+        <a-typography-link @click="pushMessage('delete')" class="delete-button">
+          <Delete />
         </a-typography-link>
       </div>
     </div>
@@ -86,6 +83,11 @@ const fieldsData = ref(props.data.template)
   padding-top: 20px;
   border-top-left-radius: 10px;
   border-top-right-radius: 10px;
+}
+
+.comment-node .title-container .comment-text {
+  color: #545454;
+  width: 100%;
 }
 
 .comment-node .title-container .hint-popover {
@@ -118,76 +120,92 @@ const fieldsData = ref(props.data.template)
   color: white;
   font-size: 18px;
 }
+
+.comment-node .delete-button {
+  opacity: 0;
+}
+
+.comment-node:hover .delete-button {
+  opacity: 1;
+}
 </style>
 
 <style>
+.comment-node .vue-flow__resize-control {
+  opacity: 0;
+}
+
+.comment-node:hover .vue-flow__resize-control {
+  opacity: 1;
+}
+
 .vue-flow__resize-control {
-  position: absolute
+  position: absolute;
 }
 
 .vue-flow__resize-control.left,
 .vue-flow__resize-control.right {
-  cursor: ew-resize
+  cursor: ew-resize;
 }
 
 .vue-flow__resize-control.top,
 .vue-flow__resize-control.bottom {
-  cursor: ns-resize
+  cursor: ns-resize;
 }
 
 .vue-flow__resize-control.top.left,
 .vue-flow__resize-control.bottom.right {
-  cursor: nwse-resize
+  cursor: nwse-resize;
 }
 
 .vue-flow__resize-control.bottom.left,
 .vue-flow__resize-control.top.right {
-  cursor: nesw-resize
+  cursor: nesw-resize;
 }
 
 .vue-flow__resize-control.handle {
-  width: 4px;
-  height: 4px;
+  width: 5px;
+  height: 5px;
   border: 1px solid #fff;
   border-radius: 1px;
   background-color: #3367d9;
-  transform: translate(-50%, -50%)
+  transform: translate(-50%, -50%);
 }
 
 .vue-flow__resize-control.handle.left {
   left: 0;
-  top: 50%
+  top: 50%;
 }
 
 .vue-flow__resize-control.handle.right {
   left: 100%;
-  top: 50%
+  top: 50%;
 }
 
 .vue-flow__resize-control.handle.top {
   left: 50%;
-  top: 0
+  top: 0;
 }
 
 .vue-flow__resize-control.handle.bottom {
   left: 50%;
-  top: 100%
+  top: 100%;
 }
 
 .vue-flow__resize-control.handle.top.left,
 .vue-flow__resize-control.handle.bottom.left {
-  left: 0
+  left: 0;
 }
 
 .vue-flow__resize-control.handle.top.right,
 .vue-flow__resize-control.handle.bottom.right {
-  left: 100%
+  left: 100%;
 }
 
 .vue-flow__resize-control.line {
   border-color: #3367d9;
   border-width: 0;
-  border-style: solid
+  border-style: solid;
 }
 
 .vue-flow__resize-control.line.left,
@@ -195,17 +213,17 @@ const fieldsData = ref(props.data.template)
   width: 1px;
   transform: translate(-50%);
   top: 0;
-  height: 100%
+  height: 100%;
 }
 
 .vue-flow__resize-control.line.left {
   left: 0;
-  border-left-width: 1px
+  border-left-width: 5px;
 }
 
 .vue-flow__resize-control.line.right {
   left: 100%;
-  border-right-width: 1px
+  border-right-width: 5px;
 }
 
 .vue-flow__resize-control.line.top,
@@ -213,16 +231,16 @@ const fieldsData = ref(props.data.template)
   height: 1px;
   transform: translateY(-50%);
   left: 0;
-  width: 100%
+  width: 100%;
 }
 
 .vue-flow__resize-control.line.top {
   top: 0;
-  border-top-width: 1px
+  border-top-width: 5px;
 }
 
 .vue-flow__resize-control.line.bottom {
-  border-bottom-width: 1px;
-  top: 100%
+  border-bottom-width: 5px;
+  top: 100%;
 }
 </style>

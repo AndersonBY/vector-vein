@@ -20,6 +20,9 @@ dependencies:
   '@codemirror/view':
     specifier: ^6.16.0
     version: 6.16.0
+  '@icon-park/vue-next':
+    specifier: ^1.4.2
+    version: 1.4.2(vue@3.3.4)
   '@liripeng/vue-audio-player':
     specifier: ^1.5.2
     version: 1.5.2
@@ -606,6 +609,15 @@ packages:
   /@humanwhocodes/object-schema@1.2.1:
     resolution: {integrity: sha512-ZnQMnLV4e7hDlUvw8H+U8ASL02SS2Gn6+9Ac3wGGLIe7+je2AeAOxPY+izIPJDfFDb7eDjev0Us8MO1iFRN8hA==}
     dev: true
+
+  /@icon-park/vue-next@1.4.2(vue@3.3.4):
+    resolution: {integrity: sha512-+QklF255wkfBOabY+xw6FAI0Bwln/RhdwCunNy/9sKdKuChtaU67QZqU67KGAvZUTeeBgsL+yaHHxqfQeGZXEQ==}
+    engines: {node: '>= 8.0.0', npm: '>= 5.0.0'}
+    peerDependencies:
+      vue: 3.x
+    dependencies:
+      vue: 3.3.4
+    dev: false
 
   /@intlify/core-base@9.2.2:
     resolution: {integrity: sha512-JjUpQtNfn+joMbrXvpR4hTF8iJQ2sEFzzK3KIESOx+f+uwIjgw20igOyaIdhfsVVBCds8ZM64MoeNSx+PHQMkA==}

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-10 23:54:57
+ * @Last Modified time: 2023-08-11 23:04:01
  */
 export default {
   lang: '中文',
@@ -480,6 +480,8 @@ export default {
       },
       baseNode: {
         'document_link': '文档链接',
+        'clone_node': '克隆节点',
+        'delete_node': '删除节点',
       },
       baseField: {
         'show_in_use_interface': '是否在使用界面显示',

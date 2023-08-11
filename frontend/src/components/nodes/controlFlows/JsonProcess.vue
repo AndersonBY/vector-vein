@@ -13,9 +13,6 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  events: {
-    required: false,
-  },
   templateData: {
     "description": "description",
     "task_name": "control_flows.json_process",
@@ -108,7 +105,6 @@ const props = defineProps({
     }
   }
 })
-const emit = defineEmits(['change', 'delete'])
 
 const { t } = useI18n()
 
@@ -117,17 +113,11 @@ fieldsData.value.process_mode.options = fieldsData.value.process_mode.options.ma
   item.label = t(`components.nodes.controlFlows.JsonProcess.process_mode_${item.value}`)
   return item
 })
-
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
-  })
-}
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.controlFlows.JsonProcess.title')" :description="props.data.description" documentLink="https://vectorvein.com/help/docs/control-flows#h2-6"
-    @delete="deleteNode">
+  <BaseNode :nodeId="id" :title="t('components.nodes.controlFlows.JsonProcess.title')"
+    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/control-flows#h2-6">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">

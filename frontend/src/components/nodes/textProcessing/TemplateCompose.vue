@@ -1,14 +1,10 @@
 <script setup>
-import { defineComponent, ref, reactive } from 'vue'
+import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import TemplateEditorModal from '@/components/TemplateEditorModal.vue'
-
-defineComponent({
-  name: 'TemplateCompose',
-})
 
 const props = defineProps({
   id: {
@@ -18,9 +14,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  events: {
-    required: false,
   },
   templateData: {
     "description": "description",
@@ -58,7 +51,6 @@ const props = defineProps({
     }
   }
 })
-const emit = defineEmits(['change', 'delete'])
 
 const { t } = useI18n()
 
@@ -90,19 +82,11 @@ const addField = () => {
   newFieldData.name = newFieldData.display_name
   fieldsData.value[newFieldData.name] = JSON.parse(JSON.stringify(newFieldData))
   showAddField.value = false
-  props.events.change({
-    id: props.id,
-    data: props.data,
-  })
   newFieldData.display_name = ''
   newFieldData.options = []
 }
 const removeField = (field) => {
   delete fieldsData.value[field]
-  props.events.change({
-    id: props.id,
-    data: props.data,
-  })
 }
 
 const addListOptionsItem = (newValue, index) => {
@@ -115,19 +99,12 @@ const deleteListOptionsItem = (index) => {
   newFieldData.options.splice(index, 1)
 }
 
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
-  })
-}
-
 const openTemplateEditor = ref(false)
 </script>
 
 <template>
-  <BaseNode style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
-    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/text-processing#h2-8"
-    @delete="deleteNode">
+  <BaseNode :nodeId="id" style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
+    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/text-processing#h2-8">
     <template #main>
       <a-row style="display:block;">
         <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">

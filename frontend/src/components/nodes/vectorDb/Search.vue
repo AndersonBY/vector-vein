@@ -1,14 +1,10 @@
 <script setup>
-import { defineComponent, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
-
-defineComponent({
-  name: 'Search',
-})
 
 const props = defineProps({
   id: {
@@ -18,9 +14,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  events: {
-    required: false,
   },
   templateData: {
     "description": "description",
@@ -135,7 +128,6 @@ const props = defineProps({
     }
   },
 })
-const emit = defineEmits(['change', 'delete'])
 
 const { t } = useI18n()
 const userDatabasesStore = useUserDatabasesStore()
@@ -158,17 +150,11 @@ fieldsData.value.data_type.options = fieldsData.value.data_type.options.map(item
   item.label = t(`components.nodes.vectorDb.Search.${item.value}`)
   return item
 })
-
-const deleteNode = () => {
-  props.events.delete({
-    id: props.id,
-  })
-}
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.vectorDb.Search.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/vector-db#h2-8" @delete="deleteNode">
+  <BaseNode :nodeId="id" :title="t('components.nodes.vectorDb.Search.title')" :description="props.data.description"
+    documentLink="https://vectorvein.com/help/docs/vector-db#h2-8">
     <template #main>
       <a-row type="flex">
         <a-col :span="24">
