@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-24 17:51:49
+# @Last Modified time: 2023-08-24 19:22:57
 import json
 from datetime import datetime
 
@@ -170,7 +170,7 @@ class Workflow:
         """
         related_subnodes = []
         for field, field_data in node_obj.field_map.items():
-            if field in ("workflow_id", "fail_all", "list_input"):
+            if field in ("workflow_id",):
                 continue
             related_subnode = field_data.get("node")
             if related_subnode is not None:
@@ -214,7 +214,7 @@ class Workflow:
             node_obj (Node): 【工作流调用】节点
         """
         for subnode_field, subnode_field_data in subnode_obj.field_map.items():
-            if subnode_field in ("workflow_id", "fail_all", "list_input"):
+            if subnode_field in ("workflow_id",):
                 continue
             if subnode_field not in node_obj.field_map:
                 # 不在【工作流调用】节点中显示的字段，不需要更新
@@ -293,7 +293,7 @@ class Workflow:
                 updated_nodes.append(used_node.data)
                 continue
             for field, field_data in original_node.field_map.items():
-                if field in ("workflow_id", "fail_all", "list_input"):
+                if field in ("workflow_id",):
                     continue
                 actual_node = self.get_field_actual_node(original_node, {"field_key": field, **field_data})
                 actual_field_data = actual_node.get_field(field)

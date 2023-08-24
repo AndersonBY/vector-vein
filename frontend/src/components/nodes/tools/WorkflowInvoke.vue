@@ -34,34 +34,6 @@ const props = defineProps({
         "list": false,
         "field_type": "input"
       },
-      "fail_all": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": false,
-        "value": false,
-        "password": false,
-        "name": "fail_all",
-        "display_name": "fail_all",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "checkbox"
-      },
-      "list_input": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": false,
-        "value": false,
-        "password": false,
-        "name": "list_input",
-        "display_name": "list_input",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "checkbox"
-      },
     }
   }
 })
@@ -79,7 +51,7 @@ const workflowSelectModal = reactive({
     seletedWorkflowTitle.value = workflowSelectModal.data.title
     fieldsData.value.workflow_id.value = workflowSelectModal.data.wid
     Object.keys(fieldsData.value).forEach((field) => {
-      if (!['workflow_id', 'fail_all', 'list_input'].includes(field)) {
+      if (!['workflow_id'].includes(field)) {
         delete fieldsData.value[field]
       }
     })
@@ -158,29 +130,12 @@ const workflowSelectModal = reactive({
           </BaseField>
         </a-col>
 
-        <a-col :span="24">
-          <BaseField id="fail_all" :name="t('components.nodes.tools.WorkflowInvoke.fail_all')" required type="target"
-            v-model:show="fieldsData.fail_all.show">
-            <a-checkbox v-model:checked="fieldsData.fail_all.value">
-            </a-checkbox>
-          </BaseField>
-        </a-col>
-
-        <a-col :span="24">
-          <BaseField id="list_input" :name="t('components.nodes.tools.WorkflowInvoke.list_input')" required type="target"
-            v-model:show="fieldsData.list_input.show">
-            <a-checkbox v-model:checked="fieldsData.list_input.value">
-            </a-checkbox>
-          </BaseField>
-        </a-col>
-
         <a-divider>
           {{ t('components.nodes.tools.WorkflowInvoke.workflow_fields') }}
         </a-divider>
 
         <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
-          <a-col :span="24"
-            v-if="!['workflow_id', 'fail_all', 'list_input'].includes(field) && !fieldsData[field].is_output">
+          <a-col :span="24" v-if="!['workflow_id'].includes(field) && !fieldsData[field].is_output">
             <BaseField :id="field" :name="`${fieldsData[field].display_name}: ${fieldsData[field].type}`" required
               type="target" deletable @delete="removeField(field)" v-model:show="fieldsData[field].show">
               <a-select style="width: 100%;" v-model:value="fieldsData[field].value" :options="fieldsData[field].options"
