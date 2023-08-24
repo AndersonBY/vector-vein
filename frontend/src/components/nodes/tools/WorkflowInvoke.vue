@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { nonFormItemsTypes } from '@/utils/workflow'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import WorkflowSelect from '@/components/workspace/WorkflowSelect.vue'
@@ -83,6 +84,7 @@ const workflowSelectModal = reactive({
       }
     })
     workflowSelectModal.data.input_fields.forEach((field) => {
+      if (nonFormItemsTypes.includes(field.field_type)) return
       fieldsData.value[field.name] = JSON.parse(JSON.stringify(field))
       fieldsData.value[field.name].node = fieldsData.value[field.name].nodeId
     })
