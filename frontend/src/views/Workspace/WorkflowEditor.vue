@@ -152,6 +152,8 @@ const saveWorkflow = async () => {
   if (response.status == 200) {
     message.success(t('workspace.workflowSpace.save_success'))
     savedWorkflowHash.value = hashObject(currentWorkflow.value)
+  } else if (response.data.status == 400) {
+    message.error(t('workspace.workflowSpace.workflow_cant_invoke_itself'))
   } else {
     message.error(t('workspace.workflowSpace.save_failed'))
   }
