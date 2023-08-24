@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-07 00:53:15
+# @Last Modified time: 2023-08-24 16:29:45
 import uuid
 from pathlib import Path
 from datetime import datetime
@@ -17,7 +17,7 @@ from models import (
     WorkflowRunRecord,
     WorkflowRunSchedule,
 )
-from api.utils import get_user_object_general
+from api.utils import get_user_object_general, WorkflowData
 from utilities.files import copy_file
 from utilities.static_file_server import StaticFileServer
 
@@ -68,14 +68,15 @@ class WorkflowAPI:
         return response
 
     def update(self, payload):
+        wid = payload.get("wid", None)
         status, msg, workflow = get_user_object_general(
             Workflow,
-            wid=payload.get("wid", None),
+            wid=wid,
         )
         if status != 200:
             response = {"status": status, "msg": msg, "data": {}}
             return response
-        data = payload.get("data", None)
+        data = payload.get("data", {})
         title = payload.get("title", "").encode("utf16", errors="surrogatepass").decode("utf16")
         brief = payload.get("brief", "").encode("utf16", errors="surrogatepass").decode("utf16")
         images = payload.get("images", [])
@@ -90,6 +91,11 @@ class WorkflowAPI:
                 workflow.tags.add(tag_obj)
         workflow.title = title
         workflow.brief = brief
+
+        related_workflows = WorkflowData(data).related_workflows
+        if wid in related_workflows.keys():
+            return {"status": 400, "msg": "workflow can not be related to itself", "data": {}}
+        data["related_workflows"] = related_workflows
 
         # Copy images to static folder and store in url format
         copied_images = []
