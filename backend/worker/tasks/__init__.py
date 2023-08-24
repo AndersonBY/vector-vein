@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:43:01
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-24 03:20:09
+# @Last Modified time: 2023-08-24 17:48:44
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint_error
 
@@ -44,6 +44,8 @@ def chain(*tasks):
 @task
 def on_finish(workflow_data: dict):
     workflow = Workflow(workflow_data)
+    workflow.update_original_workflow_data()
+    workflow.clean_workflow_data()
     workflow.report_workflow_status(200)
     return True
 
