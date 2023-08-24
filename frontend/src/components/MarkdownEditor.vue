@@ -1,50 +1,30 @@
 <script setup>
-import { defineComponent, ref, watch } from "vue"
+import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
-import { MilkdownProvider } from "@milkdown/vue"
-import MilkdownEditor from '@/components/MilkdownEditor.vue'
-
-defineComponent({
-  name: "MarkdownEditor",
-})
+import VueMarkdown from 'vue-markdown-render'
 
 const props = defineProps({
-  markdown: {
+  placeholder: {
     type: String,
-    required: true,
-    default: '',
-  },
+    default: ''
+  }
 })
 
 const { t } = useI18n()
-
-const emit = defineEmits(['update:markdown'])
-let innerMarkdown = ref(props.markdown)
-
-watch(() => innerMarkdown.value, (markdown) => {
-  emit('update:markdown', innerMarkdown.value)
-})
-
-const editMethod = ref('markdown')
+const markdown = defineModel()
+const preview = ref(false)
 </script>
 
 <template>
   <div>
     <a-form-item-rest>
-      <a-radio-group style="margin-bottom: 15px;" v-model:value="editMethod">
-        <a-radio-button value="rawText">
-          {{ t('components.markdownEditor.raw_text') }}
-        </a-radio-button>
-        <a-radio-button value="markdown">
-          {{ t('components.markdownEditor.markdown_text') }}
-        </a-radio-button>
-      </a-radio-group>
+      <a-checkbox v-model:checked="preview">
+        {{ t('common.preview') }}
+      </a-checkbox>
     </a-form-item-rest>
-
-    <MilkdownProvider v-if="editMethod == 'markdown'">
-      <MilkdownEditor v-model:markdown="innerMarkdown" />
-    </MilkdownProvider>
-    <a-textarea v-model:value="innerMarkdown" :auto-size="{ minRows: 5 }" :show-count="true" v-else>
-    </a-textarea>
+    <a-textarea v-model:value="markdown" :autoSize="{ minRows: 3, maxRows: 10 }" :placeholder="props.placeholder"
+      v-show="!preview" />
+    <VueMarkdown v-highlight v-model:source="markdown" class="custom-scrollbar markdown-body custom-hljs"
+      v-show="preview" />
   </div>
 </template>
