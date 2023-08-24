@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-11 23:03:48
+ * @Last Modified time: 2023-08-24 16:03:07
  */
 export default {
   lang: 'English',
@@ -195,6 +195,7 @@ export default {
       'delete_failed': 'Delete failed',
       'save_success': 'Save success',
       'save_failed': 'Save failed',
+      'workflow_cant_invoke_itself': 'Workflow can\'t invoke itself',
       'get_workflow_failed': 'Get workflow failed',
       'get_workflow_record_failed': 'Get workflow record failed',
       'submit_workflow_success': 'Submit workflow request success',
@@ -801,6 +802,16 @@ export default {
           'output_type_text': 'Text',
           'output_type_markdown': 'Markdown',
           'output': 'Output',
+        },
+        WorkflowInvoke: {
+          'title': 'Workflow invoke',
+          'description': 'Used to invoke the workflow and get the result.',
+          'select_workflow': 'Select workflow',
+          'selected_workflow': 'Selected workflow',
+          'workflow_id': 'Workflow ID',
+          'fail_all': 'If this node fails, the entire workflow fails',
+          'list_input': 'List input',
+          'workflow_fields': 'Workflow fields',
         },
       },
       controlFlows: {

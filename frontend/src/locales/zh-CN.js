@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-11 23:04:01
+ * @Last Modified time: 2023-08-24 16:02:49
  */
 export default {
   lang: '中文',
@@ -195,6 +195,7 @@ export default {
       'delete_failed': '删除失败',
       'save_success': '保存成功',
       'save_failed': '保存失败',
+      'workflow_cant_invoke_itself': '工作流不能调用自身',
       'get_workflow_failed': '获取工作流失败',
       'get_workflow_record_failed': '获取工作流运行记录失败',
       'submit_workflow_success': '已提交工作流运行请求',
@@ -801,6 +802,16 @@ export default {
           'output_type_text': '文本',
           'output_type_markdown': 'Markdown',
           'output': '输出',
+        },
+        WorkflowInvoke: {
+          'title': '工作流调用',
+          'description': '用于调用工作流并获取结果。',
+          'select_workflow': '选择工作流',
+          'selected_workflow': '已选择工作流',
+          'workflow_id': '工作流 ID',
+          'fail_all': '该节点失败则工作流整体失败',
+          'list_input': '列表形式输入',
+          'workflow_fields': '工作流字段',
         },
       },
       controlFlows: {
