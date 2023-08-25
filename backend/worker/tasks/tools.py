@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-21 18:26:19
+# @Last Modified time: 2023-08-26 01:37:21
 import re
 import json
 
@@ -14,6 +14,18 @@ from utilities.web_crawler import proxies, headers
 from worker.tasks import task
 
 
+def convert_parameter_value(value, parameter_type):
+    if parameter_type == "str":
+        return str(value)
+    elif parameter_type == "int":
+        return int(value)
+    elif parameter_type == "float":
+        return float(value)
+    elif parameter_type == "bool":
+        return bool(value)
+    return value  # if none of the types match
+
+
 @task
 def programming_function(
     workflow_data: dict,
@@ -23,22 +35,23 @@ def programming_function(
     code = workflow.get_node_field_value(node_id, "code")
     language = workflow.get_node_field_value(node_id, "language")
     fields = workflow.get_node_fields(node_id)
-    parameters = {}
+    list_input = workflow.get_node_field_value(node_id, "list_input")
+    if isinstance(list_input, str):
+        list_input = True if list_input.lower() == "true" else False
+
+    parameters_batch = []
     for field in fields:
-        if field in ("code", "language", "output"):
+        if field in ("code", "language", "output", "list_input"):
             continue
         parameter = workflow.get_node_field_value(node_id, field)
         parameter_type = workflow.get_node(node_id).get_field(field).get("type")
-        if parameter_type == "str":
-            parameters[field] = str(parameter)
-        elif parameter_type == "int":
-            parameters[field] = int(parameter)
-        elif parameter_type == "float":
-            parameters[field] = float(parameter)
-        elif parameter_type == "bool":
-            parameters[field] = bool(parameter)
+        if list_input:
+            parameters_batch = parameters_batch or [dict() for _ in range(len(parameter))]
+            for batch, parameter_value in zip(parameters_batch, parameter):
+                batch[field] = convert_parameter_value(parameter_value, parameter_type)
         else:
-            parameters[field] = parameter
+            parameters_batch = parameters_batch or [dict()]
+            parameters_batch[0][field] = convert_parameter_value(parameter, parameter_type)
 
     pattern = r"```.*?\n(.*?)\n```"
     code_block_search = re.search(pattern, code, re.DOTALL)
@@ -48,12 +61,18 @@ def programming_function(
     else:
         pure_code = code
 
-    if language == "python":
-        exec(pure_code, globals())
-        result = main(**parameters)
-    else:
-        result = "Not implemented"
-    workflow.update_node_field_value(node_id, "output", result)
+    results = []
+    for parameters in parameters_batch:
+        if language == "python":
+            exec(pure_code, globals())
+            result = main(**parameters)
+        else:
+            result = "Not implemented"
+        results.append(result)
+
+    if not list_input:
+        results = results[0]
+    workflow.update_node_field_value(node_id, "output", results)
     return workflow.data
 
 
