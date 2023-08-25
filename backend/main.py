@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-22 02:15:23
+# @Last Modified time: 2023-08-26 00:16:38
 import os
 import queue
 import threading
@@ -100,9 +100,13 @@ static_file_server = StaticFileServer("./data/static")
 static_file_server_thread = threading.Thread(target=static_file_server.start, daemon=True)
 static_file_server_thread.start()
 
+if DEBUG:
+    url = os.environ.get("VITE_LOCAL", "web/index.html")
+else:
+    url = "web/index.html"
 window = webview.create_window(
     f"VectorVein v{VERSION}",
-    url="web/index.html",
+    url=url,
     js_api=api,
     width=1600,
     height=1000,
