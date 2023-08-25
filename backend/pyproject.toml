@@ -41,3 +41,5 @@ build-debug = "pyinstaller debug.spec --noconfirm"
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
 dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.25"}
+fullstack-dev.cmd = "python run_fullstack_dev.py"
+fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.25", "VITE_LOCAL" = "http://localhost:5174/"}
