@@ -177,8 +177,11 @@ const runWorkflow = async () => {
         // clearNodesFiles()
       } else if (response.status == 500) {
         running.value = false
+        recordStatus.value = 'FAILED'
         message.error(t('workspace.workflowSpace.run_workflow_failed'))
         clearInterval(checkStatusTimer.value)
+        setErrorTask(response.data.error_task)
+        showingRecord.value = true
       }
     }, 1000)
   } else {
@@ -246,14 +249,8 @@ const alertType = computed(() => {
     return 'info'
   }
 })
-const setWorkflowRecord = (record) => {
-  runRecordId.value = record.rid
-  recordStatus.value = record.status
-  currentWorkflow.value.data = {
-    ...record.data,
-    ui: savedWorkflow.value.data.ui || {}
-  }
-  let [category, node] = (record.data.error_task || '.').split('.')
+const setErrorTask = (errorTask) => {
+  let [category, node] = (errorTask || '.').split('.')
   category = category.split('_')
     .map((word, index) => {
       if (index === 0) {
@@ -262,6 +259,9 @@ const setWorkflowRecord = (record) => {
       return word.charAt(0).toUpperCase() + word.slice(1);
     })
     .join('')
+  if (category == 'output') {
+    category = 'outputs'
+  }
   node = node.split('_')
     .map((word) => {
       return word.charAt(0).toUpperCase() + word.slice(1);
@@ -273,6 +273,15 @@ const setWorkflowRecord = (record) => {
     node = 'ChatGLM'
   }
   recordErrorTask.value = `${category}.${node}`
+}
+const setWorkflowRecord = (record) => {
+  runRecordId.value = record.rid
+  recordStatus.value = record.status
+  currentWorkflow.value.data = {
+    ...record.data,
+    ui: savedWorkflow.value.data.ui || {}
+  }
+  setErrorTask(record.data.error_task)
   const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
   const reactiveUIDesign = reactive(uiDesign)
   inputFields.value = reactiveUIDesign.inputFields
