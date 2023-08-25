@@ -2,8 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-24 19:22:57
+# @Last Modified time: 2023-08-25 13:43:52
 import json
+from typing import List, Dict
 from datetime import datetime
 
 from models import WorkflowRunRecord
@@ -143,7 +144,7 @@ class Workflow:
         self.workflow_data["nodes"] = [node.data for node in nodes.values()]
         return nodes, workflow_invoke_nodes
 
-    def handle_workflow_invoke(self, node_obj: Node) -> list[dict]:
+    def handle_workflow_invoke(self, node_obj: Node) -> List[Dict]:
         """
         对【工作流调用】节点进行处理，将被调用的子工作流的节点和边添加到当前工作流中
 
@@ -158,7 +159,7 @@ class Workflow:
         subworkflow = self.related_workflows.get(subworkflow_id)
         return self.add_subnodes_and_subedges(subworkflow, related_subnodes, node_obj)
 
-    def get_related_subnodes(self, node_obj: Node) -> list[str]:
+    def get_related_subnodes(self, node_obj: Node) -> List[str]:
         """
         找出【工作流调用】节点的显示字段有哪些，并且找出字段对应的实际工作流节点 ID
 
@@ -180,7 +181,7 @@ class Workflow:
     def add_subnodes_and_subedges(
         self,
         subworkflow: dict,
-        related_subnodes: list[str],
+        related_subnodes: List[str],
         node_obj: Node,
     ):
         updated_subnodes = []
@@ -194,7 +195,7 @@ class Workflow:
     def add_subnode(
         self,
         subnode: dict,
-        related_subnodes: list[str],
+        related_subnodes: List[str],
         node_obj: Node,
     ):
         subnode_obj = Node(subnode)
