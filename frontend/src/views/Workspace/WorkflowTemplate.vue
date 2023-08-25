@@ -6,8 +6,7 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { message } from 'ant-design-vue'
 import VueMarkdown from 'vue-markdown-render'
 import { officialSiteAPI } from '@/api/remote'
-import { workflowTemplateAPI, workflowAPI } from '@/api/workflow'
-import WorkflowEditor from '@/components/workspace/WorkflowEditor.vue'
+import { workflowAPI } from '@/api/workflow'
 
 defineComponent({
   name: 'WorkflowTemplate',
@@ -45,33 +44,6 @@ const addTemplateToUserWorkflows = async () => {
   userWorkflowsStore.addUserWorkflow(workflow)
   userWorkflowsStore.setUserWorkflowsTotal(userWorkflowsStore.userWorkflowsTotal + 1)
   router.push({ name: 'WorkflowUse', params: { workflowId: response.data.wid } })
-}
-
-const editorModalRef = ref(null)
-const openEditor = () => {
-  editorModalRef.value.showModal()
-}
-
-const saveTemplate = async (data) => {
-  const { title, brief, images, tags, workflow } = data
-  const response = await workflowTemplateAPI('update', {
-    tid: workflowTemplateId,
-    title: title,
-    brief: brief,
-    images: images,
-    tags: tags,
-    data: workflow
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowTemplate.update_success'))
-    templateData.value.title = title
-    templateData.value.brief = brief
-    templateData.value.images = images
-    templateData.value.tags = tags
-    templateData.value.data = workflow
-  } else {
-    message.error(t('workspace.workflowTemplate.update_failed'))
-  }
 }
 </script>
 
@@ -126,12 +98,6 @@ const saveTemplate = async (data) => {
           <a-button type="primary" @click="addTemplateToUserWorkflows">
             {{ t('workspace.workflowTemplate.add_to_my_workflows') }}
           </a-button>
-          <a-button type="primary" @click="openEditor" v-if="templateData.is_owner">
-            {{ t('workspace.workflowTemplate.edit_template') }}
-          </a-button>
-          <WorkflowEditor ref="editorModalRef" :title="templateData.title" :brief="templateData.brief"
-            :images="templateData.images" :tags="templateData.tags" :key="templateData.wid"
-            :nodes="templateData.data.nodes" :edges="templateData.data.edges" @ok="saveTemplate" />
         </a-space>
       </a-col>
     </a-row>

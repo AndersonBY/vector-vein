@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-25 17:04:20
+ * @Last Modified time: 2023-08-26 00:21:46
  */
 export default {
   lang: 'English',
@@ -79,6 +79,7 @@ export default {
     'back': 'Back',
     'previous_step': 'Previous step',
     'next_step': 'Next step',
+    'preview': 'Preview',
   },
   email: {
     verify: {
@@ -793,6 +794,7 @@ export default {
           'parameter_type_bool': 'Boolean',
           'parameter_type_list': 'List',
           'add_parameter_name': 'Parameter name',
+          'list_input': 'List input',
           'output': 'Output',
         },
         ImageSearch: {

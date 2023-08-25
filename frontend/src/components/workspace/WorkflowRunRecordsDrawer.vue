@@ -15,7 +15,8 @@ const loading = ref(true)
 const props = defineProps({
   workflowId: {
     type: String,
-    required: true,
+    required: false,
+    default: '',
   },
   buttonType: {
     type: String,

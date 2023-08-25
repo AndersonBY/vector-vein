@@ -391,7 +391,7 @@ const codeEditorModal = reactive({
           <a-divider>
             {{ t('workspace.workflowEditor.brief_info') }}
           </a-divider>
-          <MarkdownEditor v-model:markdown="currentWorkflow.brief" />
+          <MarkdownEditor v-model="currentWorkflow.brief" />
           <a-divider>
             {{ t('workspace.workflowEditor.brief_images') }}
           </a-divider>
