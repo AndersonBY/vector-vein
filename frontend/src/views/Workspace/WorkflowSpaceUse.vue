@@ -3,7 +3,7 @@ import { onBeforeMount, defineComponent, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { FullscreenOutlined, FullscreenExitOutlined, FormOutlined, ThunderboltOutlined } from "@ant-design/icons-vue"
+import { FullScreenOne, OffScreenOne, Edit, Lightning } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -376,7 +376,7 @@ const openLocalFile = (file) => {
       <a-col :xxl="6" :xl="8" :lg="10" :md="24" v-show="!outputMaximized">
         <a-row :gutter="[16, 16]">
           <a-typography-title :level="3">
-            <FormOutlined class="text-primary" />
+            <Edit fill="#28c5e5" />
             {{ t('workspace.workflowSpace.inputs') }}
           </a-typography-title>
           <a-col :span="24">
@@ -446,15 +446,15 @@ const openLocalFile = (file) => {
       <a-col :xxl="outputMaximized ? 24 : 18" :xl="outputMaximized ? 24 : 16" :lg="outputMaximized ? 24 : 14" :md="24">
         <a-typography-title :level="3" style="display: flex; justify-content: space-between;">
           <span>
-            <ThunderboltOutlined class="text-primary" />
+            <lightning fill="#28c5e5" />
             {{ t('workspace.workflowSpace.outputs') }}
           </span>
           <span>
             <a-tooltip :title="t('workspace.workflowSpace.maximize_output')">
-              <FullscreenOutlined @click="outputMaximized = !outputMaximized" v-show="!outputMaximized" />
+              <FullScreenOne @click="outputMaximized = !outputMaximized" v-show="!outputMaximized" />
             </a-tooltip>
             <a-tooltip :title="t('workspace.workflowSpace.normalize_output')">
-              <FullscreenExitOutlined @click="outputMaximized = !outputMaximized" v-show="outputMaximized" />
+              <OffScreenOne @click="outputMaximized = !outputMaximized" v-show="outputMaximized" />
             </a-tooltip>
           </span>
         </a-typography-title>
