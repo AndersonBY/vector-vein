@@ -154,8 +154,9 @@ const getWorkflowDetail = async (wid) => {
   data.value = {
     wid: wid,
     title: selectedWorkflow.value.title,
-    input_fields: reactiveUIDesign.inputFields,
-    output_nodes: reactiveUIDesign.outputNodes,
+    inputFields: reactiveUIDesign.inputFields,
+    outputNodes: reactiveUIDesign.outputNodes,
+    workflowInvokeOutputNodes: reactiveUIDesign.workflowInvokeOutputNodes,
   }
   loading.value = false
 }

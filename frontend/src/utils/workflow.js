@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 16:43:04
+ * @Last Modified time: 2023-08-25 17:03:55
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -51,6 +51,7 @@ export const getUIDesignFromWorkflow = (workflowData) => {
   let unusedOutputNodes = JSON.parse(JSON.stringify(outputNodes))
   let triggerNodes = workflowData.data?.ui?.triggerNodes || []
   let unusedTriggerNodes = JSON.parse(JSON.stringify(triggerNodes))
+  let workflowInvokeOutputNodes = []
 
   workflowData.data.nodes.forEach((node) => {
     if (node.category == 'triggers') {
@@ -80,6 +81,9 @@ export const getUIDesignFromWorkflow = (workflowData) => {
         }
       } else if (node.field_type == 'typography-paragraph') {
 
+      } else if (node.type == 'WorkflowInvokeOutput') {
+        workflowInvokeOutputNodes.push(node)
+        return
       } else {
         return
       }
@@ -143,5 +147,6 @@ export const getUIDesignFromWorkflow = (workflowData) => {
     inputFields,
     outputNodes,
     triggerNodes,
+    workflowInvokeOutputNodes,
   }
 }

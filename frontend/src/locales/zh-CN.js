@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-24 16:02:49
+ * @Last Modified time: 2023-08-25 17:04:36
  */
 export default {
   lang: '中文',
@@ -682,6 +682,11 @@ export default {
           'show_echarts': '显示图表',
           'output_type': '输出类型',
           'output': '输出',
+        },
+        WorkflowInvokeOutput: {
+          'title': '工作流调用输出',
+          'description': '用于被工作流调用节点调用时现实的输出，不显示在使用界面。',
+          'value': '数据',
         },
       },
       webCrawlers: {

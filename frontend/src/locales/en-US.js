@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-24 16:03:07
+ * @Last Modified time: 2023-08-25 17:04:20
  */
 export default {
   lang: 'English',
@@ -682,6 +682,11 @@ export default {
           'show_echarts': 'Show Echarts',
           'output_type': 'Output type',
           'output': 'Output',
+        },
+        WorkflowInvokeOutput: {
+          'title': 'Workflow invoke output',
+          'description': 'Used to display the output when called by the workflow invoke node, not displayed in the use interface.',
+          'value': 'Value',
         },
       },
       webCrawlers: {

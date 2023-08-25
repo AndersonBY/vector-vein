@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-27 14:33:38
+# @Last Modified time: 2023-08-25 16:53:51
 from pathlib import Path
 from datetime import datetime
 
@@ -143,4 +143,14 @@ def echarts(
 ):
     workflow = Workflow(workflow_data)
     workflow.get_node_field_value(node_id, "option")
+    return workflow.data
+
+
+@task
+def workflow_invoke_output(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    workflow.get_node_field_value(node_id, "value")
     return workflow.data

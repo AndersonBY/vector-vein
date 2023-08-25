@@ -55,13 +55,14 @@ const workflowSelectModal = reactive({
         delete fieldsData.value[field]
       }
     })
-    workflowSelectModal.data.input_fields.forEach((field) => {
+    workflowSelectModal.data.inputFields.forEach((field) => {
       if (nonFormItemsTypes.includes(field.field_type)) return
       fieldsData.value[field.name] = JSON.parse(JSON.stringify(field))
       fieldsData.value[field.name].node = fieldsData.value[field.name].nodeId
     })
     const fieldNamesIds = new Set()
-    workflowSelectModal.data.output_nodes.forEach((node) => {
+    const outputNodes = workflowSelectModal.data.outputNodes.concat(workflowSelectModal.data.workflowInvokeOutputNodes)
+    outputNodes.forEach((node) => {
       let fieldKey = `${node.id.slice(0, 8)}_${node.type}`
       while (fieldNamesIds.has(fieldKey)) {
         fieldKey = `${fieldKey}_${Math.floor(Math.random() * 1000)}`
@@ -85,6 +86,9 @@ const workflowSelectModal = reactive({
       } else if (node.type == 'Echarts') {
         fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.option))
         outputFieldKey = 'option'
+      } else if (node.type == 'WorkflowInvokeOutput') {
+        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.value))
+        outputFieldKey = 'value'
       }
       fieldsData.value[fieldKey].name = fieldName
       fieldsData.value[fieldKey].display_name = fieldName
