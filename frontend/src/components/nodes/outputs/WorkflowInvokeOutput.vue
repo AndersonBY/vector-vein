@@ -32,6 +32,20 @@ const props = defineProps({
         "list": false,
         "field_type": "textarea"
       },
+      "display_name": {
+        "required": true,
+        "placeholder": "",
+        "show": true,
+        "multiline": true,
+        "value": "",
+        "password": false,
+        "name": "display_name",
+        "display_name": "display_name",
+        "type": "any",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "textarea"
+      },
     }
   },
 })
@@ -50,6 +64,14 @@ const fieldsData = ref(props.data.template)
         <a-col :span="24">
           <BaseField id="value" :name="t('components.nodes.outputs.WorkflowInvokeOutput.value')" required type="target"
             v-model:show="fieldsData.value.show">
+          </BaseField>
+        </a-col>
+
+        <a-col :span="24">
+          <BaseField id="display_name" :name="t('components.nodes.outputs.WorkflowInvokeOutput.display_name')" required
+            type="target" v-model:show="fieldsData.display_name.show">
+            <a-input class="field-content" v-model:value="fieldsData.display_name.value"
+              :placeholder="fieldsData.display_name.placeholder" />
           </BaseField>
         </a-col>
       </a-row>

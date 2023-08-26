@@ -63,7 +63,8 @@ const workflowSelectModal = reactive({
     const fieldNamesIds = new Set()
     const outputNodes = workflowSelectModal.data.outputNodes.concat(workflowSelectModal.data.workflowInvokeOutputNodes)
     outputNodes.forEach((node) => {
-      let fieldKey = `${node.id.slice(0, 8)}_${node.type}`
+      const nodeIdSlice = node.id.slice(0, 8)
+      let fieldKey = `${nodeIdSlice}_${node.type}`
       while (fieldNamesIds.has(fieldKey)) {
         fieldKey = `${fieldKey}_${Math.floor(Math.random() * 1000)}`
       }
@@ -91,7 +92,11 @@ const workflowSelectModal = reactive({
         outputFieldKey = 'value'
       }
       fieldsData.value[fieldKey].name = fieldName
-      fieldsData.value[fieldKey].display_name = fieldName
+      if (node.type == 'WorkflowInvokeOutput') {
+        fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.data.template.display_name.value}`
+      } else {
+        fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
+      }
       fieldsData.value[fieldKey].show = false
       fieldsData.value[fieldKey].is_output = true
       fieldsData.value[fieldKey].node = node.id
@@ -162,7 +167,7 @@ const workflowSelectModal = reactive({
       <a-row type="flex" style="width: 100%;">
         <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="field">
           <a-col :span="24" v-if="fieldsData[field].is_output">
-            <BaseField :id="field" :name="fieldsData[field].name" type="source" nameOnly>
+            <BaseField :id="field" :name="fieldsData[field].display_name" type="source" nameOnly>
             </BaseField>
           </a-col>
         </template>
