@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-26 18:58:45
+ * @Last Modified time: 2023-08-27 01:31:46
  */
 export default {
   lang: 'English',
@@ -226,6 +226,10 @@ export default {
       'brief_info': 'Brief info',
       'brief_images': 'Brief images',
       'edit_code': 'Edit code',
+      'workflow_check_warning': 'Workflow check warning',
+      'workflow_has_no_inputs': 'Workflow has no inputs (please check the fields you want to display in the use interface)',
+      'workflow_has_no_outputs': 'Workflow has no outputs (please drag a node from the output to the canvas and connect it)',
+      'workflow_has_no_triggers': 'Workflow has no triggers (please drag a node from the triggers to the canvas and connect it)',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

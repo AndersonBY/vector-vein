@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-26 18:58:31
+ * @Last Modified time: 2023-08-27 01:31:32
  */
 export default {
   lang: '中文',
@@ -226,6 +226,10 @@ export default {
       'brief_info': '简介信息',
       'brief_images': '简介图片',
       'edit_code': '编辑代码',
+      'workflow_check_warning': '工作流检查警告',
+      'workflow_has_no_inputs': '工作流没有输入（请将勾选需要显示在使用界面的字段）',
+      'workflow_has_no_outputs': '工作流没有输出（请从输出里面拖拽一个节点到画布上并连接）',
+      'workflow_has_no_triggers': '工作流没有触发器（请从触发器里面拖拽一个节点到画布上并连接）',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',

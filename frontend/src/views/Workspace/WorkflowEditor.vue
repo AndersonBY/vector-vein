@@ -22,6 +22,7 @@ import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import { workflowAPI } from "@/api/workflow"
 import { hashObject } from "@/utils/util"
+import { getUIDesignFromWorkflow, nonFormItemsTypes } from '@/utils/workflow'
 import { databaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -136,6 +137,28 @@ const updateWorkflowData = () => {
   }
 }
 
+const saveCheckModalOpen = ref(false)
+const workflowCheckList = ref({
+  hasInput: false,
+  hasOutput: false,
+  hasTrigger: false,
+})
+const saveWorkflowCheck = () => {
+  workflowCheckList.value = {
+    hasInput: false,
+    hasOutput: false,
+    hasTrigger: false,
+  }
+  const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+  const reactiveUIDesign = reactive(uiDesign)
+  workflowCheckList.value.hasInput = reactiveUIDesign.inputFields.filter((inputField) => !nonFormItemsTypes.includes(inputField.field_type)).length > 0
+  workflowCheckList.value.hasOutput = reactiveUIDesign.outputNodes.filter((node) => node.category == 'outputs').length > 0
+  workflowCheckList.value.hasTrigger = reactiveUIDesign.triggerNodes.filter((node) => node.category == 'triggers').length > 0
+  if (!workflowCheckList.value.hasInput || !workflowCheckList.value.hasOutput || !workflowCheckList.value.hasTrigger) {
+    saveCheckModalOpen.value = true
+  }
+}
+
 const saving = ref(false)
 const saveWorkflow = async () => {
   saving.value = true
@@ -145,6 +168,7 @@ const saveWorkflow = async () => {
     ...workflowData,
     ui: uiDesign,
   }
+  saveWorkflowCheck()
   const response = await workflowAPI('update', {
     wid: workflowId,
     ...currentWorkflow.value,
@@ -376,6 +400,25 @@ const codeEditorModal = reactive({
             <a-button type="primary" @click="saveWorkflow" :loading="saving">
               {{ t('common.save') }}
             </a-button>
+            <a-modal v-model:open="saveCheckModalOpen" :footer="null">
+              <template #title>
+                <a-typography-text type="warning">
+                  <Caution />
+                  {{ t('workspace.workflowEditor.workflow_check_warning') }}
+                </a-typography-text>
+              </template>
+
+              <a-typography-paragraph type="danger" v-if="!workflowCheckList.hasInput">
+                {{ t('workspace.workflowEditor.workflow_has_no_inputs') }}
+              </a-typography-paragraph>
+              <a-typography-paragraph type="danger" v-if="!workflowCheckList.hasOutput">
+                {{ t('workspace.workflowEditor.workflow_has_no_outputs') }}
+              </a-typography-paragraph>
+              <a-typography-paragraph type="danger" v-if="!workflowCheckList.hasTrigger">
+                {{ t('workspace.workflowEditor.workflow_has_no_triggers') }}
+              </a-typography-paragraph>
+
+            </a-modal>
           </a-space>
         </a-col>
       </a-row>
