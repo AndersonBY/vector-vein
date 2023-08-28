@@ -271,6 +271,8 @@ const setErrorTask = (errorTask) => {
     node = 'OpenAI'
   } else if (node == 'ChatGlm') {
     node = 'ChatGLM'
+  } else if (node == 'SearchData' && category == 'vectorDb') {
+    node = 'Search'
   }
   recordErrorTask.value = `${category}.${node}`
 }
