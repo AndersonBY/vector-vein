@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-26 01:37:21
+# @Last Modified time: 2023-08-28 18:09:55
 import re
 import json
 
@@ -62,6 +62,8 @@ def programming_function(
         pure_code = code
 
     results = []
+    if len(parameters_batch) == 0:
+        parameters_batch.append({})
     for parameters in parameters_batch:
         if language == "python":
             exec(pure_code, globals())
