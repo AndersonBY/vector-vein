@@ -2,8 +2,10 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-25 13:43:52
+# @Last Modified time: 2023-08-29 23:38:55
 import json
+import uuid
+from copy import deepcopy
 from typing import List, Dict
 from datetime import datetime
 
@@ -119,6 +121,7 @@ class Workflow:
             self.original_workflow_data = workflow_data["original_workflow_data"]
         self.related_workflows = workflow_data.get("related_workflows", {})
         self.edges = self.workflow_data["edges"]
+        self.__node_id_map = {}
         self.nodes, self.workflow_invoke_nodes = self.parse_nodes()
         self.dag = self.create_dag()
         self.workflow_id = workflow_data.get("wid")
@@ -137,7 +140,8 @@ class Workflow:
                 continue
 
             # 对于【工作流调用】节点，需要将子工作流的节点和边添加到当前工作流中
-            nodes_list.extend(self.handle_workflow_invoke(node_obj))
+            new_nodes = deepcopy(self.handle_workflow_invoke(node_obj))
+            nodes_list.extend(new_nodes)
             workflow_invoke_nodes[node_obj.id] = node_obj
 
         # 更新原始数据中的nodes
@@ -181,14 +185,27 @@ class Workflow:
     def add_subnodes_and_subedges(
         self,
         subworkflow: dict,
-        related_subnodes: List[str],
+        related_subnodes: list[str],
         node_obj: Node,
     ):
+        subworkflow = deepcopy(subworkflow)
         updated_subnodes = []
+        # 我们需要给节点赋值一个新ID，否则如果某个子工作流有被重复利用
+        # 会导致连线同一个节点有多个连线，最终可能导致工作流图有环
+        # 同时用子工作流里的节点ID加调用工作流的节点ID作为索引
+        # 本质上相当于将subworkflow做了一个副本，副本里面的节点ID都是新的
         for subnode in subworkflow.get("nodes", []):
+            new_id = str(uuid.uuid4())
+            self.__node_id_map[subnode["id"] + node_obj.id] = new_id
             updated_subnode = self.add_subnode(subnode, related_subnodes, node_obj)
+            updated_subnode["id"] = new_id
             updated_subnodes.append(updated_subnode)
 
+        # 把subworkflow的边里的source和target替换为新ID
+        for edge in subworkflow.get("edges", []):
+            edge["source"] = self.__node_id_map.get(edge["source"] + node_obj.id, edge["source"])
+            edge["target"] = self.__node_id_map.get(edge["target"] + node_obj.id, edge["target"])
+            edge["id"] = f"vueflow__edge-{edge['source']}{edge['sourceHandle']}-{edge['target']}{edge['targetHandle']}"
         self.edges.extend(subworkflow.get("edges", []))
         return updated_subnodes
 
@@ -239,11 +256,12 @@ class Workflow:
             original_source_node_field = workflow_invoke_node.get_field(edge["sourceHandle"])
             original_output_field_key = original_source_node_field.get("output_field_key")
             source = self.get_original_node(source, edge["sourceHandle"])
-            edge["source"] = source
+            edge["source"] = self.__node_id_map[source + workflow_invoke_node.id]
             edge["sourceHandle"] = original_output_field_key
         if target in self.workflow_invoke_nodes:
+            workflow_invoke_node = self.workflow_invoke_nodes[target]
             target = self.get_original_node(target, edge["targetHandle"])
-            edge["target"] = target
+            edge["target"] = self.__node_id_map[target + workflow_invoke_node.id]
         return edge
 
     def get_original_node(self, node: str, handle: str):
