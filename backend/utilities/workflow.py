@@ -2,8 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-29 23:38:55
-import json
+# @Last Modified time: 2023-08-30 13:38:00
 import uuid
 from copy import deepcopy
 from typing import List, Dict
@@ -115,13 +114,13 @@ class Workflow:
     def __init__(self, workflow_data: dict):
         self.workflow_data = workflow_data
         if "original_workflow_data" not in workflow_data:
-            self.original_workflow_data = json.loads(json.dumps(workflow_data))
+            self.original_workflow_data = deepcopy(workflow_data)
             self.workflow_data["original_workflow_data"] = self.original_workflow_data
         else:
             self.original_workflow_data = workflow_data["original_workflow_data"]
         self.related_workflows = workflow_data.get("related_workflows", {})
         self.edges = self.workflow_data["edges"]
-        self.__node_id_map = {}
+        self.__node_id_map = workflow_data.get("__node_id_map", {})
         self.nodes, self.workflow_invoke_nodes = self.parse_nodes()
         self.dag = self.create_dag()
         self.workflow_id = workflow_data.get("wid")
@@ -197,6 +196,7 @@ class Workflow:
         for subnode in subworkflow.get("nodes", []):
             new_id = str(uuid.uuid4())
             self.__node_id_map[subnode["id"] + node_obj.id] = new_id
+            self.workflow_data["__node_id_map"] = self.__node_id_map
             updated_subnode = self.add_subnode(subnode, related_subnodes, node_obj)
             updated_subnode["id"] = new_id
             updated_subnodes.append(updated_subnode)
@@ -328,6 +328,7 @@ class Workflow:
     def clean_workflow_data(self):
         self.workflow_data.pop("original_workflow_data", None)
         self.workflow_data.pop("related_workflows", None)
+        self.workflow_data.pop("__node_id_map", None)
 
     def get_node(self, node_id: str) -> Node:
         return self.nodes.get(node_id)
