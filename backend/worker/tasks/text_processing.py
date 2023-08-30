@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-26 11:29:09
+# @Last Modified time: 2023-08-30 14:53:39
 import re
 
 import markdown2
@@ -189,14 +189,14 @@ def text_truncation(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    text = workflow.get_node_field_value(node_id, "text")
+    input_text = workflow.get_node_field_value(node_id, "text")
     truncate_length = workflow.get_node_field_value(node_id, "truncate_length")
     floating_range = workflow.get_node_field_value(node_id, "floating_range")
     separators = RecursiveCharacterTextSplitter.get_separators_for_language(Language.MARKDOWN)
-    if isinstance(text, str):
-        texts = [text]
+    if isinstance(input_text, str):
+        texts = [input_text]
     else:
-        texts = text
+        texts = input_text
     outputs = []
     for text in texts:
         if len(text) <= truncate_length:
@@ -217,7 +217,7 @@ def text_truncation(
             truncated_text = text[:truncate_length]
 
         outputs.append(truncated_text)
-    if isinstance(text, str):
+    if isinstance(input_text, str):
         final_output = outputs[0]
     else:
         final_output = outputs
