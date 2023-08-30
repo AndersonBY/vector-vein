@@ -71,15 +71,17 @@ const getHandleStyle = (handleType) => ({
         {{ props.name }}
       </a-typography-text>
       <a-typography-text type="danger" v-if="props.required"> *</a-typography-text>
-      <a-divider type="vertical"></a-divider>
-      <a-tooltip :title="t('components.nodes.baseField.show_in_use_interface')">
-        <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue"
-          v-if="props.type == 'target'">
-          <a-typography-text type="secondary">
-            {{ t('components.nodes.baseField.show') }}
-          </a-typography-text>
-        </a-checkbox>
-      </a-tooltip>
+      <slot name="inline"></slot>
+      <div class="show-in-use-interface-checkbox">
+        <a-tooltip :title="t('components.nodes.baseField.show_in_use_interface')">
+          <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue"
+            v-if="props.type == 'target'">
+            <a-typography-text type="secondary">
+              {{ t('components.nodes.baseField.show') }}
+            </a-typography-text>
+          </a-checkbox>
+        </a-tooltip>
+      </div>
       <a-typography-link type="danger" class="delete-field-button" @click="removeField()" v-if="props.deletable">
         <CloseOne style="float: right;" />
       </a-typography-link>
@@ -121,6 +123,14 @@ const getHandleStyle = (handleType) => ({
 .template-item-field-text {
   position: relative;
   padding: 0 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.template-item-field-text .show-in-use-interface-checkbox {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .template-item-field-content {
