@@ -72,10 +72,9 @@ const getHandleStyle = (handleType) => ({
       </a-typography-text>
       <a-typography-text type="danger" v-if="props.required"> *</a-typography-text>
       <slot name="inline"></slot>
-      <div class="show-in-use-interface-checkbox">
+      <div class="show-in-use-interface-checkbox" v-if="props.type == 'target'">
         <a-tooltip :title="t('components.nodes.baseField.show_in_use_interface')">
-          <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue"
-            v-if="props.type == 'target'">
+          <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue">
             <a-typography-text type="secondary">
               {{ t('components.nodes.baseField.show') }}
             </a-typography-text>
@@ -124,6 +123,7 @@ const getHandleStyle = (handleType) => ({
   position: relative;
   padding: 0 10px;
   display: flex;
+  justify-content: flex-end;
   gap: 5px;
 }
 
