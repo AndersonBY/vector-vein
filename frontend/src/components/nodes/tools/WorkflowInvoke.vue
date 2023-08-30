@@ -146,7 +146,7 @@ const workflowSelectModal = reactive({
         <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
           <a-col :span="24" v-if="!['workflow_id'].includes(field) && !fieldsData[field].is_output">
             <BaseField :id="field" :name="`${fieldsData[field].display_name}: ${fieldsData[field].type}`" required
-              type="target" deletable @delete="removeField(field)" v-model:show="fieldsData[field].show">
+              type="target" @delete="removeField(field)" v-model:show="fieldsData[field].show">
               <template>
                 <a-select style="width: 100%;" v-model:value="fieldsData[field].value"
                   :options="fieldsData[field].options" v-if="fieldsData[field].field_type == 'select'" />
