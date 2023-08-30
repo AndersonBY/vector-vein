@@ -72,9 +72,10 @@ const fieldsData = ref(props.data.template)
         <a-col :span="24">
           <BaseField id="show_mermaid" :name="t('components.nodes.outputs.Mermaid.show_mermaid')" required type="target"
             v-model:show="fieldsData.show_mermaid.show">
-            <a-checkbox v-model:checked="fieldsData.show_mermaid.value">
-              {{ t('components.nodes.outputs.Mermaid.show_mermaid') }}
-            </a-checkbox>
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.show_mermaid.value">
+              </a-checkbox>
+            </template>
           </BaseField>
         </a-col>
       </a-row>

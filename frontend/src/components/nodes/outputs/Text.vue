@@ -105,9 +105,10 @@ const fieldsData = ref(props.data.template)
         <a-col :span="24">
           <BaseField id="render_markdown" :name="t('components.nodes.outputs.Text.render_markdown')" required
             type="target" v-model:show="fieldsData.render_markdown.show">
-            <a-checkbox v-model:checked="fieldsData.render_markdown.value">
-              {{ t('components.nodes.outputs.Text.render_markdown') }}
-            </a-checkbox>
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.render_markdown.value">
+              </a-checkbox>
+            </template>
           </BaseField>
         </a-col>
       </a-row>

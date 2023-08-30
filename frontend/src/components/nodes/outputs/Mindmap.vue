@@ -72,9 +72,10 @@ const fieldsData = ref(props.data.template)
         <a-col :span="24">
           <BaseField id="show_mind_map" :name="t('components.nodes.outputs.Mindmap.show_mind_map')" required type="target"
             v-model:show="fieldsData.show_mind_map.show">
-            <a-checkbox v-model:checked="fieldsData.show_mind_map.value">
-              {{ t('components.nodes.outputs.Mindmap.show_mind_map') }}
-            </a-checkbox>
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.show_mind_map.value">
+              </a-checkbox>
+            </template>
           </BaseField>
         </a-col>
       </a-row>

@@ -227,8 +227,10 @@ const codeEditorModal = reactive({
         <a-col :span="24">
           <BaseField id="list_input" :name="t('components.nodes.tools.ProgrammingFunction.list_input')" required
             type="target" v-model:show="fieldsData.list_input.show">
-            <a-checkbox v-model:checked="fieldsData.list_input.value">
-            </a-checkbox>
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.list_input.value">
+              </a-checkbox>
+            </template>
           </BaseField>
         </a-col>
       </a-row>

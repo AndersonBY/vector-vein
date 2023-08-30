@@ -147,15 +147,19 @@ const workflowSelectModal = reactive({
           <a-col :span="24" v-if="!['workflow_id'].includes(field) && !fieldsData[field].is_output">
             <BaseField :id="field" :name="`${fieldsData[field].display_name}: ${fieldsData[field].type}`" required
               type="target" deletable @delete="removeField(field)" v-model:show="fieldsData[field].show">
-              <a-select style="width: 100%;" v-model:value="fieldsData[field].value" :options="fieldsData[field].options"
-                v-if="fieldsData[field].field_type == 'select'" />
-              <a-textarea v-model:value="fieldsData[field].value" :autoSize="true" :showCount="true"
-                :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'textarea'" />
-              <a-input v-model:value="fieldsData[field].value" :placeholder="fieldsData[field].placeholder"
-                v-else-if="fieldsData[field].field_type == 'input'" />
-              <a-checkbox v-model:checked="fieldsData[field].value"
-                v-else-if="fieldsData[field].field_type == 'checkbox'">
-              </a-checkbox>
+              <template>
+                <a-select style="width: 100%;" v-model:value="fieldsData[field].value"
+                  :options="fieldsData[field].options" v-if="fieldsData[field].field_type == 'select'" />
+                <a-textarea v-model:value="fieldsData[field].value" :autoSize="true" :showCount="true"
+                  :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'textarea'" />
+                <a-input v-model:value="fieldsData[field].value" :placeholder="fieldsData[field].placeholder"
+                  v-else-if="fieldsData[field].field_type == 'input'" />
+              </template>
+
+              <template #inline>
+                <a-checkbox v-model:checked="fieldsData[field].value" v-if="fieldsData[field].field_type == 'checkbox'">
+                </a-checkbox>
+              </template>
             </BaseField>
           </a-col>
         </template>

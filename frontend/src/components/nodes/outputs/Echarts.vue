@@ -72,9 +72,10 @@ const fieldsData = ref(props.data.template)
         <a-col :span="24">
           <BaseField id="show_echarts" :name="t('components.nodes.outputs.Echarts.show_echarts')" required type="target"
             v-model:show="fieldsData.show_echarts.show">
-            <a-checkbox v-model:checked="fieldsData.show_echarts.value">
-              {{ t('components.nodes.outputs.Echarts.show_echarts') }}
-            </a-checkbox>
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.show_echarts.value">
+              </a-checkbox>
+            </template>
           </BaseField>
         </a-col>
       </a-row>
