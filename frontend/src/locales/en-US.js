@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-27 01:31:46
+ * @Last Modified time: 2023-08-31 15:20:46
  */
 export default {
   lang: 'English',
@@ -230,6 +230,8 @@ export default {
       'workflow_has_no_inputs': 'Workflow has no inputs (please check the fields you want to display in the use interface)',
       'workflow_has_no_outputs': 'Workflow has no outputs (please drag a node from the output to the canvas and connect it)',
       'workflow_has_no_triggers': 'Workflow has no triggers (please drag a node from the triggers to the canvas and connect it)',
+      'workflow_has_cycles': 'The workflow connection has a cycle, please make sure that the connection of each node will not form a cycle',
+      'workflow_has_isolated_nodes': 'There are isolated nodes in the workflow, please make sure that all nodes except the trigger node are connected to other nodes',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

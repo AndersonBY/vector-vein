@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-27 01:36:02
+ * @Last Modified time: 2023-08-31 15:20:37
  */
 export default {
   lang: '中文',
@@ -230,6 +230,8 @@ export default {
       'workflow_has_no_inputs': '工作流没有输入（请勾选需要显示在使用界面的字段）',
       'workflow_has_no_outputs': '工作流没有输出（请从输出里面拖拽一个节点到画布上并连接）',
       'workflow_has_no_triggers': '工作流没有触发器（请从触发器里面拖拽一个节点到画布上并连接）',
+      'workflow_has_cycles': '工作流连线存在环路，请确保各个节点的连接不会形成一个环',
+      'workflow_has_isolated_nodes': '工作流中存在孤立节点，请确保除了触发器节点以外各个节点都与其他节点连接',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',

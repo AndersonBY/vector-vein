@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-25 17:03:55
+ * @Last Modified time: 2023-08-31 15:19:14
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -16,6 +16,123 @@ export function hasShowFields(node) {
     }
   })
   return hasShow
+}
+
+export class DAG {
+  constructor() {
+    this.nodes = new Set();
+    this.edges = {};
+  }
+
+  add_node(node) {
+    this.nodes.add(node);
+    if (!(node in this.edges)) {
+      this.edges[node] = new Set();
+    }
+  }
+
+  add_edge(start, end) {
+    if (!this.nodes.has(start)) {
+      this.add_node(start);
+    }
+    if (!this.nodes.has(end)) {
+      this.add_node(end);
+    }
+    this.edges[start].add(end);
+  }
+
+  get_parents(node) {
+    let parents = [];
+    for (const [start, ends] of Object.entries(this.edges)) {
+      if (ends.has(node)) {
+        parents.push(start);
+      }
+    }
+    return parents;
+  }
+
+  get_children(node) {
+    return Array.from(this.edges[node]);
+  }
+
+  get_all_nodes() {
+    return Array.from(this.nodes);
+  }
+
+  topological_sort() {
+    let in_degree = {};
+    for (const node of this.nodes) {
+      in_degree[node] = 0;
+    }
+    for (const [start, ends] of Object.entries(this.edges)) {
+      for (const end of ends) {
+        in_degree[end] += 1;
+      }
+    }
+
+    let queue = Object.keys(in_degree).filter(node => in_degree[node] == 0);
+
+    let result = [];
+    while (queue.length > 0) {
+      let node = queue.shift();
+      result.push(node);
+      for (const child of this.edges[node]) {
+        in_degree[child] -= 1;
+        if (in_degree[child] == 0) {
+          queue.push(child);
+        }
+      }
+    }
+
+    if (result.length != this.nodes.size) {
+      throw new Error("The graph contains cycles");
+    }
+
+    return result;
+  }
+}
+
+export const checkWorkflowDAG = (workflowData) => {
+  const result = {
+    noCycle: true,
+    noIsolatedNodes: true,
+  }
+  let dag = new DAG()
+  workflowData.data.nodes.forEach((node) => {
+    if (node.category != 'triggers') {
+      dag.add_node(node.id)
+    }
+  })
+  workflowData.data.edges.forEach((edge) => {
+    dag.add_edge(edge.source, edge.target)
+  })
+  try {
+    dag.topological_sort()
+    result.noCycle = true
+  } catch (e) {
+    result.noCycle = false
+  }
+
+  const isolatedNodes = workflowData.data.nodes.filter((node) => {
+    if (node.category == 'triggers') {
+      return false
+    }
+    return true
+  }).map((node) => node.id)
+  workflowData.data.edges.forEach((edge) => {
+    const targetIndex = isolatedNodes.indexOf(edge.target)
+    if (targetIndex >= 0) {
+      isolatedNodes.splice(targetIndex, 1)
+    }
+    const sourceIndex = isolatedNodes.indexOf(edge.source)
+    if (sourceIndex >= 0) {
+      isolatedNodes.splice(sourceIndex, 1)
+    }
+  })
+  if (isolatedNodes.length > 0) {
+    result.noIsolatedNodes = false
+  }
+  return result
 }
 
 export const getWorkflows = async (

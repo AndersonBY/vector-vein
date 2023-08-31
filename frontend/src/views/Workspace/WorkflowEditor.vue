@@ -22,7 +22,7 @@ import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import { workflowAPI } from "@/api/workflow"
 import { hashObject } from "@/utils/util"
-import { getUIDesignFromWorkflow, nonFormItemsTypes } from '@/utils/workflow'
+import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { databaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
@@ -148,14 +148,19 @@ const saveWorkflowCheck = () => {
     hasInput: false,
     hasOutput: false,
     hasTrigger: false,
+    noCycle: false,
+    noIsolatedNodes: false,
   }
+  const workflowDAGStatus = checkWorkflowDAG(currentWorkflow.value)
+  workflowCheckList.value.noCycle = workflowDAGStatus.noCycle
+  workflowCheckList.value.noIsolatedNodes = workflowDAGStatus.noIsolatedNodes
   const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
   const reactiveUIDesign = reactive(uiDesign)
   workflowCheckList.value.hasInput = reactiveUIDesign.inputFields.filter((inputField) => !nonFormItemsTypes.includes(inputField.field_type)).length > 0
   workflowCheckList.value.hasOutput = reactiveUIDesign.outputNodes.filter((node) => node.category == 'outputs').length > 0
   workflowCheckList.value.hasTrigger = reactiveUIDesign.triggerNodes.filter((node) => node.category == 'triggers').length > 0
-  if (!workflowCheckList.value.hasInput || !workflowCheckList.value.hasOutput || !workflowCheckList.value.hasTrigger) {
-    saveCheckModalOpen.value = true
+  if (Object.values(workflowCheckList.value).some(val => val === false)) {
+    saveCheckModalOpen.value = true;
   }
 }
 
@@ -416,6 +421,12 @@ const codeEditorModal = reactive({
               </a-typography-paragraph>
               <a-typography-paragraph type="danger" v-if="!workflowCheckList.hasTrigger">
                 {{ t('workspace.workflowEditor.workflow_has_no_triggers') }}
+              </a-typography-paragraph>
+              <a-typography-paragraph type="danger" v-if="!workflowCheckList.noCycle">
+                {{ t('workspace.workflowEditor.workflow_has_cycles') }}
+              </a-typography-paragraph>
+              <a-typography-paragraph type="danger" v-if="!workflowCheckList.noIsolatedNodes">
+                {{ t('workspace.workflowEditor.workflow_has_isolated_nodes') }}
               </a-typography-paragraph>
 
             </a-modal>
