@@ -121,9 +121,15 @@ onBeforeMount(async () => {
           label: item.name,
         }
       })
+    } else if (node.type == "CommentNode") {
+      node.dimensions = {
+        width: parseInt(node.style?.width || 100),
+        height: parseInt(node.style?.height || 50),
+      }
     }
   })
   currentWorkflow.value.tags = currentWorkflow.value.tags.map(tag => tag.tid)
+  fromObject(currentWorkflow.value.data)
   elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
   savedWorkflowHash.value = hashObject(currentWorkflow.value)
   loading.value = false
@@ -217,7 +223,7 @@ const exitConfirm = () => {
   }
 }
 
-const { addEdges, updateEdge, onConnect, toObject, viewport, vueFlowRef, edges } = useVueFlow()
+const { addEdges, updateEdge, onConnect, toObject, fromObject, viewport, vueFlowRef, edges } = useVueFlow()
 onConnect((params) => {
   params.type = vueFlowStyleSettings.value.edge.type
   params.animated = vueFlowStyleSettings.value.edge.animated
