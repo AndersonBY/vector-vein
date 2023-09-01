@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-25 16:53:51
+# @Last Modified time: 2023-09-01 18:22:56
 from pathlib import Path
 from datetime import datetime
 
@@ -25,7 +25,7 @@ def text(
 ):
     workflow = Workflow(workflow_data)
     text: str = workflow.get_node_field_value(node_id, "text")
-    workflow.update_node_field_value(node_id, "text", text)
+    workflow.update_node_field_value(node_id, "output", text)
     return workflow.data
 
 
