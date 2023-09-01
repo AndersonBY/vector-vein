@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-30 13:38:00
+# @Last Modified time: 2023-09-01 18:36:29
 import uuid
 from copy import deepcopy
 from typing import List, Dict
@@ -254,7 +254,9 @@ class Workflow:
         if source in self.workflow_invoke_nodes:
             workflow_invoke_node = self.workflow_invoke_nodes[source]
             original_source_node_field = workflow_invoke_node.get_field(edge["sourceHandle"])
-            original_output_field_key = original_source_node_field.get("output_field_key")
+            original_output_field_key = original_source_node_field.get(
+                "output_field_key", original_source_node_field.get("fieldName")
+            )
             source = self.get_original_node(source, edge["sourceHandle"])
             edge["source"] = self.__node_id_map[source + workflow_invoke_node.id]
             edge["sourceHandle"] = original_output_field_key
