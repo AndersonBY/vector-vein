@@ -156,7 +156,7 @@ fieldsData.value.process_mode.options = fieldsData.value.process_mode.options.ma
       </a-row>
     </template>
     <template #output>
-      <BaseField id="output" :name="t('components.nodes.common.output')" type="source">
+      <BaseField id="output" :name="t('components.nodes.common.output')" type="source" nameOnly>
       </BaseField>
     </template>
   </BaseNode>
