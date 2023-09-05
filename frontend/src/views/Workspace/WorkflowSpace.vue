@@ -1,45 +1,3 @@
-<template>
-  <div class="space-container">
-    <a-layout class="layout">
-      <a-layout-sider width="200" style="background: #fff" breakpoint="lg" collapsed-width="0">
-        <a-skeleton active v-if="loading" />
-        <a-menu v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline" style="height: 100%" v-else>
-          <a-menu-item key="my_index">
-            <router-link to="/workflow/">
-              <HomeOutlined />
-              {{ t('workspace.workflowSpace.workflow_index') }}
-            </router-link>
-          </a-menu-item>
-          <a-sub-menu key="user-workflows">
-            <template #title>
-              <span>
-                <UserOutlined />
-                {{ t('workspace.workflowSpace.user_fast_access_workflows') }}
-              </span>
-            </template>
-            <a-menu-item :key="workflow.wid" v-for="workflow in userFastAccessWorkflows">
-              <a-tooltip placement="topLeft" :title="workflow.title">
-                <router-link :to="`/workflow/${workflow.wid}`">
-                  {{ workflow.title }}
-                </router-link>
-              </a-tooltip>
-            </a-menu-item>
-
-            <a-menu-item key="add" @click="openNewWorkflowModal">
-              + {{ t('workspace.workflowSpace.add_new_workflow') }}
-            </a-menu-item>
-            <NewWorkflowModal ref="newWorkflowModal" @create="add" />
-          </a-sub-menu>
-        </a-menu>
-      </a-layout-sider>
-      <a-layout-content :style="{ padding: '0 24px', minHeight: '280px' }">
-        <a-skeleton active v-if="loading" />
-        <router-view :key="workflowId" v-else></router-view>
-      </a-layout-content>
-    </a-layout>
-  </div>
-</template>
-
 <script setup>
 import { defineComponent, ref, nextTick, watch } from "vue"
 import { useI18n } from 'vue-i18n'
@@ -51,10 +9,6 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { HomeOutlined, UserOutlined } from "@ant-design/icons-vue"
 import { workflowAPI } from "@/api/workflow"
 import NewWorkflowModal from '@/components/workspace/NewWorkflowModal.vue'
-
-defineComponent({
-  name: 'WorkflowSpace',
-})
 
 const { t } = useI18n()
 const loading = ref(false)
@@ -94,10 +48,52 @@ const add = async (template) => {
 
   nextTick(() => {
     selectedKeys.value = [workflow.wid]
-    router.push(`/workflow/${workflow.wid}`)
+    router.push(`/workflow/editor/${workflow.wid}`)
   })
 }
 </script>
+
+<template>
+  <div class="space-container">
+    <a-layout class="layout">
+      <a-layout-sider width="200" style="background: #fff" breakpoint="lg" collapsed-width="0">
+        <a-skeleton active v-if="loading" />
+        <a-menu v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline" style="height: 100%" v-else>
+          <a-menu-item key="my_index">
+            <router-link to="/workflow/">
+              <HomeOutlined />
+              {{ t('workspace.workflowSpace.workflow_index') }}
+            </router-link>
+          </a-menu-item>
+          <a-sub-menu key="user-workflows">
+            <template #title>
+              <span>
+                <UserOutlined />
+                {{ t('workspace.workflowSpace.user_fast_access_workflows') }}
+              </span>
+            </template>
+            <a-menu-item :key="workflow.wid" v-for="workflow in userFastAccessWorkflows">
+              <a-tooltip placement="topLeft" :title="workflow.title">
+                <router-link :to="`/workflow/${workflow.wid}`">
+                  {{ workflow.title }}
+                </router-link>
+              </a-tooltip>
+            </a-menu-item>
+
+            <a-menu-item key="add" @click="add">
+              + {{ t('workspace.workflowSpace.add_new_workflow') }}
+            </a-menu-item>
+            <!-- <NewWorkflowModal ref="newWorkflowModal" @create="add" /> -->
+          </a-sub-menu>
+        </a-menu>
+      </a-layout-sider>
+      <a-layout-content :style="{ padding: '0 24px', minHeight: '280px' }">
+        <a-skeleton active v-if="loading" />
+        <router-view :key="workflowId" v-else></router-view>
+      </a-layout-content>
+    </a-layout>
+  </div>
+</template>
 
 <style scoped>
 .space-container {
