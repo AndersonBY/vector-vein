@@ -2,24 +2,15 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-09 17:00:33
+# @Last Modified time: 2023-09-05 17:30:12
 from typing import Union
 
 import httpx
 import openai
 
 from utilities.workflow import Workflow
-from utilities.embeddings import get_token_counts
 from utilities.web_crawler import proxies, proxies_for_requests
 from worker.tasks import task
-
-
-model_max_tokens_map = {
-    "gpt-3.5-turbo": 4096,
-    "gpt-3.5-turbo-16k": 16384,
-    "gpt-4": 8192,
-    "gpt-4-32k": 32768,
-}
 
 
 @task
@@ -30,20 +21,31 @@ def open_ai(
     workflow = Workflow(workflow_data)
     input_prompt: Union[str, list] = workflow.get_node_field_value(node_id, "prompt")
     temperature: float = workflow.get_node_field_value(node_id, "temperature")
+    use_function_call: bool = workflow.get_node_field_value(node_id, "use_function_call", False)
+    functions: list = workflow.get_node_field_value(node_id, "functions", [])
+    function_call_mode: str = workflow.get_node_field_value(node_id, "function_call_mode", "auto")
+    if use_function_call:
+        if function_call_mode not in ("auto", "none"):
+            function_call_mode = {"name": function_call_mode}
+        function_call_parameters = {
+            "functions": functions,
+            "function_call": function_call_mode,
+        }
+    else:
+        function_call_parameters = {}
+
     openai_api_type = workflow.setting.get("openai_api_type")
     if openai_api_type == "azure":
         openai.api_type = "azure"
         openai.api_base = workflow.setting.get("openai_api_base")
-        openai.api_version = "2023-05-15"
+        openai.api_version = "2023-07-01-preview"
         engine_model_param = {"engine": workflow.setting.get("openai_chat_engine")}
-        model_max_tokens = 4096
     else:
         openai.api_type = "open_ai"
         openai.api_base = workflow.setting.get("openai_api_base", "https://api.openai.com/v1")
         openai.api_version = None
         model = workflow.get_node_field_value(node_id, "llm_model")
         engine_model_param = {"model": model}
-        model_max_tokens = model_max_tokens_map.get(model, 4096)
     openai.api_key = workflow.setting.get("openai_api_key")
     openai.proxy = proxies_for_requests()
 
@@ -52,7 +54,8 @@ def open_ai(
     elif isinstance(input_prompt, list):
         prompts = input_prompt
 
-    results = []
+    content_outputs = []
+    function_call_outputs = []
     for prompt in prompts:
         messages = [
             {
@@ -60,20 +63,22 @@ def open_ai(
                 "content": prompt,
             },
         ]
-        token_counts = get_token_counts(prompt)
-        max_tokens = model_max_tokens - token_counts - 50
         response = openai.ChatCompletion.create(
             **engine_model_param,
+            **function_call_parameters,
             messages=messages,
             temperature=temperature,
-            max_tokens=max_tokens,
             top_p=0.77,
         )
-        result = response.choices[0].message.content
-        results.append(result)
+        content_output = response.choices[0].message.get("content", "")
+        content_outputs.append(content_output)
+        function_call_output = response.choices[0].message.get("function_call", {})
+        function_call_outputs.append(function_call_output)
 
-    output = results[0] if isinstance(input_prompt, str) else results
-    workflow.update_node_field_value(node_id, "output", output)
+    content_output = content_outputs[0] if isinstance(input_prompt, str) else content_outputs
+    workflow.update_node_field_value(node_id, "output", content_output)
+    function_call_output = function_call_outputs[0] if isinstance(input_prompt, str) else function_call_outputs
+    workflow.update_node_field_value(node_id, "function_call_output", function_call_output)
     workflow.set_node_status(node_id, 200)
     return workflow.data
 
