@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-31 15:20:37
+ * @Last Modified time: 2023-09-05 16:31:16
  */
 export default {
   lang: '中文',
@@ -586,6 +586,18 @@ export default {
         OpenAI: {
           'title': 'OpenAI',
           'description': 'OpenAI 是一个非营利性的研究机构，致力于推动人工智能的安全发展。OpenAI 的研究团队由世界顶级的人工智能专家组成，他们致力于开发人工智能技术，以解决人类面临的最重要的挑战。',
+          'use_function_call': '使用函数调用',
+          'functions': '函数',
+          'function_call_mode': '函数调用方式',
+          'add_function': '添加函数',
+          'function_name': '函数名称',
+          'function_description': '函数描述',
+          'function_parameters': '函数参数',
+          'function_required_parameters': '必填参数',
+          'add_parameter': '添加参数',
+          'parameter_name': '参数名称',
+          'parameter_description': '参数描述',
+          'parameter_type': '参数类型',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
           'temperature': 'AI 偏好（温度）',
@@ -593,6 +605,7 @@ export default {
           'balanced': '平衡',
           'precise': '精准',
           'output': '输出',
+          'function_call_output': '函数调用输出',
         },
         ChatGLM: {
           'title': 'ChatGLM',

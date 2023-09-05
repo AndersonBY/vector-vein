@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-08-31 15:20:46
+ * @Last Modified time: 2023-09-05 16:31:25
  */
 export default {
   lang: 'English',
@@ -586,6 +586,18 @@ export default {
         OpenAI: {
           'title': 'OpenAI',
           'description': 'OpenAI is a non-profit artificial intelligence research company founded in 2015 by Elon Musk, Sam Altman, and Greg Brockman. It is dedicated to ensuring that artificial general intelligence benefits all of humanity.',
+          'use_function_call': 'Use function call',
+          'functions': 'Functions',
+          'function_call_mode': 'Function call mode',
+          'add_function': 'Add function',
+          'function_name': 'Function name',
+          'function_description': 'Function description',
+          'function_parameters': 'Function parameters',
+          'function_required_parameters': 'Required parameters',
+          'add_parameter': 'Add parameter',
+          'parameter_name': 'Name',
+          'parameter_description': 'Description',
+          'parameter_type': 'Type',
           'prompt': 'Prompt',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',
@@ -593,6 +605,7 @@ export default {
           'balanced': 'Balanced',
           'precise': 'Precise',
           'output': 'Output',
+          'function_call_output': 'Function call output',
         },
         ChatGLM: {
           'title': 'ChatGLM',
