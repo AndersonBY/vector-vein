@@ -12,6 +12,7 @@ import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
 import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
+import TextOutput from "@/components/TextOutput.vue"
 
 defineComponent({
   name: 'UIDesign',
@@ -210,15 +211,8 @@ const deleteField = (list, index) => {
                     <a-typography-title :level="5">
                       {{ node.data.template.output_title.value }}
                     </a-typography-title>
-                    <template v-if="node.data.template.render_markdown.value">
-                      <vue-markdown v-highlight :source="node.data.template.text.value"
-                        class="markdown-body custom-hljs" />
-                      <a-typography-paragraph :copyable="{ text: node.data.template.text.value }">
-                      </a-typography-paragraph>
-                    </template>
-                    <a-typography-paragraph :copyable="{ text: node.data.template.text.value }" v-else>
-                      {{ node.data.template.text.value }}
-                    </a-typography-paragraph>
+                    <TextOutput :text="node.data.template.text.value"
+                      :renderMarkdown="node.data.template.render_markdown.value" />
                   </div>
 
                   <div v-else-if="node.type == 'Audio'">
