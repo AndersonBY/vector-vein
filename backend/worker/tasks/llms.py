@@ -2,7 +2,8 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-09-05 17:30:12
+# @Last Modified time: 2023-09-05 18:22:38
+import json
 from typing import Union
 
 import httpx
@@ -56,6 +57,7 @@ def open_ai(
 
     content_outputs = []
     function_call_outputs = []
+    function_call_arguments_batches = []
     for prompt in prompts:
         messages = [
             {
@@ -74,11 +76,21 @@ def open_ai(
         content_outputs.append(content_output)
         function_call_output = response.choices[0].message.get("function_call", {})
         function_call_outputs.append(function_call_output)
+        function_call_arguments = function_call_output.get("arguments", "")
+        try:
+            json.loads(function_call_arguments)
+        except json.JSONDecodeError:
+            function_call_arguments = {}
+        function_call_arguments_batches.append(function_call_arguments)
 
     content_output = content_outputs[0] if isinstance(input_prompt, str) else content_outputs
     workflow.update_node_field_value(node_id, "output", content_output)
     function_call_output = function_call_outputs[0] if isinstance(input_prompt, str) else function_call_outputs
     workflow.update_node_field_value(node_id, "function_call_output", function_call_output)
+    function_call_arguments_batches = (
+        function_call_arguments_batches[0] if isinstance(input_prompt, str) else function_call_arguments_batches
+    )
+    workflow.update_node_field_value(node_id, "function_call_arguments", function_call_arguments_batches)
     workflow.set_node_status(node_id, 200)
     return workflow.data
 

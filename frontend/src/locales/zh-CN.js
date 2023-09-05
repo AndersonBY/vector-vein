@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-05 16:31:16
+ * @Last Modified time: 2023-09-05 18:25:42
  */
 export default {
   lang: '中文',
@@ -605,7 +605,8 @@ export default {
           'balanced': '平衡',
           'precise': '精准',
           'output': '输出',
-          'function_call_output': '函数调用输出',
+          'function_call_output': '函数调用完整输出',
+          'function_call_arguments': '函数调用参数值',
         },
         ChatGLM: {
           'title': 'ChatGLM',

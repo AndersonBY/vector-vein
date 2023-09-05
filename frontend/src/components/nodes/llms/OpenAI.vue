@@ -146,6 +146,34 @@ const props = defineProps({
         "list": false,
         "field_type": ""
       },
+      "function_call_output": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": "",
+        "password": false,
+        "name": "function_call_output",
+        "display_name": "function_call_output",
+        "type": "str",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": ""
+      },
+      "function_call_arguments": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": "",
+        "password": false,
+        "name": "function_call_arguments",
+        "display_name": "function_call_arguments",
+        "type": "dict",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": ""
+      },
     }
   },
 })
@@ -452,6 +480,11 @@ const removeProperty = (property) => {
         </a-col>
         <a-col :span="24">
           <BaseField id="function_call_output" :name="t('components.nodes.llms.OpenAI.function_call_output')"
+            type="source" nameOnly>
+          </BaseField>
+        </a-col>
+        <a-col :span="24">
+          <BaseField id="function_call_arguments" :name="t('components.nodes.llms.OpenAI.function_call_arguments')"
             type="source" nameOnly>
           </BaseField>
         </a-col>

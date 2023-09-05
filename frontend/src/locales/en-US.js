@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-05 16:31:25
+ * @Last Modified time: 2023-09-05 18:25:49
  */
 export default {
   lang: 'English',
@@ -606,6 +606,7 @@ export default {
           'precise': 'Precise',
           'output': 'Output',
           'function_call_output': 'Function call output',
+          'function_call_arguments': 'Function call arguments',
         },
         ChatGLM: {
           'title': 'ChatGLM',
