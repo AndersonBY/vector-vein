@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-05 18:25:49
+ * @Last Modified time: 2023-09-07 23:24:21
  */
 export default {
   lang: 'English',
@@ -52,6 +52,7 @@ export default {
     'my': 'My',
     'all': 'All',
     'add': 'Add',
+    'edit': 'Edit',
     'create': 'Create',
     'delete': 'Delete',
     'status': 'Status',

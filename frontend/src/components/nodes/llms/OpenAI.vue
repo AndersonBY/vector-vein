@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
@@ -181,7 +181,6 @@ const props = defineProps({
 const { t } = useI18n()
 
 const fieldsData = ref(props.data.template)
-
 if (!fieldsData.value.use_function_call) {
   fieldsData.value.use_function_call = {
     "required": true,
@@ -260,7 +259,9 @@ const updateFunctionCallModeOptions = () => {
   )
 }
 
-const newFunctionData = reactive({
+const isEditingFunction = ref(false)
+const editingFunctionIndex = ref(-1)
+const functionData = reactive({
   "name": "",
   "description": "",
   "parameters": {
@@ -269,16 +270,24 @@ const newFunctionData = reactive({
     "required": [],
   }
 })
-const showAddFunctionDrawer = ref(false)
-const openAddFunctionDrawer = () => {
-  showAddFunctionDrawer.value = true
+const showFunctionDataDrawer = ref(false)
+const openAddFunctionDataDrawer = () => {
+  isEditingFunction.value = false
+  functionData.name = ''
+  functionData.description = ''
+  functionData.parameters = {
+    "type": "object",
+    "properties": {},
+    "required": [],
+  }
+  showFunctionDataDrawer.value = true
 }
 const addFunction = () => {
-  fieldsData.value.functions.value.push(JSON.parse(JSON.stringify(newFunctionData)))
-  showAddFunctionDrawer.value = false
-  newFunctionData.name = ''
-  newFunctionData.description = ''
-  newFunctionData.parameters = {
+  fieldsData.value.functions.value.push(JSON.parse(JSON.stringify(functionData)))
+  showFunctionDataDrawer.value = false
+  functionData.name = ''
+  functionData.description = ''
+  functionData.parameters = {
     "type": "object",
     "properties": {},
     "required": [],
@@ -289,8 +298,25 @@ const removeFunction = (index) => {
   fieldsData.value.functions.value.splice(index, 1)
   updateFunctionCallModeOptions()
 }
+const openEditFunctionDataDrawer = (index) => {
+  isEditingFunction.value = true
+  editingFunctionIndex.value = index
+  functionData.name = fieldsData.value.functions.value[index].name
+  functionData.description = fieldsData.value.functions.value[index].description
+  functionData.parameters = JSON.parse(JSON.stringify(fieldsData.value.functions.value[index].parameters))
+  showFunctionDataDrawer.value = true
+}
+const editFunction = () => {
+  fieldsData.value.functions.value[editingFunctionIndex.value].name = functionData.name
+  fieldsData.value.functions.value[editingFunctionIndex.value].description = functionData.description
+  fieldsData.value.functions.value[editingFunctionIndex.value].parameters = JSON.parse(JSON.stringify(functionData.parameters))
+  showFunctionDataDrawer.value = false
+  updateFunctionCallModeOptions()
+}
 
-const newPropertyData = reactive({
+const isEditingProperty = ref(false)
+const editingProperty = ref('')
+const propertyData = reactive({
   "name": "",
   "type": "string",
   "description": ""
@@ -326,22 +352,42 @@ const propertyTypeOptions = [
     label: 'null'
   },
 ]
-const showAddPropertyDrawer = ref(false)
+const showPropertyDataDrawer = ref(false)
 const openAddPropertyDrawer = () => {
-  showAddPropertyDrawer.value = true
+  isEditingProperty.value = false
+  showPropertyDataDrawer.value = true
 }
 const addProperty = () => {
-  newFunctionData.parameters.properties[newPropertyData.name] = {
-    "type": newPropertyData.type,
-    "description": newPropertyData.description
+  functionData.parameters.properties[propertyData.name] = {
+    "type": propertyData.type,
+    "description": propertyData.description
   }
-  showAddPropertyDrawer.value = false
-  newPropertyData.name = ''
-  newPropertyData.type = 'string'
-  newPropertyData.description = ''
+  showPropertyDataDrawer.value = false
+  propertyData.name = ''
+  propertyData.type = 'string'
+  propertyData.description = ''
 }
 const removeProperty = (property) => {
-  delete newFunctionData.parameters.properties[property]
+  delete functionData.parameters.properties[property]
+}
+const openEditPropertyDrawer = (property) => {
+  isEditingProperty.value = true
+  editingProperty.value = property
+  propertyData.name = property
+  propertyData.type = functionData.parameters.properties[property].type
+  propertyData.description = functionData.parameters.properties[property].description
+  showPropertyDataDrawer.value = true
+}
+const editProperty = () => {
+  delete functionData.parameters.properties[editingProperty.value]
+  functionData.parameters.properties[propertyData.name] = {
+    "type": propertyData.type,
+    "description": propertyData.description
+  }
+  showPropertyDataDrawer.value = false
+  propertyData.name = ''
+  propertyData.type = 'string'
+  propertyData.description = ''
 }
 </script>
 
@@ -389,39 +435,48 @@ const removeProperty = (property) => {
             <a-row type="flex" :gutter="[12, 12]">
               <a-col :span="24" :key="index" v-for="(func, index) in fieldsData.functions.value">
                 <div style="display: flex; gap: 5px; align-items: center;">
-                  {{ func.name }}
-                  <ReduceOne @click="removeFunction(index)" />
+                  <a-button block @click="openEditFunctionDataDrawer(index)">
+                    <Edit />
+                    {{ func.name }}
+                  </a-button>
+                  <ReduceOne class="clickable-icon" fill="#ff4d4f" @click="removeFunction(index)" />
                 </div>
               </a-col>
               <a-col :span="24">
-                <a-button type="dashed" block @click="openAddFunctionDrawer" class="add-field-button">
+                <a-button type="dashed" block @click="openAddFunctionDataDrawer" class="add-field-button">
                   <AddOne />
                   {{ t('components.nodes.llms.OpenAI.add_function') }}
                 </a-button>
               </a-col>
             </a-row>
-            <a-drawer v-model:open="showAddFunctionDrawer" :title="t('components.nodes.llms.OpenAI.add_function')"
+            <a-drawer v-model:open="showFunctionDataDrawer" :title="t('components.nodes.llms.OpenAI.add_function')"
               placement="right" :width="500">
               <template #extra>
-                <a-button type="primary" @click="addFunction">
+                <a-button type="primary" @click="editFunction(editingFunctionIndex)" v-if="isEditingFunction">
+                  {{ t('common.edit') }}
+                </a-button>
+                <a-button type="primary" @click="addFunction" v-else>
                   {{ t('common.add') }}
                 </a-button>
               </template>
               <a-form>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.function_name')">
-                  <a-input v-model:value="newFunctionData.name" />
+                  <a-input v-model:value="functionData.name" />
                 </a-form-item>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.function_description')">
-                  <a-textarea v-model:value="newFunctionData.description" />
+                  <a-textarea v-model:value="functionData.description" />
                 </a-form-item>
 
                 <a-form-item :label="t('components.nodes.llms.OpenAI.function_parameters')">
                   <a-row type="flex" :gutter="[12, 12]">
                     <a-col :span="24" :key="index"
-                      v-for="(propertyName, index) in Object.keys(newFunctionData.parameters.properties)">
+                      v-for="(propertyName, index) in Object.keys(functionData.parameters.properties)">
                       <div style="display: flex; gap: 5px; align-items: center;">
-                        {{ propertyName }}
-                        <ReduceOne @click="removeProperty(propertyName)" />
+                        <a-button block @click="openEditPropertyDrawer(propertyName)">
+                          <Edit />
+                          {{ propertyName }}
+                        </a-button>
+                        <ReduceOne class="clickable-icon" fill="#ff4d4f" @click="removeProperty(propertyName)" />
                       </div>
                     </a-col>
                     <a-col :span="24">
@@ -434,28 +489,31 @@ const removeProperty = (property) => {
                 </a-form-item>
 
                 <a-form-item :label="t('components.nodes.llms.OpenAI.function_required_parameters')">
-                  <a-checkbox-group v-model:value="newFunctionData.parameters.required" name="checkboxgroup"
-                    :options="Object.keys(newFunctionData.parameters.properties).map(property => ({ label: property, value: property }))" />
+                  <a-checkbox-group v-model:value="functionData.parameters.required" name="checkboxgroup"
+                    :options="Object.keys(functionData.parameters.properties).map(property => ({ label: property, value: property }))" />
                 </a-form-item>
               </a-form>
             </a-drawer>
 
-            <a-drawer v-model:open="showAddPropertyDrawer" :title="t('components.nodes.llms.OpenAI.add_parameter')"
+            <a-drawer v-model:open="showPropertyDataDrawer" :title="t('components.nodes.llms.OpenAI.add_parameter')"
               placement="right">
               <template #extra>
-                <a-button type="primary" @click="addProperty">
+                <a-button type="primary" @click="editProperty" v-if="isEditingProperty">
+                  {{ t('common.edit') }}
+                </a-button>
+                <a-button type="primary" @click="addProperty" v-else>
                   {{ t('common.add') }}
                 </a-button>
               </template>
               <a-form>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.parameter_name')">
-                  <a-input v-model:value="newPropertyData.name" />
+                  <a-input v-model:value="propertyData.name" />
                 </a-form-item>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.parameter_description')">
-                  <a-textarea v-model:value="newPropertyData.description" />
+                  <a-textarea v-model:value="propertyData.description" />
                 </a-form-item>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.parameter_type')">
-                  <a-select ref="select" v-model:value="newPropertyData.type" :options="propertyTypeOptions">
+                  <a-select ref="select" v-model:value="propertyData.type" :options="propertyTypeOptions">
                   </a-select>
                 </a-form-item>
               </a-form>
@@ -478,12 +536,12 @@ const removeProperty = (property) => {
           <BaseField id="output" :name="t('components.nodes.llms.OpenAI.output')" type="source" nameOnly>
           </BaseField>
         </a-col>
-        <a-col :span="24">
+        <a-col :span="24" v-show="fieldsData.use_function_call.value">
           <BaseField id="function_call_output" :name="t('components.nodes.llms.OpenAI.function_call_output')"
             type="source" nameOnly>
           </BaseField>
         </a-col>
-        <a-col :span="24">
+        <a-col :span="24" v-show="fieldsData.use_function_call.value">
           <BaseField id="function_call_arguments" :name="t('components.nodes.llms.OpenAI.function_call_arguments')"
             type="source" nameOnly>
           </BaseField>
@@ -493,4 +551,8 @@ const removeProperty = (property) => {
   </BaseNode>
 </template>
 
-<style></style>
+<style>
+.clickable-icon {
+  cursor: pointer;
+}
+</style>
