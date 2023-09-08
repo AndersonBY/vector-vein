@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-10 23:42:46
+# @Last Modified time: 2023-09-08 18:33:04
 import json
 import random
 
@@ -102,9 +102,11 @@ def json_process(
     process_mode = workflow.get_node_field_value(node_id, "process_mode")
     key = workflow.get_node_field_value(node_id, "key")
     default_value = workflow.get_node_field_value(node_id, "default_value")
+    keys = workflow.get_node_field_value(node_id, "keys", [])
 
     input_fields_has_list = isinstance(input_data, list) or isinstance(key, list)
     output = []
+    output_keys = {k: [] for k in keys}
     if isinstance(input_data, dict):
         input_data = [input_data]
     if not isinstance(key, list):
@@ -118,6 +120,10 @@ def json_process(
     if process_mode == "get_value":
         for i in range(len(input_data)):
             output.append(input_data[i].get(key[i], default_value))
+    elif process_mode == "get_multiple_values":
+        for data in input_data:
+            for k in keys:
+                output_keys[k].append(data.get(k, default_value))
     elif process_mode == "list_values":
         for i in range(len(input_data)):
             output.append(list(input_data[i].values()))
@@ -125,7 +131,13 @@ def json_process(
         for i in range(len(input_data)):
             output.append(list(input_data[i].keys()))
 
-    if not input_fields_has_list:
-        output = output[0]
-    workflow.update_node_field_value(node_id, "output", output)
+    if process_mode != "get_multiple_values":
+        if not input_fields_has_list:
+            output = output[0]
+        workflow.update_node_field_value(node_id, "output", output)
+    else:
+        for k in keys:
+            if not input_fields_has_list:
+                output_keys[k] = output_keys[k][0]
+            workflow.update_node_field_value(node_id, f"output-{k}", output_keys[k])
     return workflow.data

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-07 23:24:09
+ * @Last Modified time: 2023-09-08 18:07:09
  */
 export default {
   lang: '中文',
@@ -888,9 +888,12 @@ export default {
           'input': '输入',
           'process_mode': '处理模式',
           'process_mode_get_value': '根据 Key 获取值',
+          'process_mode_get_multiple_values': '根据多个 Key 获取多个值',
           'process_mode_list_values': '列表形式列出所有值',
           'process_mode_list_keys': '列表形式列出所有 Key',
           'key': 'Key',
+          'keys': 'Keys',
+          'add_key': '添加 Key',
           'default_value': '默认值（当 Key 不存在时）',
           'output': '输出',
         },

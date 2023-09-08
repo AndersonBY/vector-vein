@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-07 23:24:21
+ * @Last Modified time: 2023-09-08 18:07:27
  */
 export default {
   lang: 'English',
@@ -888,9 +888,12 @@ export default {
           'input': 'Input',
           'process_mode': 'Process mode',
           'process_mode_get_value': 'Get value by Key',
+          'process_mode_get_multiple_values': 'Get multiple values by Keys',
           'process_mode_list_values': 'List all values',
           'process_mode_list_keys': 'List all keys',
           'key': 'Key',
+          'keys': 'Keys',
+          'add_key': 'Add key',
           'default_value': 'Default value (when Key does not exist)',
           'output': 'Output',
         },

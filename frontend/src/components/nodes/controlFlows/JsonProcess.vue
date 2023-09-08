@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { AddOne, ReduceOne } from '@icon-park/vue-next'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 
@@ -45,6 +46,10 @@ const props = defineProps({
             "label": "get_value"
           },
           {
+            "value": "get_multiple_values",
+            "label": "get_multiple_values"
+          },
+          {
             "value": "list_values",
             "label": "list_values"
           },
@@ -70,6 +75,20 @@ const props = defineProps({
         "name": "key",
         "display_name": "key",
         "type": "str|list",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "input"
+      },
+      "keys": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": [],
+        "password": false,
+        "name": "keys",
+        "display_name": "keys",
+        "type": "list",
         "clear_after_run": true,
         "list": false,
         "field_type": "input"
@@ -113,6 +132,25 @@ fieldsData.value.process_mode.options = fieldsData.value.process_mode.options.ma
   item.label = t(`components.nodes.controlFlows.JsonProcess.process_mode_${item.value}`)
   return item
 })
+if (!fieldsData.value.keys) {
+  fieldsData.value.keys = {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "multiline": true,
+    "value": [],
+    "password": false,
+    "name": "keys",
+    "display_name": "keys",
+    "type": "list",
+    "clear_after_run": true,
+    "list": true,
+    "field_type": "input"
+  }
+}
+const removeKey = (index) => {
+  fieldsData.value.keys.value.splice(index, 1)
+}
 </script>
 
 <template>
@@ -153,11 +191,50 @@ fieldsData.value.process_mode.options = fieldsData.value.process_mode.options.ma
             </BaseField>
           </a-col>
         </template>
+
+        <template v-if="fieldsData.process_mode.value == 'get_multiple_values'">
+          <a-col :span="24">
+            <BaseField id="keys" :name="t('components.nodes.controlFlows.JsonProcess.keys')" required type="target"
+              v-model:show="fieldsData.keys.show">
+              <a-row :gutter="[8, 8]" style="margin-top: 16px;">
+                <a-col :span="24" v-for="(key, index) in fieldsData.keys.value" :key="index">
+                  <a-space>
+                    <a-typography-text v-model:content="fieldsData.keys.value[index]" editable />
+                    <ReduceOne class="clickable-icon" fill="#ff4d4f" @click="removeKey(index)" />
+                  </a-space>
+                </a-col>
+              </a-row>
+
+              <a-button block type="dashed" class="add-field-button" @click="fieldsData.keys.value.push('')">
+                <AddOne />
+                {{ t('components.nodes.controlFlows.JsonProcess.add_key') }}
+              </a-button>
+            </BaseField>
+          </a-col>
+
+          <a-col :span="24">
+            <BaseField id="default_value" :name="t('components.nodes.controlFlows.JsonProcess.default_value')"
+              type="target" v-model:show="fieldsData.default_value.show">
+              <a-input class="field-content" v-model:value="fieldsData.default_value.value"
+                :placeholder="fieldsData.default_value.placeholder" />
+            </BaseField>
+          </a-col>
+        </template>
       </a-row>
     </template>
     <template #output>
-      <BaseField id="output" :name="t('components.nodes.common.output')" type="source" nameOnly>
-      </BaseField>
+      <a-row type="flex" style="width: 100%">
+        <a-col :span="24" v-if="fieldsData.process_mode.value != 'get_multiple_values'">
+          <BaseField id="output" :name="t('components.nodes.common.output')" type="source" nameOnly>
+          </BaseField>
+        </a-col>
+        <template v-else>
+          <a-col v-for="(key, index) in fieldsData.keys.value" :key="index" :span="24">
+            <BaseField :id="`output-${key}`" :name="key" type="source" nameOnly>
+            </BaseField>
+          </a-col>
+        </template>
+      </a-row>
     </template>
   </BaseNode>
 </template>
