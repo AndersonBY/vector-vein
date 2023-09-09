@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-08 18:07:27
+ * @Last Modified time: 2023-09-09 16:15:23
  */
 export default {
   lang: 'English',
@@ -599,6 +599,14 @@ export default {
           'parameter_name': 'Name',
           'parameter_description': 'Description',
           'parameter_type': 'Type',
+          'array_configuration_mode': 'Array configuration mode',
+          'array_configuration_mode_simple': 'Simple configuration',
+          'array_configuration_mode_manual': 'Manual configuration',
+          'array_items_type': 'Array items type',
+          'array_items_manual_schema': 'Items JSON Schema',
+          'array_items_manual_schema_error': 'Items JSON Schema error',
+          'object_items_manual_schema': 'Object JSON Schema',
+          'object_items_manual_schema_error': 'Object JSON Schema error',
           'prompt': 'Prompt',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',

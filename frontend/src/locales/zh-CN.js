@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-08 18:07:09
+ * @Last Modified time: 2023-09-09 16:15:04
  */
 export default {
   lang: '中文',
@@ -599,6 +599,14 @@ export default {
           'parameter_name': '参数名称',
           'parameter_description': '参数描述',
           'parameter_type': '参数类型',
+          'array_configuration_mode': '数组配置方式',
+          'array_configuration_mode_simple': '简单配置',
+          'array_configuration_mode_manual': '手动编写',
+          'array_items_type': '数组项类型',
+          'array_items_manual_schema': '数组项 JSON 格式',
+          'array_items_manual_schema_error': '数组项 JSON 格式错误',
+          'object_items_manual_schema': '对象 JSON 格式',
+          'object_items_manual_schema_error': '对象 JSON 格式错误',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
           'temperature': 'AI 偏好（温度）',

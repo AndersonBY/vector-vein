@@ -2,6 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
+import { message } from 'ant-design-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
@@ -322,6 +323,19 @@ const propertyData = reactive({
   "description": ""
 })
 
+const arrayConfigurationMode = ref('simple')
+const arrayItemsType = ref('string')
+const arrayItemsManualSchema = ref('{"items": {"type": "string"}}')
+
+const objectItemsManualSchema = ref('{"properties": {}, "required": []}')
+
+const propertyTypeChanged = (value) => {
+  if (value == 'array') {
+    arrayConfigurationMode.value = 'simple'
+    arrayItemsType.value = 'string'
+  }
+}
+
 const propertyTypeOptions = [
   {
     value: 'string',
@@ -357,11 +371,43 @@ const openAddPropertyDrawer = () => {
   isEditingProperty.value = false
   showPropertyDataDrawer.value = true
 }
-const addProperty = () => {
+const setPropertyData = () => {
   functionData.parameters.properties[propertyData.name] = {
     "type": propertyData.type,
     "description": propertyData.description
   }
+  if (propertyData.type == 'array') {
+    if (arrayConfigurationMode.value == 'simple') {
+      functionData.parameters.properties[propertyData.name].items = {
+        "type": arrayItemsType.value
+      }
+    } else {
+      try {
+        JSON.parse(arrayItemsManualSchema.value)
+      } catch (error) {
+        message.error(t('components.nodes.llms.OpenAI.array_items_manual_schema_error'))
+        return
+      }
+      functionData.parameters.properties[propertyData.name] = {
+        ...functionData.parameters.properties[propertyData.name],
+        ...JSON.parse(arrayItemsManualSchema.value)
+      }
+    }
+  } else if (propertyData.type == 'object') {
+    try {
+      JSON.parse(objectItemsManualSchema.value)
+    } catch (error) {
+      message.error(t('components.nodes.llms.OpenAI.object_items_manual_schema_error'))
+      return
+    }
+    functionData.parameters.properties[propertyData.name] = {
+      ...functionData.parameters.properties[propertyData.name],
+      ...JSON.parse(objectItemsManualSchema.value)
+    }
+  }
+}
+const addProperty = () => {
+  setPropertyData()
   showPropertyDataDrawer.value = false
   propertyData.name = ''
   propertyData.type = 'string'
@@ -380,10 +426,7 @@ const openEditPropertyDrawer = (property) => {
 }
 const editProperty = () => {
   delete functionData.parameters.properties[editingProperty.value]
-  functionData.parameters.properties[propertyData.name] = {
-    "type": propertyData.type,
-    "description": propertyData.description
-  }
+  setPropertyData()
   showPropertyDataDrawer.value = false
   propertyData.name = ''
   propertyData.type = 'string'
@@ -474,7 +517,7 @@ const editProperty = () => {
                       <div style="display: flex; gap: 5px; align-items: center;">
                         <a-button block @click="openEditPropertyDrawer(propertyName)">
                           <Edit />
-                          {{ propertyName }}
+                          {{ propertyName }}: {{ functionData.parameters.properties[propertyName].type }}
                         </a-button>
                         <ReduceOne class="clickable-icon" fill="#ff4d4f" @click="removeProperty(propertyName)" />
                       </div>
@@ -513,9 +556,38 @@ const editProperty = () => {
                   <a-textarea v-model:value="propertyData.description" />
                 </a-form-item>
                 <a-form-item :label="t('components.nodes.llms.OpenAI.parameter_type')">
-                  <a-select ref="select" v-model:value="propertyData.type" :options="propertyTypeOptions">
+                  <a-select ref="select" v-model:value="propertyData.type" :options="propertyTypeOptions"
+                    @change="propertyTypeChanged">
                   </a-select>
                 </a-form-item>
+                <template v-if="propertyData.type == 'array'">
+                  <a-form-item :label="t('components.nodes.llms.OpenAI.array_configuration_mode')">
+                    <a-select ref="select" v-model:value="arrayConfigurationMode">
+                      <a-select-option value="simple">
+                        {{ t('components.nodes.llms.OpenAI.array_configuration_mode_simple') }}
+                      </a-select-option>
+                      <a-select-option value="manual">
+                        {{ t('components.nodes.llms.OpenAI.array_configuration_mode_manual') }}
+                      </a-select-option>
+                    </a-select>
+                  </a-form-item>
+                  <a-form-item :label="t('components.nodes.llms.OpenAI.array_items_type')"
+                    v-if="arrayConfigurationMode == 'simple'">
+                    <a-select ref="select" v-model:value="arrayItemsType" :options="propertyTypeOptions">
+                    </a-select>
+                  </a-form-item>
+                  <a-form-item :label="t('components.nodes.llms.OpenAI.array_items_manual_schema')"
+                    v-if="arrayConfigurationMode == 'manual'">
+                    <a-textarea v-model:value="arrayItemsManualSchema" :autoSize="{ minRows: 1, maxRows: 20 }"
+                      :showCount="true" />
+                  </a-form-item>
+                </template>
+                <template v-else-if="propertyData.type == 'object'">
+                  <a-form-item :label="t('components.nodes.llms.OpenAI.object_items_manual_schema')">
+                    <a-textarea v-model:value="objectItemsManualSchema" :autoSize="{ minRows: 1, maxRows: 20 }"
+                      :showCount="true" />
+                  </a-form-item>
+                </template>
               </a-form>
             </a-drawer>
           </BaseField>
