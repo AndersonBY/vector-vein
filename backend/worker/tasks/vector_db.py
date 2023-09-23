@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 11:40:57
+# @Last Modified time: 2023-09-23 23:17:14
 from worker.tasks import task
 from utilities.workflow import Workflow
 from utilities.text_splitter import TokenTextSplitter
@@ -97,23 +97,33 @@ def search_data(
     vdb_response_queue = vdb_queues["response"]
     workflow = Workflow(workflow_data)
     search_text = workflow.get_node_field_value(node_id, "search_text")
-    text_embedding = get_embedding_from_open_ai(search_text, workflow.setting)
-    vdb_request_queue.put(
-        {
-            "function_name": "search_point",
-            "parameters": dict(
-                vid=workflow.get_node_field_value(node_id, "database"),
-                text_embedding=text_embedding,
-                limit=workflow.get_node_field_value(node_id, "count"),
-            ),
-        }
-    )
-    results = vdb_response_queue.get()
-    vdb_response_queue.task_done()
     output_type = workflow.get_node_field_value(node_id, "output_type")
-    if output_type == "text":
-        result = "\n".join([result["text"] for result in results])
-    elif output_type == "list":
-        result = [result["text"] for result in results]
-    workflow.update_node_field_value(node_id, "output", result)
+
+    if isinstance(search_text, str):
+        search_texts = [search_text]
+    elif isinstance(search_text, list):
+        search_texts = search_text
+
+    results = []
+    for text in search_texts:
+        text_embedding = get_embedding_from_open_ai(text, workflow.setting)
+        vdb_request_queue.put(
+            {
+                "function_name": "search_point",
+                "parameters": dict(
+                    vid=workflow.get_node_field_value(node_id, "database"),
+                    text_embedding=text_embedding,
+                    limit=workflow.get_node_field_value(node_id, "count"),
+                ),
+            }
+        )
+        search_results = vdb_response_queue.get()
+        vdb_response_queue.task_done()
+
+        if output_type == "text":
+            results.append("\n".join([result["text"] for result in search_results]))
+        elif output_type == "list":
+            results.append([result["text"] for result in search_results])
+
+    workflow.update_node_field_value(node_id, "output", results if isinstance(search_text, list) else results[0])
     return workflow.data
