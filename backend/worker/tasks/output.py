@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-09-01 18:22:56
+# @Last Modified time: 2023-10-12 19:35:07
 from pathlib import Path
 from datetime import datetime
 
@@ -11,8 +11,8 @@ import openpyxl
 import markdown2
 from docx import Document
 from docx.oxml.ns import qn
-from htmldocx import HtmlToDocx
 
+from utilities.html2docx import HtmlToDocx
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint
 from worker.tasks import task

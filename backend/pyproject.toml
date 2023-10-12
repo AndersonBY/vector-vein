@@ -12,7 +12,6 @@ dependencies = [
   "python-pptx>=0.6.21",
   "openai>=0.27.0",
   "python-docx>=0.8.11",
-  "htmldocx>=0.0.6",
   "pandas>=2.0.1",
   "yagmail>=0.15.293",
   "qdrant-client>=1.1.3",
@@ -42,4 +41,4 @@ build-front = "python build.py -t f"
 dev.cmd = "python main.py"
 dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.28"}
 fullstack-dev.cmd = "python run_fullstack_dev.py"
-fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.28", "VITE_LOCAL" = "http://localhost:5174/"}
+fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.0.28", "VITE_LOCAL" = "http://localhost:5173/"}
