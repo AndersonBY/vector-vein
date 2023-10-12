@@ -3,7 +3,7 @@ import { ref, reactive, markRaw, onBeforeMount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { LeftOutlined, ExclamationCircleOutlined } from '@ant-design/icons-vue'
+import { Left, Caution } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background, BackgroundVariant } from '@vue-flow/background'
@@ -366,13 +366,13 @@ const codeEditorModal = reactive({
       <a-row type="flex" align="middle" justify="space-between" :gutter="[16, 16]" style="width: 100%;">
         <a-col flex="0 0">
           <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
-            <LeftOutlined />
+            <Left />
             {{ t('common.back') }}
 
             <a-modal v-model:open="exitModalOpen">
               <template #title>
                 <a-typography-text type="warning">
-                  <ExclamationCircleOutlined />
+                  <Caution />
                   {{ t('common.back') }}
                 </a-typography-text>
               </template>
