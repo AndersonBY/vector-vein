@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-09 16:15:04
+ * @Last Modified time: 2023-12-09 17:33:28
  */
 export default {
   lang: '中文',
@@ -599,6 +599,8 @@ export default {
           'parameter_name': '参数名称',
           'parameter_description': '参数描述',
           'parameter_type': '参数类型',
+          'response_format': '响应格式',
+          'response_format_warning': '仅 gpt-4-1106-preview 或 gpt-3.5-turbo-1106 支持 JSON 响应格式，已强制修改模型为 gpt-3.5-turbo-1106',
           'array_configuration_mode': '数组配置方式',
           'array_configuration_mode_simple': '简单配置',
           'array_configuration_mode_manual': '手动编写',
@@ -903,6 +905,22 @@ export default {
           'keys': 'Keys',
           'add_key': '添加 Key',
           'default_value': '默认值（当 Key 不存在时）',
+          'output': '输出',
+        },
+      },
+      mediaProcessing: {
+        title: '多媒体处理',
+        GptVision: {
+          'title': 'GPT-Vision',
+          'description': '带视觉的 GPT，允许模型接收图像并回答有关它们的问题。',
+          'text_prompt': '文本提示词',
+          'images_or_urls': '图片或链接',
+          'images': '图片',
+          'urls': '链接',
+          'detail_type': '图像理解细节',
+          'detail_type_auto': '自动选择',
+          'detail_type_low': '低分辨率图像理解',
+          'detail_type_high': '高分辨率图像理解',
           'output': '输出',
         },
       },

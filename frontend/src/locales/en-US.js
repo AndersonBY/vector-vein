@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-09-09 16:15:23
+ * @Last Modified time: 2023-12-09 17:33:48
  */
 export default {
   lang: 'English',
@@ -599,6 +599,8 @@ export default {
           'parameter_name': 'Name',
           'parameter_description': 'Description',
           'parameter_type': 'Type',
+          'response_format': 'Response format',
+          'response_format_warning': 'Only gpt-4-1106-preview or gpt-3.5-turbo-1106 support JSON response format, the model has been forcibly modified to gpt-3.5-turbo-1106',
           'array_configuration_mode': 'Array configuration mode',
           'array_configuration_mode_simple': 'Simple configuration',
           'array_configuration_mode_manual': 'Manual configuration',
@@ -904,6 +906,22 @@ export default {
           'add_key': 'Add key',
           'default_value': 'Default value (when Key does not exist)',
           'output': 'Output',
+        },
+      },
+      mediaProcessing: {
+        title: 'Media processing',
+        GptVision: {
+          'title': 'GPT-Vision',
+          'description': 'GPT with vision, allowing the model to receive images and answer questions about them.',
+          'text_prompt': 'Text prompt',
+          'images_or_urls': 'Images or URLs',
+          'images': 'Images',
+          'urls': 'URLs',
+          'detail_type': 'Detail type',
+          'detail_type_auto': 'Auto',
+          'detail_type_low': 'Low',
+          'detail_type_high': 'High',
+          'output': '输出',
         },
       },
     },
