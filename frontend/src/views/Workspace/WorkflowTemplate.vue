@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref } from "vue"
+import { onBeforeMount, ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
@@ -7,10 +7,6 @@ import { message } from 'ant-design-vue'
 import VueMarkdown from 'vue-markdown-render'
 import { officialSiteAPI } from '@/api/remote'
 import { workflowAPI } from '@/api/workflow'
-
-defineComponent({
-  name: 'WorkflowTemplate',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -70,7 +66,7 @@ const addTemplateToUserWorkflows = async () => {
             <a-typography-text type="secondary">
               {{ t('common.update_time_format', {
                 time: new
-                  Date(templateData.update_time).toLocaleString()
+                  Date(parseInt(templateData.update_time)).toLocaleString()
               }) }}
             </a-typography-text>
             <a-divider type="vertical" />
