@@ -310,7 +310,7 @@ const onNewNodeDragEnd = (event) => {
   elements.value.push(newNode)
 }
 
-const nodeFiles = import.meta.globEager('@/components/nodes/*/*.vue')
+const nodeFiles = import.meta.glob('@/components/nodes/*/*.vue', { eager: true })
 const nodeTypes = {}
 const nodesCategories = {}
 const nodeCategoriesReverse = {}
