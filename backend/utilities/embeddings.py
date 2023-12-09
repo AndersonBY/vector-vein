@@ -2,9 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:15:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-15 16:48:35
-import openai
+# @Last Modified time: 2023-12-09 17:48:02
+import httpx
 import tiktoken
+from openai import AzureOpenAI, OpenAI
+
+from utilities.web_crawler import proxies
 
 
 chatgpt_encoding = tiktoken.encoding_for_model("gpt-3.5-turbo")
@@ -18,16 +21,26 @@ def get_token_counts(text: str, model: str = "gpt-3.5-turbo") -> int:
 
 
 def get_embedding_from_open_ai(text: str, setting: dict = None):
-    openai.api_key = setting.get("openai_api_key")
     if setting.get("openai_api_type") == "azure":
-        openai.api_type = "azure"
-        openai.api_base = setting.get("openai_api_base")
-        openai.api_version = "2022-12-01"
-        engine = setting.get("openai_embedding_engine")
-        return openai.Embedding.create(input=[text], engine=engine)["data"][0]["embedding"]
+        client = AzureOpenAI(
+            azure_endpoint=setting.get("openai_api_base"),
+            api_key=setting.get("openai_api_key"),
+            api_version="2023-12-01-preview",
+            http_client=httpx.Client(
+                proxies=proxies(),
+                transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+            ),
+        )
+        model = setting.get("openai_embedding_engine")
     else:
-        openai.api_type = "open_ai"
-        openai.api_base = setting.get("openai_api_base", "https://api.openai.com/v1")
-        openai.api_version = None
+        client = OpenAI(
+            api_key=setting.get("openai_api_key"),
+            base_url=setting.get("openai_api_base", "https://api.openai.com/v1"),
+            http_client=httpx.Client(
+                proxies=proxies(),
+                transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+            ),
+        )
         model = "text-embedding-ada-002"
-        return openai.Embedding.create(input=[text], model=model)["data"][0]["embedding"]
+
+    return client.embeddings.create(input=[text], model=model).data[0].embedding
