@@ -1,11 +1,11 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref, reactive, computed, nextTick } from "vue"
+import { onBeforeMount, defineComponent, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
-import VueMarkdown from 'vue-markdown-render'
+import WorkflowCard from '@/components/workspace/WorkflowCard.vue'
 import { officialSiteAPI } from '@/api/remote'
 
 defineComponent({
@@ -125,25 +125,8 @@ const workflowTemplates = reactive({
         <a-row :gutter="[16, 16]">
           <a-col :lg="6" :md="8" :sm="12" :xs="24" v-for="template in workflowTemplates.data" :key="template.tid"
             @click="router.push(`/workflow/template/${template.tid}`)">
-            <a-card class="template-card" hoverable>
-              <template #title>
-                <div class="template-card-title-container">
-                  <a-typography-title :level="4">
-                    {{ template.title }}
-                  </a-typography-title>
-                  <a-tag v-for="(tag, index) in template.tags" :key="index" :color="tag.color">
-                    {{ tag.title }}
-                  </a-tag>
-                </div>
-              </template>
-              <a-carousel autoplay arrows v-if="template.images.length > 0">
-                <div v-for="(image, index) in template.images" :key="index">
-                  <img :src="image" class="card-image" />
-                </div>
-              </a-carousel>
-              <VueMarkdown v-highlight :source="template.brief" class="custom-scrollbar markdown-body custom-hljs"
-                v-else />
-            </a-card>
+            <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
+              :brief="template.brief" :author="template.user" :forks="false" />
           </a-col>
         </a-row>
       </a-spin>
