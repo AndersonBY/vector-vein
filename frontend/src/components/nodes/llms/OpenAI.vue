@@ -40,9 +40,13 @@ const props = defineProps({
         "placeholder": "",
         "show": false,
         "multiline": false,
-        "value": "gpt-3.5-turbo",
+        "value": "gpt-3.5-turbo-1106",
         "password": false,
         "options": [
+          {
+            "value": "gpt-3.5-turbo-1106",
+            "label": "gpt-3.5-turbo-1106"
+          },
           {
             "value": "gpt-3.5-turbo",
             "label": "gpt-3.5-turbo"
@@ -50,6 +54,10 @@ const props = defineProps({
           {
             "value": "gpt-3.5-turbo-16k",
             "label": "gpt-3.5-turbo-16k"
+          },
+          {
+            "value": "gpt-4-1106-preview",
+            "label": "gpt-4-1106-preview"
           },
           {
             "value": "gpt-4",
@@ -80,6 +88,30 @@ const props = defineProps({
         "clear_after_run": true,
         "list": false,
         "field_type": "number"
+      },
+      "response_format": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "multiline": false,
+        "value": "text",
+        "password": false,
+        "options": [
+          {
+            "value": "text",
+            "label": "Text"
+          },
+          {
+            "value": "json_object",
+            "label": "JSON"
+          },
+        ],
+        "name": "response_format",
+        "display_name": "response_format",
+        "type": "str",
+        "clear_after_run": false,
+        "list": true,
+        "field_type": "select"
       },
       "use_function_call": {
         "required": false,
@@ -234,6 +266,32 @@ if (!fieldsData.value.function_call_mode) {
     ],
     "name": "function_call_mode",
     "display_name": "function_call_mode",
+    "type": "str",
+    "clear_after_run": false,
+    "list": true,
+    "field_type": "select"
+  }
+}
+if (!fieldsData.value.response_format) {
+  fieldsData.value.response_format = {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "multiline": false,
+    "value": "text",
+    "password": false,
+    "options": [
+      {
+        "value": "text",
+        "label": "Text"
+      },
+      {
+        "value": "json_object",
+        "label": "JSON"
+      },
+    ],
+    "name": "response_format",
+    "display_name": "response_format",
     "type": "str",
     "clear_after_run": false,
     "list": true,
@@ -432,6 +490,16 @@ const editProperty = () => {
   propertyData.type = 'string'
   propertyData.description = ''
 }
+
+const responseFormatChanged = (value) => {
+  if (value == 'text') return
+  // 如果fieldsData.llm_model.value不是gpt-3.5-turbo-1106或者gpt-4-1106-preview
+  // 则强制设置为gpt-3.5-turbo-1106，通知提醒用户
+  if (fieldsData.value.llm_model.value != 'gpt-3.5-turbo-1106' && fieldsData.value.llm_model.value != 'gpt-4-1106-preview') {
+    fieldsData.value.llm_model.value = 'gpt-3.5-turbo-1106'
+    message.warning(t('components.nodes.llms.OpenAI.response_format_warning'))
+  }
+}
 </script>
 
 <template>
@@ -459,6 +527,14 @@ const editProperty = () => {
           <BaseField id="temperature" :name="t('components.nodes.llms.OpenAI.temperature')" required type="target"
             v-model:show="fieldsData.temperature.show">
             <TemperatureInput v-model="fieldsData.temperature.value" />
+          </BaseField>
+        </a-col>
+
+        <a-col :span="24">
+          <BaseField id="response_format" :name="t('components.nodes.llms.OpenAI.response_format')" required type="target"
+            v-model:show="fieldsData.response_format.show">
+            <a-select style="width: 100%;" v-model:value="fieldsData.response_format.value"
+              :options="fieldsData.response_format.options" @change="responseFormatChanged" />
           </BaseField>
         </a-col>
 
