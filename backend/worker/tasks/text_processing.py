@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-30 14:53:39
+# @Last Modified time: 2024-02-22 17:06:56
 import re
 
 import markdown2
@@ -89,7 +89,7 @@ def template_compose(
         for field in fields:
             if field == "output":
                 continue
-            template = template.replace(f"{{{{{field}}}}}", fields_values[field][index])
+            template = template.replace(f"{{{{{field}}}}}", str(fields_values[field][index]))
         fields_values["output"].append(template)
 
     if not fields_has_list:
