@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-21 18:26:50
+# @Last Modified time: 2024-03-04 01:01:58
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -110,7 +110,9 @@ def bilibili_crawler(
     resp = httpx.get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies())
     title = resp.json()["data"]["title"]
 
-    resp = httpx.get(f"https://api.bilibili.com/x/player/wbi/v2?aid={aid}&cid={cid}", headers=headers, proxies=proxies())
+    resp = httpx.get(
+        f"https://api.bilibili.com/x/player/wbi/v2?aid={aid}&cid={cid}", headers=headers, proxies=proxies()
+    )
     subtitle_list = resp.json()["data"]["subtitle"]["subtitles"]
     if len(subtitle_list) == 0:
         subtitle_data = [] if output_type == "list" else ""
@@ -137,6 +139,8 @@ def youtube_crawler(
     workflow = Workflow(workflow_data)
     url_or_video_id = workflow.get_node_field_value(node_id, "url_or_video_id")
     output_type = workflow.get_node_field_value(node_id, "output_type")
+    get_comments = workflow.get_node_field_value(node_id, "get_comments", False)
+    comments_type = workflow.get_node_field_value(node_id, "comments_type", "text_only")
 
     if isinstance(url_or_video_id, list):
         urls = url_or_video_id
@@ -157,11 +161,15 @@ def youtube_crawler(
 
     text_results = []
     title_results = []
+    comments_results = []
     for url in formatted_urls:
-        ydl_opts = {"writeautomaticsub": True}
+        ydl_opts = {"writeautomaticsub": True, "getcomments": get_comments}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             title = info["title"]
+            comments = info.get("comments", [])
+            if comments_type == "text_only":
+                comments = [comment["text"] for comment in comments]
 
         # TODO: 这里直接选择列表第一个作为字幕了，对于多语言字幕未来要考虑让用户选择语言？
         if len(info["subtitles"]) > 0:
@@ -198,9 +206,14 @@ def youtube_crawler(
 
         text_results.append(subtitle_data)
         title_results.append(title)
+        if get_comments:
+            comments_results.append(comments)
 
     title_value = title_results if isinstance(url_or_video_id, list) else title_results[0]
     workflow.update_node_field_value(node_id, "output_title", title_value)
     text_value = text_results if isinstance(url_or_video_id, list) else text_results[0]
     workflow.update_node_field_value(node_id, "output_subtitle", text_value)
+    if get_comments:
+        comments_value = comments_results if isinstance(url_or_video_id, list) else comments_results[0]
+        workflow.update_node_field_value(node_id, "output_comments", comments_value)
     return workflow.data

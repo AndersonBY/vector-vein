@@ -32,6 +32,44 @@ const props = defineProps({
         "list": false,
         "field_type": "input"
       },
+      "get_comments": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": false,
+        "value": false,
+        "password": false,
+        "name": "get_comments",
+        "display_name": "get_comments",
+        "type": "bool",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "checkbox"
+      },
+      "comments_type": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": false,
+        "value": "text_only",
+        "password": false,
+        "options": [
+          {
+            "value": "text_only",
+            "label": "text_only"
+          },
+          {
+            "value": "detailed",
+            "label": "detailed"
+          },
+        ],
+        "name": "comments_type",
+        "display_name": "comments_type",
+        "type": "bool",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "radio"
+      },
       "output_type": {
         "required": false,
         "placeholder": "",
@@ -84,6 +122,20 @@ const props = defineProps({
         "list": false,
         "field_type": "textarea"
       },
+      "output_comments": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "multiline": true,
+        "value": "",
+        "password": false,
+        "name": "output_comments",
+        "display_name": "output_comments",
+        "type": "str|dict",
+        "clear_after_run": true,
+        "list": false,
+        "field_type": "textarea"
+      },
     }
   },
 })
@@ -93,6 +145,54 @@ const { t } = useI18n()
 const fieldsData = ref(props.data.template)
 fieldsData.value.output_type.options = fieldsData.value.output_type.options.map(item => {
   item.label = t(`components.nodes.webCrawlers.YoutubeCrawler.${item.value}`)
+  return item
+})
+
+if (!fieldsData.value.get_comments) {
+  fieldsData.value.get_comments = {
+    "required": true,
+    "placeholder": "",
+    "show": false,
+    "multiline": false,
+    "value": false,
+    "password": false,
+    "name": "get_comments",
+    "display_name": "get_comments",
+    "type": "bool",
+    "clear_after_run": true,
+    "list": false,
+    "field_type": "checkbox"
+  }
+}
+if (!fieldsData.value.comments_type) {
+  fieldsData.value.comments_type = {
+    "required": true,
+    "placeholder": "",
+    "show": false,
+    "multiline": false,
+    "value": "text_only",
+    "password": false,
+    "options": [
+      {
+        "value": "text_only",
+        "label": "text_only"
+      },
+      {
+        "value": "detailed",
+        "label": "detailed"
+      },
+    ],
+    "name": "comments_type",
+    "display_name": "comments_type",
+    "type": "bool",
+    "clear_after_run": true,
+    "list": false,
+    "field_type": "radio"
+  }
+}
+
+fieldsData.value.comments_type.options = fieldsData.value.comments_type.options.map(item => {
+  item.label = t(`components.nodes.webCrawlers.YoutubeCrawler.comments_type_${item.value}`)
   return item
 })
 </script>
@@ -115,17 +215,39 @@ fieldsData.value.output_type.options = fieldsData.value.output_type.options.map(
               :options="fieldsData.output_type.options" />
           </BaseField>
         </a-col>
+        <a-col :span="24">
+          <BaseField id="get_comments" :name="t('components.nodes.webCrawlers.YoutubeCrawler.get_comments')" required
+            type="target" v-model:show="fieldsData.get_comments.show">
+            <template #inline>
+              <a-checkbox v-model:checked="fieldsData.get_comments.value">
+              </a-checkbox>
+            </template>
+          </BaseField>
+        </a-col>
+        <a-col :span="24">
+          <BaseField id="comments_type" :name="t('components.nodes.webCrawlers.YoutubeCrawler.comments_type')" required
+            type="target" v-model:show="fieldsData.comments_type.show">
+            <a-radio-group option-type="button" v-model:value="fieldsData.comments_type.value"
+              :options="fieldsData.comments_type.options" />
+          </BaseField>
+        </a-col>
       </a-row>
     </template>
+
     <template #output>
       <a-row type="flex" style="width: 100%;">
         <a-col :span="24">
-          <BaseField id="output_title" :name="t('components.nodes.webCrawlers.YoutubeCrawler.output_title')" type="source"
-            nameOnly>
+          <BaseField id="output_title" :name="t('components.nodes.webCrawlers.YoutubeCrawler.output_title')"
+            type="source" nameOnly>
           </BaseField>
         </a-col>
         <a-col :span="24">
           <BaseField id="output_subtitle" :name="t('components.nodes.webCrawlers.YoutubeCrawler.output_subtitle')"
+            type="source" nameOnly>
+          </BaseField>
+        </a-col>
+        <a-col :span="24">
+          <BaseField id="output_comments" :name="t('components.nodes.webCrawlers.YoutubeCrawler.output_comments')"
             type="source" nameOnly>
           </BaseField>
         </a-col>
