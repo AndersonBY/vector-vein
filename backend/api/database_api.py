@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-14 01:28:49
+# @Last Modified time: 2024-03-04 00:43:17
 from pathlib import Path
 
 from models import (
@@ -32,6 +32,17 @@ class DatabaseAPI:
         database = model_serializer(database)
         response = {"status": 200, "msg": "success", "data": database}
         return response
+    
+    def update(self, payload):
+        status, msg, database = get_user_object_general(
+            UserVectorDatabase,
+            vid=payload.get("vid", None),
+        )
+        if status != 200:
+            return {"status": status, "msg": msg, "data": {}}
+        database.name = payload.get("name", database.name)
+        database.save()
+        return {"status": 200, "msg": msg}
 
     def list(self, payload):
         databases = UserVectorDatabase.select().order_by("create_time")
