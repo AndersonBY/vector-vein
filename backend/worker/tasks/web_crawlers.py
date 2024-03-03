@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-03-04 01:01:58
+# @Last Modified time: 2024-03-04 01:20:09
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -190,7 +190,12 @@ def youtube_crawler(
                         break
                 break
         else:
-            raise Exception("No subtitle found")
+            print("No subtitle found")
+            title_results.append(title)
+            text_results.append("")
+            if get_comments:
+                comments_results.append(comments)
+            continue
 
         subtitle_resp = httpx.get(subtitle_url, proxies=proxies(), headers=headers)
         subtitle_data_list = subtitle_resp.json()["events"]
