@@ -525,3 +525,10 @@ const codeEditorModal = reactive({
   height: calc(100vh - 40px - 40px);
 }
 </style>
+
+<style>
+.vue-flow .vue-flow__edge.selected path {
+  stroke: #28c5e5 !important;
+  stroke-width: 6 !important;
+}
+</style>

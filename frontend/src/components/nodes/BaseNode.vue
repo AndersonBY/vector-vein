@@ -132,4 +132,9 @@ const { t } = useI18n()
   color: white;
   font-size: 18px;
 }
+
+.vue-flow .vue-flow__node.selected .node {
+  box-shadow: 0 0 0 3px #28c5e5;
+  border: 1px solid #28c5e5;
+}
 </style>
