@@ -27,7 +27,7 @@ const props = defineProps({
         "password": false,
         "name": "content",
         "display_name": "content",
-        "type": "str|list",
+        "type": "str",
         "clear_after_run": true,
         "list": false,
         "field_type": "textarea"
@@ -56,7 +56,7 @@ const fieldsData = ref(props.data.template)
 </script>
 
 <template>
-  <BaseNode :title="t('components.nodes.outputs.Mermaid.title')" :description="props.data.description"
+  <BaseNode :nodeId="id" :title="t('components.nodes.outputs.Mermaid.title')" :description="props.data.description"
     documentLink="https://vectorvein.com/help/docs/outputs#h2-24">
     <template #main>
       <a-row type="flex">
