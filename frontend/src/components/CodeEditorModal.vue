@@ -6,7 +6,7 @@ import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView } from "@codemirror/view"
 import { Codemirror } from 'vue-codemirror'
-import { CodeOutlined } from '@ant-design/icons-vue'
+import { FileCode } from '@icon-park/vue-next'
 
 defineComponent({
   name: 'CodeEditorModal',
@@ -80,7 +80,7 @@ const handleReady = (payload) => {
   <a-modal :open="innerOpen" width="80vw" @ok="updateOpen(false, true)" @cancel="updateOpen(false, false)">
     <template #title>
       <a-space>
-        <CodeOutlined />
+        <FileCode />
         {{ t('components.codeEditorModal.title') }}
 
         <a-typography-text :copyable="{ text: props.code }">

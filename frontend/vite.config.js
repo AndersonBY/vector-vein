@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-18 00:42:28
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-16 11:09:12
+ * @Last Modified time: 2024-03-04 00:55:40
  */
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
@@ -23,7 +23,6 @@ const defaultConfig = {
   optimizeDeps: {
     include: [
       'ant-design-vue',
-      '@ant-design/icons-vue',
     ],
   },
   define: {

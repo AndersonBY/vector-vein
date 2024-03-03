@@ -1,13 +1,9 @@
 <script setup>
-import { defineComponent, ref, reactive, computed } from "vue"
+import { ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { ControlOutlined, FieldTimeOutlined, FlagOutlined, PayCircleOutlined, NumberOutlined } from '@ant-design/icons-vue'
+import { Time, Control, Consume, Tag, ListNumbers } from '@icon-park/vue-next'
 import { workflowRunRecordAPI } from "@/api/workflow"
-
-defineComponent({
-  name: 'WorkflowRunRecordsDrawer',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -173,27 +169,32 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
             @change="workflowRunRecords.handleTableChange">
             <template #headerCell="{ column }">
               <template v-if="column.key === 'workflow_title'">
-                <NumberOutlined />
+                <ListNumbers />
                 {{ t('components.workspace.workflowRunRecordsDrawer.workflow_title') }}
               </template>
+
               <template v-else-if="column.key === 'start_time'">
-                <FieldTimeOutlined />
+                <Time />
                 {{ t('components.workspace.workflowRunRecordsDrawer.start_time') }}
               </template>
+
               <template v-else-if="column.key === 'end_time'">
-                <FieldTimeOutlined />
+                <Time />
                 {{ t('components.workspace.workflowRunRecordsDrawer.end_time') }}
               </template>
+
               <template v-else-if="column.key === 'status'">
-                <FlagOutlined />
+                <Tag />
                 {{ t('components.workspace.workflowRunRecordsDrawer.status') }}
               </template>
+
               <template v-else-if="column.key === 'used_credits'">
-                <PayCircleOutlined />
+                <Consume />
                 {{ t('components.workspace.workflowRunRecordsDrawer.used_credits') }}
               </template>
+
               <template v-else-if="column.key === 'action'">
-                <ControlOutlined />
+                <Control />
                 {{ t('common.action') }}
               </template>
             </template>
@@ -202,11 +203,13 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
               <template v-if="column.key === 'workflow_title'">
                 {{ record.workflow.title }}
               </template>
+
               <template v-else-if="column.key === 'status'">
                 <a-tag :color="statusColor[record.status]">
                   {{ t(`components.workspace.workflowRunRecordsDrawer.status_${record.status.toLowerCase()}`) }}
                 </a-tag>
               </template>
+
               <template v-else-if="column.key === 'action'">
                 <div class="action-container">
                   <a-typography-link @click.prevent="getWorkflowRunRecordDetail(record.rid, record.workflow)">

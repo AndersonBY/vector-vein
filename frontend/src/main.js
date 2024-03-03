@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-18 00:42:28
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-05-15 22:04:31
+ * @Last Modified time: 2024-03-03 23:57:01
  */
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -20,6 +20,7 @@ import { getPageTitle } from '@/utils/title'
 import 'ant-design-vue/dist/reset.css'
 import 'github-markdown-css'
 import 'highlight.js/styles/monokai-sublime.css'
+import '@icon-park/vue-next/styles/index.css'
 
 const app = createApp(App)
 

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-12-09 17:33:48
+ * @Last Modified time: 2024-03-04 00:45:10
  */
 export default {
   lang: 'English',
@@ -81,6 +81,7 @@ export default {
     'previous_step': 'Previous step',
     'next_step': 'Next step',
     'preview': 'Preview',
+    'save_success': 'Save success',
   },
   email: {
     verify: {
@@ -304,6 +305,7 @@ export default {
       'data_type_OTHER': 'Other',
       'delete_confirm': 'Confirm to delete this data?',
       'delete': 'Delete',
+      'modify_database_info': 'Modify database info',
     },
     databaseObjectCreate: {
       'add_object': 'Add object',
@@ -749,11 +751,16 @@ export default {
           'title': 'Youtube ',
           'description': 'Used to crawl videos from youtube.',
           'url_or_video_id': 'URL or video ID',
+          'get_comments': 'Get comments',
+          'comments_type': 'Comments output format',
+          'comments_type_text_only': 'Text only',
+          'comments_type_detailed': 'Detailed',
           'output_type': 'Output type',
           'str': 'String',
           'list': 'List',
           'output_subtitle': 'Subtitle',
           'output_title': 'Title',
+          'output_comments': 'Comments',
         },
       },
       triggers: {

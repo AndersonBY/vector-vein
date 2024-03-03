@@ -1,3 +1,28 @@
+<script setup>
+import { ref } from "vue"
+import { Help } from '@icon-park/vue-next'
+
+const props = defineProps({
+  contents: {
+    type: Array,
+    required: false,
+    default: () => {
+      return []
+    },
+  },
+  fixedWidth: {
+    type: Boolean,
+    default: true,
+  },
+  color: {
+    type: String,
+    default: '#007de4',
+  },
+})
+const overlayClassName = ref(['question-popover'])
+if (props.fixedWidth) overlayClassName.value.push('question-popover-fixed-width')
+</script>
+
 <template>
   <a-popover :overlayClassName="(overlayClassName).join(' ')">
     <template #content>
@@ -14,33 +39,12 @@
           <img v-if="content.type == 'image'" :src="content.url" />
         </div>
       </template>
+      <slot></slot>
     </template>
-    <question-circle-outlined :style="{ margin: '0 2px' }" />
+    <Help style="margin: 0 2px;" :fill="color" />
   </a-popover>
 </template>
-  
-<script setup>
-import { defineComponent, ref } from "vue"
-import { QuestionCircleOutlined } from '@ant-design/icons-vue'
 
-defineComponent({
-  name: "QuestionPopover",
-})
-
-const props = defineProps({
-  contents: {
-    type: Array,
-    required: true,
-  },
-  fixedWidth: {
-    type: Boolean,
-    default: true,
-  },
-})
-const overlayClassName = ref(['question-popover'])
-if (props.fixedWidth) overlayClassName.value.push('question-popover-fixed-width')
-</script>
-  
 <style>
 .question-popover-fixed-width.ant-popover {
   max-width: 300px;

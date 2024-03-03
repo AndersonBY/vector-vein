@@ -2,7 +2,7 @@
 import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { AppstoreAddOutlined, UserOutlined } from "@ant-design/icons-vue"
+import { User, MoreApp } from '@icon-park/vue-next'
 import { getFullUrl } from "@/utils/util"
 import MyWorkflows from '@/components/workspace/MyWorkflows.vue'
 import WorkflowTemplatesMarket from "@/components/workspace/WorkflowTemplatesMarket.vue"
@@ -22,16 +22,17 @@ const tabChange = async (key) => {
     <a-tab-pane key="my-workflows">
       <template #tab>
         <span>
-          <UserOutlined />
+          <User />
           {{ t('workspace.workflowSpaceMain.my_workflows') }}
         </span>
       </template>
       <MyWorkflows />
     </a-tab-pane>
     <a-tab-pane key="official-workflow-templates">
+
       <template #tab>
         <span>
-          <AppstoreAddOutlined />
+          <MoreApp theme="filled" />
           {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
         </span>
       </template>
@@ -45,4 +46,3 @@ const tabChange = async (key) => {
   height: calc(100vh - 64px);
 }
 </style>
-  

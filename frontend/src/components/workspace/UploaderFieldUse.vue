@@ -1,12 +1,7 @@
 <script setup>
-import { defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { InboxOutlined, DeleteOutlined, FileOutlined } from '@ant-design/icons-vue'
+import { InboxOut, Delete, FileSuccess } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
-
-defineComponent({
-  name: 'UploaderFieldUse',
-})
 
 const props = defineProps({
   multiple: {
@@ -41,31 +36,35 @@ const upload = async () => {
   }
 }
 </script>
+
 <template>
   <a-row :gutter="[16, 16]">
     <a-col :span="24">
       <a-button type="primary" block @click="upload">
         <template #icon>
-          <InboxOutlined />
+          <InboxOut />
         </template>
         {{ t('components.workspace.uploaderFieldUse.upload') }}
       </a-button>
     </a-col>
     <a-col :span="24">
       <a-list :data-source="files">
+
         <template #renderItem="{ item }">
           <a-list-item>
             <template #actions>
               <a-typography-link @click="remove(item)">
-                <DeleteOutlined />
+                <Delete />
               </a-typography-link>
             </template>
             <a-list-item-meta>
+
               <template #title>
                 <a-typography-text>{{ item }}</a-typography-text>
               </template>
+
               <template #avatar>
-                <FileOutlined />
+                <FileSuccess />
               </template>
             </a-list-item-meta>
           </a-list-item>

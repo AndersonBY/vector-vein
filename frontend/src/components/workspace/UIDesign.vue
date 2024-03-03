@@ -1,22 +1,13 @@
 <script setup>
-import { defineComponent, ref, reactive, nextTick } from 'vue'
-import { DragOutlined, CloseOutlined, FormOutlined, ThunderboltOutlined } from "@ant-design/icons-vue"
+import { ref, reactive, nextTick } from 'vue'
+import { DirectionAdjustmentThree, Delete, Edit, Lightning } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
-import VueMarkdown from 'vue-markdown-render'
 import { VueDraggable, useDraggable } from 'vue-draggable-plus'
 import { getUIDesignFromWorkflow, nonFormItemsTypes } from '@/utils/workflow'
 import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
-import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
-import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
-import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
-import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import TextOutput from "@/components/TextOutput.vue"
-
-defineComponent({
-  name: 'UIDesign',
-})
 
 const currentWorkflow = defineModel()
 const { t } = useI18n()
@@ -110,7 +101,7 @@ const deleteField = (list, index) => {
           <template v-for="(item, nodeIndex) in uiItems" :key="`node-${nodeIndex}`">
             <a-tooltip :title="t(`components.workspace.uiDesign.${item.name}.tip`)" placement="right">
               <a-menu-item class="draggable-menu-item" :id="item.id">
-                <DragOutlined />
+                <DirectionAdjustmentThree />
                 <span>{{ t(`components.workspace.uiDesign.${item.name}.title`) }}</span>
               </a-menu-item>
             </a-tooltip>
@@ -124,7 +115,7 @@ const deleteField = (list, index) => {
           <a-col :xxl="6" :xl="8" :lg="10" :md="24">
             <a-row :gutter="[16, 16]">
               <a-typography-title :level="3">
-                <FormOutlined class="text-primary" />
+                <Edit fill="#28c5e5" />
                 {{ t('workspace.workflowSpace.inputs') }}
               </a-typography-title>
 
@@ -132,12 +123,14 @@ const deleteField = (list, index) => {
                 <a-form layout="vertical" ref="inputFieldsEl">
                   <div class="draggable-item" v-for="( field, fieldIndex ) in inputFields "
                     :key="`field-${field}-${fieldIndex}`">
-                    <DragOutlined class="handle" />
+                    <DirectionAdjustmentThree class="handle" />
                     <a-form-item class="draggable-item-content" v-if="!nonFormItemsTypes.includes(field.field_type)">
+
                       <template #label>
                         {{ field.display_name }}
                       </template>
-                      <TemperatureInput v-model="field.value" v-if="field.category == 'llms' && field == 'temperature'" />
+                      <TemperatureInput v-model="field.value"
+                        v-if="field.category == 'llms' && field == 'temperature'" />
                       <a-select v-model:value="field.value" :options="field.options"
                         v-else-if="field.field_type == 'select'" />
                       <a-textarea v-model:value="field.value" :autoSize="true" :showCount="true"
@@ -147,14 +140,16 @@ const deleteField = (list, index) => {
                       <a-input-number v-model:value="field.value" :placeholder="field.placeholder"
                         v-else-if="field.field_type == 'number'" />
                       <a-checkbox v-model:checked="field.value" v-else-if="field.field_type == 'checkbox'" />
-                      <UploaderFieldUse v-model="field.value" v-else-if="field.field_type == 'file'" />
+                      <UploaderFieldUse v-model="field.value"
+                        :supportFileTypes="field.support_file_types || '.docx, .pptx, .xlsx, .pdf, .txt, .md, .html, .json, .csv, .srt'"
+                        v-else-if="field.field_type == 'file'" />
                       <ListFieldUse v-model="field.value" v-else-if="field.field_type == 'list'" />
                     </a-form-item>
                     <a-row class="draggable-item-content" v-if="field.field_type == 'typography-paragraph'">
                       <a-col :span="24" class="ui-special-item-container">
                         <a-textarea class="ui-special-item" v-model:value="field.value" :placeholder="field.placeholder"
                           auto-size @change="updateWorkflowUi" />
-                        <CloseOutlined class="ui-special-item-delete" @click="deleteField(inputFields, fieldIndex)" />
+                        <Delete class="ui-special-item-delete" @click="deleteField(inputFields, fieldIndex)" />
                       </a-col>
                     </a-row>
                   </div>
@@ -165,28 +160,17 @@ const deleteField = (list, index) => {
 
               <a-col :span="24">
                 <a-row :gutter="[16, 16]">
+
                   <template v-for="( node ) in triggerNodes" :key="`node-${node.id}`">
                     <a-col :span="24">
                       <a-button type="primary" block v-if="node.type == 'ButtonTrigger'">
                         {{ node.data.template.button_text.value }}
                       </a-button>
-                      <a-card :title="t('components.nodes.triggers.ScheduleTrigger.schedule_settings')"
-                        v-else-if="node.type == 'ScheduleTrigger'">
-                        <template #extra>
-                          <a-space>
-                            <a-button type="primary">
-                              {{ t('components.nodes.triggers.ScheduleTrigger.save_schedule_settings') }}
-                            </a-button>
-                            <a-popconfirm :title="t('workspace.workflowSpace.delete_schedule_trigger_confirm')">
-                              <a-button type="primary" danger>
-                                {{ t('workspace.workflowSpace.delete') }}
-                              </a-button>
-                            </a-popconfirm>
-                          </a-space>
-                        </template>
-                        <cron-ant v-model="node.data.template.schedule.value"
-                          :button-props="{ type: 'primary', shape: 'round', }" :locale="language" />
-                      </a-card>
+                      <div class="special-item-container" v-else-if="node.type == 'ScheduleTrigger'">
+                        <a-typography-title :level="4">
+                          {{ t('components.nodes.triggers.ScheduleTrigger.title') }}
+                        </a-typography-title>
+                      </div>
                     </a-col>
                   </template>
                 </a-row>
@@ -197,7 +181,7 @@ const deleteField = (list, index) => {
           <a-col :xxl="18" :xl="16" :lg="14" :md="24">
             <a-typography-title :level="3" style="display: flex; justify-content: space-between;">
               <span>
-                <ThunderboltOutlined class="text-primary" />
+                <Lightning fill="#28c5e5" />
                 {{ t('workspace.workflowSpace.outputs') }}
               </span>
             </a-typography-title>
@@ -205,7 +189,7 @@ const deleteField = (list, index) => {
             <a-row :gutter="[16, 16]" ref="outputNodesEl">
               <a-col :span="24" class="draggable-item" v-for="(node, index) in outputNodes"
                 :key="`node-${node.id}-${index}`">
-                <DragOutlined class="handle" />
+                <DirectionAdjustmentThree class="handle" />
                 <div class="draggable-item-content">
                   <div v-if="node.type == 'Text'">
                     <a-typography-title :level="5">
@@ -215,27 +199,41 @@ const deleteField = (list, index) => {
                       :renderMarkdown="node.data.template.render_markdown.value" />
                   </div>
 
-                  <div v-else-if="node.type == 'Audio'">
-                    <AudioPlayer :audios="[node.data.template.audio_url?.value]" />
+                  <div class="special-item-container" v-else-if="node.type == 'Audio'">
+                    <a-typography-title :level="4">
+                      {{ t('components.nodes.outputs.Audio.title') }}
+                    </a-typography-title>
                   </div>
 
-                  <div v-else-if="node.type == 'Mindmap'">
-                    <MindmapRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+                  <div class="special-item-container" v-else-if="node.type == 'Mindmap'">
+                    <a-typography-title :level="4">
+                      {{ t('components.nodes.outputs.Mindmap.title') }}
+                    </a-typography-title>
                   </div>
 
-                  <div v-else-if="node.type == 'Mermaid'">
-                    <MermaidRenderer :content="node.data.template.content.value" style="width: 100%;min-height: 50vh;" />
+                  <div class="special-item-container" v-else-if="node.type == 'Mermaid'">
+                    <a-typography-title :level="4">
+                      {{ t('components.nodes.outputs.Mermaid.title') }}
+                    </a-typography-title>
                   </div>
 
-                  <div v-else-if="node.type == 'Echarts'">
-                    <EchartsRenderer :option="node.data.template.option.value" style="width: 100%;min-height: 50vh;" />
+                  <div class="special-item-container" v-else-if="node.type == 'Echarts'">
+                    <a-typography-title :level="4">
+                      {{ t('components.nodes.outputs.Echarts.title') }}
+                    </a-typography-title>
+                  </div>
+
+                  <div class="special-item-container" v-else-if="node.type == 'Html'">
+                    <a-typography-title :level="4">
+                      {{ t('components.nodes.outputs.Html.title') }}
+                    </a-typography-title>
                   </div>
 
                   <div v-else>
                     <div class="ui-special-item-container" v-if="node.field_type == 'typography-paragraph'">
                       <a-textarea class="ui-special-item" v-model:value="node.value" :placeholder="node.placeholder"
                         auto-size @change="updateWorkflowUi" />
-                      <CloseOutlined class="ui-special-item-delete" @click="deleteField(outputNodes, index)" />
+                      <Delete class="ui-special-item-delete" @click="deleteField(outputNodes, index)" />
                     </div>
                   </div>
                 </div>
@@ -281,6 +279,14 @@ const deleteField = (list, index) => {
 .ui-special-item-delete {
   flex-grow: 0;
   margin-left: 10px;
+}
+
+.special-item-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
+  background-color: #e7e7e7;
 }
 </style>
 

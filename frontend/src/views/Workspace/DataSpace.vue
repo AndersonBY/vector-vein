@@ -1,16 +1,12 @@
 <script setup>
-import { LoadingOutlined } from '@ant-design/icons-vue'
-import { ref, reactive, defineComponent, onBeforeMount } from 'vue'
+import { LoadingFour, Delete } from '@icon-park/vue-next'
+import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { message } from 'ant-design-vue'
 import { statusColorMap } from '@/utils/common'
 import { databaseAPI } from '@/api/database'
-
-defineComponent({
-  name: 'DataSpace',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -36,7 +32,7 @@ const databases = reactive({
   }, {
     title: t('common.action'),
     key: 'action',
-    width: '200px',
+    width: '80px',
   }],
   data: [],
   hoverRowVid: null,
@@ -107,7 +103,7 @@ const deleteDatabase = async (vid) => {
 <template>
   <div class="dataspace-container">
     <a-row align="center" :gutter="[16, 16]">
-        <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
+      <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #extra>
             <a-button type="primary" @click="createNewDatabaseModal.open = true">
@@ -121,6 +117,7 @@ const deleteDatabase = async (vid) => {
             </a-modal>
           </template>
           <a-table :columns="databases.columns" :customRow="databases.customRow" :data-source="databases.data">
+
             <template #headerCell="{ column }">
               <template v-if="column.key === 'name'">
                 {{ t('workspace.dataSpace.database_name') }}
@@ -133,14 +130,16 @@ const deleteDatabase = async (vid) => {
                   {{ record.name }}
                 </a-typography-text>
               </template>
+
               <template v-else-if="column.key === 'status'">
                 <span>
                   <a-tag :color="record.color">
-                    <LoadingOutlined v-if="record.status === 'CREATING'" />
+                    <LoadingFour v-if="record.status === 'CREATING'" />
                     {{ t(`workspace.dataSpace.status_${record.status.toLowerCase()}`) }}
                   </a-tag>
                 </span>
               </template>
+
               <template v-else-if="column.key === 'tags'">
                 <span>
                   <a-tag v-for="tag in record.tags" :key="tag">
@@ -148,12 +147,15 @@ const deleteDatabase = async (vid) => {
                   </a-tag>
                 </span>
               </template>
+
               <template v-else-if="column.key === 'action'">
                 <span>
                   <a-popconfirm :title="t('workspace.dataSpace.delete_confirm')" @confirm="deleteDatabase(record.vid)">
-                    <a-typography-link type="danger">
-                      {{ t('common.delete') }}
-                    </a-typography-link>
+                    <a-button danger type="text">
+                      <template #icon>
+                        <Delete />
+                      </template>
+                    </a-button>
                   </a-popconfirm>
                 </span>
               </template>

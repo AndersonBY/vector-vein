@@ -1,14 +1,13 @@
 <script setup>
-import { defineComponent, ref, nextTick, watch } from "vue"
+import { ref, nextTick, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
-import { HomeOutlined, UserOutlined } from "@ant-design/icons-vue"
+import { Home, User } from '@icon-park/vue-next'
 import { workflowAPI } from "@/api/workflow"
-import NewWorkflowModal from '@/components/workspace/NewWorkflowModal.vue'
 
 const { t } = useI18n()
 const loading = ref(false)
@@ -58,17 +57,18 @@ const add = async (template) => {
     <a-layout class="layout">
       <a-layout-sider width="200" style="background: #fff" breakpoint="lg" collapsed-width="0">
         <a-skeleton active v-if="loading" />
-        <a-menu v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline" style="height: 100%" v-else>
+        <a-menu v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline" style="height: 100%"
+          v-else>
           <a-menu-item key="my_index">
             <router-link to="/workflow/">
-              <HomeOutlined />
+              <Home />
               {{ t('workspace.workflowSpace.workflow_index') }}
             </router-link>
           </a-menu-item>
           <a-sub-menu key="user-workflows">
             <template #title>
               <span>
-                <UserOutlined />
+                <User />
                 {{ t('workspace.workflowSpace.user_fast_access_workflows') }}
               </span>
             </template>
@@ -106,4 +106,3 @@ const add = async (template) => {
   background: #fff;
 }
 </style>
-  

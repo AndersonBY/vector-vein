@@ -1,21 +1,10 @@
 <script setup>
-import { ref, reactive, defineComponent, onBeforeMount, computed } from 'vue'
+import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import {
-  AudioOutlined,
-  ClusterOutlined,
-  DatabaseOutlined,
-  EditOutlined,
-  LoadingOutlined,
-  PictureOutlined
-} from '@ant-design/icons-vue'
+import { Edit, DatabaseSetting, FileCabinet, LoadingFour, AudioFile, PictureOne, Delete, Upload } from '@icon-park/vue-next'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
-
-defineComponent({
-  name: 'DataSpace',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -50,7 +39,7 @@ const databaseObjects = reactive({
   }, {
     title: t('common.action'),
     key: 'action',
-    width: '200px',
+    width: '80px',
   }],
   data: [],
   loading: false,
@@ -132,6 +121,30 @@ const deleteObject = (objectId) => {
     databaseObjects.load({})
   })
 }
+
+const infoEditorModal = reactive({
+  open: false,
+  form: {
+    name: databaseInfo.value.name,
+  },
+  show: () => {
+    infoEditorModal.open = true
+    infoEditorModal.form.name = databaseInfo.value.name
+  },
+  ok: async () => {
+    const response = await databaseAPI('update', {
+      'vid': databaseId,
+      ...infoEditorModal.form,
+    })
+    if (response.status == 200) {
+      message.success(t('common.save_success'))
+      databaseInfo.value.name = infoEditorModal.form.name
+      infoEditorModal.open = false
+    } else {
+      message.error(response.msg)
+    }
+  },
+})
 </script>
 
 <template>
@@ -141,12 +154,12 @@ const deleteObject = (objectId) => {
         <a-breadcrumb>
           <a-breadcrumb-item>
             <router-link :to="`/data`">
-              <ClusterOutlined />
+              <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <DatabaseOutlined />
+            <DatabaseSetting />
             {{ databaseInfo.name }}
           </a-breadcrumb-item>
         </a-breadcrumb>
@@ -154,18 +167,43 @@ const deleteObject = (objectId) => {
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <DatabaseOutlined />
+            <DatabaseSetting />
             {{ databaseInfo.name }}
           </template>
+
           <template #extra>
-            <a-button type="primary" @click="navigateToCreate">
-              {{ t('workspace.databaseDetail.add_object') }}
-            </a-button>
+            <a-flex gap="middle">
+              <a-tooltip :title="t('workspace.databaseDetail.modify_database_info')">
+                <a-button type="text" size="large" class="title-edit-button" @click="infoEditorModal.show">
+                  <template #icon>
+                    <Edit />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-modal :title="t('workspace.databaseDetail.modify_database_info')" @ok="infoEditorModal.ok"
+                :confirm-loading="infoEditorModal.createLoading" v-model:open="infoEditorModal.open">
+                <a-form :model="databaseInfo" layout="vertical">
+                  <a-form-item :label="t('workspace.dataSpace.database_name')" name="name"
+                    :rules="[{ required: true }]">
+                    <a-input v-model:value="infoEditorModal.form.name" />
+                  </a-form-item>
+                </a-form>
+              </a-modal>
+              <a-tooltip :title="t('workspace.databaseDetail.add_object')">
+                <a-button type="text" size="large" @click="navigateToCreate">
+
+                  <template #icon>
+                    <Upload />
+                  </template>
+                </a-button>
+              </a-tooltip>
+            </a-flex>
           </template>
 
           <a-table :loading="databaseObjects.loading" :customRow="databaseObjects.customRow"
             :columns="databaseObjects.columns" :data-source="databaseObjects.data"
             :pagination="databaseObjects.pagination" @change="databaseObjects.handleTableChange">
+
             <template #headerCell="{ column }">
               <template v-if="column.key === 'title'">
                 {{ t('workspace.databaseDetail.object_title') }}
@@ -176,28 +214,30 @@ const deleteObject = (objectId) => {
               <template v-if="column.key === 'title'">
                 <a-typography-text disabled v-if="record.status == 'PR'">
                   {{ record.title }}
-                  <LoadingOutlined />
+                  <LoadingFour :spin="true" />
                 </a-typography-text>
                 <a-typography-text class="object-title" v-else>
                   {{ record.title }}
                 </a-typography-text>
               </template>
+
               <template v-else-if="column.key === 'data_type'">
                 <span>
                   <a-tag v-if="record.data_type.toUpperCase() == 'TEXT'" color="blue">
-                    <EditOutlined />
+                    <Edit />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
                   <a-tag v-if="record.data_type.toUpperCase() == 'IMAGE'" color="green">
-                    <PictureOutlined />
+                    <PictureOne />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
                   <a-tag v-if="record.data_type.toUpperCase() == 'AUDIO'" color="purple">
-                    <AudioOutlined />
+                    <AudioFile />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
                 </span>
               </template>
+
               <template v-else-if="column.key === 'source_url'">
                 <a-typography-link :href="record.source_url" target="_blank" v-if="record.source_url?.length > 0">
                   {{ t('workspace.databaseDetail.source_url') }}
@@ -206,13 +246,16 @@ const deleteObject = (objectId) => {
                   {{ t('workspace.databaseDetail.source_url') }}
                 </a-typography-text>
               </template>
+
               <template v-else-if="column.key === 'action'">
                 <template v-if="record.status != 'PR'">
                   <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
                     @confirm="deleteObject(record.oid)">
-                    <a-typography-link type="danger">
-                      {{ t('workspace.databaseDetail.delete') }}
-                    </a-typography-link>
+                    <a-button type="text" danger>
+                      <template #icon>
+                        <Delete />
+                      </template>
+                    </a-button>
                   </a-popconfirm>
                 </template>
               </template>

@@ -1,16 +1,12 @@
 <script setup>
-import { ref, reactive, defineComponent, onBeforeMount, computed } from 'vue'
+import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { FileOutlined, DatabaseOutlined, ClusterOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons-vue'
+import { DocDetail, DatabaseSetting, FileCabinet, Check, Close } from '@icon-park/vue-next'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
-
-defineComponent({
-  name: 'DataSpace',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -112,13 +108,13 @@ const create = async () => {
         <a-breadcrumb>
           <a-breadcrumb-item>
             <router-link :to="`/data`">
-              <ClusterOutlined />
+              <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
             <router-link :to="`/data/${database.vid}`">
-              <DatabaseOutlined />
+              <DatabaseSetting />
               {{ database.name }}
             </router-link>
           </a-breadcrumb-item>
@@ -130,7 +126,7 @@ const create = async () => {
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <FileOutlined />
+            <DocDetail />
             {{ t('workspace.databaseObjectCreate.add_object') }}
           </template>
 
@@ -194,13 +190,14 @@ const create = async () => {
             </a-form-item>
 
             <a-form-item v-if="!['delimeter', 'table'].includes(processRules.split_method)">
+
               <template #label>
                 {{ t('workspace.databaseObjectCreate.chunk_length') }}
                 <QuestionPopover :contents="[
-                  t('workspace.databaseObjectCreate.question.chunk_length.1'),
-                  t('workspace.databaseObjectCreate.question.chunk_length.2'),
-                  t('workspace.databaseObjectCreate.question.chunk_length.3')
-                ]" />
+    t('workspace.databaseObjectCreate.question.chunk_length.1'),
+    t('workspace.databaseObjectCreate.question.chunk_length.2'),
+    t('workspace.databaseObjectCreate.question.chunk_length.3')
+  ]" />
               </template>
               <a-input-number v-model:value="processRules.chunk_length" />
             </a-form-item>
@@ -231,6 +228,7 @@ const create = async () => {
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.object_files')" :span="3"
                   v-if="objectInfo.add_method == 'files'">
                   <a-list :dataSource="objectInfo.files">
+
                     <template #renderItem="{ item }">
                       <a-list-item>
                         <a-list-item-meta :title="item" />
@@ -260,8 +258,8 @@ const create = async () => {
                   {{ processRules.delimiter }}
                 </a-descriptions-item>
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.remove_url_and_email')">
-                  <CheckOutlined v-if="processRules.remove_url_and_email" />
-                  <CloseOutlined v-else />
+                  <Check v-if="processRules.remove_url_and_email" />
+                  <Close v-else />
                 </a-descriptions-item>
 
               </a-descriptions>

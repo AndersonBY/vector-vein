@@ -1,9 +1,9 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref, reactive, computed, nextTick } from "vue"
+import { onBeforeMount, ref, reactive, computed, nextTick } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { BranchesOutlined, ControlOutlined, FieldTimeOutlined, PlusOutlined, TagsOutlined, StarOutlined, StarFilled } from '@ant-design/icons-vue'
+import { WholeSiteAccelerator, TagOne, Time, Control, Plus, Star, Copy, Delete, CloseOne } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
@@ -12,10 +12,6 @@ import ShareWorkflowModal from '@/components/workspace/ShareWorkflowModal.vue'
 import NewWorkflowModal from '@/components/workspace/NewWorkflowModal.vue'
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import { getWorkflows } from "@/utils/workflow"
-
-defineComponent({
-  name: 'MyWorkflows',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -59,7 +55,7 @@ const workflowRecords = reactive({
   }, {
     title: t('common.action'),
     key: 'action',
-    width: '300px',
+    width: '160px',
   }],
   data: userWorkflows.value,
   loading: false,
@@ -240,20 +236,19 @@ const openRecord = async (record) => {
       <a-col :span="24">
         <a-row type="flex" align="middle" justify="space-between">
           <a-col flex="auto">
-            <a-space>
-              <a-input-search v-model:value="workflowRecords.searchText"
-                :placeholder="t('workspace.workflowSpaceMain.input_search_text')" enter-button
-                @search="workflowRecords.searchWorkflows" class="search-input">
-              </a-input-search>
-              <a-button @click="workflowRecords.clearSearch">
-                {{ t('workspace.workflowSpaceMain.reset_search') }}
-              </a-button>
-            </a-space>
+            <a-input-search v-model:value="workflowRecords.searchText"
+              :placeholder="t('workspace.workflowSpaceMain.input_search_text')" enter-button
+              @search="workflowRecords.searchWorkflows" class="search-input">
+              <template #suffix>
+                <CloseOne theme="filled" @click="workflowRecords.clearSearch" style="cursor: pointer;"
+                  v-if="workflowRecords.searchText.length > 0" />
+              </template>
+            </a-input-search>
           </a-col>
           <a-col flex="auto" style="display: flex; justify-content: end;">
             <a-space>
               <a-button type="primary" @click="add">
-                <PlusOutlined />
+                <Plus />
                 {{ t('workspace.workflowSpaceMain.create_workflow') }}
               </a-button>
               <NewWorkflowModal ref="newWorkflowModal" @create="add" />
@@ -270,21 +265,25 @@ const openRecord = async (record) => {
         <a-table :loading="workflowRecords.loading" :columns="workflowRecords.columns"
           :customRow="workflowRecords.customRow" :data-source="workflowRecords.data"
           :pagination="workflowRecords.pagination" @change="workflowRecords.handleTableChange">
+
           <template #headerCell="{ column }">
             <template v-if="column.key === 'title'">
-              <BranchesOutlined />
+              <WholeSiteAccelerator />
               {{ t('workspace.workflowSpaceMain.workflow_title') }}
             </template>
+
             <template v-else-if="column.key === 'tags'">
-              <TagsOutlined />
+              <TagOne />
               {{ t('workspace.workflowSpaceMain.tags') }}
             </template>
+
             <template v-else-if="column.key === 'update_time'">
-              <FieldTimeOutlined />
+              <Time />
               {{ t('workspace.workflowSpaceMain.update_time') }}
             </template>
+
             <template v-else-if="column.key === 'action'">
-              <ControlOutlined />
+              <Control />
               {{ t('common.action') }}
             </template>
           </template>
@@ -297,16 +296,17 @@ const openRecord = async (record) => {
                 </a-typography-text>
                 <a-tooltip :title="t('workspace.workflowSpace.add_to_fast_access')" v-if="!record.is_fast_access">
                   <a-typography-link @click=addWorkflowToFastAccess(record.wid)>
-                    <StarOutlined v-show="workflowRecords.hoverRowWid == record.wid" />
+                    <Star v-show="workflowRecords.hoverRowWid == record.wid" />
                   </a-typography-link>
                 </a-tooltip>
                 <a-tooltip :title="t('workspace.workflowSpace.delete_from_fast_access')" v-else>
                   <a-typography-link @click=deleteWorkflowFromFastAccess(record.wid)>
-                    <StarFilled />
+                    <Star theme="filled" />
                   </a-typography-link>
                 </a-tooltip>
               </a-space>
             </template>
+
             <template v-else-if="column.key === 'tags'">
               <a-space>
                 <a-tag :color="tag.color" v-for="tag in record.tags" :key="tag.tid">
@@ -314,21 +314,28 @@ const openRecord = async (record) => {
                 </a-tag>
               </a-space>
             </template>
+
             <template v-else-if="column.key === 'action'">
               <div class="action-container">
-                <!-- <a-typography-link @click.prevent="openShareWorkflowModal(record.wid)">
-                  {{ t('workspace.workflowSpace.share_workflow') }}
-                </a-typography-link>
-                <a-divider type="vertical" /> -->
-                <a-typography-link @click.prevent="clone(record.wid)">
-                  {{ t('workspace.workflowSpace.clone_workflow') }}
-                </a-typography-link>
-                <a-divider type="vertical" />
-                <a-popconfirm :title="t('workspace.workflowSpace.delete_confirm')" @confirm="deleteWorkflow(record.wid)">
-                  <a-typography-link type="danger">
-                    {{ t('workspace.workflowSpace.delete') }}
-                  </a-typography-link>
-                </a-popconfirm>
+                <a-tooltip :title="t('workspace.workflowSpace.clone_workflow')">
+                  <a-button type="text" @click.prevent="clone(record.wid)">
+                    <template #icon>
+                      <Copy />
+                    </template>
+                  </a-button>
+                </a-tooltip>
+
+                <a-tooltip :title="t('workspace.workflowSpace.delete')">
+                  <a-popconfirm :title="t('workspace.workflowSpace.delete_confirm')"
+                    @confirm="deleteWorkflow(record.wid)">
+                    <a-button type="text" danger>
+
+                      <template #icon>
+                        <Delete />
+                      </template>
+                    </a-button>
+                  </a-popconfirm>
+                </a-tooltip>
               </div>
             </template>
           </template>

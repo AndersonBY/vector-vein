@@ -1,11 +1,7 @@
 <script setup>
-import { defineComponent, ref, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { EditOutlined } from '@ant-design/icons-vue'
-
-defineComponent({
-  name: 'TemplateEditorModal',
-})
+import { Edit } from '@icon-park/vue-next'
 
 const props = defineProps({
   fields: {
@@ -51,14 +47,16 @@ const handleDragStart = (event, field) => {
 </script>
 
 <template>
-  <a-modal :open="innerOpen" width="80vw" @ok="save" @cancel="cancel" style="max-width: 1280px; width: 80vw;">
+  <a-modal class="template-editor" :open="innerOpen" width="80vw" @ok="save" @cancel="cancel"
+    style="max-width: 1280px; width: 80vw;">
     <template #title>
-      <EditOutlined />
+      <Edit />
       {{ t('components.templateEditorModal.title') }}
     </template>
     <a-row :gutter="16">
       <a-col :span="6">
         <a-card>
+
           <template #title>
             {{ t('components.templateEditorModal.variable_fields') }}
             <a-typography-text type="secondary" style="font-size: 12px; font-weight: normal;">
@@ -66,8 +64,9 @@ const handleDragStart = (event, field) => {
             </a-typography-text>
           </template>
           <a-space direction="vertical" style="width: 100%">
+
             <template v-for="field in Object.keys(props.fields)" :key="field">
-              <a-button block draggable="true" @dragstart="handleDragStart($event, field)"
+              <a-button class="template-variable" block draggable="true" @dragstart="handleDragStart($event, field)"
                 v-if="!['template', 'output'].includes(field)">
                 {{ field }}
               </a-button>
@@ -77,7 +76,7 @@ const handleDragStart = (event, field) => {
       </a-col>
       <a-col :span="18">
         <a-card :title="t('components.templateEditorModal.template')">
-          <a-textarea v-model:value="innerTemplate" :rows="20" />
+          <a-textarea class="template-textarea" v-model:value="innerTemplate" :rows="20" showCount />
         </a-card>
       </a-col>
     </a-row>

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-12-09 17:33:28
+ * @Last Modified time: 2024-03-04 00:44:52
  */
 export default {
   lang: '中文',
@@ -81,6 +81,7 @@ export default {
     'previous_step': '上一步',
     'next_step': '下一步',
     'preview': '预览',
+    'save_success': '保存成功',
   },
   email: {
     verify: {
@@ -304,6 +305,7 @@ export default {
       'data_type_OTHER': '其他',
       'delete_confirm': '确认删除该数据？',
       'delete': '删除',
+      'modify_database_info': '修改数据库信息',
     },
     databaseObjectCreate: {
       'add_object': '添加数据',
@@ -749,11 +751,16 @@ export default {
           'title': 'Youtube爬虫',
           'description': '用于爬取 Youtube 视频信息。',
           'url_or_video_id': '视频网址或视频 ID',
+          'get_comments': '抓取评论',
+          'comments_type': '评论输出格式',
+          'comments_type_text_only': '仅文本',
+          'comments_type_detailed': '详细信息',
           'output_type': '输出类型',
           'str': '文本',
           'list': '列表',
           'output_subtitle': '字幕',
           'output_title': '标题',
+          'output_comments': '评论',
         },
       },
       triggers: {

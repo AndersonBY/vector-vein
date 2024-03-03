@@ -1,5 +1,5 @@
 <script setup>
-import { GlobalOutlined, DownOutlined, MenuOutlined } from '@ant-design/icons-vue'
+import { Translate, Down, ApplicationMenu } from '@icon-park/vue-next'
 import { defineComponent, onBeforeMount, ref } from 'vue'
 import { useRoute } from "vue-router"
 import { useI18n } from 'vue-i18n'
@@ -66,9 +66,9 @@ onBeforeMount(() => {
         <SettingDrawer />
         <a-dropdown>
           <a class="ant-dropdown-link" @click.prevent>
-            <GlobalOutlined />
-            International - {{ languageList[language] }}
-            <DownOutlined />
+            <Translate />
+            {{ languageList[language] }}
+            <Down />
           </a>
           <template #overlay>
             <a-menu @click="handleLanguageChange">
@@ -90,8 +90,9 @@ onBeforeMount(() => {
       <a-col>
         <a-dropdown>
           <a-button>
-            <MenuOutlined />
+            <ApplicationMenu />
           </a-button>
+
           <template #overlay>
             <a-menu>
               <a-menu-item key="1">
@@ -110,8 +111,8 @@ onBeforeMount(() => {
               </a-menu-item>
               <a-sub-menu key="3">
                 <template #title>
-                  <GlobalOutlined />
-                  International - {{ languageList[language] }}
+                  <Translate />
+                  {{ languageList[language] }}
                 </template>
                 <a-menu-item v-for="(value) in Object.keys(languageList)" :key="value"
                   @click.prevent="handleLanguageChange({ key: value })">

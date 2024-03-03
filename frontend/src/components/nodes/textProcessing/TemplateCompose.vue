@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PlusOutlined, MinusCircleOutlined } from '@ant-design/icons-vue'
+import { AddOne, ReduceOne } from '@icon-park/vue-next'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import TemplateEditorModal from '@/components/TemplateEditorModal.vue'
@@ -106,7 +106,7 @@ const openTemplateEditor = ref(false)
   <BaseNode :nodeId="id" style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
     :description="props.data.description" documentLink="https://vectorvein.com/help/docs/text-processing#h2-8">
     <template #main>
-      <a-row style="display:block;">
+      <a-row type="flex">
         <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
           <a-col :span="24" v-if="!['template', 'output'].includes(field)">
             <BaseField :id="field" :name="fieldsData[field].display_name" required type="target" deletable
@@ -125,11 +125,12 @@ const openTemplateEditor = ref(false)
 
         <a-col :span="24" style="padding: 10px">
           <a-button type="dashed" block @click="openAddField" class="add-field-button">
-            <PlusOutlined />
+            <AddOne />
             {{ t('components.nodes.textProcessing.TemplateCompose.add_field') }}
           </a-button>
           <a-drawer v-model:open="showAddField" class="custom-class"
             :title="t('components.nodes.textProcessing.TemplateCompose.add_field')" placement="right">
+
             <template #extra>
               <a-button type="primary" @click="addField">
                 {{ t('common.add') }}
@@ -161,12 +162,12 @@ const openTemplateEditor = ref(false)
                   <a-col :span="24" :key="index" v-for="(item, index) in newFieldData.options">
                     <div style="display: flex; gap: 5px;">
                       <a-input :value="item.value" @input="addListOptionsItem($event.target.value, index)" />
-                      <MinusCircleOutlined @click="deleteListOptionsItem(index)" />
+                      <ReduceOne @click="deleteListOptionsItem(index)" />
                     </div>
                   </a-col>
                   <a-col :span="24">
                     <a-button type="dashed" style="width: 100%;" @click="newFieldData.options.push('')">
-                      <PlusOutlined />
+                      <AddOne />
                       {{ t('components.nodes.listField.add_item') }}
                     </a-button>
                   </a-col>
@@ -191,6 +192,7 @@ const openTemplateEditor = ref(false)
       <a-divider></a-divider>
 
     </template>
+
     <template #output>
       <BaseField id="output" :name="t('components.nodes.textProcessing.TemplateCompose.output')" type="source" nameOnly>
       </BaseField>

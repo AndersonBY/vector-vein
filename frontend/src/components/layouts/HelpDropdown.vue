@@ -1,15 +1,11 @@
 <script setup>
-import { defineComponent, ref, reactive, onBeforeMount } from "vue"
-import { DownOutlined } from '@ant-design/icons-vue'
+import { ref, reactive, onBeforeMount } from "vue"
+import { Down } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import VueMarkdown from 'vue-markdown-render'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { officialSiteAPI } from '@/api/remote'
-
-defineComponent({
-  name: 'HelpDropdown',
-})
 
 const { t } = useI18n()
 const userSettingsStore = useUserSettingsStore()
@@ -41,7 +37,7 @@ const openUpdateInfo = ref(false)
   <a-dropdown>
     <a class="ant-dropdown-link" @click.prevent>
       {{ t('components.layout.helpDropdown.help') }}
-      <DownOutlined />
+      <Down />
     </a>
     <template #overlay>
       <a-menu>

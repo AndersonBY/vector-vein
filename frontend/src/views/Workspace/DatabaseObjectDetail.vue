@@ -1,15 +1,11 @@
 <script setup>
-import { ref, reactive, defineComponent, onBeforeMount, computed } from 'vue'
+import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { message } from 'ant-design-vue'
-import { FileOutlined, ClusterOutlined, DatabaseOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons-vue'
+import { DocDetail, DatabaseSetting, FileCabinet, Check, Close } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
-
-defineComponent({
-  name: 'DataSpace',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -113,13 +109,13 @@ const segmentDetailModal = reactive({
         <a-breadcrumb>
           <a-breadcrumb-item>
             <router-link :to="`/data`">
-              <ClusterOutlined />
+              <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
             <router-link :to="`/data/${database.vid}`">
-              <DatabaseOutlined />
+              <DatabaseSetting />
               {{ database.name }}
             </router-link>
           </a-breadcrumb-item>
@@ -129,17 +125,19 @@ const segmentDetailModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <FileOutlined />
+            <DocDetail />
             {{ databaseObject.title }}
           </template>
           <a-tabs v-model:activeKey="activeKey" tab-position="left">
             <a-tab-pane key="segments" :tab="t('workspace.databaseObjectDetail.segments')">
               <a-table :customRow="databaseObjectSegments.customRow" :columns="databaseObjectSegments.columns"
                 :data-source="databaseObjectSegments.data" :pagination="databaseObjectSegments.pagination">
+
                 <template #bodyCell="{ column, record }">
                   <template v-if="column.key === 'keywords'">
                     {{ record.keywords.join(', ') }}
                   </template>
+
                   <template v-else-if="column.key === 'action'">
                     <template v-if="record.status != 'PR'">
                       <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
@@ -168,26 +166,30 @@ const segmentDetailModal = reactive({
               <a-descriptions bordered>
 
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.split_method')">
-                  {{ t(`workspace.databaseObjectCreate.split_method_${databaseObject.info.process_rules.split_method}`) }}
+                  {{
+                    databaseObject.info?.process_rules?.split_method ?
+                      t(`workspace.databaseObjectCreate.split_method_${databaseObject.info?.process_rules?.split_method}`) :
+                      ''
+                  }}
                 </a-descriptions-item>
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.chunk_length')"
-                  v-if="databaseObject.info.process_rules.split_method != 'delimeter'">
-                  {{ databaseObject.info.process_rules.chunk_length }}
+                  v-if="databaseObject.info?.process_rules?.split_method != 'delimeter'">
+                  {{ databaseObject.info?.process_rules?.chunk_length }}
                 </a-descriptions-item>
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.delimiter')"
-                  v-if="databaseObject.info.process_rules.split_method == 'delimeter'">
-                  {{ databaseObject.info.process_rules.delimiter }}
+                  v-if="databaseObject.info?.process_rules?.split_method == 'delimeter'">
+                  {{ databaseObject.info?.process_rules?.delimiter }}
                 </a-descriptions-item>
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.remove_url_and_email')">
-                  <CheckOutlined v-if="databaseObject.info.process_rules.remove_url_and_email" />
-                  <CloseOutlined v-else />
+                  <Check v-if="databaseObject.info?.process_rules?.remove_url_and_email" />
+                  <Close v-else />
                 </a-descriptions-item>
 
                 <a-descriptions-item :label="t('workspace.databaseObjectDetail.paragraph_counts')">
-                  {{ databaseObject.info.paragraph_counts }}
+                  {{ databaseObject.info?.paragraph_counts }}
                 </a-descriptions-item>
                 <a-descriptions-item :label="t('workspace.databaseObjectDetail.word_counts')">
-                  {{ databaseObject.info.word_counts }}
+                  {{ databaseObject.info?.word_counts }}
                 </a-descriptions-item>
 
               </a-descriptions>
