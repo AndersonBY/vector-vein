@@ -2,7 +2,8 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-09-08 18:33:04
+# @Last Modified time: 2024-03-07 14:39:35
+import re
 import json
 import random
 
@@ -98,7 +99,15 @@ def json_process(
     workflow = Workflow(workflow_data)
     input_data = workflow.get_node_field_value(node_id, "input")
     if isinstance(input_data, str):
-        input_data = json.loads(input_data)
+        try:
+            input_data = json.loads(input_data)
+        except json.JSONDecodeError:
+            pattern = r"```.*?\n(.*?)\n```"
+            json_block_search = re.search(pattern, input_data, re.DOTALL)
+            if json_block_search:
+                input_data = json.loads(json_block_search.group(1))
+            else:
+                raise ValueError("Invalid JSON format")
     process_mode = workflow.get_node_field_value(node_id, "process_mode")
     key = workflow.get_node_field_value(node_id, "key")
     default_value = workflow.get_node_field_value(node_id, "default_value")
