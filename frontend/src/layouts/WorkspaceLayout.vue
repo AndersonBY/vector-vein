@@ -1,27 +1,20 @@
 <script setup>
-import { defineComponent, onBeforeMount, computed, ref } from 'vue'
+import { onBeforeMount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { useUserSettingsStore } from "@/stores/userSettings"
-import { getRandomBackgroundImg } from '@/utils/util'
 import { currentTourVersion } from '@/utils/common'
-import { getWorkflows } from "@/utils/workflow"
 import { settingAPI } from "@/api/user"
 import BasicHeader from '@/components/layouts/BasicHeader.vue'
 
-defineComponent({
-  name: 'WorkspaceLayout',
-})
-
 const { t } = useI18n()
-const userWorkflowsStore = useUserWorkflowsStore()
+const loading = ref(true)
 const userSettingsStore = useUserSettingsStore()
 const { setting } = storeToRefs(userSettingsStore)
 const openTour = ref(false)
 
 onBeforeMount(async () => {
-  const [workflowsResponse, settingsResponse] = await Promise.all([getWorkflows(userWorkflowsStore, true), settingAPI('get', {})])
+  const settingsResponse = await settingAPI('get', {})
   userSettingsStore.setSetting(settingsResponse.data)
   if (typeof setting.value.data.tour_version === "undefined" ? 0 : setting.value.data.tour_version < currentTourVersion) {
     setting.value.data.tour_version = currentTourVersion
@@ -31,9 +24,8 @@ onBeforeMount(async () => {
       openTour.value = true
     }, 1000)
   }
+  loading.value = false
 })
-
-const backgroundImgUrl = computed(() => getRandomBackgroundImg())
 
 const tourCurrentStep = ref(0)
 const tourSteps = [{
@@ -51,11 +43,14 @@ const onTourClose = () => {
 }
 </script>
 <template>
-  <a-layout style="min-height: 100vh">
+  <a-spin :spinning="loading" v-if="loading">
+    <div style="min-height: 100vh">
+    </div>
+  </a-spin>
+  <a-layout v-else class="workspace-layout">
     <BasicHeader />
     <a-layout-content class="layout-content-container" :style="{ marginTop: '64px' }">
       <router-view class="content-view-container"></router-view>
-      <img class="layout-background-img" :src="backgroundImgUrl" />
     </a-layout-content>
 
     <a-tour v-model:current="tourCurrentStep" :open="openTour" :steps="tourSteps" @close="onTourClose" />
@@ -72,7 +67,13 @@ const onTourClose = () => {
   height: 30px;
 }
 
+.workspace-layout {
+  min-height: 100vh;
+  background-color: #f4f4f4;
+}
+
 .layout-content-container {
+  margin-top: 64px;
   z-index: 0;
 }
 

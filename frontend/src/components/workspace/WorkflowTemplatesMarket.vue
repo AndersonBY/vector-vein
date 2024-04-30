@@ -1,16 +1,14 @@
 <script setup>
-import { onBeforeMount, defineComponent, ref, reactive, computed } from "vue"
+import { onBeforeMount, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import WorkflowCard from '@/components/workspace/WorkflowCard.vue'
+import InputSearch from "@/components/InputSearch.vue"
+import { formatTime } from '@/utils/util'
 import { officialSiteAPI } from '@/api/remote'
-
-defineComponent({
-  name: 'WorkflowTemplatesMarket',
-})
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -18,24 +16,41 @@ const router = useRouter()
 const userSettingsStore = useUserSettingsStore()
 const { language } = storeToRefs(userSettingsStore)
 const tags = ref([])
+const tagsOptions = computed(() => {
+  let options = [{
+    label: t('common.all_tags'),
+    value: 'all',
+  }]
+  options = options.concat(tags.value.map(tag => {
+    return {
+      label: tag.title,
+      value: tag.tid,
+    }
+  }))
+  return options
+})
 
 onBeforeMount(async () => {
-  loading.value = false
+  const searchText = router.currentRoute.value.query.search_text
+  let searchTextQuery = {}
+  if (searchText) {
+    searchTextQuery = { search_text: searchText }
+    workflowTemplates.searchText = searchText
+  }
   const [templates, tagsResponse] = await Promise.all([
-    workflowTemplates.load({ is_official: true }),
+    workflowTemplates.load({ is_official: true, ...searchTextQuery }),
     officialSiteAPI('list_tags', {}),
   ])
   if (tagsResponse.status == 200) {
     tags.value = tagsResponse.data
   }
-  loading.value = false
 })
 
 const workflowTemplates = reactive({
   data: [],
   loading: true,
   current: 1,
-  pageSize: 100,
+  pageSize: 10,
   total: 0,
   pagination: computed(() => ({
     total: workflowTemplates.total,
@@ -61,6 +76,21 @@ const workflowTemplates = reactive({
       tags: filters.tags,
     })
   },
+  searching: false,
+  searchText: '',
+  searchWorkflows: async () => {
+    workflowTemplates.searching = true
+    await workflowTemplates.load({ page_size: workflowTemplates.pageSize, search_text: workflowTemplates.searchText })
+    workflowTemplates.searching = false
+    await router.push({ query: { ...router.currentRoute.value.query, search_text: workflowTemplates.searchText } })
+  },
+  clearSearch: async () => {
+    workflowTemplates.searching = true
+    workflowTemplates.searchText = ''
+    await workflowTemplates.load({ page_size: workflowTemplates.pageSize })
+    workflowTemplates.searching = false
+    await router.push({ query: { ...router.currentRoute.value.query, search_text: undefined } })
+  },
   load: async (params) => {
     workflowTemplates.loading = true
     const res = await officialSiteAPI('list_templates', {
@@ -69,8 +99,8 @@ const workflowTemplates = reactive({
     })
     if (res.status == 200) {
       workflowTemplates.data = res.data.templates.map(item => {
-        item.create_time = new Date(item.create_time).toLocaleString()
-        item.update_time = new Date(item.update_time).toLocaleString()
+        item.create_time = formatTime(item.create_time)
+        item.update_time = formatTime(item.update_time)
         return item
       })
     } else {
@@ -85,54 +115,35 @@ const workflowTemplates = reactive({
 </script>
 
 <template>
-  <div v-if="loading">
-    <a-skeleton active />
-  </div>
-  <a-row align="middle" :gutter="[16, 16]" v-else>
-    <a-col :span="24">
-      <a-row type="flex" align="middle" justify="space-between">
-        <a-col flex="auto">
-          <a-typography-title :title="3">
-            {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
-          </a-typography-title>
+  <a-flex vertical gap="middle">
+
+    <a-flex justify="space-between">
+      <InputSearch v-model="workflowTemplates.searchText" @search="workflowTemplates.searchWorkflows"
+        @clear-search="workflowTemplates.clearSearch" />
+      <a-select v-model:value="workflowTemplates.selectTag" style="width: 200px" :options="tagsOptions"
+        @change="workflowTemplates.selectTagChange"></a-select>
+    </a-flex>
+
+    <a-spin :spinning="workflowTemplates.loading">
+      <a-row :gutter="[16, 16]">
+        <a-col :xl="6" :lg="8" :md="8" :sm="12" :xs="24" v-for="(template, index) in workflowTemplates.data"
+          :key="template.tid" @click="navigateToTemplate(template.tid)">
+          <template v-if="index == 0">
+            <a-tooltip color="blue" :open="showBeginnerTipsPopover"
+              :title="t('workspace.workflowSpaceMain.select_any_template_to_start')" trigger="focus">
+              <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
+                :brief="template.brief" :author="template.user" :forks="template.used_count" />
+            </a-tooltip>
+          </template>
+          <template v-else>
+            <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
+              :brief="template.brief" :author="template.user" :forks="template.used_count" />
+          </template>
         </a-col>
       </a-row>
-    </a-col>
+    </a-spin>
 
-    <a-col :span="24">
-      <a-space>
-        <a-typography-text>
-          {{ t('workspace.workflowTemplate.workflow_template_tags') }}
-        </a-typography-text>
-        <a-radio-group v-model:value="workflowTemplates.selectTag" button-style="solid"
-          @change="workflowTemplates.selectTagChange">
-          <a-radio-button value="all">
-            {{ t('common.all') }}
-          </a-radio-button>
-          <template v-for="tag in tags" :key="tag.tid">
-            <a-radio-button :value="tag.tid" v-if="language == tag.language">
-              {{ tag.title }}
-            </a-radio-button>
-          </template>
-        </a-radio-group>
-      </a-space>
-    </a-col>
-
-    <a-divider />
-
-    <a-col :span="24">
-      <a-spin :spinning="workflowTemplates.loading">
-        <a-row :gutter="[16, 16]">
-          <a-col :lg="6" :md="8" :sm="12" :xs="24" v-for="template in workflowTemplates.data" :key="template.tid"
-            @click="router.push(`/workflow/template/${template.tid}`)">
-            <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
-              :brief="template.brief" :author="template.user" :forks="false" />
-          </a-col>
-        </a-row>
-      </a-spin>
-    </a-col>
-
-  </a-row>
+  </a-flex>
   <a-divider />
 </template>
 
