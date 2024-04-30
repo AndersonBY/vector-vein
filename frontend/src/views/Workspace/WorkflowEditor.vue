@@ -1,12 +1,12 @@
 <script setup>
-import { ref, reactive, markRaw, onBeforeMount, watch } from 'vue'
+import { ref, reactive, markRaw, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
-import { Background, BackgroundVariant } from '@vue-flow/background'
+import { Background } from '@vue-flow/background'
 import { Controls } from '@vue-flow/controls'
 import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
@@ -14,78 +14,53 @@ import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { useUserSettingsStore } from "@/stores/userSettings"
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
+import { useUserRelationalDatabasesStore } from "@/stores/userRelationalDatabase"
 import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
-import { workflowAPI } from "@/api/workflow"
 import { hashObject } from "@/utils/util"
+import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
-import { databaseAPI } from "@/api/database"
+import { workflowAPI, workflowTemplateAPI, workflowRunRecordAPI } from "@/api/workflow"
+import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/minimap/dist/style.css'
 import '@vue-flow/controls/dist/style.css'
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const loading = ref(true)
 const route = useRoute()
 const router = useRouter()
-const workflowId = route.params.workflowId
+const workflowId = ref('')
 const activeTab = ref(t('workspace.workflowEditor.workflow_canvas'))
 const tabs = reactive([
   t('workspace.workflowEditor.workflow_info'),
   t('workspace.workflowEditor.workflow_canvas'),
   t('workspace.workflowEditor.workflow_ui_design'),
 ])
+let workflowOrTemplate = 'workflow'
+let workflowOrTemplateAPI = null
+let queryParam = {}
 
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
+const userRelationalDatabasesStore = useUserRelationalDatabasesStore()
+const { userRelationalDatabases } = storeToRefs(userRelationalDatabasesStore)
 const userWorkflowsStore = useUserWorkflowsStore()
 const userSettingsStore = useUserSettingsStore()
 const { vueFlowStyleSettings } = storeToRefs(userSettingsStore)
 const useNodeMessages = useNodeMessagesStore()
 const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
 
-const nodeEvents = {
-  change: (data, nodeId) => {
-    // console.log('change', event)
-  },
-  delete: (data, nodeId) => {
-    elements.value = elements.value.filter((element) => element.id !== nodeId)
-    elements.value = elements.value.filter((element) => {
-      if (element.source && element.source === nodeId) {
-        return false
-      }
-      if (element.target && element.target === nodeId) {
-        return false
-      }
-      return true
-    })
-  },
-  clone: (data, nodeId) => {
-    const node = elements.value.find((element) => element.id === nodeId)
-    node.selected = false
-    const newNode = JSON.parse(JSON.stringify(node))
-    newNode.id = uuidv4()
-    newNode.selected = true
-    newNode.position.x += 50
-    newNode.position.y += 50
-    elements.value.push(newNode)
-  },
-}
-watch(() => nodeMessagesCount.value, () => {
-  while (nodeMessages.value.length > 0) {
-    const { action, data, nodeId } = useNodeMessages.pop()
-    nodeEvents[action](data, nodeId)
-  }
-})
-
 const savedWorkflowHash = ref('')
 const currentWorkflow = ref({})
 const elements = ref([])
+const diagnosisRecord = ref(userWorkflowsStore.diagnosisRecord)
+const diagnosisRecordId = ref(router.currentRoute.value.query.rid)
 
 const onVueFlowStyleSettingsSave = () => {
   edges.value.forEach((edge) => {
@@ -96,22 +71,58 @@ const onVueFlowStyleSettingsSave = () => {
   userSettingsStore.setVueFlowStyleSettings(vueFlowStyleSettings.value)
 }
 
-onBeforeMount(async () => {
-  const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
-  const listDatabasesRequest = databaseAPI('list', {})
-  const workflowResponse = await getWorkflowRequest
-  const listDatabasesResponse = await listDatabasesRequest
+onUnmounted(() => {
+  userWorkflowsStore.setDiagnosisRecord(null)
+})
 
-  if (listDatabasesResponse.status == 200) {
-    userDatabasesStore.setUserDatabases(listDatabasesResponse.data)
+onMounted(async () => {
+  if (diagnosisRecordId.value) {
+    if (!diagnosisRecord.value) {
+      const res = await workflowRunRecordAPI('get', { rid: diagnosisRecordId.value })
+      diagnosisRecord.value = res.data
+    }
+  }
+  if (route.path.startsWith('/workflow/editor/')) {
+    workflowOrTemplate = 'workflow'
+    workflowOrTemplateAPI = workflowAPI
+    workflowId.value = route.params.workflowId
+    queryParam = { wid: workflowId.value }
+  } else {
+    workflowOrTemplate = 'template'
+    workflowOrTemplateAPI = workflowTemplateAPI
+    workflowId.value = route.params.templateId
+    queryParam = { tid: workflowId.value }
+  }
+  const getWorkflowRequest = workflowOrTemplateAPI('get', queryParam)
+  const listVectorDbRequest = databaseAPI('list')
+  const listRelationalDbRequest = relationalDatabaseAPI('list')
+  const workflowResponse = await getWorkflowRequest
+  const listVectorDbResponse = await listVectorDbRequest
+  const listRelationalDbResponse = await listRelationalDbRequest
+
+  if (listVectorDbResponse.status == 200) {
+    userDatabasesStore.setUserDatabases(listVectorDbResponse.data)
+  }
+  if (listRelationalDbResponse.status == 200) {
+    userRelationalDatabasesStore.setUserRelationalDatabases(listRelationalDbResponse.data)
   }
   if (workflowResponse.status != 200) {
     message.error(t('workspace.workflowSpace.get_workflow_failed'))
-    router.push({ name: 'WorkflowSpaceMain' })
+    await router.push({ name: 'WorkflowSpaceMain' })
     return
   }
+
   currentWorkflow.value = workflowResponse.data
+  if (diagnosisRecord.value) {
+    currentWorkflow.value.data = diagnosisRecord.value.data
+  }
   currentWorkflow.value.data.nodes.forEach((node) => {
+    if (diagnosisRecord.value) {
+      node.data.debug = {
+        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1,
+        credits: node.data.credits || 0
+      }
+    }
     if (node.category == "vectorDb") {
       node.data.template.database.options = userDatabases.value.filter((database) => {
         return database.status == 'VALID'
@@ -121,12 +132,34 @@ onBeforeMount(async () => {
           label: item.name,
         }
       })
-    } else if (node.type == "CommentNode") {
-      node.dimensions = {
-        width: parseInt(node.style?.width || 100),
-        height: parseInt(node.style?.height || 50),
-      }
     }
+
+    // 修复节点模板数据中的 condition 字段
+    const nodeTemplateData = nodeTemplateCreators[node.type]()
+    Object.entries(node.data.template).forEach(([key, value]) => {
+      if (nodeTemplateData.template[key]?.condition) {
+        value.condition = nodeTemplateData.template[key].condition
+      }
+    })
+    // 创建一个新对象，按照 nodeTemplateData.template 的键的顺序来添加键值对
+    const sortedTemplate = {}
+
+    // 首先添加 nodeTemplateData.template 中定义的键
+    Object.keys(nodeTemplateData.template).forEach(key => {
+      if (node.data.template.hasOwnProperty(key)) {
+        sortedTemplate[key] = node.data.template[key]
+      }
+    })
+
+    // 然后添加那些在 nodeTemplateData.template 中不存在的键
+    Object.keys(node.data.template).forEach(key => {
+      if (!nodeTemplateData.template.hasOwnProperty(key)) {
+        sortedTemplate[key] = node.data.template[key]
+      }
+    })
+
+    // 更新 node.data.template 为新的排序后的对象
+    node.data.template = sortedTemplate
   })
   currentWorkflow.value.tags = currentWorkflow.value.tags.map(tag => tag.tid)
   fromObject(currentWorkflow.value.data)
@@ -163,11 +196,13 @@ const saveWorkflowCheck = () => {
   const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
   const reactiveUIDesign = reactive(uiDesign)
   workflowCheckList.value.hasInput = reactiveUIDesign.inputFields.filter((inputField) => !nonFormItemsTypes.includes(inputField.field_type)).length > 0
-  workflowCheckList.value.hasOutput = reactiveUIDesign.outputNodes.filter((node) => node.category == 'outputs').length > 0
+  workflowCheckList.value.hasOutput = currentWorkflow.value.data.nodes.filter((node) => node.category == 'outputs').length > 0
   workflowCheckList.value.hasTrigger = reactiveUIDesign.triggerNodes.filter((node) => node.category == 'triggers').length > 0
   if (Object.values(workflowCheckList.value).some(val => val === false)) {
-    saveCheckModalOpen.value = true;
+    saveCheckModalOpen.value = true
+    return false
   }
+  return true
 }
 
 const saving = ref(false)
@@ -179,25 +214,37 @@ const saveWorkflow = async () => {
     ...workflowData,
     ui: uiDesign,
   }
-  saveWorkflowCheck()
-  const response = await workflowAPI('update', {
-    wid: workflowId,
-    ...currentWorkflow.value,
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.save_success'))
-    savedWorkflowHash.value = hashObject(currentWorkflow.value)
-  } else if (response.data.status == 400) {
-    message.error(t('workspace.workflowSpace.workflow_cant_invoke_itself'))
-  } else {
+  const checkResult = saveWorkflowCheck()
+  try {
+    const response = await workflowOrTemplateAPI('update', {
+      ...queryParam,
+      ...currentWorkflow.value,
+    })
+    if (response.status == 200) {
+      message.success(t('workspace.workflowSpace.save_success'))
+      savedWorkflowHash.value = hashObject(currentWorkflow.value)
+    } else if (response.status == 400) {
+      message.error(t('workspace.workflowSpace.workflow_cant_invoke_itself'))
+    } else {
+      message.error(t('workspace.workflowSpace.save_failed'))
+    }
+    if (workflowOrTemplate == 'workflow') {
+      userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
+    }
+  } catch (error) {
+    console.error(error)
     message.error(t('workspace.workflowSpace.save_failed'))
   }
-  userWorkflowsStore.updateUserWorkflow(currentWorkflow.value)
   saving.value = false
+  return checkResult
 }
 
 const routerBack = async () => {
-  await router.push({ name: 'WorkflowUse', params: { workflowId: workflowId } })
+  if (workflowOrTemplate == 'workflow') {
+    await router.push({ name: 'WorkflowUse', params: { workflowId: workflowId.value } })
+  } else {
+    await router.push({ name: 'WorkflowTemplate', params: { workflowTemplateId: workflowId.value } })
+  }
 }
 
 const exitModalOpen = ref(false)
@@ -208,8 +255,10 @@ const saveAndExit = async () => {
 const exitNoSave = async () => {
   await routerBack()
 }
-
 const exitConfirm = () => {
+  if (!!diagnosisRecordId.value) {
+    routerBack()
+  }
   const uiDesign = currentWorkflow.value.data.ui || {}
   const workflowData = toObject()
   currentWorkflow.value.data = {
@@ -223,15 +272,42 @@ const exitConfirm = () => {
   }
 }
 
-const { addEdges, updateEdge, onConnect, toObject, fromObject, viewport, vueFlowRef, edges } = useVueFlow()
+const {
+  addEdges,
+  removeEdges,
+  updateEdge,
+  onConnect,
+  toObject,
+  fromObject,
+  findNode,
+  viewport,
+  vueFlowRef,
+  edges
+} = useVueFlow()
 onConnect((params) => {
-  params.type = vueFlowStyleSettings.value.edge.type
-  params.animated = vueFlowStyleSettings.value.edge.animated
-  params.style = vueFlowStyleSettings.value.edge.style
+  const hasConnectedEdge = edges.value.some((edge) => {
+    return edge.target === params.target && edge.targetHandle === params.targetHandle
+  })
+  if (hasConnectedEdge) {
+    message.error(t('workspace.workflowEditor.edge_already_connected_message'))
+    return
+  }
+
+  params.type = vueFlowStyleSettings.value.edge?.type || 'bezier'
+  params.animated = vueFlowStyleSettings.value.edge?.animated || true
+  params.style = vueFlowStyleSettings.value.edge?.style || { strokeWidth: 3, stroke: '#28c5e5' }
   addEdges([params])
 })
 const onEdgeUpdate = ({ edge, connection }) => {
   updateEdge(edge, connection)
+}
+
+const onEdgeClick = ({ edge, event }) => {
+  if (edge.selected) {
+    message.info(t('workspace.workflowEditor.edge_delete_message'))
+  }
+}
+const onPaneClick = (event) => {
 }
 
 const onEdgeDoubleClick = (event) => {
@@ -242,6 +318,73 @@ const onEdgeDoubleClick = (event) => {
     return true
   })
 }
+
+const nodeEvents = {
+  change: (data, nodeId) => {
+    if (data.event == 'removeField') {
+      const edgesToRemove = edges.value.filter((edge) => {
+        if (edge.source === nodeId && edge.sourceHandle === data.fieldName) {
+          return true
+        }
+        if (edge.target === nodeId && edge.targetHandle === data.fieldName) {
+          return true
+        }
+        return false
+      })
+      removeEdges(edgesToRemove)
+    } else if (data.event == 'editField') {
+      const { oldFieldName, newFieldName } = data
+      const node = findNode(nodeId)
+      // handleBounds 得手动修改一下才行
+      node.handleBounds.source.forEach((handle) => {
+        if (handle.id === oldFieldName) {
+          handle.id = newFieldName
+        }
+      })
+      node.handleBounds.target.forEach((handle) => {
+        if (handle.id === oldFieldName) {
+          handle.id = newFieldName
+        }
+      })
+      edges.value.forEach((edge) => {
+        if (edge.source === nodeId && edge.sourceHandle === oldFieldName) {
+          edge.sourceHandle = newFieldName
+        }
+        if (edge.target === nodeId && edge.targetHandle === oldFieldName) {
+          edge.targetHandle = newFieldName
+        }
+      })
+    }
+  },
+  delete: (data, nodeId) => {
+    elements.value = elements.value.filter((element) => element.id !== nodeId)
+    elements.value = elements.value.filter((element) => {
+      if (element.source && element.source === nodeId) {
+        return false
+      }
+      if (element.target && element.target === nodeId) {
+        return false
+      }
+      return true
+    })
+  },
+  clone: (data, nodeId) => {
+    const node = findNode(nodeId)
+    node.selected = false
+    const newNode = JSON.parse(JSON.stringify(node))
+    newNode.id = uuidv4()
+    newNode.selected = true
+    newNode.position.x += 50
+    newNode.position.y -= 50
+    elements.value.push(newNode)
+  },
+}
+watch(() => nodeMessagesCount.value, () => {
+  while (nodeMessages.value.length > 0) {
+    const { action, data, nodeId } = useNodeMessages.pop()
+    nodeEvents[action](data, nodeId)
+  }
+})
 
 let ghostMenuItem
 const onTouchStart = (event) => {
@@ -276,13 +419,6 @@ const onNewNodeDragEnd = (event) => {
   if (!nodeType) {
     nodeType = event.srcElement.children[0].dataset.nodeType
   }
-  const nodeCategory = nodeCategoriesReverse[nodeType]
-  const nodeId = uuidv4()
-  const templateData = JSON.parse(JSON.stringify(nodeTypes[nodeType].props.templateData))
-  templateData.description = t(`components.nodes.${nodeCategory}.${nodeType}.description`)
-  Object.keys(templateData.template).forEach((key) => {
-    templateData.template[key].display_name = t(`components.nodes.${nodeCategory}.${nodeType}.${key}`)
-  })
 
   const dropZoneRect = vueFlowRef.value.getBoundingClientRect()
   const { x, y, zoom } = viewport.value
@@ -296,32 +432,58 @@ const onNewNodeDragEnd = (event) => {
     dropZoneY = event.clientY - dropZoneRect.top
   }
 
+  const nodeTemplateData = nodeTemplateCreators[nodeType]()
+
+  // 翻译节点模板数据中的 display_name
+  Object.entries(nodeTemplateData.template).forEach(([key, value]) => {
+    const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}`
+    if (te(translationKey) && value.display_name) {
+      value.display_name = t(translationKey)
+    }
+    if (!value.options) return
+
+    value.options = value.options.map(item => {
+      const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}_${item.value}`
+      if (te(translationKey)) {
+        item.label = t(translationKey)
+      }
+      return item
+    })
+  })
+
   const newNode = {
-    id: nodeId,
+    id: uuidv4(),
     type: nodeType,
-    category: nodeCategory,
+    category: nodeCategoriesReverse[nodeType],
     position: {
       x: (dropZoneX - x) / zoom,
       y: (dropZoneY - y) / zoom,
     },
-    data: templateData,
+    data: nodeTemplateData,
   }
 
   elements.value.push(newNode)
 }
 
 const nodeFiles = import.meta.glob('@/components/nodes/*/*.vue', { eager: true })
+const nodeTemplateFiles = import.meta.glob('@/components/nodes/*/*.js', { eager: true })
 const nodeTypes = {}
-const nodesCategories = {}
+const nodeCategories = {}
+const nodeTemplateCreators = {}
 const nodeCategoriesReverse = {}
 Object.entries(nodeFiles).forEach(([path, component]) => {
   const name = path.match(/\/([^/]+)\.vue$/)[1]
-  nodeTypes[name] = markRaw(component.default)
   const categoryName = path.match(/\/([^/]+)\/[^/]+\.vue$/)[1]
-  if (!nodesCategories[categoryName]) {
-    nodesCategories[categoryName] = []
+
+  nodeTypes[name] = markRaw(component.default)
+
+  const nodeTemplate = nodeTemplateFiles[path.replace(/\.vue$/, '.js')]
+  nodeTemplateCreators[name] = nodeTemplate?.createTemplateData
+  if (nodeTemplateCreators[name]().deprecated) return
+  if (!nodeCategories[categoryName]) {
+    nodeCategories[categoryName] = []
   }
-  nodesCategories[categoryName].push(name)
+  nodeCategories[categoryName].push(name)
   nodeCategoriesReverse[name] = categoryName
 })
 
@@ -338,6 +500,7 @@ const codeEditorModal = reactive({
     const workflowData = JSON.parse(code)
     currentWorkflow.value.data.ui = workflowData.ui || {}
     elements.value = [...workflowData.nodes, ...workflowData.edges]
+
     currentWorkflow.value.data.nodes = workflowData.nodes
     currentWorkflow.value.data.edges = workflowData.edges
     currentWorkflow.value.data.nodes.forEach((node) => {
@@ -363,8 +526,8 @@ const codeEditorModal = reactive({
   </div>
   <div class="editor-container" v-else>
     <div class="title-container">
-      <a-row type="flex" align="middle" justify="space-between" :gutter="[16, 16]" style="width: 100%;">
-        <a-col flex="0 0">
+      <a-row style="width: 100%;">
+        <a-col :span="8">
           <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
             <Left />
             {{ t('common.back') }}
@@ -389,27 +552,33 @@ const codeEditorModal = reactive({
               </template>
             </a-modal>
           </a-typography-link>
-        </a-col>
 
-        <a-col flex="0 0">
-          <a-typography-text class="title" :editable="{ triggerType: ['text', 'icon'] }"
+          <a-typography-text class="title" :ellipsis="true" :editable="{ triggerType: ['text', 'icon'] }"
             v-model:content="currentWorkflow.title">
           </a-typography-text>
         </a-col>
 
-        <a-col flex="1 0" style="display: flex; justify-content: center;">
+        <a-col :span="8" style="display: flex; justify-content: center;">
           <a-segmented v-model:value="activeTab" :options="tabs" @change="updateWorkflowData" />
         </a-col>
 
-        <a-col flex="0 0" style="display: flex; justify-content: end;">
+        <a-col :span="8" style="display: flex; justify-content: end;">
           <a-space>
             <a-button @click="codeEditorModal.openEditor">
+              <template #icon>
+                <Code />
+              </template>
               {{ t('workspace.workflowEditor.edit_code') }}
               <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
                 @save="codeEditorModal.updateCode" />
             </a-button>
-            <a-button type="primary" @click="saveWorkflow" :loading="saving">
-              {{ t('common.save') }}
+            <a-button type="primary" @click="saveWorkflow" :loading="saving" :disabled="!!diagnosisRecordId">
+              <template #icon>
+                <Save />
+              </template>
+              <a-tooltip :title="diagnosisRecordId ? t('workspace.workflowEditor.cannot_save_when_diagnosing') : ''">
+                {{ t('common.save') }}
+              </a-tooltip>
             </a-button>
             <a-modal v-model:open="saveCheckModalOpen" :footer="null">
               <template #title>
@@ -456,7 +625,7 @@ const codeEditorModal = reactive({
             {{ t('workspace.workflowEditor.brief_images') }}
           </a-divider>
           <div>
-            <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" />
+            <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" :supportFileTypes="'image/*'" />
           </div>
         </a-col>
       </a-row>
@@ -465,24 +634,38 @@ const codeEditorModal = reactive({
     <a-layout has-sider style="height: 100%;" v-show="activeTab == t('workspace.workflowEditor.workflow_canvas')">
       <a-layout-sider :style="{ overflow: 'auto', backgroundColor: '#fff' }" class="custom-scrollbar">
         <a-menu theme="light" mode="inline">
-          <a-sub-menu v-for="(category, categoryIndex) in Object.keys(nodesCategories)"
-            :key="`category-${categoryIndex}`">
-            <template #title>{{ t(`components.nodes.${category}.title`) }}</template>
+          <a-sub-menu v-for="category in nodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
+            <template #title>
+              {{ t(`components.nodes.${category.name}.title`) }}
+            </template>
             <a-menu-item :data-node-type="node" :id="node" draggable="true" @touchstart="onTouchStart"
               @touchmove="onTouchMove" @dragend="onNewNodeDragEnd" @touchend="onNewNodeDragEnd"
-              v-for="(node, nodeIndex) in nodesCategories[category]" :key="`node-${nodeIndex}`">
-              <span :data-node-type="node">{{ t(`components.nodes.${category}.${node}.title`) }}</span>
+              v-for="(node, nodeIndex) in nodeCategories[category.name]" :key="`node-${nodeIndex}`">
+              <span :data-node-type="node">{{ t(`components.nodes.${category.name}.${node}.title`) }}</span>
             </a-menu-item>
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>
-      <a-layout>
-        <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial' }">
-          <VueFlow v-model="elements" :node-types="nodeTypes" :edgesUpdatable="true" @edge-update="onEdgeUpdate"
-            @edge-double-click="onEdgeDoubleClick" :snap-to-grid="true" :snap-grid="[20, 20]">
+      <a-layout style="background-color: #fff;">
+        <a-alert v-if="diagnosisRecord" banner>
+          <template #message>
+            <a-flex align="center" justify="space-between">
+              <a-typography-text>
+                {{ t('workspace.workflowEditor.diagnosing_record', {
+                  record: `${diagnosisRecord.title}
+                ${diagnosisRecord.data.rid}`
+                }) }}
+              </a-typography-text>
+            </a-flex>
+          </template>
+        </a-alert>
+        <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial', backgroundColor: '#fff' }">
+          <VueFlow v-model="elements" :node-types="nodeTypes" :edges-updatable="true" @edge-update="onEdgeUpdate"
+            @edge-click="onEdgeClick" @edge-double-click="onEdgeDoubleClick" @pane-click="onPaneClick"
+            :snap-to-grid="true" :snap-grid="[20, 20]">
             <MiniMap />
             <Controls />
-            <Background :variant="BackgroundVariant.Dots" />
+            <Background variant="dots" />
             <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
           </VueFlow>
         </a-layout-content>
@@ -511,7 +694,8 @@ const codeEditorModal = reactive({
   display: flex;
   align-items: center;
   height: 40px;
-  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
 .editor-container .title-container .title {
