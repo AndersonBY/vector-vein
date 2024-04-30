@@ -16,20 +16,19 @@ const deleteItem = (index) => {
   listValue.value.splice(index, 1)
 }
 </script>
-
 <template>
-  <a-row type="flex" :gutter="[12, 12]">
-    <a-col :span="24" :key="index" v-for="(item, index) in listValue">
-      <div style="display: flex; gap: 5px;">
-        <a-input :value="item" @input="updateItem($event.target.value, index)" />
-        <ReduceOne @click="deleteItem(index)" />
-      </div>
-    </a-col>
-    <a-col :span="24">
-      <a-button type="dashed" style="width: 100%;" @click="addItem">
-        <AddOne />
-        {{ t('components.nodes.listField.add_item') }}
+  <a-flex vertical gap="small">
+    <a-flex :key="index" v-for="(item, index) in listValue" align="center" gap="small">
+      <a-input :value="item" @input="updateItem($event.target.value, index)" />
+      <a-button type="text" @click="deleteItem(index)">
+        <template #icon>
+          <ReduceOne />
+        </template>
       </a-button>
-    </a-col>
-  </a-row>
+    </a-flex>
+    <a-button type="dashed" style="width: 100%;" @click="addItem">
+      <AddOne />
+      {{ t('components.nodes.listField.add_item') }}
+    </a-button>
+  </a-flex>
 </template>
