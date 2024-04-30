@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:15:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-12-09 17:48:02
+# @Last Modified time: 2024-04-29 17:42:52
 import httpx
 import tiktoken
 from openai import AzureOpenAI, OpenAI
@@ -20,12 +20,12 @@ def get_token_counts(text: str, model: str = "gpt-3.5-turbo") -> int:
         return len(chatgpt_encoding.encode(text))
 
 
-def get_embedding_from_open_ai(text: str, setting: dict = None):
+def get_embedding_from_open_ai(text: str, setting: dict):
     if setting.get("openai_api_type") == "azure":
         client = AzureOpenAI(
-            azure_endpoint=setting.get("openai_api_base"),
-            api_key=setting.get("openai_api_key"),
-            api_version="2023-12-01-preview",
+            azure_endpoint=setting.get("azure_endpoint"),
+            api_key=setting.get("azure_api_key"),
+            api_version="2024-03-01-preview",
             http_client=httpx.Client(
                 proxies=proxies(),
                 transport=httpx.HTTPTransport(local_address="0.0.0.0"),
