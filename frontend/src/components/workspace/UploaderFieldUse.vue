@@ -38,38 +38,36 @@ const upload = async () => {
 </script>
 
 <template>
-  <a-row :gutter="[16, 16]">
-    <a-col :span="24">
-      <a-button type="primary" block @click="upload">
-        <template #icon>
-          <InboxOut />
-        </template>
-        {{ t('components.workspace.uploaderFieldUse.upload') }}
-      </a-button>
-    </a-col>
-    <a-col :span="24">
-      <a-list :data-source="files">
+  <a-flex vertical>
+    <a-button type="dashed" block @click="upload">
+      <template #icon>
+        <InboxOut />
+      </template>
+      {{ t('components.workspace.uploaderFieldUse.upload') }}
+    </a-button>
+    <a-list :data-source="files">
 
-        <template #renderItem="{ item }">
-          <a-list-item>
-            <template #actions>
-              <a-typography-link @click="remove(item)">
-                <Delete />
-              </a-typography-link>
+      <template #renderItem="{ item }">
+        <a-list-item>
+          <template #actions>
+            <a-button type="text" @click="remove(item)">
+              <template #icon>
+                <Delete fill="#ff4d4f" />
+              </template>
+            </a-button>
+          </template>
+          <a-list-item-meta>
+
+            <template #title>
+              <a-typography-text>{{ item }}</a-typography-text>
             </template>
-            <a-list-item-meta>
 
-              <template #title>
-                <a-typography-text>{{ item }}</a-typography-text>
-              </template>
-
-              <template #avatar>
-                <FileSuccess />
-              </template>
-            </a-list-item-meta>
-          </a-list-item>
-        </template>
-      </a-list>
-    </a-col>
-  </a-row>
+            <template #avatar>
+              <FileSuccess />
+            </template>
+          </a-list-item-meta>
+        </a-list-item>
+      </template>
+    </a-list>
+  </a-flex>
 </template>

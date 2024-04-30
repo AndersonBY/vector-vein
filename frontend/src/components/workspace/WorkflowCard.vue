@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from "vue"
-import { BranchTwo } from '@icon-park/vue-next'
+import { useI18n } from 'vue-i18n'
+import { BranchTwo, More, Share, Copy, Delete, Star } from '@icon-park/vue-next'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import { getRandomInt } from '@/utils/util'
 import { backgroundColors } from '@/utils/common'
@@ -33,15 +34,38 @@ const props = defineProps({
   author: {
     type: [Object, Boolean],
     required: false,
-    default: () => ({}),
+    default: false
+  },
+  datetime: {
+    type: [String, Boolean],
+    required: false,
+    default: false,
   },
   forks: {
     type: [Number, Boolean],
     required: false,
     default: 0,
   },
+  extra: {
+    type: [Object, Boolean],
+    required: false,
+    default: false,
+  },
+  starred: {
+    type: [Boolean, undefined],
+    required: false,
+    default: undefined,
+  },
+  loading: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 })
 
+const emit = defineEmits(['star', 'clone', 'delete'])
+
+const { t } = useI18n()
 const background = computed(() => {
   if (props.images.length === 0) {
     return {
@@ -56,27 +80,62 @@ const background = computed(() => {
 </script>
 
 <template>
-  <a-card :id="id" class="workflow-card" hoverable :style="background">
+  <a-card :id="id" :loading="loading" class="workflow-card" hoverable :style="background">
     <div class="gradient-layer">
-      <div class="info-container">
-        <div style="flex-grow: 1;">
-          <a-tag v-for="(tag, index) in tags" :key="index" :color="tag.color" style="margin-bottom: 10px;">
-            {{ tag.title }}
-          </a-tag>
-        </div>
+      <a-flex vertical class="info-container">
+        <a-flex justify="space-between" style="flex-grow: 1;">
+          <div>
+            <a-tag v-for="(tag, index) in tags" :key="index" :color="tag.color" style="margin-bottom: 10px;">
+              {{ tag.title }}
+            </a-tag>
+          </div>
+          <div>
+            <a-flex align="center">
+              <a-button v-if="(typeof starred) !== 'undefined'" size="small" type="text" @click.prevent="emit('star')">
+                <template #icon>
+                  <a-tooltip
+                    :title="starred ? t('workspace.workflowSpace.delete_from_fast_access') : t('workspace.workflowSpace.add_to_fast_access')">
+                    <Star :theme="starred ? 'filled' : 'outline'" fill="#fff" />
+                  </a-tooltip>
+                </template>
+              </a-button>
+              <a-dropdown v-if="extra">
+                <template #overlay>
+                  <a-menu>
+                    <a-menu-item key="clone" @click="emit('clone', id)">
+                      <Copy />
+                      {{ t('workspace.workflowSpace.clone_workflow') }}
+                    </a-menu-item>
+                    <a-popconfirm :title="t('workspace.workflowSpace.delete_confirm')" @confirm="emit('delete', id)">
+                      <a-menu-item key="delete">
+                        <a-typography-text type="danger">
+                          <Delete />
+                          {{ t('common.delete') }}
+                        </a-typography-text>
+                      </a-menu-item>
+                    </a-popconfirm>
+                  </a-menu>
+                </template>
+                <a-button size="large" type="text">
+                  <More theme="filled" size="24" fill="#fff" />
+                </a-button>
+              </a-dropdown>
+            </a-flex>
+          </div>
+        </a-flex>
         <a-typography-title :level="4" class="workflow-title">
           {{ title }}
         </a-typography-title>
-        <div class="meta-info-container">
-          <AuthorComponent :author="author" fontColor="#fff" v-if="author" />
-          <div class="numbers-container">
-            <div v-if="typeof forks == 'number'">
-              <BranchTwo />
-              {{ forks >= 10 ? forks : '<10' }} </div>
-            </div>
-          </div>
-        </div>
-      </div>
+        <a-flex align="center" justify="space-between" class="meta-info-container">
+          <AuthorComponent v-if="author" :author="author" fontColor="#fff" />
+          <span v-if="datetime" class="meta-text">{{ datetime }}</span>
+          <a-flex v-if="typeof forks == 'number'" align="center" class="meta-text">
+            <BranchTwo />
+            <span>{{ forks >= 10 ? forks : '<10' }}</span>
+          </a-flex>
+        </a-flex>
+      </a-flex>
+    </div>
   </a-card>
 </template>
 
@@ -101,8 +160,6 @@ const background = computed(() => {
 }
 
 .info-container {
-  display: flex;
-  flex-direction: column;
   flex-grow: 1;
   transform: translateZ(1px);
 }
@@ -119,15 +176,10 @@ const background = computed(() => {
 
 .info-container .meta-info-container {
   margin-top: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   transform: translateZ(1px);
 }
 
-.info-container .meta-info-container .numbers-container {
-  display: flex;
-  align-items: center;
+.info-container .meta-info-container .meta-text {
   color: #fff;
   font-size: 14px;
 }
