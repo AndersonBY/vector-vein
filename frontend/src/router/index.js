@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-05 01:38:00
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-07-13 02:15:54
+ * @Last Modified time: 2024-04-29 23:53:18
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
@@ -72,31 +72,55 @@ const routes = [
             meta: {
               title: 'router.workspace.children.data_space',
             },
-            component: () => import('@/views/Workspace/DataSpace.vue'),
+            component: () => import('@/views/Workspace/Database/DataSpace.vue'),
           },
           {
-            path: ':databaseId',
-            name: 'DatabaseDetail',
+            path: 'vector-db/:databaseId',
+            name: 'VectorDatabaseDetail',
             meta: {
               title: 'router.workspace.children.database_detail',
             },
-            component: () => import('@/views/Workspace/DatabaseDetail.vue')
+            component: () => import('@/views/Workspace/Database/VectorDatabaseDetail.vue')
           },
           {
-            path: ':databaseId/create',
-            name: 'DatabaseObjectCreate',
+            path: 'vector-db/:databaseId/create',
+            name: 'VectorDatabaseObjectCreate',
             meta: {
-              title: 'router.workspace.children.database_detail',
+              title: 'router.workspace.children.database_object_create',
             },
-            component: () => import('@/views/Workspace/DatabaseObjectCreate.vue')
+            component: () => import('@/views/Workspace/Database/VectorDatabaseObjectCreate.vue')
           },
           {
-            path: ':databaseId/object/:objectId',
-            name: 'DatabaseObjectDetail',
+            path: 'vector-db/:databaseId/object/:objectId',
+            name: 'VectorDatabaseObjectDetail',
             meta: {
               title: 'router.workspace.children.database_object_detail',
             },
-            component: () => import('@/views/Workspace/DatabaseObjectDetail.vue')
+            component: () => import('@/views/Workspace/Database/VectorDatabaseObjectDetail.vue')
+          },
+          {
+            path: 'relational-db/:databaseId',
+            name: 'RelationalDatabaseDetail',
+            meta: {
+              title: 'router.workspace.children.database_detail',
+            },
+            component: () => import('@/views/Workspace/Database/RelationalDatabaseDetail.vue')
+          },
+          {
+            path: 'relational-db/:databaseId/create',
+            name: 'RelationalDatabaseTableCreate',
+            meta: {
+              title: 'router.workspace.children.database_table_create',
+            },
+            component: () => import('@/views/Workspace/Database/RelationalDatabaseTableCreate.vue')
+          },
+          {
+            path: 'relational-db/:databaseId/table/:tableId',
+            name: 'RelationalDatabaseTableDetail',
+            meta: {
+              title: 'router.workspace.children.database_object_detail',
+            },
+            component: () => import('@/views/Workspace/Database/RelationalDatabaseTableDetail.vue')
           },
         ]
       },
@@ -117,14 +141,23 @@ const routes = [
           title: 'router.account.children.account_info'
         },
         component: () => import('@/views/UserAccount/AccountInfo.vue')
-      },
+      }
+    ]
+  },
+  {
+    path: '/settings',
+    component: WorkspaceLayout,
+    meta: {
+      login: true
+    },
+    children: [
       {
-        path: 'settings',
-        name: 'AccountSettings',
+        path: '',
+        name: 'settings',
         meta: {
-          title: 'router.account.children.account_settings'
+          title: 'router.account.settings'
         },
-        component: () => import('@/views/UserAccount/AccountSettings.vue')
+        component: () => import('@/views/Settings.vue')
       }
     ]
   },
