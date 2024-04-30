@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-07 01:19:22
+# @Last Modified time: 2024-04-29 22:41:36
 import re
 import json
 import time
@@ -16,7 +16,7 @@ from bs4 import BeautifulSoup
 from readability import Document
 from markdownify import MarkdownConverter, chomp
 
-from models import Setting, model_serializer
+from utilities.settings import Settings
 from utilities.print_utils import mprint, mprint_error
 
 
@@ -28,16 +28,8 @@ http_proxy_host_re = re.compile(r"http.*://(.*?)$")
 
 
 def proxies():
-    try:
-        if Setting.select().count() == 0:
-            setting = Setting.create()
-        else:
-            setting = Setting.select().order_by(Setting.create_time.desc()).first()
-        setting = model_serializer(setting)
-    except Exception as e:
-        mprint_error(e)
-        return {}
-    if not setting.get("data", {}).get("use_system_proxy"):
+    settings = Settings()
+    if not settings.get("use_system_proxy"):
         return {}
     else:
         system_proxies = urllib.request.getproxies()
@@ -52,16 +44,8 @@ def proxies():
 
 
 def proxies_for_requests():
-    try:
-        if Setting.select().count() == 0:
-            setting = Setting.create()
-        else:
-            setting = Setting.select().order_by(Setting.create_time.desc()).first()
-        setting = model_serializer(setting)
-    except Exception as e:
-        mprint_error(e)
-        return {}
-    if not setting.get("data", {}).get("use_system_proxy"):
+    settings = Settings()
+    if not settings.get("use_system_proxy"):
         return {}
     else:
         system_proxies = urllib.request.getproxies()

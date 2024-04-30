@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-09-01 18:36:29
+# @Last Modified time: 2024-04-29 17:24:31
 import uuid
 from copy import deepcopy
 from typing import List, Dict
@@ -398,7 +398,3 @@ class Workflow:
     @property
     def data(self):
         return self.workflow_data
-
-    @property
-    def setting(self):
-        return self.workflow_data["setting"]

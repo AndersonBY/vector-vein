@@ -2,17 +2,18 @@
 # @Author: Bi Ying
 # @Date:   2023-05-29 15:30:27
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-07-22 02:52:12
+# @Last Modified time: 2024-04-29 17:20:21
 import uuid
 import base64
 from pathlib import Path
 
 import httpx
 
+from utilities.settings import Settings
 from utilities.workflow import Workflow
 from utilities.web_crawler import proxies
 from utilities.static_file_server import StaticFileServer
-from worker.tasks import task
+from worker.tasks import task, timer
 
 
 SAMPLER_MAP = {
@@ -30,6 +31,7 @@ SAMPLER_MAP = {
 
 
 @task
+@timer
 def stable_diffusion(
     workflow_data: dict,
     node_id: str,
@@ -45,7 +47,7 @@ def stable_diffusion(
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
     image_folder = Path("./data") / "static" / "images"
-    stable_diffusion_base_url = workflow.setting.get("stable_diffusion_base_url").rstrip("/")
+    stable_diffusion_base_url = Settings().stable_diffusion_base_url.rstrip("/")
 
     url = f"{stable_diffusion_base_url}/sdapi/v1/txt2img"
 

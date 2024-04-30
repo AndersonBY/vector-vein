@@ -2,19 +2,19 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-03-04 00:43:17
+# @Last Modified time: 2024-04-30 16:09:41
 from pathlib import Path
 
 from models import (
-    Setting,
     UserObject,
     model_serializer,
     UserVectorDatabase,
 )
 from api.utils import get_user_object_general
+from utilities.settings import Settings
 from utilities.files import get_files_contents
 from utilities.web_crawler import crawl_text_from_url
-from utilities.text_splitter import general_split_text
+from utilities.text import split_text
 from utilities.embeddings import get_embedding_from_open_ai
 
 
@@ -32,7 +32,7 @@ class DatabaseAPI:
         database = model_serializer(database)
         response = {"status": 200, "msg": "success", "data": database}
         return response
-    
+
     def update(self, payload):
         status, msg, database = get_user_object_general(
             UserVectorDatabase,
@@ -157,11 +157,11 @@ class DatabaseObjectAPI:
                 user_object.save()
                 user_objects.append(user_object)
 
-        setting = Setting.select().order_by(Setting.create_time.desc()).first()
+        settings = Settings()
         for user_object in user_objects:
-            paragraphs = general_split_text(user_object.raw_data["text"], process_rules)
+            paragraphs = split_text(user_object.raw_data["text"], process_rules)
             for paragraph in paragraphs:
-                paragraph_embedding = get_embedding_from_open_ai(paragraph["text"], setting.data)
+                paragraph_embedding = get_embedding_from_open_ai(paragraph["text"], settings.data)
                 self.vdb_queues["request"].put(
                     {
                         "function_name": "add_point",
@@ -211,6 +211,19 @@ class DatabaseObjectAPI:
                 "page": page_num,
             },
         }
+        return response
+
+    def update(self, payload):
+        status, msg, user_object = get_user_object_general(
+            UserObject,
+            oid=payload.get("oid"),
+        )
+        if status != 200:
+            return {"status": status, "msg": msg, "data": {}}
+        user_object.title = payload.get("title", "")
+        user_object.info = payload.get("info", {})
+        user_object.save()
+        response = {"status": 200, "msg": "success", "data": {}}
         return response
 
     def delete(self, payload):

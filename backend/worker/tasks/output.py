@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-10-12 19:35:07
+# @Last Modified time: 2024-04-29 19:34:36
 from pathlib import Path
 from datetime import datetime
 
@@ -12,24 +12,29 @@ import markdown2
 from docx import Document
 from docx.oxml.ns import qn
 
+from utilities.settings import Settings
 from utilities.html2docx import HtmlToDocx
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint
-from worker.tasks import task
+from worker.tasks import task, timer
 
 
 @task
+@timer
 def text(
     workflow_data: dict,
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
     text: str = workflow.get_node_field_value(node_id, "text")
+    workflow.get_node_field_value(node_id, "output_title")
+    workflow.update_node_field_value(node_id, "text", text)
     workflow.update_node_field_value(node_id, "output", text)
     return workflow.data
 
 
 @task
+@timer
 def email(
     workflow_data: dict,
     node_id: str,
@@ -38,12 +43,13 @@ def email(
     to_email: str = workflow.get_node_field_value(node_id, "to_email")
     subject: str = workflow.get_node_field_value(node_id, "subject")
     content_html: str = workflow.get_node_field_value(node_id, "content_html")
+    settings = Settings()
     yag = yagmail.SMTP(
-        user=workflow.setting.get("email_user"),
-        password=workflow.setting.get("email_password"),
-        host=workflow.setting.get("email_smtp_host"),
-        port=workflow.setting.get("email_smtp_port"),
-        smtp_ssl=workflow.setting.get("email_smtp_ssl"),
+        user=settings.email_user,
+        password=settings.email_password,
+        host=settings.email_smtp_host,
+        port=settings.email_smtp_port,
+        smtp_ssl=settings.email_smtp_ssl,
     )
     email_send_result = yag.send(to_email, subject, [content_html])
     mprint("email_send_result", email_send_result)
@@ -51,12 +57,13 @@ def email(
 
 
 @task
+@timer
 def document(
     workflow_data: dict,
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    output_folder = Path(workflow.setting.get("output_folder"))
+    output_folder = Path(Settings().output_folder)
     file_name = workflow.get_node_field_value(node_id, "file_name")
     content = workflow.get_node_field_value(node_id, "content")
     contents = [content]
@@ -96,6 +103,7 @@ def document(
 
 
 @task
+@timer
 def audio(
     workflow_data: dict,
     node_id: str,
@@ -117,6 +125,7 @@ def audio(
 
 
 @task
+@timer
 def mindmap(
     workflow_data: dict,
     node_id: str,
@@ -127,6 +136,7 @@ def mindmap(
 
 
 @task
+@timer
 def mermaid(
     workflow_data: dict,
     node_id: str,
@@ -137,6 +147,7 @@ def mermaid(
 
 
 @task
+@timer
 def echarts(
     workflow_data: dict,
     node_id: str,
@@ -147,6 +158,7 @@ def echarts(
 
 
 @task
+@timer
 def workflow_invoke_output(
     workflow_data: dict,
     node_id: str,

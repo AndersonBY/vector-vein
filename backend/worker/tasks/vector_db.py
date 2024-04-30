@@ -2,20 +2,23 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-09-23 23:17:14
-from worker.tasks import task
+# @Last Modified time: 2024-04-30 16:08:34
+from worker.tasks import task, timer
+from utilities.settings import Settings
 from utilities.workflow import Workflow
-from utilities.text_splitter import TokenTextSplitter
+from utilities.text import split_text
 from utilities.embeddings import get_embedding_from_open_ai
 from models import UserObject, UserVectorDatabase
 
 
 @task
+@timer
 def add_data(
     workflow_data: dict,
     node_id: str,
     vdb_queues: dict,
 ):
+    settings = Settings()
     vdb_request_queue = vdb_queues["request"]
     workflow = Workflow(workflow_data)
     text = workflow.get_node_field_value(node_id, "text")
@@ -41,31 +44,47 @@ def add_data(
 
     split_method = workflow.get_node_field_value(node_id, "split_method")
     chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-    if split_method == "general":
-        text_splitter = TokenTextSplitter(chunk_size=chunk_length, chunk_overlap=30, model_name="gpt-3.5-turbo")
-        paragraphs = text_splitter.create_documents([text])
-    for paragraph_id, paragraph in enumerate(paragraphs):
-        paragraph_embedding = get_embedding_from_open_ai(paragraph, workflow.setting)
+    chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
+    delimiter = workflow.get_node_field_value(node_id, "delimiter")
+
+    process_rules = {
+        "split_method": split_method,
+        "chunk_length": chunk_length,
+        "chunk_overlap": chunk_overlap,
+        "delimiter": delimiter,
+    }
+
+    paragraphs = split_text(text=text, rules=process_rules, flat=False)
+    for paragraph in paragraphs:
+        paragraph_embedding = get_embedding_from_open_ai(paragraph["text"], settings.data)
         vdb_request_queue.put(
             {
                 "function_name": "add_point",
                 "parameters": dict(
                     vid=database_vid,
                     point={
-                        "object_id": object_id,
-                        "text": paragraph,
+                        "object_id": user_object.oid.hex,
+                        "text": paragraph["text"],
                         "embedding_type": user_object.data_type.lower(),
                         "embedding": paragraph_embedding,
-                        "extra_data": {"paragraph_id": paragraph_id},
+                        "extra_data": {"paragraph_id": paragraph["index"]},
                     },
                 ),
             }
         )
 
+    user_object.info["word_counts"] = sum([paragraph["word_counts"] for paragraph in paragraphs])
+    user_object.info["paragraph_counts"] = len(paragraphs)
+    user_object.info["process_rules"] = process_rules
+    user_object.raw_data["segments"] = paragraphs
+    user_object.status = "VA"
+    user_object.save()
+
     return workflow.data
 
 
 @task
+@timer
 def delete_data(
     workflow_data: dict,
     node_id: str,
@@ -88,11 +107,13 @@ def delete_data(
 
 
 @task
+@timer
 def search_data(
     workflow_data: dict,
     node_id: str,
     vdb_queues: dict,
 ):
+    settings = Settings()
     vdb_request_queue = vdb_queues["request"]
     vdb_response_queue = vdb_queues["response"]
     workflow = Workflow(workflow_data)
@@ -106,7 +127,7 @@ def search_data(
 
     results = []
     for text in search_texts:
-        text_embedding = get_embedding_from_open_ai(text, workflow.setting)
+        text_embedding = get_embedding_from_open_ai(text, settings.settings)
         vdb_request_queue.put(
             {
                 "function_name": "search_point",
