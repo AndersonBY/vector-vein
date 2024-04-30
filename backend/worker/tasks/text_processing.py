@@ -2,22 +2,20 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-02-22 17:06:56
-import re
-
+# @Last Modified time: 2024-04-30 16:08:12
 import markdown2
-
-from utilities.workflow import Workflow
-from utilities.text_splitter import (
-    TokenTextSplitter,
-    MarkdownTextSplitter,
+from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
     Language,
 )
-from worker.tasks import task
+
+from utilities.workflow import Workflow
+from utilities.text import split_text
+from worker.tasks import task, timer
 
 
 @task
+@timer
 def template_compose(
     workflow_data: dict,
     node_id: str,
@@ -103,6 +101,7 @@ def template_compose(
 
 
 @task
+@timer
 def markdown_to_html(
     workflow_data: dict,
     node_id: str,
@@ -126,6 +125,7 @@ def markdown_to_html(
 
 
 @task
+@timer
 def text_splitters(
     workflow_data: dict,
     node_id: str,
@@ -133,28 +133,27 @@ def text_splitters(
     workflow = Workflow(workflow_data)
     text = workflow.get_node_field_value(node_id, "text")
     split_method = workflow.get_node_field_value(node_id, "split_method")
-    if split_method == "general":
-        chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-        chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
-        text_splitter = TokenTextSplitter(
-            chunk_size=chunk_length, chunk_overlap=chunk_overlap, model_name="gpt-3.5-turbo"
-        )
-        paragraphs = text_splitter.create_documents([text])
-    elif split_method == "delimiter":
-        delimiter = workflow.get_node_field_value(node_id, "delimiter")
-        delimiter = delimiter.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
-        paragraphs = re.split(delimiter, text)
-    elif split_method == "markdown":
-        chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-        chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
-        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=chunk_overlap)
-        paragraphs = text_splitter.create_documents([text])
-        paragraphs = [paragraph for paragraph in paragraphs if len(paragraph) > 0]
+    chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
+    chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap")
+    delimiter = workflow.get_node_field_value(node_id, "delimiter")
+
+    paragraphs = split_text(
+        text=text,
+        rules={
+            "split_method": split_method,
+            "chunk_length": chunk_length,
+            "chunk_overlap": chunk_overlap,
+            "delimiter": delimiter,
+        },
+        flat=True,
+    )
+
     workflow.update_node_field_value(node_id, "output", paragraphs)
     return workflow.data
 
 
 @task
+@timer
 def list_render(
     workflow_data: dict,
     node_id: str,
@@ -173,6 +172,7 @@ def list_render(
 
 
 @task
+@timer
 def text_in_out(
     workflow_data: dict,
     node_id: str,
@@ -184,6 +184,7 @@ def text_in_out(
 
 
 @task
+@timer
 def text_truncation(
     workflow_data: dict,
     node_id: str,
