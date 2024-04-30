@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-12-09 17:09:13
+# @Last Modified time: 2024-04-30 14:06:18
 import queue
 import inspect
 import traceback
@@ -17,6 +17,7 @@ from worker.tasks import (
     triggers,
     vector_db,
     web_crawlers,
+    relational_db,
     control_flows,
     file_processing,
     text_processing,
@@ -33,6 +34,7 @@ task_modules = [
     triggers,
     vector_db,
     web_crawlers,
+    relational_db,
     control_flows,
     file_processing,
     text_processing,

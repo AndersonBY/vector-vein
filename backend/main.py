@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-26 00:16:38
+# @Last Modified time: 2024-04-30 12:05:10
 import os
 import queue
 import threading
@@ -20,6 +20,11 @@ from api.workflow_api import (
     WorkflowRunScheduleAPI,
 )
 from api.database_api import DatabaseAPI, DatabaseObjectAPI
+from api.relational_database_api import (
+    RelationalDatabaseAPI,
+    RelationalDatabaseTableAPI,
+    RelationalDatabaseTableRecordAPI,
+)
 from api.user_api import SettingAPI
 from api.remote_api import OfficialSiteAPI
 from utilities.print_utils import mprint
@@ -75,6 +80,9 @@ api_class_list = [
     WorkflowRunScheduleAPI,
     DatabaseAPI,
     DatabaseObjectAPI,
+    RelationalDatabaseAPI,
+    RelationalDatabaseTableAPI,
+    RelationalDatabaseTableRecordAPI,
     SettingAPI,
     OfficialSiteAPI,
 ]
@@ -104,6 +112,7 @@ if DEBUG:
     url = os.environ.get("VITE_LOCAL", "web/index.html")
 else:
     url = "web/index.html"
+webview.settings["ALLOW_DOWNLOADS"] = True
 window = webview.create_window(
     f"VectorVein v{VERSION}",
     url=url,
