@@ -2,16 +2,34 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-28 18:09:55
+# @Last Modified time: 2024-05-01 01:33:11
 import re
+import io
+import sys
 import json
+import shutil
+import traceback
+from pathlib import Path
 
 import httpx
 from bs4 import BeautifulSoup
 
+from utilities.settings import Settings
 from utilities.workflow import Workflow
 from utilities.web_crawler import proxies, headers
-from worker.tasks import task
+from worker.tasks import task, timer
+
+
+SKIPPING_FIELDS = [
+    "language",
+    "code",
+    "output",
+    "use_oversea_node",
+    "list_input",
+    "error_msg",
+    "console_msg",
+    "files",
+]
 
 
 def convert_parameter_value(value, parameter_type):
@@ -27,6 +45,7 @@ def convert_parameter_value(value, parameter_type):
 
 
 @task
+@timer
 def programming_function(
     workflow_data: dict,
     node_id: str,
@@ -41,7 +60,7 @@ def programming_function(
 
     parameters_batch = []
     for field in fields:
-        if field in ("code", "language", "output", "list_input"):
+        if field in SKIPPING_FIELDS:
             continue
         parameter = workflow.get_node_field_value(node_id, field)
         parameter_type = workflow.get_node(node_id).get_field(field).get("type")
@@ -61,24 +80,92 @@ def programming_function(
     else:
         pure_code = code
 
-    results = []
+    output_batch = []
+    files_batch = []
+    error_msg_batch = []
+    console_msg_batch = []
     if len(parameters_batch) == 0:
         parameters_batch.append({})
+
+    # 创建一个StringIO对象来捕获输出
+    # Create a StringIO object to capture the output
+    console_output = io.StringIO()
+
+    # 保存原始的stdout对象
+    # Save the original stdout object
+    original_stdout = sys.stdout
+
+    # 将stdout重定向到StringIO对象
+    # Redirect stdout to the StringIO object
+    sys.stdout = console_output
+
+    original_files = set(Path(".").iterdir())
+
+    settings = Settings()
+    output_folder = settings.output_folder
+
     for parameters in parameters_batch:
         if language == "python":
-            exec(pure_code, globals())
-            result = main(**parameters)
+            try:
+                exec(pure_code, globals())
+                result = main(**parameters)
+                output_batch.append(result)
+                error_msg_batch.append("")
+                console_msg_batch.append(console_output.getvalue())
+            except Exception as e:
+                if "name 'main' is not defined" in str(e):
+                    # 如果用户没有定义main函数，则尝试直接执行代码块
+                    # If the user does not define the main function, try to execute the code block directly.
+                    try:
+                        console_output.truncate(0)
+                        console_output.seek(0)
+                        exec(pure_code, globals())
+                        output_batch.append(None)
+                        error_msg_batch.append("")
+                        console_msg_batch.append(console_output.getvalue())
+                    except Exception:
+                        output_batch.append(None)
+                        error_msg_batch.append(traceback.format_exc())
+                        console_msg_batch.append(console_output.getvalue())
+                else:
+                    output_batch.append(None)
+                    error_msg_batch.append(traceback.format_exc())
+                    console_msg_batch.append(console_output.getvalue())
+            finally:
+                # 清空StringIO对象以捕获下一次的输出
+                # Clear the StringIO object to capture the next output
+                console_output.truncate(0)
+                console_output.seek(0)
         else:
-            result = "Not implemented"
-        results.append(result)
+            raise Exception("Unsupported language")
+
+        # 获取新的文件列表并确定新生成的文件
+        new_files = set(Path(".").iterdir()) - original_files
+        new_file_paths = []
+        for file_path in new_files:
+            dest_file_path = Path(output_folder) / file_path.name
+            shutil.move(str(file_path), str(dest_file_path))
+            new_file_paths.append(str(dest_file_path.absolute()))
+        files_batch.append(new_file_paths)
+
+    # 恢复原始的stdout对象
+    # Restore the original stdout object
+    sys.stdout = original_stdout
 
     if not list_input:
-        results = results[0]
-    workflow.update_node_field_value(node_id, "output", results)
+        output_batch = output_batch[0]
+        files_batch = files_batch[0]
+        error_msg_batch = error_msg_batch[0]
+        console_msg_batch = console_msg_batch[0]
+    workflow.update_node_field_value(node_id, "output", output_batch)
+    workflow.update_node_field_value(node_id, "files", files_batch)
+    workflow.update_node_field_value(node_id, "error_msg", error_msg_batch)
+    workflow.update_node_field_value(node_id, "console_msg", console_msg_batch)
     return workflow.data
 
 
 @task
+@timer
 def image_search(
     workflow_data: dict,
     node_id: str,
@@ -127,7 +214,7 @@ def image_search(
                     images.append(f"![{title}]({url})")
             results.append(images)
     elif search_engine == "pexels":
-        pexels_api_key = workflow.setting.get("pexels_api_key")
+        pexels_api_key = Settings().pexels_api_key
         if isinstance(search_text, list):
             search_texts = search_text
         else:
