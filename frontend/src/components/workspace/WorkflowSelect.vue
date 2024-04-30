@@ -210,7 +210,7 @@ const getWorkflowDetail = async (wid) => {
             </template>
             <template v-else-if="column.key === 'tags'">
               <a-space>
-                <a-tag :color="tag.color" v-for=" tag  in  record.tags " :key="tag.tid">
+                <a-tag :color="tag.color" v-for="tag in record.tags" :key="tag.tid">
                   {{ tag.title }}
                 </a-tag>
               </a-space>
