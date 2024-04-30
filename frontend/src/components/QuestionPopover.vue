@@ -16,7 +16,7 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: '#007de4',
+    default: '#28c5e5',
   },
 })
 const overlayClassName = ref(['question-popover'])
