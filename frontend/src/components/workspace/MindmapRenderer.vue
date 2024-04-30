@@ -1,13 +1,10 @@
 <script setup>
-import { defineComponent, ref, onMounted, onUpdated, watch } from 'vue'
+import { ref, onMounted, onUpdated, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Download } from '@icon-park/vue-next'
 import { Transformer } from 'markmap-lib'
 import { Markmap, loadCSS, loadJS } from 'markmap-view/dist/index.esm'
 import { saveAs } from 'file-saver'
-
-defineComponent({
-  name: 'MindmapRenderer',
-})
 
 const { t } = useI18n()
 
@@ -45,22 +42,22 @@ watch(() => props.content, () => {
 
 const downloadMindmap = () => {
   const svgEl = document.querySelector('#markmap')
-  const svgData = new XMLSerializer().serializeToString(svgEl);
-  const blob = new Blob([svgData], { type: 'image/svg+xml' });
+  const svgData = new XMLSerializer().serializeToString(svgEl)
+  const blob = new Blob([svgData], { type: 'image/svg+xml' })
   saveAs(blob, 'mindmap.svg')
 }
 
 </script>
 
 <template>
-  <a-row>
-    <a-col :span="24">
-      <svg id="markmap" ref="svgRef" style="width: 100%; min-height: 50vh;" />
-    </a-col>
-    <a-col :span="24">
-      <a-button @click="downloadMindmap" type="primary">
-        {{ t('components.workspace.mindmapRenderer.download_svg') }}
+  <a-flex vertical>
+    <svg id="markmap" ref="svgRef" style="width: 100%; min-height: 50vh;" />
+    <a-tooltip :title="t('components.workspace.mindmapRenderer.download_svg')">
+      <a-button @click="downloadMindmap" type="text">
+        <template #icon>
+          <Download />
+        </template>
       </a-button>
-    </a-col>
-  </a-row>
+    </a-tooltip>
+  </a-flex>
 </template>
