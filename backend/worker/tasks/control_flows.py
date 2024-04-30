@@ -2,16 +2,17 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-03-07 14:39:35
+# @Last Modified time: 2024-04-29 19:29:46
 import re
 import json
 import random
 
 from utilities.workflow import Workflow
-from worker.tasks import task
+from worker.tasks import task, timer
 
 
 @task
+@timer
 def empty(
     workflow_data: dict,
     node_id: str,
@@ -21,6 +22,7 @@ def empty(
 
 
 @task
+@timer
 def conditional(
     workflow_data: dict,
     node_id: str,
@@ -75,6 +77,7 @@ def conditional(
 
 
 @task
+@timer
 def random_choice(
     workflow_data: dict,
     node_id: str,
@@ -92,53 +95,73 @@ def random_choice(
 
 
 @task
+@timer
 def json_process(
     workflow_data: dict,
     node_id: str,
 ):
-    workflow = Workflow(workflow_data)
-    input_data = workflow.get_node_field_value(node_id, "input")
-    if isinstance(input_data, str):
+    def _try_parse_json(input_data):
         try:
-            input_data = json.loads(input_data)
+            return json.loads(input_data)
         except json.JSONDecodeError:
             pattern = r"```.*?\n(.*?)\n```"
             json_block_search = re.search(pattern, input_data, re.DOTALL)
-            if json_block_search:
-                input_data = json.loads(json_block_search.group(1))
-            else:
+            if not json_block_search:
                 raise ValueError("Invalid JSON format")
+            parsed_data = json.loads(json_block_search.group(1))
+            return parsed_data
+
+    workflow = Workflow(workflow_data)
+    raw_input = workflow.get_node_field_value(node_id, "input")
+
+    if isinstance(raw_input, str):
+        parsed_input = _try_parse_json(raw_input)
+    else:
+        parsed_input = raw_input
+
+    if isinstance(parsed_input, dict):
+        input_list = [parsed_input]
+    elif isinstance(parsed_input, list):
+        input_list = parsed_input
+    else:
+        input_list = parsed_input
+
+    parsed_input_data = []
+    for input_item in input_list:
+        if not isinstance(input_item, str):
+            parsed_input_data.append(input_item)
+            continue
+        parsed_input_data.append(_try_parse_json(input_item))
+
     process_mode = workflow.get_node_field_value(node_id, "process_mode")
     key = workflow.get_node_field_value(node_id, "key")
     default_value = workflow.get_node_field_value(node_id, "default_value")
     keys = workflow.get_node_field_value(node_id, "keys", [])
 
-    input_fields_has_list = isinstance(input_data, list) or isinstance(key, list)
+    input_fields_has_list = isinstance(parsed_input, list) or isinstance(key, list)
     output = []
     output_keys = {k: [] for k in keys}
-    if isinstance(input_data, dict):
-        input_data = [input_data]
     if not isinstance(key, list):
         key = [key]
 
-    if len(key) < len(input_data):
-        key = key * len(input_data)
-    elif len(key) > len(input_data):
-        input_data = input_data * len(key)
+    if len(key) < len(parsed_input_data):
+        key = key * len(parsed_input_data)
+    elif len(key) > len(parsed_input_data):
+        parsed_input_data = parsed_input_data * len(key)
 
     if process_mode == "get_value":
-        for i in range(len(input_data)):
-            output.append(input_data[i].get(key[i], default_value))
+        for i in range(len(parsed_input_data)):
+            output.append(parsed_input_data[i].get(key[i], default_value))
     elif process_mode == "get_multiple_values":
-        for data in input_data:
+        for input_item in parsed_input_data:
             for k in keys:
-                output_keys[k].append(data.get(k, default_value))
+                output_keys[k].append(input_item.get(k, default_value))
     elif process_mode == "list_values":
-        for i in range(len(input_data)):
-            output.append(list(input_data[i].values()))
+        for i in range(len(parsed_input_data)):
+            output.append(list(parsed_input_data[i].values()))
     elif process_mode == "list_keys":
-        for i in range(len(input_data)):
-            output.append(list(input_data[i].keys()))
+        for i in range(len(parsed_input_data)):
+            output.append(list(parsed_input_data[i].keys()))
 
     if process_mode != "get_multiple_values":
         if not input_fields_has_list:
@@ -149,4 +172,5 @@ def json_process(
             if not input_fields_has_list:
                 output_keys[k] = output_keys[k][0]
             workflow.update_node_field_value(node_id, f"output-{k}", output_keys[k])
+
     return workflow.data
