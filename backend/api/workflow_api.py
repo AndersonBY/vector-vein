@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-24 16:29:45
+# @Last Modified time: 2024-04-29 20:04:11
 import uuid
 from pathlib import Path
 from datetime import datetime
@@ -135,9 +135,15 @@ class WorkflowAPI:
         sort_order = payload.get("sort_order", "descend")
         sort_field = getattr(Workflow, sort_field)
         search_text = payload.get("search_text", "")
-        if sort_order == "descend":
-            sort_field = sort_field.desc()
-        workflows = Workflow.select()
+        workflow_related = payload.get("workflow_related", "")
+        if workflow_related:
+            status, msg, workflow = get_user_object_general(Workflow, wid=workflow_related)
+            if status != 200:
+                return {"status": status, "msg": msg, "data": {}}
+            related_workflow_ids = list(WorkflowData(workflow.data).related_workflows.keys())
+            workflows = Workflow.select().where(Workflow.wid.in_(related_workflow_ids))
+        else:
+            workflows = Workflow.select()
         if tags is not None and len(tags) > 0:
             workflows = (
                 workflows.join(Workflow.tags.get_through_model())
@@ -152,6 +158,8 @@ class WorkflowAPI:
         workflows_count = workflows.count()
         offset = (page_num - 1) * page_size
         limit = page_size
+        if sort_order == "descend":
+            sort_field = sort_field.desc()
         workflows = workflows.order_by(sort_field).offset(offset).limit(limit)
         workflows_list = model_serializer(workflows, many=True, manytomany=True)
         response_data = {
@@ -213,7 +221,9 @@ class WorkflowAPI:
         elif record.status in ("RUNNING", "QUEUED"):
             response = {"status": 202, "msg": record.status, "data": {}}
         else:
-            response = {"status": 500, "msg": record.status, "data": {}}
+            workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
+            workflow_serializer_data["data"] = record.data
+            response = {"status": 500, "msg": record.status, "data": workflow_serializer_data}
         return response
 
     def add_to_fast_access(self, payload):
