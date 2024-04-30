@@ -2,11 +2,10 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-10-12 19:50:35
+ * @Last Modified time: 2024-04-29 11:33:10
  */
 'use strict';
 import { message } from 'ant-design-vue'
-import { workflowAPI } from "@/api/workflow"
 
 export function hasShowFields(node) {
   let hasShow = false
@@ -99,7 +98,7 @@ export const checkWorkflowDAG = (workflowData) => {
   }
   let dag = new DAG()
   workflowData.data.nodes.forEach((node) => {
-    if (node.category != 'triggers') {
+    if (node.category != 'triggers' && node.category != 'assistedNodes') {
       dag.add_node(node.id)
     }
   })
@@ -113,50 +112,44 @@ export const checkWorkflowDAG = (workflowData) => {
     result.noCycle = false
   }
 
-  const isolatedNodes = workflowData.data.nodes.filter((node) => {
-    if (node.category == 'triggers') {
-      return false
-    }
-    return true
-  }).map((node) => node.id)
-  workflowData.data.edges.forEach((edge) => {
-    const targetIndex = isolatedNodes.indexOf(edge.target)
-    if (targetIndex >= 0) {
-      isolatedNodes.splice(targetIndex, 1)
-    }
-    const sourceIndex = isolatedNodes.indexOf(edge.source)
-    if (sourceIndex >= 0) {
-      isolatedNodes.splice(sourceIndex, 1)
+  const nodes = workflowData.data.nodes.filter((node) => node.category != 'triggers' && node.category != 'assistedNodes').map((node) => node.id)
+  const edges = workflowData.data.edges
+  const adjacencyList = {}
+
+  // 构建邻接表
+  nodes.forEach(node => adjacencyList[node] = [])
+  edges.forEach(edge => {
+    adjacencyList[edge.source].push(edge.target)
+    adjacencyList[edge.target].push(edge.source)
+  })
+
+  const visited = new Set()
+
+  // 深度优先搜索
+  const dfs = (node) => {
+    visited.add(node)
+    adjacencyList[node].forEach(neighbor => {
+      if (!visited.has(neighbor)) {
+        dfs(neighbor)
+      }
+    })
+  }
+
+  let numberOfConnectedComponents = 0
+  nodes.forEach(node => {
+    if (!visited.has(node)) {
+      numberOfConnectedComponents += 1
+      dfs(node)
     }
   })
-  if (isolatedNodes.length > 0) {
+
+  // 存在一个以上的连通分量，则认为有孤岛节点
+  if (numberOfConnectedComponents > 1) {
     result.noIsolatedNodes = false
+  } else {
+    result.noIsolatedNodes = true
   }
   return result
-}
-
-export const getWorkflows = async (
-  userWorkflowsStore,
-  need_fast_access = false,
-) => {
-  const response = await workflowAPI('list', { need_fast_access: need_fast_access })
-  if (response.status == 200) {
-    const workflows = response.data.workflows.map(item => {
-      item.create_time = new Date(item.create_time).toLocaleString()
-      item.update_time = new Date(item.update_time).toLocaleString()
-      return item
-    })
-    userWorkflowsStore.setUserWorkflows(workflows)
-    const fastAccessWorkflows = response.data.fast_access_workflows.map(item => {
-      item.create_time = new Date(item.create_time).toLocaleString()
-      item.update_time = new Date(item.update_time).toLocaleString()
-      return item
-    })
-    userWorkflowsStore.setUserWorkflows(fastAccessWorkflows, true)
-    userWorkflowsStore.setUserWorkflowsTotal(response.data.total)
-  } else {
-    message.error(response.msg)
-  }
 }
 
 export const nonFormItemsTypes = ["typography-paragraph"]
@@ -180,10 +173,6 @@ export const getUIDesignFromWorkflow = (workflowData) => {
         if (!node.data.template.text.show) {
           return
         }
-      } else if (node.type == 'Document') {
-        if (!node.data.template.show_local_file.value) {
-          return
-        }
       } else if (node.type == 'Audio') {
         if (!node.data.template.show_player.value) {
           return
@@ -205,6 +194,8 @@ export const getUIDesignFromWorkflow = (workflowData) => {
       } else if (node.type == 'WorkflowInvokeOutput') {
         workflowInvokeOutputNodes.push(node)
         return
+      } else if (node.type == 'Html') {
+
       } else {
         return
       }
@@ -270,4 +261,37 @@ export const getUIDesignFromWorkflow = (workflowData) => {
     triggerNodes,
     workflowInvokeOutputNodes,
   }
+}
+
+export function checkFieldsValid(inputFields) {
+  let checkFieldsValid = true
+  try {
+    inputFields.forEach((field) => {
+      let currentFieldValid = true
+      if (field.field_type == 'checkbox') {
+        return
+      }
+      if (!field.show) {
+        return
+      }
+      if (!field.required) {
+        return
+      }
+
+      if (field.field_type == 'number' && typeof field.value != 'number') {
+        currentFieldValid = false
+      } else if (field.field_type == 'select' && field.value.length === 0) {
+        currentFieldValid = false
+      } else if (!field.value && !field.value === 0) {
+        currentFieldValid = false
+      }
+      if (!currentFieldValid) {
+        message.error(t('workspace.workflowSpace.field_is_empty', { field: field.display_name }))
+        checkFieldsValid = false
+      }
+    })
+  } catch (errorInfo) {
+    checkFieldsValid = false
+  }
+  return checkFieldsValid
 }

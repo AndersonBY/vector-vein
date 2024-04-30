@@ -2,8 +2,10 @@
  * @Author: Bi Ying
  * @Date:   2022-02-09 03:05:56
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2023-06-27 16:42:56
+ * @Last Modified time: 2024-04-29 03:00:44
  */
+import { useUserSettingsStore } from "@/stores/userSettings"
+
 export function zip(rows) {
   return rows[0].map((_, c) => rows.map(row => row[c]))
 }
@@ -26,6 +28,21 @@ export function timeLengthSeconds(length) {
   } else {
     return `${minutes} min${minutes > 1 ? 's' : ''} ${seconds} s`
   }
+}
+
+export function formatTime(time, showSeconds = false) {
+  const timeFormatOptions = {
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }
+  if (showSeconds) {
+    timeFormatOptions.second = '2-digit'
+  }
+  return new Date(parseInt(time)).toLocaleString(useUserSettingsStore().language, timeFormatOptions)
 }
 
 export function getFullUrl(path, querys) {
