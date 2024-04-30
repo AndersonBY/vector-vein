@@ -1,12 +1,8 @@
 <script setup>
-import { defineComponent, provide, watch, ref } from 'vue'
+import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import "echarts"
-import VChart, { THEME_KEY } from "vue-echarts"
-
-defineComponent({
-  name: 'EchartsRenderer',
-})
+import VChart from "vue-echarts"
 
 const props = defineProps({
   option: {
@@ -24,7 +20,7 @@ const parseOption = (option) => {
     try {
       parsedOption = JSON.parse(option)
     } catch (e) {
-      console.log(e)
+      console.error(e)
       parsedOption = {}
     }
   }
@@ -47,9 +43,6 @@ watch(() => props.option, () => {
   option.value = props.option
   parsedOption.value = parseOption(option.value)
 })
-
-provide(THEME_KEY, "light")
-
 </script>
 
 <template>
