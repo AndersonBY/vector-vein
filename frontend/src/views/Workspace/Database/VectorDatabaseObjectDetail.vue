@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { message } from 'ant-design-vue'
-import { DocDetail, DatabaseSetting, FileCabinet, Check, Close } from '@icon-park/vue-next'
+import { DocDetail, DatabaseSetting, FileCabinet, Check, Close, Edit } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 
@@ -60,7 +60,7 @@ const databaseObjectSegments = reactive({
       title: t('workspace.databaseObjectDetail.segment_word_counts'),
       key: 'word_counts',
       dataIndex: 'word_counts',
-      width: '50px',
+      width: '100px',
     },
   ],
   data: [],
@@ -73,6 +73,14 @@ const databaseObjectSegments = reactive({
     current: databaseObjectSegments.current,
     pageSize: databaseObjectSegments.pageSize,
   })),
+  handleTableChange: (page, filters, sorter) => {
+    databaseObjectSegments.load({
+      page_size: page.pageSize,
+      page: page.current,
+      sort_field: sorter.field,
+      sort_order: sorter.order,
+    })
+  },
   hoverRowOid: null,
   customRow: (record) => {
     return {
@@ -97,6 +105,30 @@ const segmentDetailModal = reactive({
   text: '',
   keywords: [],
 })
+
+const infoEditorModal = reactive({
+  open: false,
+  form: {
+    title: databaseObject.value.title,
+  },
+  show: () => {
+    infoEditorModal.open = true
+    infoEditorModal.form.title = databaseObject.value.title
+  },
+  ok: async () => {
+    const response = await databaseObjectAPI('update', {
+      'oid': databaseObject.value.oid,
+      ...infoEditorModal.form,
+    })
+    if (response.status == 200) {
+      message.success(t('common.save_success'))
+      databaseObject.value.title = infoEditorModal.form.title
+      infoEditorModal.open = false
+    } else {
+      message.error(response.msg)
+    }
+  },
+})
 </script>
 
 <template>
@@ -114,7 +146,7 @@ const segmentDetailModal = reactive({
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <router-link :to="`/data/${database.vid}`">
+            <router-link :to="`/data/vector-db/${database.vid}`">
               <DatabaseSetting />
               {{ database.name }}
             </router-link>
@@ -125,8 +157,28 @@ const segmentDetailModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <DocDetail />
-            {{ databaseObject.title }}
+            <a-flex justify="space-between" align="center">
+              <div>
+                <DocDetail />
+                {{ databaseObject.title }}
+              </div>
+              <a-tooltip :title="t('workspace.databaseObjectDetail.modify_object_info')">
+                <a-button type="text" size="large" @click="infoEditorModal.show">
+                  <template #icon>
+                    <Edit />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-modal :title="t('workspace.databaseObjectDetail.modify_object_info')" @ok="infoEditorModal.ok"
+                :confirm-loading="infoEditorModal.createLoading" v-model:open="infoEditorModal.open">
+                <a-form :model="infoEditorModal.form" layout="vertical">
+                  <a-form-item :label="t('workspace.databaseObjectDetail.object_title')" name="title"
+                    :rules="[{ required: true }]">
+                    <a-input v-model:value="infoEditorModal.form.title" />
+                  </a-form-item>
+                </a-form>
+              </a-modal>
+            </a-flex>
           </template>
           <a-tabs v-model:activeKey="activeKey" tab-position="left">
             <a-tab-pane key="segments" :tab="t('workspace.databaseObjectDetail.segments')">

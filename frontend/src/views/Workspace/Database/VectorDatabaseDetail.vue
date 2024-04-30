@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { Edit, DatabaseSetting, FileCabinet, LoadingFour, AudioFile, PictureOne, Delete, Upload } from '@icon-park/vue-next'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
+import { formatTime } from '@/utils/util'
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -23,19 +24,19 @@ const databaseObjects = reactive({
     title: t('workspace.databaseDetail.data_type'),
     key: 'data_type',
     dataIndex: 'data_type',
-    width: '200px',
+    width: '100px',
   }, {
     title: t('workspace.databaseDetail.source_url'),
     key: 'source_url',
     dataIndex: 'source_url',
-    width: '200px',
+    width: '100px',
   }, {
     title: t('common.create_time'),
     key: 'create_time',
     dataIndex: 'create_time',
     sorter: true,
     sortDirections: ['descend', 'ascend'],
-    width: '200px',
+    width: '150px',
   }, {
     title: t('common.action'),
     key: 'action',
@@ -65,7 +66,7 @@ const databaseObjects = reactive({
       style: { cursor: 'pointer' },
       onClick: async (event) => {
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('object-title')) {
-          await router.push(`/data/${databaseId}/object/${record.oid}`)
+          await router.push(`/data/vector-db/${databaseId}/object/${record.oid}`)
         }
       },
       onMouseenter: (event) => { databaseObjects.hoverRowOid = record.vid },
@@ -80,7 +81,7 @@ const databaseObjects = reactive({
     })
     if (res.status == 200) {
       databaseObjects.data = res.data.objects.map(item => {
-        item.create_time = new Date(item.create_time).toLocaleString()
+        item.create_time = formatTime(item.create_time)
         return item
       })
     } else {
@@ -167,10 +168,8 @@ const infoEditorModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <DatabaseSetting />
-            {{ databaseInfo.name }}
+            <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;" :content="databaseInfo.name" />
           </template>
-
           <template #extra>
             <a-flex gap="middle">
               <a-tooltip :title="t('workspace.databaseDetail.modify_database_info')">
@@ -203,7 +202,6 @@ const infoEditorModal = reactive({
           <a-table :loading="databaseObjects.loading" :customRow="databaseObjects.customRow"
             :columns="databaseObjects.columns" :data-source="databaseObjects.data"
             :pagination="databaseObjects.pagination" @change="databaseObjects.handleTableChange">
-
             <template #headerCell="{ column }">
               <template v-if="column.key === 'title'">
                 {{ t('workspace.databaseDetail.object_title') }}
@@ -220,24 +218,22 @@ const infoEditorModal = reactive({
                   {{ record.title }}
                 </a-typography-text>
               </template>
-
               <template v-else-if="column.key === 'data_type'">
                 <span>
-                  <a-tag v-if="record.data_type.toUpperCase() == 'TEXT'" color="blue">
+                  <a-tag v-if="record.data_type.toUpperCase() == 'TEXT'" color="blue" :bordered="false">
                     <Edit />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
-                  <a-tag v-if="record.data_type.toUpperCase() == 'IMAGE'" color="green">
+                  <a-tag v-if="record.data_type.toUpperCase() == 'IMAGE'" color="green" :bordered="false">
                     <PictureOne />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
-                  <a-tag v-if="record.data_type.toUpperCase() == 'AUDIO'" color="purple">
+                  <a-tag v-if="record.data_type.toUpperCase() == 'AUDIO'" color="purple" :bordered="false">
                     <AudioFile />
                     {{ t(`workspace.databaseDetail.data_type_${record.data_type.toUpperCase()}`) }}
                   </a-tag>
                 </span>
               </template>
-
               <template v-else-if="column.key === 'source_url'">
                 <a-typography-link :href="record.source_url" target="_blank" v-if="record.source_url?.length > 0">
                   {{ t('workspace.databaseDetail.source_url') }}
@@ -246,7 +242,6 @@ const infoEditorModal = reactive({
                   {{ t('workspace.databaseDetail.source_url') }}
                 </a-typography-text>
               </template>
-
               <template v-else-if="column.key === 'action'">
                 <template v-if="record.status != 'PR'">
                   <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
