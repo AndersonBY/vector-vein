@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-03-04 01:20:09
+# @Last Modified time: 2024-04-30 21:31:14
 from urllib.parse import urlparse, parse_qs
 
 import httpx
@@ -10,7 +10,7 @@ import yt_dlp
 
 from utilities.workflow import Workflow
 from utilities.web_crawler import crawl_text_from_url, proxies
-from worker.tasks import task
+from worker.tasks import task, timer
 
 
 headers = {
@@ -44,6 +44,7 @@ def get_aid_cid(bvid, part_number):
 
 
 @task
+@timer
 def text_crawler(
     workflow_data: dict,
     node_id: str,
@@ -82,6 +83,7 @@ def text_crawler(
 
 
 @task
+@timer
 def bilibili_crawler(
     workflow_data: dict,
     node_id: str,
@@ -92,6 +94,9 @@ def bilibili_crawler(
 
     if "b23.tv" in url_or_bvid:
         resp = httpx.get(url_or_bvid, headers=headers, proxies=proxies(), follow_redirects=True)
+        url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
+    elif len(url_or_bvid) < 10:
+        resp = httpx.get(f"https://b23.tv/{url_or_bvid}", headers=headers, follow_redirects=True)
         url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
 
     if "bilibili.com" in url_or_bvid:
@@ -132,6 +137,7 @@ def bilibili_crawler(
 
 
 @task
+@timer
 def youtube_crawler(
     workflow_data: dict,
     node_id: str,

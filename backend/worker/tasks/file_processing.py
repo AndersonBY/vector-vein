@@ -2,13 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-16 19:02:28
+# @Last Modified time: 2024-04-29 14:43:29
 from utilities.workflow import Workflow
 from utilities.files import get_files_contents
-from worker.tasks import task
+from worker.tasks import task, timer
 
 
 @task
+@timer
 def file_loader(
     workflow_data: dict,
     node_id: str,
