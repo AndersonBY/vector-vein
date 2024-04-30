@@ -2,7 +2,10 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:43:01
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-08-24 17:48:44
+# @Last Modified time: 2024-04-29 14:35:08
+import time
+from functools import wraps
+
 from utilities.workflow import Workflow
 from utilities.print_utils import mprint_error
 
@@ -56,3 +59,24 @@ def on_error(*args, **kwargs):
     workflow = Workflow(workflow_data)
     workflow.report_workflow_status(500)
     return True
+
+
+def timer(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        start_time = time.time()
+        result = func(*args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        if len(args) > 1:
+            node_id = args[1]
+        else:
+            node_id = kwargs.get("node_id")
+        print(f"{node_id} Function {func.__name__} took {elapsed_time} seconds to run.")
+        if node_id is not None and isinstance(result, dict):
+            if "node_run_time" not in result:
+                result["node_run_time"] = {}
+            result["node_run_time"][node_id] = elapsed_time
+        return result
+
+    return wrapper
