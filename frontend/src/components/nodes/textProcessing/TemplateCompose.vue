@@ -1,10 +1,12 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
+import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
-import TemplateEditorModal from '@/components/TemplateEditorModal.vue'
+import TemplateEditorModal from '@/components/nodes/TemplateEditorModal.vue'
+import { createTemplateData } from './TemplateCompose'
 
 const props = defineProps({
   id: {
@@ -15,131 +17,152 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  templateData: {
-    "description": "description",
-    "task_name": "text_processing.template_compose",
-    "has_inputs": true,
-    "template": {
-      "template": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": true,
-        "value": "",
-        "password": false,
-        "name": "template",
-        "display_name": "template",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "textarea"
-      },
-      "output": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": true,
-        "value": "",
-        "password": false,
-        "name": "output",
-        "display_name": "output",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "textarea"
-      }
-    }
-  }
 })
 
 const { t } = useI18n()
 
-const fieldsData = ref(props.data.template)
+const useNodeMessages = useNodeMessagesStore()
+const pushMessage = (action, data) => {
+  useNodeMessages.push({
+    action,
+    data,
+    nodeId: props.id,
+  })
+}
 
-const newFieldData = reactive({
+const fieldsData = ref(props.data.template)
+const templateData = createTemplateData()
+Object.entries(templateData.template).forEach(([key, value]) => {
+  fieldsData.value[key] = fieldsData.value[key] || value
+  if (value.is_output) {
+    fieldsData.value[key].is_output = true
+  }
+})
+
+const fieldsOrder = ref(Object.keys(fieldsData.value))
+
+const editFieldData = reactive({
   "required": true,
   "placeholder": "",
   "show": false,
-  "multiline": false,
   "value": "",
   "options": [],
-  "password": false,
   "name": "",
   "display_name": "",
   "type": "str",
-  "clear_after_run": false,
   "list": false,
   "field_type": "input",
 })
-const newFieldDataTypeChange = (value) => {
-  newFieldData.multiline = value == 'textarea' ? true : false
+
+const showEditField = ref(false)
+const addNewField = () => {
+  isEditField.value = false
+  editFieldData.display_name = ''
+  editFieldData.options = []
+  showEditField.value = true
 }
-const showAddField = ref(false)
-const openAddField = () => {
-  showAddField.value = true
-}
-const addField = () => {
-  newFieldData.name = newFieldData.display_name
-  fieldsData.value[newFieldData.name] = JSON.parse(JSON.stringify(newFieldData))
-  showAddField.value = false
-  newFieldData.display_name = ''
-  newFieldData.options = []
+const saveField = () => {
+  const index = fieldsOrder.value.indexOf(originalFieldName.value)
+  editFieldData.name = editFieldData.display_name
+  fieldsData.value[editFieldData.name] = JSON.parse(JSON.stringify(editFieldData))
+  editFieldData.display_name = ''
+  editFieldData.options = []
+  if (isEditField.value && originalFieldName.value != editFieldData.name) {
+    delete fieldsData.value[originalFieldName.value]
+    fieldsOrder.value[index] = editFieldData.name
+    // 把 fieldsData.value.template.value 中的原字段替换为新字段
+    fieldsData.value.template.value = fieldsData.value.template.value.replace(`{{${originalFieldName.value}}}`, `{{${editFieldData.name}}}`)
+    pushMessage('change', {
+      event: 'editField',
+      oldFieldName: originalFieldName.value,
+      newFieldName: editFieldData.name,
+    })
+  } else if (isEditField.value && originalFieldType.value != editFieldData.field_type) {
+    fieldsData.value[editFieldData.name].field_type = editFieldData.field_type
+    pushMessage('change', {
+      event: 'editFieldType',
+      fieldName: editFieldData.name,
+      fieldType: editFieldData.field_type,
+    })
+  } else {
+    fieldsOrder.value.push(editFieldData.name)
+  }
+  showEditField.value = false
 }
 const removeField = (field) => {
+  fieldsOrder.value = fieldsOrder.value.filter(item => item != field)
   delete fieldsData.value[field]
+  pushMessage('change', { event: 'removeField', fieldName: field })
+}
+
+const isEditField = ref(false)
+const originalFieldName = ref('')
+const originalFieldType = ref('')
+const editField = (field) => {
+  originalFieldName.value = field
+  originalFieldType.value = fieldsData.value[field].field_type
+  editFieldData.display_name = field
+  editFieldData.name = field
+  editFieldData.value = fieldsData.value[field].value
+  editFieldData.show = fieldsData.value[field].show
+  editFieldData.options = fieldsData.value[field].options
+  editFieldData.field_type = fieldsData.value[field].field_type
+  showEditField.value = true
+  isEditField.value = true
 }
 
 const addListOptionsItem = (newValue, index) => {
-  newFieldData.options[index] = {
+  editFieldData.options[index] = {
     "value": newValue,
     "label": newValue
   }
 }
 const deleteListOptionsItem = (index) => {
-  newFieldData.options.splice(index, 1)
+  editFieldData.options.splice(index, 1)
 }
 
 const openTemplateEditor = ref(false)
 </script>
 
 <template>
-  <BaseNode :nodeId="id" style="width: 400px" :title="t('components.nodes.textProcessing.TemplateCompose.title')"
-    :description="props.data.description" documentLink="https://vectorvein.com/help/docs/text-processing#h2-8">
+  <BaseNode :nodeId="id" :debug="props.data.debug" :width="300" :fieldsData="fieldsData"
+    translatePrefix="components.nodes.textProcessing.TemplateCompose"
+    documentLink="https://vectorvein.com/help/docs/text-processing#h2-8">
     <template #main>
-      <a-row type="flex">
-        <template v-for="(field, fieldIndex) in Object.keys(fieldsData)" :key="fieldIndex">
-          <a-col :span="24" v-if="!['template', 'output'].includes(field)">
-            <BaseField :id="field" :name="fieldsData[field].display_name" required type="target" deletable
-              @delete="removeField(field)" v-model:show="fieldsData[field].show">
-              <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
-                :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
-                v-if="fieldsData[field].field_type == 'select'" />
-              <a-textarea class="field-content" v-model:value="fieldsData[field].value"
-                :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
-                v-else-if="fieldsData[field].field_type == 'textarea'" />
-              <a-input class="field-content" v-model:value="fieldsData[field].value"
-                :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
-            </BaseField>
-          </a-col>
+      <a-flex vertical gap="small">
+        <template v-for="(field, fieldIndex) in fieldsOrder" :key="fieldIndex">
+          <BaseField v-if="!['template', 'output'].includes(field)" :name="fieldsData[field].display_name" required
+            type="target" deletable editable @delete="removeField(field)" @edit="editField(field)"
+            v-model:data="fieldsData[field]">
+            <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
+              :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
+              v-if="fieldsData[field].field_type == 'select'" />
+            <a-textarea class="field-content" v-model:value="fieldsData[field].value"
+              :autoSize="{ minRows: 2, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
+              v-else-if="fieldsData[field].field_type == 'textarea'" />
+            <a-input class="field-content" v-model:value="fieldsData[field].value"
+              :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
+          </BaseField>
         </template>
 
-        <a-col :span="24" style="padding: 10px">
-          <a-button type="dashed" block @click="openAddField" class="add-field-button">
-            <AddOne />
+        <div class="add-field-button-container">
+          <a-button type="dashed" block @click="addNewField" class="add-field-button">
+            <template #icon>
+              <AddOne />
+            </template>
             {{ t('components.nodes.textProcessing.TemplateCompose.add_field') }}
           </a-button>
-          <a-drawer v-model:open="showAddField" class="custom-class"
-            :title="t('components.nodes.textProcessing.TemplateCompose.add_field')" placement="right">
-
+          <a-drawer v-model:open="showEditField"
+            :title="t(`components.nodes.textProcessing.TemplateCompose.${isEditField ? 'edit' : 'add'}_field`)"
+            placement="right">
             <template #extra>
-              <a-button type="primary" @click="addField">
-                {{ t('common.add') }}
+              <a-button type="primary" @click="saveField">
+                {{ t(isEditField ? 'common.save' : 'common.add') }}
               </a-button>
             </template>
             <a-form>
               <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_type')">
-                <a-select ref="select" v-model:value="newFieldData.field_type" style="width: 120px"
-                  @change="newFieldDataTypeChange">
+                <a-select ref="select" v-model:value="editFieldData.field_type" style="width: 100%">
                   <a-select-option value="input">
                     {{ t('components.nodes.textProcessing.TemplateCompose.field_type_input') }}
                   </a-select-option>
@@ -153,20 +176,21 @@ const openTemplateEditor = ref(false)
               </a-form-item>
 
               <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_display_name')">
-                <a-input v-model:value="newFieldData.display_name" />
+                <a-input v-model:value="editFieldData.display_name" />
               </a-form-item>
 
               <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_list_options')"
-                v-if="newFieldData.field_type == 'select'">
+                v-if="editFieldData.field_type == 'select'">
                 <a-row type="flex" :gutter="[12, 12]">
-                  <a-col :span="24" :key="index" v-for="(item, index) in newFieldData.options">
+                  <a-col :span="24" :key="index" v-for="(item, index) in editFieldData.options">
                     <div style="display: flex; gap: 5px;">
                       <a-input :value="item.value" @input="addListOptionsItem($event.target.value, index)" />
                       <ReduceOne @click="deleteListOptionsItem(index)" />
                     </div>
                   </a-col>
                   <a-col :span="24">
-                    <a-button type="dashed" style="width: 100%;" @click="newFieldData.options.push('')">
+                    <a-button type="dashed" style="width: 100%;"
+                      @click="editFieldData.options.push({ value: '', label: '' })">
                       <AddOne />
                       {{ t('components.nodes.listField.add_item') }}
                     </a-button>
@@ -176,28 +200,29 @@ const openTemplateEditor = ref(false)
 
             </a-form>
           </a-drawer>
-        </a-col>
-      </a-row>
+        </div>
+      </a-flex>
 
-      <BaseField id="template" :name="t('components.nodes.textProcessing.TemplateCompose.template')" required
-        type="target" v-model:show="fieldsData.template.show">
+      <BaseField :name="t('components.nodes.textProcessing.TemplateCompose.template')" required type="target"
+        v-model:data="fieldsData.template">
         <a-typography-paragraph :ellipsis="{ row: 1, expandable: false }"
           :content="fieldsData.template.value"></a-typography-paragraph>
-        <a-button block type="primary" class="open-template-editor-button" @click="openTemplateEditor = true">
+        <a-button block type="dashed" class="open-template-editor-button" @click="openTemplateEditor = true">
+          <template #icon>
+            <Edit />
+          </template>
           {{ t('components.nodes.textProcessing.TemplateCompose.open_template_editor') }}
         </a-button>
         <TemplateEditorModal v-model:open="openTemplateEditor" v-model:template="fieldsData.template.value"
           :fields="fieldsData" />
       </BaseField>
-      <a-divider></a-divider>
 
-    </template>
-
-    <template #output>
-      <BaseField id="output" :name="t('components.nodes.textProcessing.TemplateCompose.output')" type="source" nameOnly>
-      </BaseField>
     </template>
   </BaseNode>
 </template>
 
-<style></style>
+<style scoped>
+.add-field-button-container {
+  padding: 10px;
+}
+</style>

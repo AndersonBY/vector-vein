@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
-import BaseField from '@/components/nodes/BaseField.vue'
+import { createTemplateData } from './ButtonTrigger'
 
 const props = defineProps({
   id: {
@@ -13,50 +13,22 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  templateData: {
-    "description": "description",
-    "task_name": "triggers.button_trigger",
-    "has_inputs": false,
-    "template": {
-      "button_text": {
-        "required": true,
-        "placeholder": "Run",
-        "show": false,
-        "multiline": true,
-        "value": "run",
-        "password": false,
-        "name": "button_text",
-        "display_name": "button_text",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "button"
-      },
-    }
-  },
 })
 
 const { t } = useI18n()
 
 const fieldsData = ref(props.data.template)
-fieldsData.value.button_text.value = t('components.nodes.triggers.ButtonTrigger.run')
+const templateData = createTemplateData()
+Object.entries(templateData.template).forEach(([key, value]) => {
+  fieldsData.value[key] = fieldsData.value[key] || value
+  if (value.is_output) {
+    fieldsData.value[key].is_output = true
+  }
+})
+fieldsData.value.button_text.value = fieldsData.value.button_text.value.length > 0 ? fieldsData.value.button_text.value : t('components.nodes.triggers.ButtonTrigger.run')
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :title="t('components.nodes.triggers.ButtonTrigger.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/triggers#h2-0">
-    <template #main>
-      <a-row type=" flex">
-        <a-col :span="24">
-          <BaseField id="button_text" :name="t('components.nodes.triggers.ButtonTrigger.button_text')" required
-            type="target">
-            <a-input class="field-content" v-model:value="fieldsData.button_text.value"
-              :placeholder="fieldsData.button_text.placeholder" />
-          </BaseField>
-        </a-col>
-      </a-row>
-    </template>
-  </BaseNode>
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.triggers.ButtonTrigger"
+    documentLink="https://vectorvein.com/help/docs/triggers#h2-0" />
 </template>
-
-<style></style>

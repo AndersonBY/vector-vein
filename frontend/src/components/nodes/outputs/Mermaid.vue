@@ -1,8 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
-import BaseField from '@/components/nodes/BaseField.vue'
+import { createTemplateData } from './Mermaid'
 
 const props = defineProps({
   id: {
@@ -13,75 +12,19 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  templateData: {
-    "description": "description",
-    "task_name": "output.mermaid",
-    "has_inputs": true,
-    "template": {
-      "content": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": false,
-        "value": "",
-        "password": false,
-        "name": "content",
-        "display_name": "content",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "textarea"
-      },
-      "show_mermaid": {
-        "required": false,
-        "placeholder": "",
-        "show": false,
-        "multiline": false,
-        "value": true,
-        "password": false,
-        "name": "show_mermaid",
-        "display_name": "show_mermaid",
-        "type": "bool",
-        "clear_after_run": false,
-        "list": false,
-        "field_type": "checkbox"
-      },
-    }
-  },
 })
 
-const { t } = useI18n()
-
 const fieldsData = ref(props.data.template)
+const templateData = createTemplateData()
+Object.entries(templateData.template).forEach(([key, value]) => {
+  fieldsData.value[key] = fieldsData.value[key] || value
+  if (value.is_output) {
+    fieldsData.value[key].is_output = true
+  }
+})
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :title="t('components.nodes.outputs.Mermaid.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/outputs#h2-24">
-    <template #main>
-      <a-row type="flex">
-
-        <a-col :span="24">
-          <BaseField id="content" :name="t('components.nodes.outputs.Mermaid.content')" required type="target"
-            v-model:show="fieldsData.content.show">
-            <a-textarea v-model:value="fieldsData.content.value" :autoSize="true" :showCount="true"
-              :placeholder="fieldsData.content.placeholder" />
-          </BaseField>
-        </a-col>
-
-        <a-col :span="24">
-          <BaseField id="show_mermaid" :name="t('components.nodes.outputs.Mermaid.show_mermaid')" required type="target"
-            v-model:show="fieldsData.show_mermaid.show">
-            <template #inline>
-              <a-checkbox v-model:checked="fieldsData.show_mermaid.value">
-              </a-checkbox>
-            </template>
-          </BaseField>
-        </a-col>
-      </a-row>
-    </template>
-
-  </BaseNode>
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.outputs.Mermaid"
+    :debug="props.data.debug" documentLink="https://vectorvein.com/help/docs/outputs#h2-24" />
 </template>
-
-<style></style>

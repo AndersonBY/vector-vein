@@ -1,10 +1,9 @@
 <script setup>
 import { ref } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import BaseNode from '@/components/nodes/BaseNode.vue'
-import BaseField from '@/components/nodes/BaseField.vue'
+import { createTemplateData } from './DeleteData'
 
 const props = defineProps({
   id: {
@@ -15,63 +14,20 @@ const props = defineProps({
     type: Object,
     required: true,
   },
-  templateData: {
-    "description": "description",
-    "task_name": "vector_db.delete_data",
-    "has_inputs": true,
-    "template": {
-      "object_id": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": true,
-        "value": "",
-        "password": false,
-        "name": "object_id",
-        "display_name": "object_id",
-        "type": "list|str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": ""
-      },
-      "database": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": false,
-        "value": "",
-        "password": false,
-        "options": [],
-        "name": "database",
-        "display_name": "database",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "select"
-      },
-      "delete_success": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "multiline": true,
-        "value": "",
-        "password": false,
-        "name": "delete_success",
-        "display_name": "delete_success",
-        "type": "list|bool",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": ""
-      }
-    }
-  },
 })
 
-const { t } = useI18n()
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
 
 const fieldsData = ref(props.data.template)
+const templateData = createTemplateData()
+Object.entries(templateData.template).forEach(([key, value]) => {
+  fieldsData.value[key] = fieldsData.value[key] || value
+  if (value.is_output) {
+    fieldsData.value[key].is_output = true
+  }
+})
+
 fieldsData.value.database.options = userDatabases.value.filter((database) => {
   return database.status == 'VALID'
 }).map((item) => {
@@ -83,34 +39,6 @@ fieldsData.value.database.options = userDatabases.value.filter((database) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :title="t('components.nodes.vectorDb.DeleteData.title')" :description="props.data.description"
-    documentLink="https://vectorvein.com/help/docs/vector-db#h2-4">
-    <template #main>
-      <a-row type="flex">
-        <a-col :span="24">
-          <BaseField id="object_id" :name="t('components.nodes.vectorDb.DeleteData.object_id')" required type="target"
-            v-model:show="fieldsData.object_id.show">
-            <a-input class="field-content" v-model:value="fieldsData.object_id.value"
-              :placeholder="fieldsData.object_id.placeholder" />
-          </BaseField>
-        </a-col>
-
-        <a-col :span="24">
-          <BaseField id="database" :name="t('components.nodes.vectorDb.DeleteData.database')" required type="target"
-            v-model:show="fieldsData.database.show">
-            <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.database.value"
-              :options="fieldsData.database.options" />
-          </BaseField>
-        </a-col>
-      </a-row>
-    </template>
-
-    <template #output>
-      <BaseField id="delete_success" :name="t('components.nodes.vectorDb.DeleteData.delete_success')" type="source"
-        nameOnly>
-      </BaseField>
-    </template>
-  </BaseNode>
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.vectorDb.DeleteData"
+    :debug="props.data.debug" documentLink="https://vectorvein.com/help/docs/vector-db#h2-4" />
 </template>
-
-<style></style>

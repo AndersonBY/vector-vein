@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { Delete } from '@icon-park/vue-next'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import { NodeResizer } from '@vue-flow/node-resizer'
+import { createTemplateData } from './CommentNode'
 
 const props = defineProps({
   id: {
@@ -12,26 +13,6 @@ const props = defineProps({
   data: {
     type: Object,
     required: true,
-  },
-  templateData: {
-    "description": "description",
-    "has_inputs": false,
-    "template": {
-      "comment": {
-        "required": false,
-        "placeholder": "",
-        "show": false,
-        "multiline": true,
-        "value": "",
-        "password": false,
-        "name": "comment",
-        "display_name": "comment",
-        "type": "str",
-        "clear_after_run": true,
-        "list": false,
-        "field_type": "textarea"
-      },
-    }
   },
 })
 
@@ -46,6 +27,13 @@ const pushMessage = (action, data) => {
 }
 
 const fieldsData = ref(props.data.template)
+const templateData = createTemplateData()
+Object.entries(templateData.template).forEach(([key, value]) => {
+  fieldsData.value[key] = fieldsData.value[key] || value
+  if (value.is_output) {
+    fieldsData.value[key].is_output = true
+  }
+})
 </script>
 
 <template>

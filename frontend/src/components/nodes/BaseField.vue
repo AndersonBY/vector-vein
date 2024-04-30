@@ -2,13 +2,10 @@
 import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Handle, Position } from '@vue-flow/core'
-import { CloseOne } from '@icon-park/vue-next'
+import { CloseOne, Edit, PreviewOpen, PreviewCloseOne } from '@icon-park/vue-next'
+import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 
 const props = defineProps({
-  id: {
-    type: String,
-    required: true,
-  },
   name: {
     type: String,
     required: true,
@@ -29,94 +26,123 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  editable: {
+    type: Boolean,
+    default: false,
+  },
   style: {
     type: Object,
     default: () => ({}),
   },
-  show: {
-    type: Boolean,
-    default: true,
+  data: {
+    type: Object,
+    default: () => ({}),
   },
 })
 
-const emit = defineEmits(['delete', 'update:show'])
+const emit = defineEmits(['delete', 'update:data', 'edit'])
 
 const { t } = useI18n()
 
-const innerShow = ref(props.show)
-const updateShowValue = (event) => {
-  innerShow.value = event.target.checked
-  emit('update:show', innerShow.value)
+const innerData = ref(props.data)
+const id = ref(innerData.value.id || innerData.value.name)
+
+const toggleShowValue = () => {
+  innerData.value.show = !innerData.value.show
+  emit('update:data', innerData.value)
 }
-watch(() => props.show, (newValue) => {
-  innerShow.value = newValue
-})
+watch(() => props.data, (newValue) => {
+  innerData.value = newValue
+  id.value = newValue.id || newValue.name
+}, { deep: true })
 
 const removeField = () => {
-  emit('delete', props.id)
+  emit('delete', id)
 }
 
-const getHandleStyle = (handleType) => ({
-  borderColor: handleType == 'target' ? '#94d574' : '#e8de7f',
-  borderWidth: '2px',
-  backgroundColor: '#fff',
-  width: '10px',
-  height: '10px',
-})
+const editField = () => {
+  emit('edit', id)
+}
 </script>
 <template>
-  <div :class="['template-item-field', props.type == 'source' ? 'template-item-output-field' : '']" :style="props.style">
+  <div :class="['template-item-field', props.type == 'source' ? 'template-item-output-field' : '']"
+    :style="props.style">
     <div class="template-item-field-text">
-      <a-typography-text>
+      <a-typography-text class="field-name dark-color-text">
         {{ props.name }}
       </a-typography-text>
       <a-typography-text type="danger" v-if="props.required"> *</a-typography-text>
+      <a-button v-if="editable" type="text" size="small" @click="editField">
+        <template #icon>
+          <Edit />
+        </template>
+      </a-button>
       <slot name="inline"></slot>
-      <div class="show-in-use-interface-checkbox" v-if="props.type == 'target'">
+      <template v-if="!$slots.inline && !innerData.is_output">
+        <a-checkbox v-if="innerData.field_type == 'checkbox'" v-model:checked="innerData.value">
+        </a-checkbox>
+      </template>
+      <div v-if="props.type == 'target'" class="show-in-use-interface-checkbox"
+        :class="{ 'always-show': innerData.show }">
         <a-tooltip :title="t('components.nodes.baseField.show_in_use_interface')">
-          <a-checkbox class="field-show-checkbox" :checked="innerShow" @change="updateShowValue">
-            <a-typography-text type="secondary">
-              {{ t('components.nodes.baseField.show') }}
-            </a-typography-text>
-          </a-checkbox>
+          <a-button type="text" size="small" @click="toggleShowValue">
+            <template #icon>
+              <PreviewOpen v-if="innerData.show" fill="#28c5e5" />
+              <PreviewCloseOne v-else fill="#28c5e5" />
+            </template>
+          </a-button>
         </a-tooltip>
       </div>
-      <a-typography-link type="danger" class="delete-field-button" @click="removeField()" v-if="props.deletable">
-        <CloseOne style="float: right;" />
-      </a-typography-link>
+      <a-button type="text" size="small" class="delete-field-button" @click="removeField()" v-if="props.deletable">
+        <template #icon>
+          <CloseOne fill="#ff4d4f" />
+        </template>
+      </a-button>
     </div>
-    <Handle :style="getHandleStyle(props.type)" :id="id" :type="props.type"
+    <Handle :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type"
       :position="props.type == 'target' ? Position.Left : Position.Right" :connectable-start="props.type != 'target'"
       :connectable-end="props.type == 'target'" v-if="nameOnly" />
     <div style="position: relative;">
       <div class="template-item-field-content">
         <slot>
         </slot>
+        <template v-if="!$slots.default && !innerData.is_output">
+          <a-select v-if="innerData.field_type == 'select'" v-model:value="innerData.value" :options="innerData.options"
+            style="width: 100%;" />
+          <a-textarea v-model:value="innerData.value" :autoSize="{ minRows: 2, maxRows: 30 }" :showCount="true"
+            :placeholder="innerData.placeholder" v-else-if="innerData.field_type == 'textarea'" />
+          <a-input v-model:value="innerData.value" :placeholder="innerData.placeholder"
+            v-else-if="innerData.field_type == 'input'" />
+          <a-input-number v-model:value="innerData.value" :placeholder="innerData.placeholder"
+            v-else-if="innerData.field_type == 'number'" style="width: 100%;" />
+          <a-radio-group option-type="button" v-model:value="innerData.value" :options="innerData.options"
+            v-else-if="innerData.field_type == 'radio'" />
+          <TemperatureInput v-else-if="innerData.field_type == 'temperature'" v-model="innerData.value" />
+        </template>
       </div>
       <template v-if="props.type == 'target'">
-        <Handle :style="getHandleStyle('target')" :id="id" type="target" :position="Position.Left"
+        <Handle :class="['handle', 'target-handle']" :id="id" type="target" :position="Position.Left"
           :connectable-start="false" :connectable-end="true" v-if="!nameOnly" />
-        <Handle :style="getHandleStyle('source')" :id="id" type="source" :position="Position.Right"
+        <Handle :class="['handle', 'source-handle']" :id="id" type="source" :position="Position.Right"
           :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
       </template>
       <template v-else>
-        <Handle :style="getHandleStyle(props.type)" :id="id" :type="props.type" :position="Position.Right"
+        <Handle :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type" :position="Position.Right"
           :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
       </template>
     </div>
   </div>
 </template>
+
 <style scoped>
 .template-item-field {
-  background: #f8f8f8;
   padding: 10px 0;
   width: 100%;
   height: 100%;
   position: relative;
-}
-
-.template-item-output-field {
-  background-color: #28c5e5 !important;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .template-item-field-text {
@@ -127,10 +153,20 @@ const getHandleStyle = (handleType) => ({
   gap: 5px;
 }
 
-.template-item-field-text .show-in-use-interface-checkbox {
+.template-item-field .show-in-use-interface-checkbox {
   flex-grow: 1;
   display: flex;
   justify-content: flex-end;
+  opacity: 0;
+}
+
+.template-item-field:hover .show-in-use-interface-checkbox {
+  opacity: 1;
+  transition: opacity .3s;
+}
+
+.template-item-field .show-in-use-interface-checkbox.always-show {
+  opacity: 1;
 }
 
 .template-item-field-content {
@@ -145,5 +181,10 @@ const getHandleStyle = (handleType) => ({
 
 .template-item-field:hover .delete-field-button {
   opacity: 1;
+}
+
+.field-name {
+  font-weight: 600;
+  transition: color .3s;
 }
 </style>
