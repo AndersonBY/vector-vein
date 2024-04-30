@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from "vue"
-import { Down } from '@icon-park/vue-next'
+import { Help } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import VueMarkdown from 'vue-markdown-render'
@@ -34,36 +34,31 @@ const openUpdateInfo = ref(false)
 </script>
 
 <template>
-  <a-dropdown>
-    <a class="ant-dropdown-link" @click.prevent>
-      {{ t('components.layout.helpDropdown.help') }}
-      <Down />
-    </a>
-    <template #overlay>
-      <a-menu>
-        <a-menu-item>
-          <a href="https://vectorvein.com/help/docs/introduction" target="_blank">
-            {{ t('components.layout.helpDropdown.documentation') }}
-          </a>
-        </a-menu-item>
-        <a-menu-item v-if="updateInfo.updatable" @click="openUpdateInfo = true">
-          {{ t('components.layout.helpDropdown.update_available') }}
-          <a-modal
-            :title="t('components.layout.helpDropdown.new_version', { version: updateInfo.version, releaseDatetime: new Date(updateInfo.release_date).toLocaleString() })"
-            :open="openUpdateInfo" :footer="null" @cancel="openUpdateInfo = false">
-            <VueMarkdown v-highlight :source="updateInfo.release_notes[language]"
-              class="custom-scrollbar markdown-body custom-hljs" />
-          </a-modal>
-        </a-menu-item>
-        <a-menu-item @click="openAboutVectorVein = true">
-          {{ t('components.layout.helpDropdown.about_vectorvein') }}
-          <a-modal :title="t('components.layout.helpDropdown.about_vectorvein')" :open="openAboutVectorVein"
-            :footer="null" @cancel="openAboutVectorVein = false">
-            <VueMarkdown v-highlight :source="t('components.layout.helpDropdown.about_vectorvein_description')"
-              class="custom-scrollbar markdown-body custom-hljs" />
-          </a-modal>
-        </a-menu-item>
-      </a-menu>
+  <a-sub-menu key="/help" :title="t('components.layout.helpDropdown.help')">
+    <template #icon>
+      <Help />
     </template>
-  </a-dropdown>
+    <a-menu-item key="document">
+      <a href="https://vectorvein.com/help/docs/introduction" target="_blank">
+        {{ t('components.layout.helpDropdown.documentation') }}
+      </a>
+    </a-menu-item>
+    <a-menu-item key="/update" v-if="updateInfo.updatable" @click="openUpdateInfo = true">
+      {{ t('components.layout.helpDropdown.update_available') }}
+      <a-modal
+        :title="t('components.layout.helpDropdown.new_version', { version: updateInfo.version, releaseDatetime: new Date(updateInfo.release_date).toLocaleString() })"
+        :open="openUpdateInfo" :footer="null" @cancel="openUpdateInfo = false">
+        <VueMarkdown v-highlight :source="updateInfo.release_notes[language]"
+          class="custom-scrollbar markdown-body custom-hljs" />
+      </a-modal>
+    </a-menu-item>
+    <a-menu-item key="/about" @click="openAboutVectorVein = true">
+      {{ t('components.layout.helpDropdown.about_vectorvein') }}
+      <a-modal :title="t('components.layout.helpDropdown.about_vectorvein')" :open="openAboutVectorVein" :footer="null"
+        @cancel="openAboutVectorVein = false">
+        <VueMarkdown v-highlight :source="t('components.layout.helpDropdown.about_vectorvein_description')"
+          class="custom-scrollbar markdown-body custom-hljs" />
+      </a-modal>
+    </a-menu-item>
+  </a-sub-menu>
 </template>
