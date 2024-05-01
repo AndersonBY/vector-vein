@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 22:41:36
+# @Last Modified time: 2024-05-01 13:57:35
 import re
 import json
 import time
@@ -29,7 +29,7 @@ http_proxy_host_re = re.compile(r"http.*://(.*?)$")
 
 def proxies():
     settings = Settings()
-    if not settings.get("use_system_proxy"):
+    if not settings.get("use_system_proxy", True):
         return {}
     else:
         system_proxies = urllib.request.getproxies()
@@ -45,7 +45,7 @@ def proxies():
 
 def proxies_for_requests():
     settings = Settings()
-    if not settings.get("use_system_proxy"):
+    if not settings.get("use_system_proxy", True):
         return {}
     else:
         system_proxies = urllib.request.getproxies()
