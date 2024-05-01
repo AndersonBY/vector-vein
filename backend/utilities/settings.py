@@ -7,7 +7,10 @@ from models import Setting as SettingModel
 class Settings:
     def __init__(self):
         self.data = dict()
-        self.load_setting()
+        try:
+            self.load_setting()
+        except Exception:
+            self.data = dict()
 
     def load_setting(self):
         if SettingModel.select().count() == 0:
