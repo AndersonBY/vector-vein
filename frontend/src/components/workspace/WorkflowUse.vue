@@ -1,11 +1,12 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, ref, reactive } from "vue"
+import { onBeforeMount, onBeforeUnmount, ref, reactive, computed } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import { storeToRefs } from 'pinia'
+import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { useUserRelationalDatabasesStore } from "@/stores/userRelationalDatabase"
@@ -35,6 +36,8 @@ const props = defineProps({
 })
 
 const { t } = useI18n()
+const userSettings = useUserSettingsStore()
+const { setting } = storeToRefs(userSettings)
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
 const userRelationalDatabasesStore = useUserRelationalDatabasesStore()
@@ -92,6 +95,17 @@ onBeforeMount(async () => {
           value: item.rid,
           label: item.name,
         }));
+    } else if (node.type === 'LocalLlm') {
+      node.data.template.model_family.options = setting.value.data.local_llms.map(llm => ({
+        value: llm.model_family,
+        text: llm.model_family,
+      }))
+      const modelFamily = node.data.template.model_family.value
+      const llm = setting.value.data.local_llms.find((llm) => llm.model_family === modelFamily)
+      node.data.template.llm_model.options = llm ? llm.models.map((model) => ({
+        value: model.model_id,
+        text: model.model_label,
+      })) : []
     }
   });
 
@@ -185,7 +199,7 @@ const runWorkflow = async () => {
         showingRecord.value = true
 
       } else if (statusResponse.status == 202) {
-        const finishedNodes = statusResponse.data.finished_nodes
+        const finishedNodes = statusResponse.data.finished_nodes ?? []
         outputNodes.value.forEach((node) => {
           const finishedNode = finishedNodes.find((item) => {
             return item.id == node.id
@@ -221,35 +235,6 @@ const runWorkflow = async () => {
     message.error(t('workspace.workflowSpace.submit_workflow_failed'))
     running.value = false
   }
-}
-
-const updateWorkflowScheduleTrigger = async () => {
-  running.value = true
-  const response = await workflowScheduleTriggerAPI('update', {
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ...currentWorkflow.value
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.update_schedule_success'))
-  } else {
-    message.error(t('workspace.workflowSpace.update_schedule_failed'))
-  }
-  running.value = false
-}
-
-const deletingSchedule = ref(false)
-const deleteWorkflowScheduleTrigger = async () => {
-  deletingSchedule.value = true
-  const response = await workflowScheduleTriggerAPI('delete', {
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ...currentWorkflow.value
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.delete_schedule_success'))
-  } else {
-    message.error(t('workspace.workflowSpace.delete_schedule_failed'))
-  }
-  deletingSchedule.value = false
 }
 
 const showingRecord = ref(false)
