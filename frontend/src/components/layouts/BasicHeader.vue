@@ -117,9 +117,7 @@ const settingOpen = ref(false)
 
     <a-row style="width: 100%;" justify="space-between" v-else>
       <a-col>
-        <a href="/" class="logo">
-          <img alt="VectorVein" :src="logoUrl" />
-        </a>
+        <img alt="VectorVein" :src="logoUrl" />
       </a-col>
       <a-col>
         <a-dropdown>
