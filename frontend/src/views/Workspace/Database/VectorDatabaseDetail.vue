@@ -66,7 +66,7 @@ const databaseObjects = reactive({
       style: { cursor: 'pointer' },
       onClick: async (event) => {
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('object-title')) {
-          await router.push(`/data/vector-db/${databaseId}/object/${record.oid}`)
+          await router.push({ name: 'VectorDatabaseObjectDetail', params: { databaseId, objectId: record.oid } })
         }
       },
       onMouseenter: (event) => { databaseObjects.hoverRowOid = record.vid },
@@ -109,7 +109,7 @@ onBeforeMount(async () => {
 })
 
 const navigateToCreate = async () => {
-  await router.push(`/data/${databaseId}/create`)
+  await router.push({ name: 'VectorDatabaseObjectCreate', params: { databaseId } })
 }
 
 const deleteObject = (objectId) => {
