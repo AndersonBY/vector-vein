@@ -92,5 +92,7 @@ class ModelSetting(pydantic.BaseModel):
         if self.id_settings_key:
             self.id = settings.get(self.id_settings_key)
         for endpoint in self.endpoints:
-            endpoint.endpoint = settings.get(endpoint.endpoint_settings_key)
-            endpoint.api_key = settings.get(endpoint.api_key_settings_key)
+            if endpoint.endpoint_settings_key:
+                endpoint.endpoint = settings.get(endpoint.endpoint_settings_key)
+            if endpoint.api_key_settings_key:
+                endpoint.api_key = settings.get(endpoint.api_key_settings_key)
