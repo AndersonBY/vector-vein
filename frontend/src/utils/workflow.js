@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 11:33:10
+ * @Last Modified time: 2024-05-02 18:17:41
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -216,6 +216,7 @@ export const getUIDesignFromWorkflow = (workflowData) => {
           const nodeField = JSON.parse(JSON.stringify(node.data.template[field]))
           nodeField.category = node.category
           nodeField.nodeId = node.id
+          nodeField.nodeType = node.type
           nodeField.fieldName = field
           // 让 nodeField.value和node.data.template[field].value双向绑定
           Object.defineProperty(nodeField, 'value', {
