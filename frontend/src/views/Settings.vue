@@ -2,7 +2,7 @@
 import { ref, reactive, toRaw, onBeforeMount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { MenuFoldOne, MenuUnfoldOne, More, Robot, Mail } from '@icon-park/vue-next'
+import { MenuFoldOne, MenuUnfoldOne, More, Robot, Mail, Delete } from '@icon-park/vue-next'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { deepCopy } from '@/utils/util'
 import { settingAPI } from "@/api/user"
@@ -119,6 +119,9 @@ const localLlmForm = reactive({
   api_key: '',
   models: [],
 })
+const localLlmFormRemove = (index) => {
+  settingForm.data.local_llms.splice(index, 1)
+}
 const localLlmFormEdit = (llm, index) => {
   localLlmForm.model_family = llm.model_family
   localLlmForm.models = deepCopy(toRaw(llm.models))
@@ -153,6 +156,9 @@ const localLlmModelForm = reactive({
   concurrent: 1,
   max_tokens: 8192,
 })
+const localLlmModelRemove = (index) => {
+  localLlmForm.models.splice(index, 1)
+}
 const localLlmModelEdit = (model, index) => {
   localLlmModelForm.model_id = model.model_id
   localLlmModelForm.model_label = model.model_label
@@ -317,10 +323,16 @@ const localLlmModelSave = () => {
         <a-row :gutter="[12, 12]">
           <a-col :sm="24" :md="8">
             <a-flex vertical gap="small">
-              <a-button v-for="(llmFamily, index) in settingForm.data.local_llms" type="text" block
-                @click="localLlmFormEdit(llmFamily, index)">
-                {{ llmFamily.model_family }}
-              </a-button>
+              <a-flex v-for="(llmFamily, index) in settingForm.data.local_llms" gap="small" align="center">
+                <a-button type="text" block @click="localLlmFormEdit(llmFamily, index)">
+                  {{ llmFamily.model_family }}
+                </a-button>
+                <a-button type="text" @click="localLlmFormRemove(index)">
+                  <template #icon>
+                    <Delete fill="#ff4d4f" />
+                  </template>
+                </a-button>
+              </a-flex>
               <a-button type="dashed" block @click="localLlmsFormStatus = 'add'">
                 {{ t('settings.add_model_family') }}
               </a-button>
@@ -339,10 +351,16 @@ const localLlmModelSave = () => {
               </a-form-item>
               <a-form-item :label="t('settings.models')">
                 <a-flex vertical gap="small">
-                  <a-button v-for="(model, index) in localLlmForm.models" type="text" block
-                    @click="localLlmModelEdit(model, index)">
-                    {{ model.model_label }}
-                  </a-button>
+                  <a-flex v-for="(model, index) in localLlmForm.models" gap="small" align="center">
+                    <a-button type="text" block @click="localLlmModelEdit(model, index)">
+                      {{ model.model_label }}
+                    </a-button>
+                    <a-button type="text" @click="localLlmModelRemove(index)">
+                      <template #icon>
+                        <Delete fill="#ff4d4f" />
+                      </template>
+                    </a-button>
+                  </a-flex>
                   <a-button type="dashed" block @click="localLlmModelAdd">
                     {{ t('settings.add_model') }}
                   </a-button>
