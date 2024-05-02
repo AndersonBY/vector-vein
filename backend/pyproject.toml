@@ -34,16 +34,16 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.9,<3.13"
-version = "0.1.0"
+version = "0.1.1"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.1.0 -t p"
+build = "python build.py -v 0.1.1 -t p"
 build-debug = "pyinstaller debug.spec --noconfirm"
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.0"}
+dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.1"}
 fullstack-dev.cmd = "python run_fullstack_dev.py"
-fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.0", "VITE_LOCAL" = "http://localhost:5173/"}
+fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.1", "VITE_LOCAL" = "http://localhost:5173/"}
