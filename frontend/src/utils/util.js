@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-09 03:05:56
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 03:00:44
+ * @Last Modified time: 2024-05-02 17:01:10
  */
 import { useUserSettingsStore } from "@/stores/userSettings"
 
@@ -74,4 +74,8 @@ export function hashObject(obj) {
     hash &= hash; // Convert to 32bit integer
   }
   return hash;
+}
+
+export function deepCopy(obj) {
+  return JSON.parse(JSON.stringify(obj))
 }
