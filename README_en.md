@@ -28,9 +28,15 @@ VectorVein is built using pywebview, based on the webview2 kernel, so you need t
 
 ### Configuration
 
-After opening the software normally, click the "Open Settings" button and fill in the OpenAI API Key to enable the AI function. Also, select the output folder to store the output files of the workflow. If you need to use the email sending function, please also fill in the email information in the settings page.
+After the software opens normally, click the settings button, and enter the API Key for OpenAI/Moonshot/Zhipu AI/Anthropic in the "Large Language Models" tab to use non-local AI features.
 
-![Settings](resources/images/settings1-en.jpg)
+![LLM Settings](resources/images/settings1-en.jpg)
+
+If you are using a local large language model, fill in the local model configuration information in the "Local Large Language Models" tab.
+
+![Local LLM Settings](resources/images/settings2-en.jpg)
+
+If you need to use the email sending feature, please fill in the email information in the "Email Settings" tab.
 
 ### Notes
 

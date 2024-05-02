@@ -28,9 +28,16 @@
 
 ### 配置
 
-软件正常打开后点击打开设置按钮，请填入 OpenAI 的 API Key 以使用 AI 功能，并选择输出文件夹用于存放工作流输出时的文件。如果需要用到邮件发送的功能请在设置页面一并填入邮箱信息。
+软件正常打开后点击打开设置按钮，请在 `大语言模型` 标签页填入 OpenAI/Moonshot/智谱 AI/Anthropic 的 API Key 以使用非本地的 AI 功能。
 
-![设置](resources/images/settings1-zh.jpg)
+![LLM 设置](resources/images/settings1-zh.jpg)
+
+如果使用本地大语言模型则在 `本地大语言模型` 标签页填入本地的模型配置信息。
+
+![本地 LLM 设置](resources/images/settings2-zh.jpg)
+
+如果需要用到邮件发送的功能请在 `邮件设置` 标签页填入邮箱信息。
+
 
 ### 注意事项
 
