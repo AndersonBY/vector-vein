@@ -20,7 +20,7 @@ const props = defineProps({
 })
 
 const route = useRoute()
-const selectType = route.path.startsWith('/workspace/workflow/editor/') ? 'workflow' : 'officialTemplate'
+const selectType = route.path.startsWith('/workflow/editor/') ? 'workflow' : 'officialTemplate'
 const showUser = selectType == 'template'
 
 const { t } = useI18n()
