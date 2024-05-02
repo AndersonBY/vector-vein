@@ -1,1 +1,0 @@
-import{I as e,c}from"./index-DwTab_5X.js";const i=e("more",!1,function(l){return c("svg",{width:l.size,height:l.size,viewBox:"0 0 48 48",fill:"none"},[c("circle",{cx:"12",cy:"24",r:"3",fill:l.colors[0]},null),c("circle",{cx:"24",cy:"24",r:"3",fill:l.colors[0]},null),c("circle",{cx:"36",cy:"24",r:"3",fill:l.colors[0]},null)])});export{i as M};

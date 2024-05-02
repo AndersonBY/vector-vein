@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
-    "@codemirror/lang-python": "^6.1.5",
+    "@codemirror/lang-python": "^6.1.6",
     "@codemirror/lang-sql": "^6.6.3",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.26.3",
@@ -37,7 +37,7 @@
     "pinia": "^2.1.7",
     "smplr": "^0.13.4",
     "uuid": "^9.0.1",
-    "vue": "^3.4.25",
+    "vue": "^3.4.26",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "0.2.0-beta.2",
     "vue-echarts": "^6.7.1",
@@ -48,12 +48,12 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.2",
     "@vitejs/plugin-vue": "^4.6.2",
-    "@vue-flow/core": "^1.33.5",
+    "@vue-flow/core": "^1.33.6",
     "@vue/eslint-config-prettier": "^7.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.25.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.2.10"
+    "vite": "^5.2.11"
   }
 }
