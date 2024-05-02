@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 16:08:34
+# @Last Modified time: 2024-05-02 19:36:59
 from worker.tasks import task, timer
 from utilities.settings import Settings
 from utilities.workflow import Workflow
@@ -119,6 +119,8 @@ def search_data(
     workflow = Workflow(workflow_data)
     search_text = workflow.get_node_field_value(node_id, "search_text")
     output_type = workflow.get_node_field_value(node_id, "output_type")
+    database_vid = workflow.get_node_field_value(node_id, "database")
+    count = workflow.get_node_field_value(node_id, "count")
 
     if isinstance(search_text, str):
         search_texts = [search_text]
@@ -127,14 +129,14 @@ def search_data(
 
     results = []
     for text in search_texts:
-        text_embedding = get_embedding_from_open_ai(text, settings.settings)
+        text_embedding = get_embedding_from_open_ai(text, settings.data)
         vdb_request_queue.put(
             {
                 "function_name": "search_point",
                 "parameters": dict(
-                    vid=workflow.get_node_field_value(node_id, "database"),
+                    vid=database_vid,
                     text_embedding=text_embedding,
-                    limit=workflow.get_node_field_value(node_id, "count"),
+                    limit=count,
                 ),
             }
         )
