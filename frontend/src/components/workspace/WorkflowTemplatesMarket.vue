@@ -112,6 +112,10 @@ const workflowTemplates = reactive({
     workflowTemplates.loading = false
   }
 })
+
+const navigateToTemplate = async (tid) => {
+  await router.push({ name: 'WorkflowTemplate', params: { workflowTemplateId: tid } })
+}
 </script>
 
 <template>
@@ -128,17 +132,8 @@ const workflowTemplates = reactive({
       <a-row :gutter="[16, 16]">
         <a-col :xl="6" :lg="8" :md="8" :sm="12" :xs="24" v-for="(template, index) in workflowTemplates.data"
           :key="template.tid" @click="navigateToTemplate(template.tid)">
-          <template v-if="index == 0">
-            <a-tooltip color="blue" :open="showBeginnerTipsPopover"
-              :title="t('workspace.workflowSpaceMain.select_any_template_to_start')" trigger="focus">
-              <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
-                :brief="template.brief" :author="template.user" :forks="template.used_count" />
-            </a-tooltip>
-          </template>
-          <template v-else>
-            <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
-              :brief="template.brief" :author="template.user" :forks="template.used_count" />
-          </template>
+          <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
+            :brief="template.brief" :author="template.user" :forks="template.used_count" />
         </a-col>
       </a-row>
     </a-spin>

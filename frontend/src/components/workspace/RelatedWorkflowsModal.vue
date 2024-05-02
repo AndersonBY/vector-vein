@@ -55,14 +55,14 @@ onBeforeMount(async () => {
         <a-tab-pane v-for="relatedWorkflow in relatedWorkflows" :key="relatedWorkflow[queryKey]"
           :tab="relatedWorkflow.title">
           <template v-if="isTemplate || relatedWorkflow.is_template">
-            <a-typography-link :href="`/workspace/workflow/template/${relatedWorkflow.tid}`" class="workflow-title">
+            <router-link :to="`/workflow/template/${relatedWorkflow.tid}`" class="workflow-title">
               {{ t('workspace.workflowTemplate.template') }}: {{ relatedWorkflow.title }}
-            </a-typography-link>
+            </router-link>
           </template>
           <template v-else>
-            <a-typography-link :href="`/workspace/workflow/${relatedWorkflow.wid}`" class="workflow-title">
+            <router-link :to="`/workflow/${relatedWorkflow.wid}`" class="workflow-title">
               {{ relatedWorkflow.title }}
-            </a-typography-link>
+            </router-link>
           </template>
           <a-typography-text type="secondary">
             {{ t('workspace.workflowSpace.update_time', {
