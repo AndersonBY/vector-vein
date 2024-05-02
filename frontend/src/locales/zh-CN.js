@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-01 03:00:31
+ * @Last Modified time: 2024-05-02 19:15:55
  */
 export default {
   lang: '中文',
@@ -626,6 +626,7 @@ export default {
           'add_field_list_options': '列表选项',
           'click_to_add_to_template': '点击可将变量添加到模板',
           'open_template_editor': '打开模板编辑器',
+          'edit_field': '编辑变量',
         },
         MarkdownToHtml: {
           'title': 'MD 转 HTML',
@@ -771,6 +772,18 @@ export default {
           'title': 'Claude',
           'description': 'Claude是Antropic开发的大型语言模型,被训练来给出有益且无害的回复。',
           'prompt': '输入内容（Prompt）',
+          'llm_model': '模型',
+          'temperature': 'AI 偏好（温度）',
+          'creative': '创意',
+          'balanced': '平衡',
+          'precise': '精准',
+          'output': '输出',
+        },
+        LocalLlm: {
+          'title': '本地大语言模型',
+          'description': '用户自行定义的大语言模型接口',
+          'prompt': '输入内容（Prompt）',
+          'model_family': '模型系列',
           'llm_model': '模型',
           'temperature': 'AI 偏好（温度）',
           'creative': '创意',
@@ -1205,6 +1218,19 @@ export default {
     'zhipuai_api_key': '智谱 AI API Key',
     'anthropic_api_base': 'Anthropic API Base',
     'anthropic_api_key': 'Anthropic API Key',
+    'local_llms': '本地大语言模型',
+    'model_family_api_base': '模型系列 API Base',
+    'model_family_api_key': '模型系列 API Key',
+    'model_family': '模型系列名称',
+    'models': '模型列表',
+    'model_label': '模型标签',
+    'model_id': '模型 ID',
+    'model_rpm': '每分钟请求数',
+    'model_concurrent': '并发数',
+    'model_max_tokens': '上下文长度',
+    'add_model_family': '添加模型系列',
+    'add_model': '添加模型',
+    'save_model_family': '保存模型系列',
     'output_folder': '输出文件夹',
     'select_folder': '选择文件夹',
     'email_settings': '邮件设置',

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-01 03:00:41
+ * @Last Modified time: 2024-05-02 19:16:24
  */
 export default {
   lang: 'English',
@@ -626,6 +626,7 @@ export default {
           'add_field_list_options': 'List options',
           'click_to_add_to_template': 'Click to add variables to the template',
           'open_template_editor': 'Open template editor',
+          'edit_field': 'Edit field',
         },
         MarkdownToHtml: {
           'title': 'Markdown to HTML',
@@ -771,6 +772,19 @@ export default {
           'title': 'Claude',
           'description': 'Claude is a large language model developed by Antropic, trained to give helpful and harmless responses.',
           'prompt': 'Prompt',
+          'llm_model': 'Model',
+          'temperature': 'AI preference (temperature)',
+          'creative': 'Creative',
+          'balanced': 'Balanced',
+          'precise': 'Precise',
+          'output': 'Output',
+        },
+        LocalLlm: {
+          'title': 'Local LLM',
+          'description': 'User-defined large language model interface',
+          'prompt': 'Prompt',
+          'model_family': 'Model family',
+          'llm_model': '模型',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',
           'creative': 'Creative',
@@ -1205,6 +1219,19 @@ export default {
     'zhipuai_api_key': 'ZhiPu AI API Key',
     'anthropic_api_base': 'Anthropic API Base',
     'anthropic_api_key': 'Anthropic API Key',
+    'local_llms': 'Local LLMs',
+    'model_family_api_base': 'Model family API Base',
+    'model_family_api_key': 'Model family API Key',
+    'model_family': 'Model family name',
+    'models': 'Models',
+    'model_label': 'Model label',
+    'model_id': 'Model ID',
+    'model_rpm': 'RPM (requests per minute)',
+    'model_concurrent': 'Concurrency',
+    'model_max_tokens': 'Context length',
+    'add_model_family': 'Add model family',
+    'add_model': 'Add model',
+    'save_model_family': 'Save model family',
     'output_folder': 'Output folder',
     'select_folder': 'Select folder',
     'email_settings': 'Email settings',
