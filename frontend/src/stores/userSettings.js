@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 11:17:47
+ * @Last Modified time: 2024-05-02 17:47:53
  */
 import { defineStore } from "pinia"
 
@@ -66,6 +66,7 @@ export const useUserSettingsStore = defineStore('userSettings', {
     },
     setSetting(setting) {
       this.setting = setting
+      localStorage.setItem("userSettings.setting", JSON.stringify(setting))
     },
     setTourVersion(tourVersion) {
       this.tourVersion = tourVersion
