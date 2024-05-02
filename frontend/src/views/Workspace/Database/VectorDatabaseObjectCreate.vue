@@ -93,7 +93,7 @@ const create = async () => {
     message.error(t('workspace.databaseObjectCreate.create_failed'))
   }
   creating.value = false
-  await router.push(`/data/${databaseId}`)
+  await router.push({ name: 'VectorDatabaseObjectDetail', params: { databaseId, objectId: response.data.oid } })
 }
 
 </script>
@@ -113,7 +113,7 @@ const create = async () => {
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <router-link :to="`/data/${database.vid}`">
+            <router-link :to="`/data/vector-db/${database.vid}`">
               <DatabaseSetting />
               {{ database.name }}
             </router-link>
@@ -194,10 +194,10 @@ const create = async () => {
               <template #label>
                 {{ t('workspace.databaseObjectCreate.chunk_length') }}
                 <QuestionPopover :contents="[
-    t('workspace.databaseObjectCreate.question.chunk_length.1'),
-    t('workspace.databaseObjectCreate.question.chunk_length.2'),
-    t('workspace.databaseObjectCreate.question.chunk_length.3')
-  ]" />
+                  t('workspace.databaseObjectCreate.question.chunk_length.1'),
+                  t('workspace.databaseObjectCreate.question.chunk_length.2'),
+                  t('workspace.databaseObjectCreate.question.chunk_length.3')
+                ]" />
               </template>
               <a-input-number v-model:value="processRules.chunk_length" />
             </a-form-item>
@@ -222,7 +222,7 @@ const create = async () => {
 
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.object_source_url')" :span="3"
                   v-if="objectInfo.add_method == 'url'">
-                  <a href="objectInfo.source_url" target="_blank">{{ objectInfo.source_url }}</a>
+                  <a :href="objectInfo.source_url" target="_blank">{{ objectInfo.source_url }}</a>
                 </a-descriptions-item>
 
                 <a-descriptions-item :label="t('workspace.databaseObjectCreate.object_files')" :span="3"
