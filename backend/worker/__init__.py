@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 14:06:18
+# @Last Modified time: 2024-05-02 19:24:47
 import queue
 import inspect
 import traceback
@@ -63,6 +63,7 @@ def main_worker(task_queue: queue.Queue, vdb_queues: dict):
         task_queue (queue.Queue): Workflow run task queue
         vdb_queue (queue.Queue): Vector database related request queue
     """
+    mprint("Task worker start")
     while True:
         task_data = task_queue.get()
         mprint("worker receive task")
@@ -116,6 +117,7 @@ def main_vector_database(vdb_queues: dict):
     }
     vdb_request_queue = vdb_queues["request"]
     vdb_response_queue = vdb_queues["response"]
+    mprint("Vector database worker start")
     while True:
         request = vdb_request_queue.get()
         function_name: dict = request.get("function_name")
