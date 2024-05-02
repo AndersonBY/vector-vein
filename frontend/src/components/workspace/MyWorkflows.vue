@@ -98,7 +98,7 @@ const workflowRecords = reactive({
       onClick: async (event) => {
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('workflow-title')) {
           await nextTick(async () => {
-            await router.push(`/workspace/workflow/${record.wid}`)
+            await router.push({ name: 'WorkflowUse', params: { workflowId: record.wid } })
           })
         }
       },
@@ -233,7 +233,7 @@ const add = async (template) => {
   const workflow = response.data
   await userWorkflowsStore.refreshWorkflows()
   nextTick(async () => {
-    await router.push(`/workflow/editor/${workflow.wid}`)
+    await router.push({ name: 'WorkflowEditor', params: { workflowId: workflow.wid } })
   })
 }
 const clone = async (workflowWid) => {
@@ -257,12 +257,12 @@ const clone = async (workflowWid) => {
   const workflow = createResponse.data
   await userWorkflowsStore.refreshWorkflows()
   nextTick(async () => {
-    await router.push(`/workflow/${workflow.wid}`)
+    await router.push({ name: 'WorkflowUse', params: { workflowId: workflow.wid } })
   })
 }
 
 const openRecord = async (record) => {
-  await router.push(`/workflow/${record.wid}?rid=${record.rid}`)
+  await router.push({ name: 'WorkflowUse', params: { workflowId: record.wid }, query: { rid: record.rid } })
 }
 </script>
 
@@ -301,7 +301,7 @@ const openRecord = async (record) => {
     <a-row v-if="workflowDisplayPreference == 'card'" :gutter="[16, 16]" style="margin-bottom: 80px;">
       <a-col :xxl="6" :xl="8" :lg="8" :md="12" :sm="24" :xs="24" v-for="record in workflowRecords.data"
         :key="record.pid">
-        <router-link :to="`/workflow/${record.wid}`">
+        <router-link :to="{ name: 'WorkflowUse', params: { workflowId: record.wid } }">
           <WorkflowCard :title="record.title" :tags="record.tags" :images="record.images" :brief="record.brief"
             :author="false" :datetime="record.update_time" :forks="false" :extra="true" :loading="record.loading"
             :starred="record.is_fast_access" @star="toggleFastAccess(record)" @clone="clone(record.wid)"
@@ -393,9 +393,9 @@ const openRecord = async (record) => {
         </a-typography-paragraph>
         <a-typography-paragraph type="secondary">
           {{ t('components.workspace.myWorkflows.no_workflows_2') }}
-          <a-typography-link href="/workflow/?tab=official-workflow-templates">
+          <router-link to="/workflow/?tab=official-workflow-templates">
             {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
-          </a-typography-link>
+          </router-link>
         </a-typography-paragraph>
       </template>
     </a-table>
