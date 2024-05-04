@@ -41,7 +41,8 @@ mac = ["pyobjc"]
 
 [tool.pdm.scripts]
 build = "python build.py -v 0.1.1 -t p"
-build-debug = "pyinstaller debug.spec --noconfirm"
+build-debug.cmd = "python build.py -v 0.1.1 -t d"
+build-debug.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.1"}
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
 dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.1"}

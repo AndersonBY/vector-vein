@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 12:05:10
+# @Last Modified time: 2024-05-04 12:34:12
 import os
 import queue
 import threading
@@ -56,13 +56,16 @@ def open_folder_dialog(self, initial_directory=""):
     return result
 
 
+if Path("./DEBUG").exists():
+    DEBUG = Path("./DEBUG").read_text() == "1"
+else:
+    DEBUG = os.environ.get("VECTORVEIN_DEBUG", "0") == "1"
+
 if Path("./version.txt").exists():
-    with open("./version.txt", "r") as f:
-        VERSION = f.read()
+    VERSION = Path("./version.txt").read_text()
 else:
     VERSION = os.environ.get("VECTORVEIN_VERSION", "0.0.1")
 
-DEBUG = os.environ.get("VECTORVEIN_DEBUG", "0") == "1"
 mprint(f"Debug: {DEBUG}")
 mprint(f"Version: {VERSION}")
 

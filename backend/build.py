@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 13:34:28
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-06-05 02:29:56
+# @Last Modified time: 2024-05-04 12:32:42
 import os
 import shlex
 import shutil
@@ -31,7 +31,15 @@ def build_production(version):
 
 
 def build_development(version):
-    pass
+    run_cmd("pyinstaller debug.spec --noconfirm", split=False)
+    # Create a version file in ./dist/vector-vein/
+    version_txt_path = Path("./dist/vector-vein/version.txt")
+    if not version_txt_path.parent.exists():
+        version_txt_path.parent.mkdir(parents=True, exist_ok=True)
+    with open("./dist/vector-vein/version.txt", "w") as f:
+        f.write(version)
+    with open("./dist/vector-vein/DEBUG", "w") as f:
+        f.write("1")
 
 
 def build_frontend():
