@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 18:17:41
+ * @Last Modified time: 2024-05-05 12:16:18
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -97,12 +97,15 @@ export const checkWorkflowDAG = (workflowData) => {
     noIsolatedNodes: true,
   }
   let dag = new DAG()
+  const triggersIds = []
   workflowData.data.nodes.forEach((node) => {
     if (node.category != 'triggers' && node.category != 'assistedNodes') {
       dag.add_node(node.id)
+    } else if (node.category == 'triggers') {
+      triggersIds.push(node.id)
     }
   })
-  workflowData.data.edges.forEach((edge) => {
+  workflowData.data.edges.filter((edge) => triggersIds.includes(edge.source) && triggersIds.includes(edge.target)).forEach((edge) => {
     dag.add_edge(edge.source, edge.target)
   })
   try {
@@ -113,7 +116,7 @@ export const checkWorkflowDAG = (workflowData) => {
   }
 
   const nodes = workflowData.data.nodes.filter((node) => node.category != 'triggers' && node.category != 'assistedNodes').map((node) => node.id)
-  const edges = workflowData.data.edges
+  const edges = workflowData.data.edges.filter((edge) => triggersIds.includes(edge.source) && triggersIds.includes(edge.target))
   const adjacencyList = {}
 
   // 构建邻接表
