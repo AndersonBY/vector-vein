@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-05 12:16:18
+ * @Last Modified time: 2024-05-06 11:30:47
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -116,7 +116,7 @@ export const checkWorkflowDAG = (workflowData) => {
   }
 
   const nodes = workflowData.data.nodes.filter((node) => node.category != 'triggers' && node.category != 'assistedNodes').map((node) => node.id)
-  const edges = workflowData.data.edges.filter((edge) => triggersIds.includes(edge.source) && triggersIds.includes(edge.target))
+  const edges = workflowData.data.edges.filter((edge) => !(triggersIds.includes(edge.source) && triggersIds.includes(edge.target)))
   const adjacencyList = {}
 
   // 构建邻接表
