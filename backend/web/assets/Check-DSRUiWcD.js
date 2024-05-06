@@ -1,1 +1,0 @@
-import{I as i,c as t}from"./index-CfafZJhW.js";const n=i("check",!0,function(e){return t("svg",{width:e.size,height:e.size,viewBox:"0 0 48 48",fill:"none"},[t("path",{d:"M43 11L16.875 37L5 25.1818",stroke:e.colors[0],"stroke-width":e.strokeWidth,"stroke-linecap":e.strokeLinecap,"stroke-linejoin":e.strokeLinejoin},null)])});export{n as C};
