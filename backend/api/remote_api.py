@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-07 11:43:52
+# @Last Modified time: 2024-05-07 13:49:55
 import httpx
 
 from utilities.web_crawler import proxies
@@ -18,7 +18,7 @@ def request(method: str, path: str, payload=None):
     try_times = 0
     while try_times < 3:
         try:
-            payload_params = {"json": payload} if method == "POST" and payload else {}
+            payload_params = {"json": payload} if method == "POST" and payload else {"params": payload}
             response = httpx.request(
                 method,
                 url,
