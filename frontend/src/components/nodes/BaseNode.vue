@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
+import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
 import ListField from '@/components/nodes/ListField.vue'
 
 const props = defineProps({
@@ -79,6 +80,7 @@ if (props.width) {
 
 const updateFields = () => {
   const inputs = []
+  const inputGroups = {}
   const outputs = []
   Object.keys(fieldsData.value).forEach((field) => {
     if (fieldsData.value[field].is_output) {
@@ -93,28 +95,45 @@ const updateFields = () => {
     } else {
       if (fieldsData.value[field].condition) {
         const condition = fieldsData.value[field].condition
-        if (condition(fieldsData.value)) {
-          inputs.push(field)
+        if (!condition(fieldsData.value)) {
+          return
         }
+      }
+      if (fieldsData.value[field].group) {
+        if (!inputGroups[fieldsData.value[field].group]) {
+          inputGroups[fieldsData.value[field].group] = []
+        }
+        inputGroups[fieldsData.value[field].group].push(field)
       } else {
         inputs.push(field)
       }
     }
   })
-  return { inputs, outputs }
+  return { inputs, inputGroups, outputs }
 }
 
 const inputFields = ref([])
+const inputGroupFields = ref({})
 const outputFields = ref([])
-const { inputs, outputs } = updateFields()
+const { inputs, inputGroups, outputs } = updateFields()
 inputFields.value = inputs
+inputGroupFields.value = inputGroups
 outputFields.value = outputs
 
 watch(() => fieldsData.value, () => {
-  const { inputs, outputs } = updateFields()
+  const { inputs, inputGroups, outputs } = updateFields()
   inputFields.value = inputs
+  inputGroupFields.value = inputGroups
   outputFields.value = outputs
 }, { deep: true })
+
+const collapseChanged = (data) => {
+  for (const key in fieldsData.value) {
+    if (fieldsData.value[key].group === data.id) {
+      fieldsData.value[key].group_collpased = data.collpased
+    }
+  }
+}
 </script>
 
 <template>
@@ -171,6 +190,23 @@ watch(() => fieldsData.value, () => {
                   type="target" v-model:data="fieldsData[field]"
                   :nameOnly="['', 'checkbox'].includes(fieldsData[field].field_type)" />
               </a-tooltip>
+            </template>
+            <template v-for="(fields, group) in inputGroupFields">
+              <BaseFieldsCollapse :id="group" :collapse="fieldsData[fields[0]].group_collpased"
+                :name="group === 'default' ? t('common.more_settings') : t(`${translatePrefix}.group_${group}`)"
+                @collapseChanged="collapseChanged">
+                <template v-for="field in fields">
+                  <a-tooltip :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''"
+                    placement="left">
+                    <ListField v-if="fieldsData[field].field_type == 'list'" :name="t(`${translatePrefix}.${field}`)"
+                      :required="fieldsData[field].required" type="target" v-model:data="fieldsData[field]">
+                    </ListField>
+                    <BaseField v-else :name="t(`${translatePrefix}.${field}`)" :required="fieldsData[field].required"
+                      type="target" v-model:data="fieldsData[field]"
+                      :nameOnly="['', 'checkbox'].includes(fieldsData[field].field_type)" />
+                  </a-tooltip>
+                </template>
+              </BaseFieldsCollapse>
             </template>
           </a-flex>
         </template>

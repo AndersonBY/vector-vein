@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 19:15:55
+ * @Last Modified time: 2024-05-07 01:04:54
  */
 export default {
   lang: '中文',
@@ -101,6 +101,7 @@ export default {
     'finish': '完成',
     'success': '成功',
     'cancel': '取消',
+    'more_settings': '更多设置',
   },
   email: {
     verify: {
@@ -627,6 +628,7 @@ export default {
           'click_to_add_to_template': '点击可将变量添加到模板',
           'open_template_editor': '打开模板编辑器',
           'edit_field': '编辑变量',
+          'name_reserved': 'template/output 是保留关键字，不能作为变量名。',
         },
         MarkdownToHtml: {
           'title': 'MD 转 HTML',

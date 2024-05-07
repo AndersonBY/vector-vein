@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 02:28:08
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 02:29:41
+ * @Last Modified time: 2024-05-07 11:47:58
  */
 import { flattenedChatModelOptions } from '@/utils/common'
 
@@ -68,7 +68,8 @@ export function createTemplateData() {
         "display_name": "use_sample_data",
         "type": "bool",
         "list": false,
-        "field_type": "checkbox"
+        "field_type": "checkbox",
+        "group": "default",
       },
       "include_column_names": {
         "required": false,
@@ -79,7 +80,8 @@ export function createTemplateData() {
         "display_name": "include_column_names",
         "type": "bool",
         "list": false,
-        "field_type": "checkbox"
+        "field_type": "checkbox",
+        "group": "default",
       },
       "max_count": {
         "required": true,
@@ -90,7 +92,8 @@ export function createTemplateData() {
         "display_name": "max_count",
         "type": "str",
         "list": false,
-        "field_type": "number"
+        "field_type": "number",
+        "group": "default",
       },
       "output_type": {
         "required": true,
@@ -115,7 +118,8 @@ export function createTemplateData() {
         "display_name": "output_type",
         "type": "str",
         "list": false,
-        "field_type": "select"
+        "field_type": "select",
+        "group": "default",
       },
       "output": {
         "required": true,

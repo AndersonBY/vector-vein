@@ -7,6 +7,7 @@ import { storeToRefs } from 'pinia'
 import { useUserRelationalDatabasesStore } from "@/stores/userRelationalDatabase"
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
+import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
 import { relationalDatabaseTableAPI } from '@/api/database'
 import { createTemplateData } from './SmartQuery'
 
@@ -60,16 +61,24 @@ const loadTables = async (rid) => {
     status: ['VA'],
     page_size: 100,
   })
-  if (response.status != 200) {
+  if (response.data.status != 200) {
     return
   }
-  fieldsData.value.tables.options = response.data.tables.map((item) => {
+  fieldsData.value.tables.options = response.data.data.tables.map((item) => {
     return {
       value: item.tid,
       label: item.name,
     }
   })
   loadingTables.value = false
+}
+
+const collapseChanged = (data) => {
+  for (const key in fieldsData.value) {
+    if (fieldsData.value[key].group === 'default') {
+      fieldsData.value[key].group_collpased = data.collpased
+    }
+  }
 }
 </script>
 
@@ -116,39 +125,44 @@ const loadTables = async (rid) => {
           </BaseField>
         </a-tooltip>
 
-        <a-tooltip placement="left" :title="t('components.nodes.relationalDb.SmartQuery.use_sample_data_tip')">
-          <BaseField :name="t('components.nodes.relationalDb.SmartQuery.use_sample_data')" name-only type="target"
-            v-model:data="fieldsData.use_sample_data">
-            <template #inline>
-              <a-checkbox v-model:checked="fieldsData.use_sample_data.value">
-              </a-checkbox>
-            </template>
-          </BaseField>
-        </a-tooltip>
+        <BaseFieldsCollapse id="default" :collapse="fieldsData.use_sample_data.group_collpased"
+          :name="t('common.more_settings')" @collapseChanged="collapseChanged">
 
-        <template v-show="fieldsData.output_type.value == 'list'">
-          <a-tooltip placement="left" :title="t('components.nodes.relationalDb.SmartQuery.include_column_names_tip')">
-            <BaseField :name="t('components.nodes.relationalDb.SmartQuery.include_column_names')" name-only
-              type="target" v-model:data="fieldsData.include_column_names">
+          <a-tooltip placement="left" :title="t('components.nodes.relationalDb.SmartQuery.use_sample_data_tip')">
+            <BaseField :name="t('components.nodes.relationalDb.SmartQuery.use_sample_data')" name-only type="target"
+              v-model:data="fieldsData.use_sample_data">
               <template #inline>
-                <a-checkbox v-model:checked="fieldsData.include_column_names.value">
+                <a-checkbox v-model:checked="fieldsData.use_sample_data.value">
                 </a-checkbox>
               </template>
             </BaseField>
           </a-tooltip>
-        </template>
 
-        <BaseField :name="t('components.nodes.relationalDb.SmartQuery.max_count')" type="target"
-          v-model:data="fieldsData.max_count">
-          <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.max_count.value"
-            :placeholder="fieldsData.max_count.placeholder" />
-        </BaseField>
+          <template v-show="fieldsData.output_type.value == 'list'">
+            <a-tooltip placement="left" :title="t('components.nodes.relationalDb.SmartQuery.include_column_names_tip')">
+              <BaseField :name="t('components.nodes.relationalDb.SmartQuery.include_column_names')" name-only
+                type="target" v-model:data="fieldsData.include_column_names">
+                <template #inline>
+                  <a-checkbox v-model:checked="fieldsData.include_column_names.value">
+                  </a-checkbox>
+                </template>
+              </BaseField>
+            </a-tooltip>
+          </template>
 
-        <BaseField :name="t('components.nodes.relationalDb.SmartQuery.output_type')" type="target"
-          v-model:data="fieldsData.output_type">
-          <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.output_type.value"
-            :options="fieldsData.output_type.options" />
-        </BaseField>
+          <BaseField :name="t('components.nodes.relationalDb.SmartQuery.max_count')" type="target"
+            v-model:data="fieldsData.max_count">
+            <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.max_count.value"
+              :placeholder="fieldsData.max_count.placeholder" />
+          </BaseField>
+
+          <BaseField :name="t('components.nodes.relationalDb.SmartQuery.output_type')" type="target"
+            v-model:data="fieldsData.output_type">
+            <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.output_type.value"
+              :options="fieldsData.output_type.options" />
+          </BaseField>
+
+        </BaseFieldsCollapse>
       </a-flex>
     </template>
   </BaseNode>

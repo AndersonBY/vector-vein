@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 19:16:24
+ * @Last Modified time: 2024-05-07 01:05:06
  */
 export default {
   lang: 'English',
@@ -101,6 +101,7 @@ export default {
     'finish': 'Finish',
     'success': 'Success',
     'cancel': 'Cancel',
+    'more_settings': 'More settings',
   },
   email: {
     verify: {
@@ -627,6 +628,7 @@ export default {
           'click_to_add_to_template': 'Click to add variables to the template',
           'open_template_editor': 'Open template editor',
           'edit_field': 'Edit field',
+          'name_reserved': 'template/output is a reserved keyword and cannot be used as a variable name.',
         },
         MarkdownToHtml: {
           'title': 'Markdown to HTML',

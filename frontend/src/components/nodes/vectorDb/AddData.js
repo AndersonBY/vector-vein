@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-14 20:01:07
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 21:01:38
+ * @Last Modified time: 2024-05-06 13:56:06
  */
 export function createTemplateData() {
   return {
@@ -43,6 +43,18 @@ export function createTemplateData() {
         "list": false,
         "field_type": "input"
       },
+      "database": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "options": [],
+        "name": "database",
+        "display_name": "database",
+        "type": "str",
+        "list": false,
+        "field_type": "select"
+      },
       "data_type": {
         "required": true,
         "placeholder": "",
@@ -62,7 +74,8 @@ export function createTemplateData() {
         "display_name": "data_type",
         "type": "str",
         "list": false,
-        "field_type": "select"
+        "field_type": "select",
+        "group": "default",
       },
       "split_method": {
         "required": true,
@@ -92,6 +105,7 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "select",
+        "group": "default",
         "condition": (fieldsData) => {
           return fieldsData.data_type.value == 'text'
         }
@@ -106,6 +120,7 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "number",
+        "group": "default",
         "condition": (fieldsData) => {
           return ['general', 'markdown'].includes(fieldsData.split_method.value)
         }
@@ -120,6 +135,7 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "number",
+        "group": "default",
         "condition": (fieldsData) => {
           return ['general', 'markdown'].includes(fieldsData.split_method.value)
         }
@@ -134,6 +150,7 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "input",
+        "group": "default",
         "condition": (fieldsData) => {
           return fieldsData.split_method.value == 'delimiter'
         }
@@ -147,19 +164,8 @@ export function createTemplateData() {
         "display_name": "remove_url_and_email",
         "type": "bool",
         "list": false,
-        "field_type": "checkbox"
-      },
-      "database": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "value": "",
-        "options": [],
-        "name": "database",
-        "display_name": "database",
-        "type": "str",
-        "list": false,
-        "field_type": "select"
+        "field_type": "checkbox",
+        "group": "default",
       },
       "object_id": {
         "required": true,
