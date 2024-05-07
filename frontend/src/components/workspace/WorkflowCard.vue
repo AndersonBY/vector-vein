@@ -99,7 +99,7 @@ const background = computed(() => {
                   </a-tooltip>
                 </template>
               </a-button>
-              <a-dropdown v-if="extra">
+              <a-dropdown v-if="extra" placement="bottomRight">
                 <template #overlay>
                   <a-menu>
                     <a-menu-item key="clone" @click="emit('clone', id)">
@@ -116,7 +116,7 @@ const background = computed(() => {
                     </a-popconfirm>
                   </a-menu>
                 </template>
-                <a-button size="large" type="text">
+                <a-button size="small" type="text">
                   <More theme="filled" size="24" fill="#fff" />
                 </a-button>
               </a-dropdown>
