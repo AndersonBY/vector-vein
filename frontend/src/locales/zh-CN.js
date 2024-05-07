@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 01:04:54
+ * @Last Modified time: 2024-05-07 22:12:08
  */
 export default {
   lang: '中文',
@@ -504,17 +504,6 @@ export default {
         'create_new_workflow': '创建新工作流',
         'empty_workflow': '新建空工作流',
       },
-      shareWorkflowModal: {
-        'share_workflow': '分享工作流',
-        'title': '标题',
-        'brief': '描述',
-        'brief_min_require': '描述至少{count}个字符',
-        'brief_hint1': '介绍该工作流的用途、输入输出等信息，以便其他用户更好地了解该工作流。',
-        'brief_hint2': '支持 Markdown 格式。',
-        'share_to_community': '分享到社区',
-        'share_to_community_brief': '分享到社区后，其他用户可以在社区中搜索到该工作流。否则仅可通过分享链接访问。',
-        'share_success': '分享成功',
-      },
       tagInput: {
         'select_tags': '选择标签',
       },
@@ -853,6 +842,7 @@ export default {
           'output_type_only_link': '仅下载链接文字',
           'output_type_markdown': 'Markdown',
           'output_type_html': 'HTML',
+          'show_local_file': '显示本地文件',
           'output': '输出',
         },
         Mindmap: {

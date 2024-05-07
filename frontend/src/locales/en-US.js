@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 01:05:06
+ * @Last Modified time: 2024-05-07 22:14:39
  */
 export default {
   lang: 'English',
@@ -504,17 +504,6 @@ export default {
         'create_new_workflow': 'Create new workflow',
         'empty_workflow': 'Create empty workflow',
       },
-      shareWorkflowModal: {
-        'share_workflow': 'Share workflow',
-        'title': 'Title',
-        'description': 'Description',
-        'description_min_require': 'Description requires at least {count} characters',
-        'description_hint1': 'Introduce the purpose, input and output of the workflow so that other users can better understand the workflow.',
-        'description_hint2': 'Support Markdown format.',
-        'share_to_community': 'Share to community',
-        'share_to_community_description': 'After sharing to the community, other users can search for the workflow in the community. Otherwise, it can only be accessed through the shared link.',
-        'share_success': 'Share success',
-      },
       tagInput: {
         'select_tags': 'Select tags',
       },
@@ -786,7 +775,6 @@ export default {
           'description': 'User-defined large language model interface',
           'prompt': 'Prompt',
           'model_family': 'Model family',
-          'llm_model': '模型',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',
           'creative': 'Creative',
@@ -842,6 +830,7 @@ export default {
           'output_type_only_path': 'Only path',
           'output_type_markdown': 'Markdown',
           'output_type_html': 'HTML',
+          'show_local_file': 'Show local file',
           'output': 'Output',
         },
         Audio: {
