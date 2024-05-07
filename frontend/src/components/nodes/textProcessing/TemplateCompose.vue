@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { message } from 'ant-design-vue'
 import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import BaseNode from '@/components/nodes/BaseNode.vue'
@@ -41,6 +42,8 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 const fieldsOrder = ref(Object.keys(fieldsData.value))
 
+const reservedFieldNames = ['template', 'output']
+
 const editFieldData = reactive({
   "required": true,
   "placeholder": "",
@@ -62,6 +65,10 @@ const addNewField = () => {
   showEditField.value = true
 }
 const saveField = () => {
+  if (reservedFieldNames.includes(editFieldData.display_name)) {
+    message.error(t('components.nodes.textProcessing.TemplateCompose.name_reserved'))
+    return
+  }
   const index = fieldsOrder.value.indexOf(originalFieldName.value)
   editFieldData.name = editFieldData.display_name
   fieldsData.value[editFieldData.name] = JSON.parse(JSON.stringify(editFieldData))
