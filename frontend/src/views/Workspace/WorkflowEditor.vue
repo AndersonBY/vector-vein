@@ -49,7 +49,6 @@ let queryParam = {}
 const userDatabasesStore = useUserDatabasesStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
 const userRelationalDatabasesStore = useUserRelationalDatabasesStore()
-const { userRelationalDatabases } = storeToRefs(userRelationalDatabasesStore)
 const userWorkflowsStore = useUserWorkflowsStore()
 const userSettingsStore = useUserSettingsStore()
 const { vueFlowStyleSettings } = storeToRefs(userSettingsStore)
