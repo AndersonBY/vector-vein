@@ -28,14 +28,14 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 const userSettings = useUserSettingsStore()
 const { setting } = storeToRefs(userSettings)
 
-fieldsData.value.model_family.options = setting.value.data.local_llms.map((llm) => ({
+fieldsData.value.model_family.options = setting.value.data?.local_llms?.map((llm) => ({
   value: llm.model_family,
   text: llm.model_family,
 }))
 
 fieldsData.value.llm_model.options = computed(() => {
   const modelFamily = fieldsData.value.model_family.value
-  const llm = setting.value.data.local_llms.find((llm) => llm.model_family === modelFamily)
+  const llm = setting.value.data?.local_llms?.find((llm) => llm.model_family === modelFamily)
   return llm ? llm.models.map((model) => ({
     value: model.model_id,
     text: model.model_label,
