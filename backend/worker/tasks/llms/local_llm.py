@@ -30,7 +30,7 @@ class LocalLLMTask(BaseLLMTask):
         )
         self.MODEL_SETTINGS = {
             model_id: ModelSetting(
-                id=model_family,
+                id=model_id,
                 endpoints=[endpoint],
                 max_tokens=selected_model_settings.get("max_tokens", 8192),
                 concurrent=selected_model_settings.get("concurrent", 1),
