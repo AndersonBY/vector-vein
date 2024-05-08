@@ -28,18 +28,27 @@
 
 ### 配置
 
+#### 远程大语言模型接口配置
+
 软件正常打开后点击打开设置按钮，请在 `大语言模型` 标签页填入 OpenAI/Moonshot/智谱 AI/Anthropic 的 API Key 以使用非本地的 AI 功能。
 
 ![LLM 设置](resources/images/settings1-zh.jpg)
 
-如果使用本地大语言模型则在 `本地大语言模型` 标签页填入本地的模型配置信息。
+#### 本地大语言模型接口配置
+
+如果使用本地大语言模型在 `本地大语言模型` 标签页填入本地的模型配置信息。目前支持 OpenAI 兼容的接口，如 LM-Studio、Ollama、vLLM 等。
 
 ![本地 LLM 设置](resources/images/settings2-zh.jpg)
 
+> LM-Studio 的 API Base 通常为 http://localhost:1234/v1/
+> 
+> Ollama 的 API Base 通常为 http://localhost:11434/v1/
+>
+> 注意填写完配置后先点 `保存模型系列` 然后再点 `保存设置`。
+
+#### 其它配置
+
 如果需要用到邮件发送的功能请在 `邮件设置` 标签页填入邮箱信息。
-
-
-### 注意事项
 
 #### 关于本地的 Stable Diffusion API
 

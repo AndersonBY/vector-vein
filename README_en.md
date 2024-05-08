@@ -28,13 +28,25 @@ VectorVein is built using pywebview, based on the webview2 kernel, so you need t
 
 ### Configuration
 
+#### Remote Large Language Model Interface Configuration
+
 After the software opens normally, click the settings button, and enter the API Key for OpenAI/Moonshot/Zhipu AI/Anthropic in the "Large Language Models" tab to use non-local AI features.
 
 ![LLM Settings](resources/images/settings1-en.jpg)
 
-If you are using a local large language model, fill in the local model configuration information in the "Local Large Language Models" tab.
+#### Local Large Language Model Interface Configuration
+
+If using a local large language model, fill in the local model configuration information in the `Local Large Language Model` tab. Currently supports OpenAI-compatible interfaces, such as LM-Studio, Ollama, vLLM, etc.
 
 ![Local LLM Settings](resources/images/settings2-en.jpg)
+
+> The API Base for LM-Studio is usually http://localhost:1234/v1/
+> 
+> The API Base for Ollama is usually http://localhost:11434/v1/
+>
+> After completing the configuration, click `Save Model Family` first, and then click `Save Settings`.
+
+#### Other settings
 
 If you need to use the email sending feature, please fill in the email information in the "Email Settings" tab.
 
