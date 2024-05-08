@@ -96,12 +96,12 @@ onBeforeMount(async () => {
           label: item.name,
         }));
     } else if (node.type === 'LocalLlm') {
-      node.data.template.model_family.options = setting.value.data.local_llms.map(llm => ({
+      node.data.template.model_family.options = setting.value.data?.local_llms?.map(llm => ({
         value: llm.model_family,
         text: llm.model_family,
       }))
       const modelFamily = node.data.template.model_family.value
-      const llm = setting.value.data.local_llms.find((llm) => llm.model_family === modelFamily)
+      const llm = setting.value.data?.local_llms?.find((llm) => llm.model_family === modelFamily)
       node.data.template.llm_model.options = llm ? llm.models.map((model) => ({
         value: model.model_id,
         text: model.model_label,
