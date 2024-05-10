@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { createTemplateData } from './Conditional'
@@ -31,7 +31,7 @@ originalOperatorOptions.forEach(item => {
 })
 fieldsData.value.operator.options = originalOperatorOptions.filter(item => item.field_type.includes('string'))
 
-watch(() => fieldsData.value.field_type.value, () => {
+const updateFields = () => {
   if (fieldsData.value.field_type.value == 'string') {
     fieldsData.value.left_field.field_type = 'input'
     fieldsData.value.right_field.field_type = 'input'
@@ -41,6 +41,14 @@ watch(() => fieldsData.value.field_type.value, () => {
     fieldsData.value.right_field.field_type = 'number'
     fieldsData.value.operator.options = originalOperatorOptions.filter(item => item.field_type.includes('number'))
   }
+}
+
+onBeforeMount(() => {
+  updateFields()
+})
+
+watch(() => fieldsData.value.field_type.value, () => {
+  updateFields()
 })
 </script>
 
