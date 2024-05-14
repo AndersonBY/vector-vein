@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 22:12:08
+ * @Last Modified time: 2024-05-14 20:09:52
  */
 export default {
   lang: '中文',
@@ -795,6 +795,8 @@ export default {
           'sampler': '采样器',
           'width': '宽度',
           'height': '高度',
+          'size': '尺寸',
+          'aspect_ratio': '宽高比',
           'output_type': '输出类型',
           'output_type_only_link': '仅路径',
           'output_type_markdown': 'Markdown',

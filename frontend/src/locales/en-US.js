@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 22:14:39
+ * @Last Modified time: 2024-05-14 20:10:13
  */
 export default {
   lang: 'English',
@@ -795,6 +795,8 @@ export default {
           'sampler': 'Sampler',
           'width': 'Width',
           'height': 'Height',
+          'size': 'Size',
+          'aspect_ratio': 'Aspect ratio',
           'output_type': 'Output type',
           'output_type_only_link': 'Only link',
           'output_type_markdown': 'Markdown',
