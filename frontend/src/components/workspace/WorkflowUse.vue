@@ -20,7 +20,7 @@ import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import TextOutput from "@/components/TextOutput.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
 import { getUIDesignFromWorkflow, hasShowFields, nonFormItemsTypes, checkFieldsValid } from '@/utils/workflow'
-import { workflowAPI, workflowScheduleTriggerAPI } from "@/api/workflow"
+import { workflowAPI } from "@/api/workflow"
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 
 const props = defineProps({
