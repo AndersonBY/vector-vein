@@ -29,7 +29,7 @@ onBeforeMount(async () => {
   const response = await officialSiteAPI('get_template', { tid: workflowTemplateId })
   if (response.status != 200) {
     message.error(t('workspace.workflowSpace.get_workflow_failed'))
-    router.push({ name: 'Workspace' })
+    router.push({ name: 'WorkflowSpaceMain' })
     return
   }
   templateData.value = response.data
