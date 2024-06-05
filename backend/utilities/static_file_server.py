@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-17 20:17:51
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 20:40:18
+# @Last Modified time: 2024-06-06 02:29:38
 from pathlib import Path
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
@@ -11,7 +11,7 @@ class StaticFileServer:
     host = "localhost"
     port = 13286
 
-    def __init__(self, static_folder_path):
+    def __init__(self, static_folder_path: str | Path):
         class MyRequestHandler(SimpleHTTPRequestHandler):
             def translate_path(self, path):
                 path = path.split("?", 1)[0]
