@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted, onUpdated, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Download } from '@icon-park/vue-next'
-import { Transformer } from 'markmap-lib'
-import { Markmap, loadCSS, loadJS } from 'markmap-view/dist/index.esm'
+import { DownPicture, MindMapping } from '@icon-park/vue-next'
+import { Transformer } from 'markmap-lib/no-plugins'
+import { pluginFrontmatter } from 'markmap-lib/plugins'
+import { Markmap, loadCSS, loadJS } from 'markmap-view'
 import { saveAs } from 'file-saver'
+import { Topic, RootTopic, Workbook } from 'xmind-generator'
 
 const { t } = useI18n()
 
@@ -20,7 +22,7 @@ const svgRef = ref()
 const content = ref(props.content)
 const rootRef = ref()
 let mm
-const transformer = new Transformer()
+const transformer = new Transformer([pluginFrontmatter])
 const update = () => {
   const { root, features } = transformer.transform(content.value)
   const { styles, scripts } = transformer.getUsedAssets(features)
@@ -47,17 +49,44 @@ const downloadMindmap = () => {
   saveAs(blob, 'mindmap.svg')
 }
 
+const exportToXmind = async () => {
+  const rootNode = rootRef.value
+  const buildTopic = (node) => {
+    const topic = Topic(node.content)
+    if (node.children && node.children.length > 0) {
+      topic.children(node.children.map(child => buildTopic(child)))
+    }
+    return topic
+  }
+  const rootTopic = RootTopic(rootNode.content).children(rootNode.children.map(child => buildTopic(child)))
+  const workbook = Workbook(rootTopic)
+
+  const arrayBuffer = await workbook.archive()
+
+  const blob = new Blob([arrayBuffer], { type: 'application/vnd.xmind.workbook' })
+  saveAs(blob, 'mindmap.xmind')
+}
+
 </script>
 
 <template>
   <a-flex vertical>
     <svg id="markmap" ref="svgRef" style="width: 100%; min-height: 50vh;" />
-    <a-tooltip :title="t('components.workspace.mindmapRenderer.download_svg')">
-      <a-button @click="downloadMindmap" type="text">
-        <template #icon>
-          <Download />
-        </template>
-      </a-button>
-    </a-tooltip>
+    <a-space>
+      <a-tooltip :title="t('components.workspace.mindmapRenderer.download_svg')">
+        <a-button @click="downloadMindmap" type="text">
+          <template #icon>
+            <DownPicture />
+          </template>
+        </a-button>
+      </a-tooltip>
+      <a-tooltip :title="t('components.workspace.mindmapRenderer.download_xmind')">
+        <a-button @click="exportToXmind" type="text">
+          <template #icon>
+            <MindMapping />
+          </template>
+        </a-button>
+      </a-tooltip>
+    </a-space>
   </a-flex>
 </template>
