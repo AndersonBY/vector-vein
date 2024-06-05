@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 00:48:33
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 00:49:52
+ * @Last Modified time: 2024-05-17 16:30:17
  */
 export function createTemplateData() {
   return {
@@ -30,7 +30,10 @@ export function createTemplateData() {
         "display_name": "separator",
         "type": "str",
         "list": true,
-        "field_type": "input"
+        "field_type": "input",
+        "condition": (fieldsData) => {
+          return fieldsData.output_type.value == 'text'
+        },
       },
       "output_type": {
         "required": true,
