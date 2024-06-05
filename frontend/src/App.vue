@@ -6,6 +6,9 @@ import { theme, Spin } from 'ant-design-vue'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import LoadingElement from "@/components/LoadingElement.vue"
 
+
+const userSettings = useUserSettingsStore()
+
 onBeforeMount(async () => {
   // Only wait when in production mode
   if (import.meta.env.PROD) {
@@ -13,9 +16,8 @@ onBeforeMount(async () => {
       await new Promise((resolve) => setTimeout(resolve, 100))
     }
   }
+  await userSettings.init()
 })
-
-const userSettings = useUserSettingsStore()
 
 const antDesignLocale = computed(() => {
   const languageMap = {
