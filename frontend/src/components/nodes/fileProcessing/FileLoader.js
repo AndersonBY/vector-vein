@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-29 02:46:49
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 02:48:29
+ * @Last Modified time: 2024-06-05 19:36:05
  */
 export function createTemplateData() {
   return {
@@ -23,6 +23,28 @@ export function createTemplateData() {
         "clear_after_run": true,
         "list": false,
         "field_type": "file"
+      },
+      "remove_image": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": true,
+        "name": "remove_image",
+        "display_name": "remove_image",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
+      },
+      "remove_url_and_email": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": true,
+        "name": "remove_url_and_email",
+        "display_name": "remove_url_and_email",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
       },
       "output": {
         "required": true,
