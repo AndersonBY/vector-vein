@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-05 01:38:00
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 23:53:18
+ * @Last Modified time: 2024-06-05 20:27:29
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
@@ -124,24 +124,6 @@ const routes = [
           },
         ]
       },
-    ]
-  },
-  {
-    path: '/account',
-    name: 'account',
-    component: WorkspaceLayout,
-    meta: {
-      login: true
-    },
-    children: [
-      {
-        path: 'info',
-        name: 'AccountInfo',
-        meta: {
-          title: 'router.account.children.account_info'
-        },
-        component: () => import('@/views/UserAccount/AccountInfo.vue')
-      }
     ]
   },
   {
