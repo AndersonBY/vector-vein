@@ -26,5 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.textProcessing.ListRender"
-    :debug="props.data.debug" documentLink="https://vectorvein.com/help/docs/text-processing#h2-0" />
+    :debug="props.data.debug" documentPath="/help/docs/text-processing#h2-0" />
 </template>

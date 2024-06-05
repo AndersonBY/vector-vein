@@ -30,5 +30,5 @@ fieldsData.value.button_text.value = fieldsData.value.button_text.value.length >
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.triggers.ButtonTrigger"
-    documentLink="https://vectorvein.com/help/docs/triggers#h2-0" />
+    documentPath="/help/docs/triggers#h2-0" />
 </template>

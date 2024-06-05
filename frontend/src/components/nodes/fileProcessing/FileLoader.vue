@@ -18,6 +18,5 @@ const fieldsData = ref(props.data.template)
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.fileProcessing.FileLoader"
-    documentLink="https://vectorvein.com/help/docs/file-processing#h2-0" />
+    translatePrefix="components.nodes.fileProcessing.FileLoader" documentPath="/help/docs/file-processing#h2-0" />
 </template>

@@ -39,8 +39,7 @@ const addKey = () => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.controlFlows.JsonProcess"
-    documentLink="https://vectorvein.com/help/docs/control-flows#h2-6">
+    translatePrefix="components.nodes.controlFlows.JsonProcess" documentPath="/help/docs/control-flows#h2-6">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.common.input')" required type="target" v-model:data="fieldsData.input">

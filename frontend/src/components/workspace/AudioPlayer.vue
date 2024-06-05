@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { PlayOne, Pause } from '@icon-park/vue-next'
-import AudioPlayer from '@liripeng/vue-audio-player'
+import VueAudioPlayer from '@liripeng/vue-audio-player'
 import MidiPlayer from 'midi-player-js'
 import { SplendidGrandPiano } from "smplr"
 import axios from 'axios'
@@ -50,7 +50,7 @@ const play = async () => {
 </script>
 
 <template>
-  <audio-player :audio-list="audios" theme-color="#28c5e5" :isLoop="false" v-if="!isMidi" />
+  <VueAudioPlayer :audio-list="audios" theme-color="#28c5e5" :isLoop="false" v-if="!isMidi" />
   <div class="hello" v-if="isMidi">
     <a-button type="primary" shape="round" size="large" @click="stop" v-if="playing">
       <pause theme="filled" />

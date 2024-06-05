@@ -2,9 +2,9 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-01 02:30:09
+ * @Last Modified time: 2024-06-05 20:48:45
  */
-import { h } from 'vue'
+import { h, computed } from 'vue'
 import {
   Helpcenter,
   CircleFourLine,
@@ -20,6 +20,7 @@ import {
   CoordinateSystem,
   RadarThree,
 } from '@icon-park/vue-next'
+import { useUserSettingsStore } from "@/stores/userSettings"
 
 export const currentTourVersion = 1
 
@@ -206,3 +207,7 @@ export const databaseColumnTypes = [
   'BOOLEAN',
   'DATETIME',
 ]
+
+export const websiteBase = computed(() => {
+  return 'https://' + (useUserSettingsStore().setting.data.website_domain ?? 'vectorvein.ai')
+})

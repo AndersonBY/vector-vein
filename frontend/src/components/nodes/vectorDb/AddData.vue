@@ -39,5 +39,5 @@ fieldsData.value.database.options = userDatabases.value.filter((database) => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.vectorDb.AddData"
-    :debug="props.data.debug" documentLink="https://vectorvein.com/help/docs/vector-db#h2-0" />
+    :debug="props.data.debug" documentPath="/help/docs/vector-db#h2-0" />
 </template>

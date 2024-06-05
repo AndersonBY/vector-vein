@@ -7,6 +7,7 @@ import QuestionPopover from '@/components/QuestionPopover.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
 import ListField from '@/components/nodes/ListField.vue'
+import { websiteBase } from '@/utils/common'
 
 const props = defineProps({
   nodeId: {
@@ -23,7 +24,7 @@ const props = defineProps({
     required: false,
     default: '',
   },
-  documentLink: {
+  documentPath: {
     type: String,
     required: false,
     default: '',
@@ -156,8 +157,8 @@ const collapseChanged = (data) => {
           <a-typography-title class="title" :level="3" style="flex-grow: 1;">
             {{ title }}
             <QuestionPopover
-              :contents="[description, { type: 'link', text: t('components.nodes.baseNode.document_link'), url: props.documentLink }]"
-              v-if="props.documentLink.length > 0" class="hint-popover" />
+              :contents="[description, { type: 'link', text: t('components.nodes.baseNode.document_link'), url: `${websiteBase}${props.documentPath}` }]"
+              v-if="props.documentPath.length > 0" class="hint-popover" />
           </a-typography-title>
           <a-tooltip color="blue" :title="t('components.nodes.baseNode.clone_node')">
             <a-button type="text" size="small" @click="pushMessage('clone')">

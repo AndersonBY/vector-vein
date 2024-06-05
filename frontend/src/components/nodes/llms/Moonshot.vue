@@ -26,6 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.Moonshot"
-    documentLink="https://vectorvein.com/help/docs/language-models#h2-32" />
+    translatePrefix="components.nodes.llms.Moonshot" documentPath="/help/docs/language-models#h2-32" />
 </template>

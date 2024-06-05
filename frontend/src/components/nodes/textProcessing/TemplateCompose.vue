@@ -133,8 +133,7 @@ const openTemplateEditor = ref(false)
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :width="300" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.textProcessing.TemplateCompose"
-    documentLink="https://vectorvein.com/help/docs/text-processing#h2-8">
+    translatePrefix="components.nodes.textProcessing.TemplateCompose" documentPath="/help/docs/text-processing#h2-8">
     <template #main>
       <a-flex vertical gap="small">
         <template v-for="(field, fieldIndex) in fieldsOrder" :key="fieldIndex">
@@ -188,21 +187,23 @@ const openTemplateEditor = ref(false)
 
               <a-form-item :label="t('components.nodes.textProcessing.TemplateCompose.add_field_list_options')"
                 v-if="editFieldData.field_type == 'select'">
-                <a-row type="flex" :gutter="[12, 12]">
-                  <a-col :span="24" :key="index" v-for="(item, index) in editFieldData.options">
-                    <div style="display: flex; gap: 5px;">
-                      <a-input :value="item.value" @input="addListOptionsItem($event.target.value, index)" />
-                      <ReduceOne @click="deleteListOptionsItem(index)" />
-                    </div>
-                  </a-col>
-                  <a-col :span="24">
-                    <a-button type="dashed" style="width: 100%;"
-                      @click="editFieldData.options.push({ value: '', label: '' })">
-                      <AddOne />
-                      {{ t('components.nodes.listField.add_item') }}
+                <a-flex vertical gap="small">
+                  <a-flex :key="index" v-for="(item, index) in editFieldData.options" align="center" gap="small">
+                    <a-input :value="item.value" @input="addListOptionsItem($event.target.value, index)" />
+                    <a-button type="text" @click="deleteListOptionsItem(index)">
+                      <template #icon>
+                        <ReduceOne />
+                      </template>
                     </a-button>
-                  </a-col>
-                </a-row>
+                  </a-flex>
+                  <a-button type="dashed" style="width: 100%;"
+                    @click="editFieldData.options.push({ value: '', label: '' })">
+                    <template #icon>
+                      <AddOne />
+                    </template>
+                    {{ t('components.nodes.listField.add_item') }}
+                  </a-button>
+                </a-flex>
               </a-form-item>
 
             </a-form>

@@ -26,6 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.controlFlows.Empty"
-    documentLink="https://vectorvein.com/help/docs/control-flows#h2-4" />
+    translatePrefix="components.nodes.controlFlows.Empty" documentPath="/help/docs/control-flows#h2-4" />
 </template>

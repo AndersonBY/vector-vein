@@ -54,6 +54,5 @@ watch(() => fieldsData.value.field_type.value, () => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.controlFlows.Conditional"
-    documentLink="https://vectorvein.com/help/docs/control-flows#h2-0" />
+    translatePrefix="components.nodes.controlFlows.Conditional" documentPath="/help/docs/control-flows#h2-0" />
 </template>

@@ -34,6 +34,5 @@ watch(() => fieldsData.value.images_or_urls, () => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.mediaProcessing.GptVision"
-    documentLink="https://vectorvein.com/help/docs/media-processing#h2-4" />
+    translatePrefix="components.nodes.mediaProcessing.GptVision" documentPath="/help/docs/media-processing#h2-4" />
 </template>

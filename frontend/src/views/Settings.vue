@@ -45,6 +45,7 @@ onBeforeMount(async () => {
   settingForm.data.pexels_api_key = res.data.data.pexels_api_key || ''
   settingForm.data.stable_diffusion_base_url = res.data.data.stable_diffusion_base_url || 'http://127.0.0.1:7860'
   settingForm.data.use_system_proxy = res.data.data.use_system_proxy || true
+  settingForm.data.website_domain = res.data.data.website_domain || 'vectorvein.ai'
   loading.value = false
 })
 const settingForm = reactive({
@@ -75,6 +76,7 @@ const settingForm = reactive({
     pexels_api_key: '',
     stable_diffusion_base_url: 'http://127.0.0.1:7860',
     use_system_proxy: true,
+    website_domain: 'vectorvein.ai',
   }
 })
 
@@ -95,7 +97,7 @@ const selectFolder = async () => {
 const saving = ref(false)
 const saveSetting = async () => {
   saving.value = true
-  await userSettings.setSetting(toRaw(settingForm))
+  userSettings.setSetting(toRaw(settingForm))
   await settingAPI('update', settingForm)
   message.success(t('settings.save_success'))
   saving.value = false
@@ -190,6 +192,11 @@ const localLlmModelSave = () => {
   localLlmModelForm.concurrent = 1
   localLlmModelForm.max_tokens = 8192
 }
+
+const websiteDomainOptions = [
+  { label: 'vectorvein.ai', value: 'vectorvein.ai' },
+  { label: 'vectorvein.com', value: 'vectorvein.com' },
+]
 </script>
 
 <template>
@@ -453,6 +460,10 @@ const localLlmModelSave = () => {
 
           <a-form-item :label="t('settings.use_system_proxy')">
             <a-checkbox v-model:checked="settingForm.data.use_system_proxy" />
+          </a-form-item>
+
+          <a-form-item :label="t('settings.website_domain')">
+            <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions" style="width: 100%;" />
           </a-form-item>
         </a-form>
       </a-card>

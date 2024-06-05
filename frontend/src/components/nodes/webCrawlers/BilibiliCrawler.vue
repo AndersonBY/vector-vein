@@ -25,7 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    documentLink="https://vectorvein.com/help/docs/web-crawlers#h2-0"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" documentPath="/help/docs/web-crawlers#h2-0"
     translatePrefix="components.nodes.webCrawlers.BilibiliCrawler" />
 </template>
