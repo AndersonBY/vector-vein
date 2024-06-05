@@ -162,3 +162,4 @@ cython_debug/
 log/
 data/
 web/
+config.json
