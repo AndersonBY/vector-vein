@@ -2,9 +2,10 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 17:47:53
+ * @Last Modified time: 2024-06-05 20:46:46
  */
 import { defineStore } from "pinia"
+import { settingAPI } from "@/api/user"
 
 let userLanguage = navigator.language
 if (userLanguage.startsWith('zh')) {
@@ -86,6 +87,14 @@ export const useUserSettingsStore = defineStore('userSettings', {
     setPopoverShown(key) {
       this.popoverRecords[key] = true
       localStorage.setItem("userSettings.popoverRecords", JSON.stringify(this.popoverRecords))
+    },
+    async init() {
+      try {
+        const res = await settingAPI('get', {})
+        this.setSetting(res.data);
+      } catch (err) {
+        console.error("Failed to initialize user settings:", err)
+      }
     },
   },
 })
