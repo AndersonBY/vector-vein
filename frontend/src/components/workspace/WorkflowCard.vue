@@ -106,14 +106,12 @@ const background = computed(() => {
                       <Copy />
                       {{ t('workspace.workflowSpace.clone_workflow') }}
                     </a-menu-item>
-                    <a-popconfirm :title="t('workspace.workflowSpace.delete_confirm')" @confirm="emit('delete', id)">
-                      <a-menu-item key="delete">
-                        <a-typography-text type="danger">
-                          <Delete />
-                          {{ t('common.delete') }}
-                        </a-typography-text>
-                      </a-menu-item>
-                    </a-popconfirm>
+                    <a-menu-item key="delete" @click="emit('delete', id)">
+                      <a-typography-text type="danger">
+                        <Delete />
+                        {{ t('common.delete') }}
+                      </a-typography-text>
+                    </a-menu-item>
                   </a-menu>
                 </template>
                 <a-button size="small" type="text">

@@ -1,8 +1,8 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, ref, reactive } from "vue"
+import { onBeforeMount, onBeforeUnmount, ref, reactive, h } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { message } from 'ant-design-vue'
+import { Modal, message, TypographyTitle } from 'ant-design-vue'
 import { Down } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
@@ -78,15 +78,30 @@ const setWorkflowRecord = (record) => {
 }
 
 const deleteWorkflow = async () => {
-  const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.delete_success'))
-    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid)
-    userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid, true)
-    await router.push({ name: 'WorkflowSpaceMain' })
-  } else {
-    message.error(t('workspace.workflowSpace.delete_failed'))
-  }
+  Modal.confirm({
+    title: h(
+      TypographyTitle,
+      { type: 'danger', level: 3, style: { marginBottom: 0 } },
+      () => t('workspace.workflowSpace.delete_confirm')
+    ),
+    okText: t('common.yes'),
+    okType: 'danger',
+    cancelText: t('common.no'),
+    maskClosable: true,
+    async onOk() {
+      const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })
+      if (response.status == 200) {
+        message.success(t('workspace.workflowSpace.delete_success'))
+        userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid)
+        userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid, true)
+        await router.push({ name: 'WorkflowSpaceMain' })
+      } else {
+        message.error(t('workspace.workflowSpace.delete_failed'))
+      }
+    },
+    onCancel() {
+    },
+  })
 }
 
 const openEditor = async () => {
@@ -131,19 +146,17 @@ const openEditor = async () => {
           <a-dropdown>
             <template #overlay>
               <a-menu>
-                <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
-                  :key="`AgentInvokeDataEdit-${saveTime}`" />
                 <a-menu-item key="edit" @click="openEditor">
                   {{ t('workspace.workflowSpace.edit') }}
                 </a-menu-item>
-                <a-popconfirm placement="leftTop" :title="t('workspace.workflowSpace.delete_confirm')"
-                  @confirm="deleteWorkflow">
-                  <a-menu-item key="delete">
-                    <a-typography-text type="danger">
-                      {{ t('workspace.workflowSpace.delete') }}
-                    </a-typography-text>
-                  </a-menu-item>
-                </a-popconfirm>
+                <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
+                  :key="`AgentInvokeDataEdit-${saveTime}`" />
+                <a-divider style="margin: 8px 0;" />
+                <a-menu-item key="delete" @click="deleteWorkflow">
+                  <a-typography-text type="danger">
+                    {{ t('workspace.workflowSpace.delete') }}
+                  </a-typography-text>
+                </a-menu-item>
               </a-menu>
             </template>
             <a-button>

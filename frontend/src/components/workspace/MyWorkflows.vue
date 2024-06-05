@@ -1,8 +1,8 @@
 <script setup>
-import { onBeforeMount, ref, reactive, computed, nextTick, watch } from "vue"
+import { onBeforeMount, ref, reactive, computed, nextTick, watch, h } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
-import { message } from 'ant-design-vue'
+import { Modal, message, TypographyTitle } from 'ant-design-vue'
 import {
   WholeSiteAccelerator,
   TagOne,
@@ -171,14 +171,29 @@ watch(() => workflowDisplayPreference.value, (newVal) => {
 })
 
 const deleteWorkflow = async (wid) => {
-  const response = await workflowAPI('delete', { wid: wid })
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.delete_success'))
-    userWorkflowsStore.deleteUserWorkflow(wid)
-    workflowRecords.load({})
-  } else {
-    message.error(t('workspace.workflowSpace.delete_failed'))
-  }
+  Modal.confirm({
+    title: h(
+      TypographyTitle,
+      { type: 'danger', level: 3, style: { marginBottom: 0 } },
+      () => t('workspace.workflowSpace.delete_confirm')
+    ),
+    okText: t('common.yes'),
+    okType: 'danger',
+    cancelText: t('common.no'),
+    maskClosable: true,
+    async onOk() {
+      const response = await workflowAPI('delete', { wid: wid })
+      if (response.status == 200) {
+        message.success(t('workspace.workflowSpace.delete_success'))
+        userWorkflowsStore.deleteUserWorkflow(wid)
+        workflowRecords.load({})
+      } else {
+        message.error(t('workspace.workflowSpace.delete_failed'))
+      }
+    },
+    onCancel() {
+    },
+  })
 }
 
 const addWorkflowToFastAccess = async (wid) => {
@@ -374,15 +389,11 @@ const openRecord = async (record) => {
               </a-button>
             </a-tooltip>
 
-            <a-tooltip :title="t('workspace.workflowSpace.delete')">
-              <a-popconfirm :title="t('workspace.workflowSpace.delete_confirm')" @confirm="deleteWorkflow(record.wid)">
-                <a-button type="text" danger>
-                  <template #icon>
-                    <Delete />
-                  </template>
-                </a-button>
-              </a-popconfirm>
-            </a-tooltip>
+            <a-button type="text" danger @click="deleteWorkflow(record.wid)">
+              <template #icon>
+                <Delete />
+              </template>
+            </a-button>
           </div>
         </template>
       </template>
