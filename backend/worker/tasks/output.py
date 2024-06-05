@@ -2,20 +2,25 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 19:34:36
+# @Last Modified time: 2024-06-06 00:36:09
+import uuid
+from io import StringIO
 from pathlib import Path
 from datetime import datetime
 
 import yagmail
 import openpyxl
 import markdown2
+import pandas as pd
 from docx import Document
 from docx.oxml.ns import qn
 
 from utilities.settings import Settings
 from utilities.html2docx import HtmlToDocx
 from utilities.workflow import Workflow
+from utilities.pdf_process import process_pdf
 from utilities.print_utils import mprint
+from utilities.static_file_server import StaticFileServer
 from worker.tasks import task, timer
 
 
@@ -30,6 +35,28 @@ def text(
     workflow.get_node_field_value(node_id, "output_title")
     workflow.update_node_field_value(node_id, "text", text)
     workflow.update_node_field_value(node_id, "output", text)
+    return workflow.data
+
+
+@task
+@timer
+def table(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    content: str = workflow.get_node_field_value(node_id, "content")
+    content_type: str = workflow.get_node_field_value(node_id, "content_type")
+    if content_type == "file":
+        df = pd.read_csv(content)
+        result = df.to_json(orient="records")
+    elif content_type == "csv":
+        df = pd.read_csv(StringIO(content))
+        result = df.to_json(orient="records")
+    elif content_type == "json":
+        result = content
+
+    workflow.update_node_field_value(node_id, "output", result)
     return workflow.data
 
 
@@ -165,4 +192,43 @@ def workflow_invoke_output(
 ):
     workflow = Workflow(workflow_data)
     workflow.get_node_field_value(node_id, "value")
+    return workflow.data
+
+
+@task
+@timer
+def picture_render(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    render_type = workflow.get_node_field_value(node_id, "render_type")
+    input_content = workflow.get_node_field_value(node_id, "content")
+    output_type = workflow.get_node_field_value(node_id, "output_type")
+
+    if isinstance(input_content, str):
+        contents = [input_content]
+    elif isinstance(input_content, list):
+        contents = input_content
+
+    static_path = Path(Settings().get("data_path", "./data")) / "static"
+    image_path = static_path / "images" / "pdf_render" / uuid.uuid4().hex
+
+    results = []
+    for content in contents:
+        if render_type == "pdf":
+            image_files = process_pdf(content, "render_images", image_path)
+            image_urls = [
+                StaticFileServer.get_file_url(Path(image_file).relative_to(static_path.absolute()).as_posix())
+                for image_file in image_files
+            ]
+            if output_type == "only_link":
+                results.append(image_urls)
+            elif output_type == "markdown":
+                results.append([f"![{url}]({url})" for url in image_urls])
+            elif output_type == "html":
+                results.append([f'<img src="{url}"/>' for url in image_urls])
+
+    output = results[0] if isinstance(input_content, str) else results
+    workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
