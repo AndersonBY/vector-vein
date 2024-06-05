@@ -16,6 +16,7 @@ import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
 import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
+import TableRenderer from "@/components/workspace/TableRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import TextOutput from "@/components/TextOutput.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
@@ -298,7 +299,7 @@ defineExpose({
         :rawErrorTask="rawErrorTask" />
     </a-col>
 
-    <a-col :xxl="6" :xl="8" :lg="10" :md="24" v-show="!outputMaximized">
+    <a-col :xxl="6" :xl="8" :lg="10" :md="24" :sm="24" :xs="24" v-show="!outputMaximized" style="width: 100%;">
       <a-flex vertical gap="small">
         <a-typography-title :level="3">
           <Edit fill="#28c5e5" />
@@ -348,7 +349,7 @@ defineExpose({
     </a-col>
 
     <a-col class="output-container" :xxl="outputMaximized ? 24 : 18" :xl="outputMaximized ? 24 : 16"
-      :lg="outputMaximized ? 24 : 14" :md="24">
+      :lg="outputMaximized ? 24 : 14" :md="24" style="width: 100%;">
       <a-typography-title :level="3" style="display: flex; justify-content: space-between;">
         <span>
           <lightning fill="#28c5e5" />
@@ -408,6 +409,10 @@ defineExpose({
 
           <div v-else-if="node.type == 'Echarts'">
             <EchartsRenderer :option="node.data.template.option.value" style="width: 100%;min-height: 50vh;" />
+          </div>
+
+          <div v-else-if="node.type == 'Table'">
+            <TableRenderer :data="node.data.template.output.value" style="width: 100%;" />
           </div>
 
           <div v-else-if="node.type == 'Html'">

@@ -210,6 +210,12 @@ const deleteField = (list, index) => {
                   </a-typography-title>
                 </div>
 
+                <div class="special-item-container" v-else-if="node.type == 'Table'">
+                  <a-typography-title :level="4">
+                    {{ t('components.nodes.outputs.Table.title') }}
+                  </a-typography-title>
+                </div>
+
                 <div class="special-item-container" v-else-if="node.type == 'Html'">
                   <a-typography-title :level="4">
                     {{ t('components.nodes.outputs.Html.title') }}

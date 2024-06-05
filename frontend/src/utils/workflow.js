@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 12:22:30
+ * @Last Modified time: 2024-06-05 18:06:19
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -190,6 +190,10 @@ export const getUIDesignFromWorkflow = (workflowData) => {
         }
       } else if (node.type == 'Echarts') {
         if (!node.data.template.show_echarts.value) {
+          return
+        }
+      } else if (node.type == 'Table') {
+        if (!node.data.template.show_table.value) {
           return
         }
       } else if (node.field_type == 'typography-paragraph') {
