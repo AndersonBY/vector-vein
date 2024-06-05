@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-09 03:05:56
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 17:01:10
+ * @Last Modified time: 2024-06-05 20:32:29
  */
 import { useUserSettingsStore } from "@/stores/userSettings"
 
@@ -13,7 +13,7 @@ export function zip(rows) {
 export function timeLength(length) {
   const hours = parseInt(length / 1000 / 60 / 60)
   const minutes = parseInt(length / 1000 / 60 % 60)
-  if (store.state.userSettings.language == 'zh-CN') {
+  if (useUserSettingsStore().language == 'zh-CN') {
     return `${hours}小时${minutes}分钟`
   } else {
     return `${hours} hour${hours > 1 ? 's' : ''} ${minutes} minute${minutes > 1 ? 's' : ''}`
@@ -23,7 +23,7 @@ export function timeLength(length) {
 export function timeLengthSeconds(length) {
   const minutes = parseInt(length / 1000 / 60)
   const seconds = parseInt(length / 1000 % 60)
-  if (store.state.userSettings.language == 'zh-CN') {
+  if (useUserSettingsStore().language == 'zh-CN') {
     return `${minutes}分钟${seconds}秒`
   } else {
     return `${minutes} min${minutes > 1 ? 's' : ''} ${seconds} s`
