@@ -3,7 +3,7 @@ import { ref, reactive, markRaw, onMounted, onUnmounted, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background } from '@vue-flow/background'
@@ -21,6 +21,7 @@ import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
+import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
 import { hashObject } from "@/utils/util"
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
@@ -292,7 +293,7 @@ onConnect((params) => {
     return
   }
 
-  params.type = vueFlowStyleSettings.value.edge?.type || 'bezier'
+  params.type = vueFlowStyleSettings.value.edge?.type || 'default'
   params.animated = vueFlowStyleSettings.value.edge?.animated || true
   params.style = vueFlowStyleSettings.value.edge?.style || { strokeWidth: 3, stroke: '#28c5e5' }
   addEdges([params])
@@ -517,6 +518,14 @@ const codeEditorModal = reactive({
     savedWorkflowHash.value = hashObject(currentWorkflow.value)
   },
 })
+
+const testRunModal = reactive({
+  open: false,
+  openTestModal: () => {
+    updateWorkflowData()
+    testRunModal.open = true
+  },
+})
 </script>
 
 <template>
@@ -527,34 +536,35 @@ const codeEditorModal = reactive({
     <div class="title-container">
       <a-row style="width: 100%;">
         <a-col :span="8">
-          <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
-            <Left />
-            {{ t('common.back') }}
+          <a-flex gap="middle" align="center">
+            <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
+              <Left />
+              {{ t('common.back') }}
 
-            <a-modal v-model:open="exitModalOpen">
-              <template #title>
-                <a-typography-text type="warning">
-                  <Caution />
-                  {{ t('common.back') }}
-                </a-typography-text>
-              </template>
+              <a-modal v-model:open="exitModalOpen">
+                <template #title>
+                  <a-typography-text type="warning">
+                    <Caution />
+                    {{ t('common.back') }}
+                  </a-typography-text>
+                </template>
 
-              {{ t('workspace.workflowEditor.exit_not_saved_confirm') }}
+                {{ t('workspace.workflowEditor.exit_not_saved_confirm') }}
 
-              <template #footer>
-                <a-button @click="exitNoSave">
-                  {{ t('workspace.workflowEditor.exit_without_save') }}
-                </a-button>
-                <a-button type="primary" @click="saveAndExit">
-                  {{ t('workspace.workflowEditor.save_and_exit') }}
-                </a-button>
-              </template>
-            </a-modal>
-          </a-typography-link>
+                <template #footer>
+                  <a-button @click="exitNoSave">
+                    {{ t('workspace.workflowEditor.exit_without_save') }}
+                  </a-button>
+                  <a-button type="primary" @click="saveAndExit">
+                    {{ t('workspace.workflowEditor.save_and_exit') }}
+                  </a-button>
+                </template>
+              </a-modal>
+            </a-typography-link>
 
-          <a-typography-text class="title" :ellipsis="true" :editable="{ triggerType: ['text', 'icon'] }"
-            v-model:content="currentWorkflow.title">
-          </a-typography-text>
+            <a-typography-text class="title" :ellipsis="true" :editable="{ triggerType: ['text', 'icon'] }"
+              v-model:content="currentWorkflow.title" />
+          </a-flex>
         </a-col>
 
         <a-col :span="8" style="display: flex; justify-content: center;">
@@ -563,14 +573,27 @@ const codeEditorModal = reactive({
 
         <a-col :span="8" style="display: flex; justify-content: end;">
           <a-space>
-            <a-button @click="codeEditorModal.openEditor">
-              <template #icon>
-                <Code />
-              </template>
-              {{ t('workspace.workflowEditor.edit_code') }}
-              <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
-                @save="codeEditorModal.updateCode" />
-            </a-button>
+            <a-tooltip :title="t('workspace.workflowEditor.edit_code')">
+              <a-button type="text" size="small" @click="codeEditorModal.openEditor">
+                <template #icon>
+                  <Code />
+                </template>
+                <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
+                  @save="codeEditorModal.updateCode" />
+              </a-button>
+            </a-tooltip>
+            <a-tooltip :title="t('workspace.workflowEditor.test_run')">
+              <a-button type="text" size="small" @click="testRunModal.openTestModal">
+                <template #icon>
+                  <Bug />
+                </template>
+                <a-modal v-model:open="testRunModal.open"
+                  :title="`${t('workspace.workflowEditor.test_run')}: ${currentWorkflow.title}`" :footer="null"
+                  width="90vw" :bodyStyle="{ minHeight: '70vh' }">
+                  <WorkflowUse v-if="testRunModal.open" :workflow="currentWorkflow" :isTemplate="false" />
+                </a-modal>
+              </a-button>
+            </a-tooltip>
             <a-button type="primary" @click="saveWorkflow" :loading="saving" :disabled="!!diagnosisRecordId">
               <template #icon>
                 <Save />
@@ -651,7 +674,7 @@ const codeEditorModal = reactive({
             <a-flex align="center" justify="space-between">
               <a-typography-text>
                 {{ t('workspace.workflowEditor.diagnosing_record', {
-                  record: `${diagnosisRecord.title}
+                record: `${diagnosisRecord.title}
                 ${diagnosisRecord.data.rid}`
                 }) }}
               </a-typography-text>
@@ -671,8 +694,7 @@ const codeEditorModal = reactive({
       </a-layout>
     </a-layout>
 
-    <UIDesign v-model="currentWorkflow" v-if="activeTab == t('workspace.workflowEditor.workflow_ui_design')">
-    </UIDesign>
+    <UIDesign v-model="currentWorkflow" v-if="activeTab == t('workspace.workflowEditor.workflow_ui_design')" />
   </div>
 </template>
 
