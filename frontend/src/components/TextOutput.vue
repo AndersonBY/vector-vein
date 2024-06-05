@@ -11,6 +11,14 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  wrapperClass: {
+    type: [String, Array],
+    default: [],
+  },
+  showCopy: {
+    type: Boolean,
+    default: true,
+  },
 })
 const innerText = computed(() => {
   if (typeof props.text === 'string') {
@@ -22,12 +30,14 @@ const innerText = computed(() => {
 </script>
 
 <template>
-  <template v-if="renderMarkdown">
-    <vue-markdown v-highlight :source="innerText" class="markdown-body custom-hljs" />
-    <a-typography-paragraph :copyable="{ text: innerText }">
+  <div :class="wrapperClass">
+    <template v-if="renderMarkdown">
+      <vue-markdown v-highlight :source="innerText" :options="{ html: true }" class="markdown-body custom-hljs" />
+      <a-typography-paragraph v-if="showCopy" :copyable="{ text: innerText }">
+      </a-typography-paragraph>
+    </template>
+    <a-typography-paragraph :copyable="showCopy ? false : { text: innerText }" v-else>
+      {{ innerText }}
     </a-typography-paragraph>
-  </template>
-  <a-typography-paragraph :copyable="{ text: innerText }" v-else>
-    {{ innerText }}
-  </a-typography-paragraph>
+  </div>
 </template>
