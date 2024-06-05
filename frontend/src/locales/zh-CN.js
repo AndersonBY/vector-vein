@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-14 20:09:52
+ * @Last Modified time: 2024-06-06 01:06:59
  */
 export default {
   lang: '中文',
@@ -102,6 +102,8 @@ export default {
     'success': '成功',
     'cancel': '取消',
     'more_settings': '更多设置',
+    'yes': '是',
+    'no': '否',
   },
   email: {
     verify: {
@@ -244,6 +246,7 @@ export default {
       'exit_not_saved_confirm': '工作流尚未保存，确认退出？',
       'save_and_exit': '保存并退出',
       'exit_without_save': '不保存退出',
+      'test_run': '测试',
       'workflow_info': '基本信息',
       'workflow_canvas': '工作流画布',
       'workflow_ui_design': '界面设计',
@@ -495,7 +498,8 @@ export default {
         'uploader_hint': '目前支持的文件类型：{fileTypes}',
       },
       mindmapRenderer: {
-        'download_svg': '下载 SVG',
+        'download_svg': '下载 SVG 文件',
+        'download_xmind': '下载 XMind 文件',
       },
       echartsRenderer: {
         'download_image': '下载图片',
@@ -597,7 +601,15 @@ export default {
           'title': '读取文件',
           'description': '读取文件内容。',
           'files': '文件',
+          'remove_image': '移除图片',
+          'remove_url_and_email': '移除链接和邮箱',
           'output': '输出',
+        },
+        FileUpload: {
+          'title': '选择文件',
+          'description': '选择本地文件并获取文件路径。',
+          'files': '文件',
+          'output': '文件路径',
         },
       },
       textProcessing: {
@@ -869,6 +881,28 @@ export default {
           'option': 'Echarts 配置项',
           'show_echarts': '显示图表',
           'output_type': '输出类型',
+          'output': '输出',
+        },
+        Table: {
+          'title': '表格',
+          'description': '用于展示表格。',
+          'content': '文件链接/表格内容',
+          'show_table': '显示表格',
+          'content_type': '输入类型',
+          'content_type_file': '文件',
+          'content_type_csv': 'CSV',
+          'content_type_json': 'JSON',
+          'output': '输出',
+        },
+        PictureRender: {
+          'title': '图片渲染',
+          'description': '用于将一定内容渲染为图片，例如将 Markdown 内容渲染为长图。',
+          'render_type': '渲染类型',
+          'content': '内容',
+          'output_type': '输出类型',
+          'output_type_only_link': '仅下载链接文字',
+          'output_type_markdown': 'Markdown',
+          'output_type_html': 'HTML',
           'output': '输出',
         },
         WorkflowInvokeOutput: {
@@ -1236,5 +1270,8 @@ export default {
     'pexels_api_key': 'Pexels API Key',
     'stable_diffusion_base_url': 'Stable Diffusion URL',
     'use_system_proxy': '使用系统代理',
+    'website_domain': '官网域名',
+    'log_path': '日志路径',
+    'data_path': '数据路径',
   },
 }

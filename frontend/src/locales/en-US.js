@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-14 20:10:13
+ * @Last Modified time: 2024-06-06 01:07:23
  */
 export default {
   lang: 'English',
@@ -102,6 +102,8 @@ export default {
     'success': 'Success',
     'cancel': 'Cancel',
     'more_settings': 'More settings',
+    'yes': 'Yes',
+    'no': 'No',
   },
   email: {
     verify: {
@@ -238,12 +240,13 @@ export default {
       'related_workflows': 'Related workflows',
       'diagnosis_workflow_record': 'Diagnosis workflow run record',
       'diagnosis_workflow_record_tip': 'You can now diagnose a specific workflow run record to view the running status, running time, and credit consumption of each node.',
-      'more_actions': 'More actions',
+      'more_actions': 'More',
     },
     workflowEditor: {
       'exit_not_saved_confirm': 'Workflow not saved, confirm exit?',
       'save_and_exit': 'Save and exit',
       'exit_without_save': 'Exit without save',
+      'test_run': 'Test',
       'workflow_info': 'Basic info',
       'workflow_canvas': 'Workflow canvas',
       'workflow_ui_design': 'UI design',
@@ -495,7 +498,8 @@ export default {
         'uploader_hint': 'Currently supported file types: {fileTypes}',
       },
       mindmapRenderer: {
-        'download_svg': 'Download svg',
+        'download_svg': 'Download svg file',
+        'download_xmind': 'Download xmind file',
       },
       echartsRenderer: {
         'download_image': 'Download image',
@@ -594,10 +598,18 @@ export default {
       fileProcessing: {
         'title': 'File processing',
         FileLoader: {
-          'title': 'Read file',
+          'title': 'Read File',
           'description': 'Read the contents of the file.',
           'files': 'File',
+          'remove_image': 'Remove image',
+          'remove_url_and_email': 'Remove url and email',
           'output': 'Output',
+        },
+        FileUpload: {
+          'title': 'Select File',
+          'description': 'Select a local file and get the file path.',
+          'files': 'File',
+          'output': 'File path',
         },
       },
       textProcessing: {
@@ -869,6 +881,28 @@ export default {
           'option': 'Echarts option',
           'show_echarts': 'Show Echarts',
           'output_type': 'Output type',
+          'output': 'Output',
+        },
+        Table: {
+          'title': 'Table',
+          'description': 'Used to display tables.',
+          'content': 'File link / Table content',
+          'show_table': 'Show table',
+          'content_type': 'Content type',
+          'content_type_file': 'File',
+          'content_type_csv': 'CSV',
+          'content_type_json': 'JSON',
+          'output': 'Output',
+        },
+        PictureRender: {
+          'title': 'Picture Render',
+          'description': 'Used to render certain content as an image, such as rendering PDF into images.',
+          'render_type': 'Render type',
+          'content': 'Content',
+          'output_type': 'Output type',
+          'output_type_only_link': 'Only link',
+          'output_type_markdown': 'Markdown',
+          'output_type_html': 'HTML',
           'output': 'Output',
         },
         WorkflowInvokeOutput: {
@@ -1236,5 +1270,8 @@ export default {
     'pexels_api_key': 'Pexels API Key',
     'stable_diffusion_base_url': 'Stable Diffusion URL',
     'use_system_proxy': 'Use system proxy',
+    'website_domain': 'Website domain',
+    'log_path': 'Log folder',
+    'data_path': 'Data folder',
   },
 }
