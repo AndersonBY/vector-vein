@@ -2,7 +2,8 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 11:17:29
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 20:18:56
+# @Last Modified time: 2024-06-05 19:33:36
+import re
 import json
 import shutil
 import zipfile
@@ -30,6 +31,26 @@ CODEC_TEST_LIST = [
     "utf-32-le",
     "utf-32-be",
 ]
+
+url_pattern = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
+email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
+
+markdown_image_pattern = re.compile(r"!\[.*\]\(.*\)")
+
+
+def remove_url_and_email(text: str):
+    text = url_pattern.sub("", text)
+    return email_pattern.sub("", text)
+
+
+def remove_markdown_image(text: str, max_length: int = 300):
+    def replace_func(match):
+        if len(match.group(0)) > max_length:
+            return "![]()"
+        else:
+            return match.group(0)
+
+    return markdown_image_pattern.sub(replace_func, text)
 
 
 def try_load_json_file(file_path: str, default=dict):
