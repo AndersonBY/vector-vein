@@ -2,10 +2,11 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 01:29:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 19:55:15
+# @Last Modified time: 2024-06-06 02:38:57
 import os
 import subprocess
 
+from utilities.config import config
 from utilities.print_utils import mprint_error
 
 
@@ -15,7 +16,7 @@ class API:
         self.version = version
         self.worker_queue = worker_queue
         self.vdb_queues = vdb_queues
-        self.data_path = "./data"
+        self.data_path = config.data_path
 
     def add_apis(self, APIClass):
         for method_name in dir(APIClass):

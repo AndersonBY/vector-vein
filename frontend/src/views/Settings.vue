@@ -36,6 +36,8 @@ onBeforeMount(async () => {
   settingForm.data.local_llms = res.data.data.local_llms || []
   // Others
   settingForm.data.output_folder = res.data.data.output_folder || './'
+  settingForm.data.data_path = res.data.data.data_path || './data'
+  settingForm.data.log_path = res.data.data.log_path || './log'
   // Email settings
   settingForm.data.email_user = res.data.data.email_user || ''
   settingForm.data.email_password = res.data.data.email_password || ''
@@ -68,6 +70,8 @@ const settingForm = reactive({
     anthropic_api_key: '',
     local_llms: [],
     output_folder: './',
+    data_path: './data',
+    log_path: './log',
     email_user: '',
     email_password: '',
     email_smtp_host: '',
@@ -80,15 +84,15 @@ const settingForm = reactive({
   }
 })
 
-const selectFolder = async () => {
+const selectFolder = async (settingsKey) => {
   try {
     const selectedFolder = await window.pywebview.api.open_folder_dialog(
-      settingForm.data.output_folder
+      settingForm.data[settingsKey]
     )
     if (!selectedFolder) {
       return
     }
-    settingForm.data.output_folder = selectedFolder[0]
+    settingForm.data[settingsKey] = selectedFolder[0]
   } catch (error) {
     console.log(error)
   }
@@ -447,23 +451,46 @@ const websiteDomainOptions = [
             <a-input v-model:value="settingForm.data.stable_diffusion_base_url" />
           </a-form-item>
 
-          <a-form-item :label="t('settings.output_folder')">
-            <a-flex vertical gap="small">
-              <a-typography-text>
-                {{ settingForm.data.output_folder }}
-              </a-typography-text>
-              <a-button @click="selectFolder">
-                {{ t('settings.select_folder') }}
-              </a-button>
-            </a-flex>
-          </a-form-item>
-
           <a-form-item :label="t('settings.use_system_proxy')">
             <a-checkbox v-model:checked="settingForm.data.use_system_proxy" />
           </a-form-item>
 
           <a-form-item :label="t('settings.website_domain')">
-            <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions" style="width: 100%;" />
+            <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions"
+              style="width: 100%;" />
+          </a-form-item>
+
+          <a-form-item :label="t('settings.output_folder')">
+            <a-flex vertical gap="small">
+              <a-typography-text>
+                {{ settingForm.data.output_folder }}
+              </a-typography-text>
+              <a-button @click="selectFolder('output_folder')">
+                {{ t('settings.select_folder') }}
+              </a-button>
+            </a-flex>
+          </a-form-item>
+
+          <a-form-item :label="t('settings.log_path')">
+            <a-flex vertical gap="small">
+              <a-typography-text>
+                {{ settingForm.data.log_path }}
+              </a-typography-text>
+              <a-button @click="selectFolder('log_path')">
+                {{ t('settings.select_folder') }}
+              </a-button>
+            </a-flex>
+          </a-form-item>
+
+          <a-form-item :label="t('settings.data_path')">
+            <a-flex vertical gap="small">
+              <a-typography-text>
+                {{ settingForm.data.data_path }}
+              </a-typography-text>
+              <a-button @click="selectFolder('data_path')">
+                {{ t('settings.select_folder') }}
+              </a-button>
+            </a-flex>
           </a-form-item>
         </a-form>
       </a-card>

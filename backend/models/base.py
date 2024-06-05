@@ -2,9 +2,10 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 12:43:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-18 00:19:34
+# @Last Modified time: 2024-06-06 02:39:13
 import json
 import uuid
+from pathlib import Path
 from datetime import date, datetime
 
 from playhouse.shortcuts import model_to_dict
@@ -14,7 +15,10 @@ from peewee import (
     SqliteDatabase,
 )
 
-database = SqliteDatabase("./data/my_database.db")
+from utilities.config import config
+
+
+database = SqliteDatabase(Path(config.data_path) / "my_database.db")
 
 
 class JSONField(TextField):

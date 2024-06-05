@@ -2,8 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 17:44:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 11:51:35
+# @Last Modified time: 2024-06-06 02:34:32
 import uuid
+from pathlib import Path
 
 from qdrant_client import QdrantClient
 from qdrant_client.http.exceptions import UnexpectedResponse
@@ -17,10 +18,12 @@ from qdrant_client.http.models import (
     FieldCondition,
 )
 
+from utilities.config import config
 from utilities.print_utils import mprint_error
 
 
-qdrant_client = QdrantClient(path="./data/qdrant_db")
+qdrant_path = Path(config.data_path) / "qdrant_db"
+qdrant_client = QdrantClient(path=qdrant_path.absolute())
 
 
 def create_collection(vid: str, size: int = 768):

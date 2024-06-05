@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-06 00:36:09
+# @Last Modified time: 2024-06-06 02:35:02
 import uuid
 from io import StringIO
 from pathlib import Path
@@ -15,6 +15,7 @@ import pandas as pd
 from docx import Document
 from docx.oxml.ns import qn
 
+from utilities.config import config
 from utilities.settings import Settings
 from utilities.html2docx import HtmlToDocx
 from utilities.workflow import Workflow
@@ -211,7 +212,7 @@ def picture_render(
     elif isinstance(input_content, list):
         contents = input_content
 
-    static_path = Path(Settings().get("data_path", "./data")) / "static"
+    static_path = Path(config.data_path) / "static"
     image_path = static_path / "images" / "pdf_render" / uuid.uuid4().hex
 
     results = []

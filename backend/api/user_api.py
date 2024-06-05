@@ -2,11 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 11:54:04
+# @Last Modified time: 2024-06-06 02:36:21
 from models import (
     Setting,
     model_serializer,
 )
+from utilities.config import config
 
 
 class SettingAPI:
@@ -18,7 +19,7 @@ class SettingAPI:
         else:
             setting = Setting.select().order_by(Setting.create_time.desc()).first()
         setting = model_serializer(setting)
-        response = {"status": 200, "msg": "success", "data": setting}
+        response = {"status": 200, "msg": "success", "data": {**setting, "data_path": config.data_path}}
         return response
 
     def update(self, payload):
@@ -26,8 +27,8 @@ class SettingAPI:
         setting = Setting.get_by_id(setting_id)
         setting.data = payload.get("data", {})
         setting.save()
-        setting = model_serializer(setting)
-        response = {"status": 200, "msg": "success", "data": setting}
+        config.save("data_path", setting.data.get("data_path", "./data"))
+        response = {"status": 200, "msg": "success", "data": model_serializer(setting)}
         return response
 
     def list(self, payload):

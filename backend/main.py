@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-04 12:34:12
+# @Last Modified time: 2024-06-06 02:34:24
 import os
 import queue
 import threading
@@ -27,6 +27,7 @@ from api.relational_database_api import (
 )
 from api.user_api import SettingAPI
 from api.remote_api import OfficialSiteAPI
+from utilities.config import config
 from utilities.print_utils import mprint
 from utilities.web_crawler import proxies_for_requests
 from utilities.static_file_server import StaticFileServer
@@ -37,10 +38,11 @@ from worker import main_worker, main_vector_database
 # Some mimetypes are not correctly registered in Windows. Register them manually.
 mimetypes.add_type("application/javascript", ".js")
 
-if not Path("./data").exists():
-    Path("./data").mkdir()
-    Path("./data/static").mkdir()
-    Path("./data/static/images").mkdir()
+data_path = Path(config.data_path)
+if not data_path.exists():
+    data_path.mkdir()
+    (data_path / "static").mkdir()
+    (data_path / "static" / "images").mkdir()
 
 # Create SQLite tables. Will ignore if tables already exist.
 create_tables()
@@ -107,7 +109,7 @@ worker_thread.start()
 vdb_thread = threading.Thread(target=main_vector_database, args=(vdb_queues,), daemon=True)
 vdb_thread.start()
 
-static_file_server = StaticFileServer("./data/static")
+static_file_server = StaticFileServer(data_path / "static")
 static_file_server_thread = threading.Thread(target=static_file_server.start, daemon=True)
 static_file_server_thread.start()
 

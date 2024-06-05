@@ -2,13 +2,14 @@
 # @Author: Bi Ying
 # @Date:   2023-05-29 15:30:27
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 17:20:21
+# @Last Modified time: 2024-06-06 02:34:40
 import uuid
 import base64
 from pathlib import Path
 
 import httpx
 
+from utilities.config import config
 from utilities.settings import Settings
 from utilities.workflow import Workflow
 from utilities.web_crawler import proxies
@@ -46,7 +47,7 @@ def stable_diffusion(
     height = workflow.get_node_field_value(node_id, "height")
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
-    image_folder = Path("./data") / "static" / "images"
+    image_folder = Path(config.data_path) / "static" / "images"
     stable_diffusion_base_url = Settings().stable_diffusion_base_url.rstrip("/")
 
     url = f"{stable_diffusion_base_url}/sdapi/v1/txt2img"
