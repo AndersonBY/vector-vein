@@ -12,6 +12,7 @@ a = Analysis(
         ("./web/favicon.ico", "web/."),
         ("./web/logo.svg", "web/."),
         ("./web/assets", "web/assets"),
+        ("./assets", "assets"),
     ],
     hiddenimports=[
         "api",
