@@ -3,7 +3,17 @@ import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { Edit, DatabaseSetting, FileCabinet, LoadingFour, AudioFile, PictureOne, Delete, Upload } from '@icon-park/vue-next'
+import {
+  Edit,
+  Delete,
+  Upload,
+  Refresh,
+  AudioFile,
+  PictureOne,
+  FileCabinet,
+  LoadingFour,
+  DatabaseSetting,
+} from '@icon-park/vue-next'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 import { formatTime } from '@/utils/util'
 
@@ -154,7 +164,7 @@ const infoEditorModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link :to="`/data`">
+            <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'vector-database' } }">
               <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
@@ -168,12 +178,27 @@ const infoEditorModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-card :loading="loading">
           <template #title>
-            <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;" :content="databaseInfo.name" />
+            <a-flex vertical gap="small" style="padding: 8px 0;">
+              <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;"
+                :content="databaseInfo.name" />
+              <a-space>
+                <a-tag color="green" :bordered="false">{{ databaseInfo.embedding_provider }}</a-tag>
+                <a-tag color="cyan" :bordered="false">{{ databaseInfo.embedding_model }}</a-tag>
+                <a-tag color="blue" :bordered="false">{{ databaseInfo.embedding_size }}</a-tag>
+              </a-space>
+            </a-flex>
           </template>
           <template #extra>
             <a-flex gap="middle">
+              <a-tooltip :title="t('common.refresh')">
+                <a-button type="text" size="large" @click="databaseObjects.load({})">
+                  <template #icon>
+                    <Refresh />
+                  </template>
+                </a-button>
+              </a-tooltip>
               <a-tooltip :title="t('workspace.databaseDetail.modify_database_info')">
-                <a-button type="text" size="large" class="title-edit-button" @click="infoEditorModal.show">
+                <a-button type="text" size="large" @click="infoEditorModal.show">
                   <template #icon>
                     <Edit />
                   </template>
@@ -211,8 +236,13 @@ const infoEditorModal = reactive({
             <template #bodyCell="{ column, record }">
               <template v-if="column.key === 'title'">
                 <a-typography-text disabled v-if="record.status == 'PR'">
-                  {{ record.title }}
-                  <LoadingFour :spin="true" />
+                  <a-space>
+                    {{ record.title }}
+                    <LoadingFour :spin="true" />
+                    <template v-if="record.progress">
+                      {{ record.progress.chunk_index + 1 }}/{{ record.progress.chunk_count }}
+                    </template>
+                  </a-space>
                 </a-typography-text>
                 <a-typography-text class="object-title" v-else>
                   {{ record.title }}
@@ -243,16 +273,14 @@ const infoEditorModal = reactive({
                 </a-typography-text>
               </template>
               <template v-else-if="column.key === 'action'">
-                <template v-if="record.status != 'PR'">
-                  <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
-                    @confirm="deleteObject(record.oid)">
-                    <a-button type="text" danger>
-                      <template #icon>
-                        <Delete />
-                      </template>
-                    </a-button>
-                  </a-popconfirm>
-                </template>
+                <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
+                  @confirm="deleteObject(record.oid)">
+                  <a-button type="text" danger>
+                    <template #icon>
+                      <Delete />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
               </template>
             </template>
           </a-table>
