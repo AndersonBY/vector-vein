@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 11:17:29
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-05 19:33:36
+# @Last Modified time: 2024-06-15 18:43:54
 import re
 import json
 import shutil
@@ -16,7 +16,7 @@ import pathspec
 import pandas as pd
 from pptx import Presentation
 
-from utilities.print_utils import mprint_error
+from utilities.general import mprint
 
 
 CODEC_TEST_LIST = [
@@ -59,7 +59,7 @@ def try_load_json_file(file_path: str, default=dict):
             with open(file_path, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
-            mprint_error(f"Failed to load json file: {file_path}, {e}")
+            mprint.error(f"Failed to load json file: {file_path}, {e}")
     return default()
 
 
@@ -110,7 +110,7 @@ def read_folder(folder_path, ignore_list):
                 rel_path = path.relative_to(folder_path)
                 contents.append(f"# {rel_path}\n```\n{file_content}\n```\n")
             except Exception as e:
-                print(f"Could not read file {path}: {e}")
+                mprint.error(f"Could not read file {path}: {e}")
     return contents
 
 
@@ -161,7 +161,7 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
             df = pd.read_excel(local_file, engine="openpyxl")
             return df.to_csv(index=False)
         except Exception as e:
-            mprint_error(e)
+            mprint.error(e)
             wb = openpyxl.load_workbook(local_file, data_only=True)
             ws = wb.active
             csv_contents = []
@@ -175,9 +175,9 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
                     txt_contents = txt_file.read()
                     return txt_contents
             except Exception as e:
-                mprint_error(e)
+                mprint.error(e)
         else:
-            mprint_error("Failed to decode file")
+            mprint.error("Failed to decode file")
             return ""
     elif filename.endswith(".zip") and read_zip:
         content = read_zip_contents(local_file)
@@ -189,9 +189,9 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
                     txt_contents = txt_file.read()
                     return txt_contents
             except Exception as e:
-                mprint_error(e)
+                mprint.error(e)
         else:
-            mprint_error("Failed to decode file")
+            mprint.error("Failed to decode file")
             return txt_contents
 
 

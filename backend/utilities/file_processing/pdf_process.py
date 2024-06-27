@@ -13,8 +13,6 @@ def calculate_zoom(page, min_dimension=1920):
 
 
 def pdf_to_images(pdf_path, output_folder):
-    print(pdf_path)
-    print(output_folder)
     if not Path(output_folder).exists():
         Path(output_folder).mkdir(parents=True, exist_ok=True)
 
