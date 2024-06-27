@@ -2,9 +2,9 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 02:28:08
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-07 11:47:58
+ * @Last Modified time: 2024-06-08 16:05:17
  */
-import { flattenedChatModelOptions } from '@/utils/common'
+import { allModels } from '@/utils/common'
 
 export function createTemplateData() {
   return {
@@ -28,7 +28,7 @@ export function createTemplateData() {
         "placeholder": "",
         "show": false,
         "value": "OpenAI/gpt-35-turbo",
-        "options": flattenedChatModelOptions,
+        "options": allModels.value,
         "name": "model",
         "display_name": "model",
         "type": "str",
