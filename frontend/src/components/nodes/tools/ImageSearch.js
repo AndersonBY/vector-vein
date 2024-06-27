@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 00:30:04
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 00:32:27
+ * @Last Modified time: 2024-06-25 19:41:50
  */
 export function createTemplateData() {
   return {
@@ -34,10 +34,6 @@ export function createTemplateData() {
           {
             "value": "pexels",
             "label": "pexels"
-          },
-          {
-            "value": "unsplash",
-            "label": "unsplash"
           },
         ],
         "name": "search_engine",
