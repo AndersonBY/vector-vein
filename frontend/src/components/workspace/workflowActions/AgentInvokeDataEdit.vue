@@ -72,21 +72,21 @@ const saveSettings = async () => {
 
   let res = {}
   if (props.workflowType == 'workflow') {
-    res = await workflowAPI('update-tool-call-data', {
+    res = await workflowAPI('update_tool_call_data', {
       wid: props.workflowData.wid,
       tool_call_data: toolCallData.value,
     })
   } else {
-    res = await workflowTemplateAPI('update-tool-call-data', {
+    res = await workflowTemplateAPI('update_tool_call_data', {
       tid: props.workflowData.tid,
       tool_call_data: toolCallData.value,
     })
   }
-  if (res.data.status == 200) {
+  if (res.status == 200) {
     message.success(t('common.save_success'))
     open.value = false
   } else {
-    message.error(res.data.msg)
+    message.error(res.msg)
   }
   loading.value = false
 }
