@@ -18,7 +18,7 @@ import { useUserSettingsStore } from '@/stores/userSettings'
 import LocalLLMSettings from "@/components/settings/LocalLLMSettings.vue"
 import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
 import AzureOpenAISettings from "@/components/settings/AzureOpenAISettings.vue"
-import { chatModelOptions } from '@/utils/common'
+import { getChatModelOptions } from '@/utils/common'
 import { settingAPI, hardwareAPI } from "@/api/user"
 import QuestionPopover from "@/components/QuestionPopover.vue"
 
@@ -28,6 +28,7 @@ const loading = ref(true)
 const userSettings = useUserSettingsStore()
 
 const microphoneDeviceOptions = ref([])
+const chatModelOptions = ref(getChatModelOptions(t))
 
 const settingForm = reactive({
   id: 1,
@@ -75,6 +76,7 @@ const saveSetting = async (updateShortcuts = false) => {
   await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts })
   message.success(t('settings.save_success'))
   saving.value = false
+  chatModelOptions.value = getChatModelOptions(t)
 }
 
 const selectedKeys = ref(['llms'])

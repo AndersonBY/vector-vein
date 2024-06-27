@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-18 02:19:01
+ * @Last Modified time: 2024-06-28 03:11:31
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -268,8 +268,7 @@ export const nonLocalChatModelOptions = [
   },
 ]
 
-export const chatModelOptions = computed(() => {
-  const { t } = useI18n()
+export const getChatModelOptions = (t) => {
   const userSettings = useUserSettingsStore()
   const { setting } = storeToRefs(userSettings)
   return nonLocalChatModelOptions.concat(setting.value.data?.local_llms?.map((provider) => {
@@ -287,7 +286,7 @@ export const chatModelOptions = computed(() => {
       })),
     }
   }))
-})
+}
 
 export const allModels = computed(() => chatModelOptions.value.map((item) => item.children).flat())
 

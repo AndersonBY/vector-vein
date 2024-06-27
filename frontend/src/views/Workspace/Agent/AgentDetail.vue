@@ -13,7 +13,7 @@ import SimpleFormItem from "@/components/SimpleFormItem.vue"
 import TextOutput from "@/components/TextOutput.vue"
 import logoUrl from "@/assets/logo.svg"
 import { hashObject, formatTime, deepCopy } from "@/utils/util"
-import { chatModelOptions, websiteBase, agentVoiceOptions } from '@/utils/common'
+import { getChatModelOptions, websiteBase, agentVoiceOptions } from '@/utils/common'
 import { agentAPI } from '@/api/chat'
 import { workflowAPI } from "@/api/workflow"
 import { officialSiteAPI } from '@/api/remote'
@@ -38,6 +38,7 @@ const savedSelectedFlows = ref({
 const updateTime = computed(() => {
   return formatTime(agentData.value.update_time)
 })
+const chatModelOptions = ref(getChatModelOptions(t))
 
 const loadAgentData = async (aid) => {
   loading.value = true

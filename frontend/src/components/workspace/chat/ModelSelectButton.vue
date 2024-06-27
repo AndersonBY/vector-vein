@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { RobotOne } from '@icon-park/vue-next'
 import IconButton from '@/components/IconButton.vue'
-import { chatModelOptions } from '@/utils/common'
+import { getChatModelOptions } from '@/utils/common'
 import { conversationAPI } from '@/api/chat'
 
 const props = defineProps({
@@ -25,6 +25,7 @@ const emit = defineEmits(['update:model', 'update:modelProvider'])
 
 const { t } = useI18n()
 const open = ref(false)
+const chatModelOptions = ref(getChatModelOptions(t))
 
 const model = ref(props.model)
 const modelProvider = ref([props.modelProvider])
