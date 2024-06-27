@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 02:41:18
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 19:30:31
+ * @Last Modified time: 2024-06-08 23:37:24
  */
 export function createTemplateData() {
   return {
@@ -46,6 +46,18 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "textarea"
+      },
+      "bordered": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "bordered",
+        "display_name": "bordered",
+        "type": "bool",
+        "clear_after_run": false,
+        "list": false,
+        "field_type": "checkbox"
       },
       "show_table": {
         "required": false,

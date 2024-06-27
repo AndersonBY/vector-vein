@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-29 02:53:06
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-29 02:55:08
+ * @Last Modified time: 2024-06-24 23:05:56
  */
 export function createTemplateData() {
   return {
@@ -13,7 +13,7 @@ export function createTemplateData() {
       "file_name": {
         "required": true,
         "placeholder": "",
-        "show": true,
+        "show": false,
         "value": "",
         "name": "file_name",
         "display_name": "file_name",

@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-06 02:35:02
+# @Last Modified time: 2024-06-25 19:35:48
 import uuid
 from io import StringIO
 from pathlib import Path
@@ -15,14 +15,12 @@ import pandas as pd
 from docx import Document
 from docx.oxml.ns import qn
 
-from utilities.config import config
-from utilities.settings import Settings
-from utilities.html2docx import HtmlToDocx
-from utilities.workflow import Workflow
-from utilities.pdf_process import process_pdf
-from utilities.print_utils import mprint
-from utilities.static_file_server import StaticFileServer
 from worker.tasks import task, timer
+from utilities.general import mprint
+from utilities.config import Settings
+from utilities.workflow import Workflow
+from utilities.media_processing import TTSClient
+from utilities.file_processing import HtmlToDocx, process_pdf, static_file_server
 
 
 @task
@@ -34,6 +32,7 @@ def text(
     workflow = Workflow(workflow_data)
     text: str = workflow.get_node_field_value(node_id, "text")
     workflow.get_node_field_value(node_id, "output_title")
+    workflow.get_node_field_value(node_id, "render_markdown")
     workflow.update_node_field_value(node_id, "text", text)
     workflow.update_node_field_value(node_id, "output", text)
     return workflow.data
@@ -48,7 +47,11 @@ def table(
     workflow = Workflow(workflow_data)
     content: str = workflow.get_node_field_value(node_id, "content")
     content_type: str = workflow.get_node_field_value(node_id, "content_type")
-    if content_type == "file":
+    workflow.get_node_field_value(node_id, "show_table")
+
+    if len(content) == 0:
+        result = ""
+    elif content_type == "file":
         df = pd.read_csv(content)
         result = df.to_json(orient="records")
     elif content_type == "csv":
@@ -94,6 +97,7 @@ def document(
     output_folder = Path(Settings().output_folder)
     file_name = workflow.get_node_field_value(node_id, "file_name")
     content = workflow.get_node_field_value(node_id, "content")
+    workflow.get_node_field_value(node_id, "show_download")
     contents = [content]
     export_type = workflow.get_node_field_value(node_id, "export_type")
 
@@ -136,19 +140,41 @@ def audio(
     workflow_data: dict,
     node_id: str,
 ):
-    # TODO: Use local TTS like SpeechT5
     workflow = Workflow(workflow_data)
+    audio_type = workflow.get_node_field_value(node_id, "audio_type", "text_to_speech")
     content = workflow.get_node_field_value(node_id, "content")
+    file_link = workflow.get_node_field_value(node_id, "file_link")
+    direct_play = workflow.get_node_field_value(node_id, "direct_play")
     output_type = workflow.get_node_field_value(node_id, "output_type")
-    # download_link = long_tts(content)
-    download_link = ""
-    workflow.update_node_field_value(node_id, "audio_url", download_link)
+
+    output_file_path = ""
+
+    if audio_type == "text_to_speech":
+        tts_provider = workflow.get_node_field_value(node_id, "tts_provider")
+        tts_model = workflow.get_node_field_value(node_id, "tts_model")
+        tts_voice = workflow.get_node_field_value(node_id, "tts_voice")
+
+        tts_client = TTSClient(provider=tts_provider, model=tts_model)
+        if direct_play:
+            tts_client.stream(text=content, voice=tts_voice)
+        else:
+            output_folder = Path(Settings().output_folder)
+            output_file_path = tts_client.create(text=content, voice=tts_voice, output_folder=output_folder)
+            output_file_path = static_file_server.get_file_url(output_file_path)
+    elif audio_type == "play_audio":
+        output_file_path = file_link
+    else:
+        mprint(f"不支持的音频类型: {audio_type}")
+        output_file_path = file_link
+
+    workflow.update_node_field_value(node_id, "audio_url", output_file_path)
     if output_type == "only_link":
-        workflow.update_node_field_value(node_id, "output", download_link)
+        workflow.update_node_field_value(node_id, "output", output_file_path)
     elif output_type == "markdown":
-        workflow.update_node_field_value(node_id, "output", f"[{download_link}]({download_link})")
+        workflow.update_node_field_value(node_id, "output", f"[{output_file_path}]({output_file_path})")
     elif output_type == "html":
-        workflow.update_node_field_value(node_id, "output", f'<a href="{download_link}">{download_link}</a>')
+        workflow.update_node_field_value(node_id, "output", f'<a href="{output_file_path}">{output_file_path}</a>')
+
     return workflow.data
 
 
@@ -160,6 +186,7 @@ def mindmap(
 ):
     workflow = Workflow(workflow_data)
     workflow.get_node_field_value(node_id, "content")
+    workflow.get_node_field_value(node_id, "show_mind_map")
     return workflow.data
 
 
@@ -171,6 +198,7 @@ def mermaid(
 ):
     workflow = Workflow(workflow_data)
     workflow.get_node_field_value(node_id, "content")
+    workflow.get_node_field_value(node_id, "show_mermaid")
     return workflow.data
 
 
@@ -182,6 +210,7 @@ def echarts(
 ):
     workflow = Workflow(workflow_data)
     workflow.get_node_field_value(node_id, "option")
+    workflow.get_node_field_value(node_id, "show_echarts")
     return workflow.data
 
 
@@ -212,7 +241,7 @@ def picture_render(
     elif isinstance(input_content, list):
         contents = input_content
 
-    static_path = Path(config.data_path) / "static"
+    static_path = static_file_server.static_folder_path
     image_path = static_path / "images" / "pdf_render" / uuid.uuid4().hex
 
     results = []
@@ -220,7 +249,7 @@ def picture_render(
         if render_type == "pdf":
             image_files = process_pdf(content, "render_images", image_path)
             image_urls = [
-                StaticFileServer.get_file_url(Path(image_file).relative_to(static_path.absolute()).as_posix())
+                static_file_server.get_file_url(Path(image_file).relative_to(static_path.absolute()).as_posix())
                 for image_file in image_files
             ]
             if output_type == "only_link":
@@ -232,4 +261,22 @@ def picture_render(
 
     output = results[0] if isinstance(input_content, str) else results
     workflow.update_node_field_value(node_id, "output", output)
+    return workflow.data
+
+
+@task
+@timer
+def html(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    html_code = workflow.get_node_field_value(node_id, "html_code")
+    output_folder = Path(Settings().output_folder)
+    file_name = f"{uuid.uuid4().hex}.html"
+    file_path = output_folder / file_name
+    with open(file_path, "w", encoding="utf8") as f:
+        f.write(html_code)
+    html_url = static_file_server.get_file_url(file_path)
+    workflow.update_node_field_value(node_id, "output", html_url)
     return workflow.data
