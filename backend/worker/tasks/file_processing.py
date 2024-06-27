@@ -2,9 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-06 00:30:19
+# @Last Modified time: 2024-06-26 16:01:31
 from utilities.workflow import Workflow
-from utilities.files import get_files_contents, remove_markdown_image, remove_url_and_email
+from utilities.file_processing import get_files_contents, remove_markdown_image, remove_url_and_email
 from worker.tasks import task, timer
 
 
@@ -18,15 +18,20 @@ def file_loader(
     files = workflow.get_node_field_value(node_id, "files")
     need_remove_image: bool = workflow.get_node_field_value(node_id, "remove_image", True)
     need_remove_url_and_email: bool = workflow.get_node_field_value(node_id, "remove_url_and_email", True)
+
     results = get_files_contents(files)
-    result = results[0]
+    output = []
+    for result in results:
+        if need_remove_image:
+            result = remove_markdown_image(result, 0)
+        if need_remove_url_and_email:
+            result = remove_url_and_email(result)
+        output.append(result)
 
-    if need_remove_image:
-        result = remove_markdown_image(result, 0)
-    if need_remove_url_and_email:
-        result = remove_url_and_email(result)
+    if len(files) == 1:
+        output = output[0]
 
-    workflow.update_node_field_value(node_id, "output", result)
+    workflow.update_node_field_value(node_id, "output", output)
     return workflow.data
 
 
@@ -38,5 +43,8 @@ def file_upload(
 ):
     workflow = Workflow(workflow_data)
     files = workflow.get_node_field_value(node_id, "files")
-    workflow.update_node_field_value(node_id, "output", files[0])
+    if len(files) == 1:
+        workflow.update_node_field_value(node_id, "output", files[0])
+    else:
+        workflow.update_node_field_value(node_id, "output", files)
     return workflow.data
