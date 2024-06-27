@@ -6,6 +6,7 @@ import { message } from 'ant-design-vue'
 import { LoadingFour, Delete, Add } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
+import QuestionPopover from '@/components/QuestionPopover.vue'
 import { statusColorMap } from '@/utils/common'
 import { databaseAPI } from '@/api/database'
 
@@ -42,7 +43,7 @@ const databases = reactive({
       style: { cursor: 'pointer' },
       onClick: async (event) => {
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('database-title')) {
-          await router.push(`/data/vector-db/${record.vid}`)
+          await router.push({ name: 'VectorDatabaseDetail', params: { databaseId: record.vid } })
         }
       },
       onMouseenter: (event) => { databases.hoverRowVid = record.vid },
@@ -74,12 +75,15 @@ onBeforeMount(async () => {
 const createNewDatabaseModal = reactive({
   open: false,
   creating: false,
-  databaseName: '',
+  form: {
+    name: '',
+    embedding_provider: 'openai',
+    embedding_size: 1536,
+    embedding_model: 'text-embedding-ada-002',
+  },
   create: async () => {
     createNewDatabaseModal.creating = true
-    const response = await databaseAPI('create', {
-      name: createNewDatabaseModal.databaseName,
-    })
+    const response = await databaseAPI('create', createNewDatabaseModal.form)
     if (response.status === 200) {
       message.success(t('workspace.dataSpace.create_success'))
       let timer = setInterval(async () => {
@@ -107,6 +111,27 @@ const deleteDatabase = async (vid) => {
   }
   await getDatabases()
 }
+
+const embeddingProviders = [
+  { label: 'OpenAI', value: 'openai' },
+  { label: 'text-embeddings-inference', value: 'text-embeddings-inference' },
+]
+
+const openaiEmbeddingModels = [
+  { label: 'text-embedding-ada-002', value: 'text-embedding-ada-002' },
+  { label: 'text-embedding-3-small', value: 'text-embedding-3-small' },
+  { label: 'text-embedding-3-large', value: 'text-embedding-3-large' },
+]
+
+const embeddingProviderTips = [
+  t('workspace.dataSpace.embedding_provider_azure_tip'),
+  t('workspace.dataSpace.embedding_provider_text_embeddings_inference_tip'),
+  {
+    type: 'link',
+    url: 'https://github.com/huggingface/text-embeddings-inference',
+    text: 'https://github.com/huggingface/text-embeddings-inference'
+  },
+]
 </script>
 
 <template>
@@ -115,12 +140,12 @@ const deleteDatabase = async (vid) => {
     <template #title>
       <a-flex justify="space-between">
         <a-space>
-            <a-button type="primary" @click="createNewDatabaseModal.open = true">
-              <template #icon>
-                <Add />
-              </template>
-              {{ t('workspace.dataSpace.create') }}
-            </a-button>
+          <a-button type="primary" @click="createNewDatabaseModal.open = true">
+            <template #icon>
+              <Add />
+            </template>
+            {{ t('workspace.dataSpace.create') }}
+          </a-button>
           <a-typography-text type="secondary">
             {{ userDatabases.length }}
           </a-typography-text>
@@ -129,7 +154,27 @@ const deleteDatabase = async (vid) => {
           @ok="createNewDatabaseModal.create" :confirmLoading="createNewDatabaseModal.creating">
           <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
             <a-form-item :label="t('workspace.dataSpace.database_name')">
-              <a-input v-model:value="createNewDatabaseModal.databaseName" />
+              <a-input v-model:value="createNewDatabaseModal.form.name" />
+            </a-form-item>
+            <a-form-item>
+              <template #label>
+                <a-flex align="center">
+                  {{ t('workspace.dataSpace.embedding_provider') }}
+                  <QuestionPopover :contents="embeddingProviderTips" />
+                </a-flex>
+              </template>
+              <a-select v-model:value="createNewDatabaseModal.form.embedding_provider" :options="embeddingProviders" />
+            </a-form-item>
+            <a-form-item v-if="createNewDatabaseModal.form.embedding_provider == 'openai'"
+              :label="t('workspace.dataSpace.embedding_models')">
+              <a-select v-model:value="createNewDatabaseModal.form.embedding_model" :options="openaiEmbeddingModels" />
+            </a-form-item>
+            <a-form-item v-else-if="createNewDatabaseModal.form.embedding_provider == 'text-embeddings-inference'"
+              :label="t('workspace.dataSpace.embedding_models')">
+              <a-input v-model:value="createNewDatabaseModal.form.embedding_model" />
+            </a-form-item>
+            <a-form-item :label="t('workspace.dataSpace.embedding_size')">
+              <a-input-number v-model:value="createNewDatabaseModal.form.embedding_size" />
             </a-form-item>
           </a-form>
         </a-modal>
