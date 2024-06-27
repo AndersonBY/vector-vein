@@ -12,8 +12,7 @@ from models import (
 )
 from worker.tasks import task, timer
 from utilities.workflow import Workflow
-from utilities.relational_db import UserDatabaseControl
-
+from utilities.database import UserDatabaseControl
 from utilities.ai_utils.chat_clients import create_chat_client
 
 
