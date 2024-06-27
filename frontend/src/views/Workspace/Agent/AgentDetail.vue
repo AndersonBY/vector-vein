@@ -39,8 +39,9 @@ const updateTime = computed(() => {
   return formatTime(agentData.value.update_time)
 })
 
-onBeforeMount(async () => {
-  agentId.value = route.params.agentId
+const loadAgentData = async (aid) => {
+  loading.value = true
+  agentId.value = aid
   let response
   if (fromSource.value == 'public') {
     response = await officialSiteAPI('get_agent', { aid: agentId.value })
@@ -68,6 +69,10 @@ onBeforeMount(async () => {
     message.error(response.msg)
   }
   loading.value = false
+}
+
+onBeforeMount(async () => {
+  await loadAgentData(route.params.agentId)
 })
 
 onBeforeRouteLeave((to, from, next) => {
@@ -180,8 +185,9 @@ const duplicate = async () => {
     }
     const createResponse = await agentAPI('create', payload)
     message.success(t('workspace.agentSpace.duplicate_agent_success'))
-    await router.push({ name: 'agentDetail', params: { agentId: createResponse.data.aid } })
-    window.location.reload()
+    duplicateModalOpen.value = false
+    fromSource.value = 'private'
+    await loadAgentData(createResponse.data.aid)
   } else {
     message.error(response.msg)
   }

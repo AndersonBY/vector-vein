@@ -24,6 +24,8 @@ import WorkflowCard from '@/components/workspace/WorkflowCard.vue'
 import { formatTime } from '@/utils/util'
 import { workflowAPI, workflowTagAPI } from "@/api/workflow"
 
+const tabKey = defineModel()
+
 const { t } = useI18n()
 const loading = ref(true)
 const router = useRouter()
@@ -280,6 +282,10 @@ const openRecord = async (record) => {
   console.log(record)
   await router.push({ name: 'WorkflowUse', params: { workflowId: record.wid }, query: { rid: record.rid } })
 }
+
+const navigateToOfficialWorkflowTemplates = async () => {
+  tabKey.value = 'official-workflow-templates'
+}
 </script>
 
 <template>
@@ -323,6 +329,17 @@ const openRecord = async (record) => {
             :starred="record.is_fast_access" @star="toggleFastAccess(record)" @clone="clone(record.wid)"
             @delete="deleteWorkflow(record.wid)" />
         </router-link>
+      </a-col>
+      <a-col v-if="workflowRecords.data.length == 0 || true" :span="24">
+        <a-typography-paragraph type="secondary">
+          {{ t('components.workspace.myWorkflows.no_workflows_1') }}
+        </a-typography-paragraph>
+        <a-typography-paragraph type="secondary">
+          {{ t('components.workspace.myWorkflows.no_workflows_2') }}
+          <a-typography-link @click="navigateToOfficialWorkflowTemplates">
+            {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
+          </a-typography-link>
+        </a-typography-paragraph>
       </a-col>
       <a-col :span="24">
         <a-flex justify="flex-end">

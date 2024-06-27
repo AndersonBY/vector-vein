@@ -50,7 +50,6 @@ const addTemplateToUserWorkflows = async () => {
   userWorkflowsStore.setUserWorkflowsTotal(userWorkflowsStore.userWorkflowsTotal + 1)
   addingTemplate.value = false
   await router.push({ name: 'WorkflowUse', params: { workflowId: response.data.wid } })
-  window.location.reload()
 }
 </script>
 

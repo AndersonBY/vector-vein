@@ -26,7 +26,7 @@ const tabChange = async (key) => {
           {{ t('workspace.workflowSpaceMain.my_workflows') }}
         </span>
       </template>
-      <MyWorkflows />
+      <MyWorkflows v-model="activeKey" />
     </a-tab-pane>
     <a-tab-pane key="official-workflow-templates">
 
