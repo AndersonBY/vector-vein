@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-09 03:05:56
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 20:32:29
+ * @Last Modified time: 2024-06-17 14:15:10
  */
 import { useUserSettingsStore } from "@/stores/userSettings"
 
@@ -61,11 +61,6 @@ export function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-export function getRandomBackgroundImg() {
-  const random = getRandomInt(1, 5)
-  return new URL(`/src/assets/imgs/basic-layout-background/img${random}.svg`, import.meta.url).href
-}
-
 export function hashObject(obj) {
   const str = JSON.stringify(obj);
   let hash = 0;
@@ -78,4 +73,10 @@ export function hashObject(obj) {
 
 export function deepCopy(obj) {
   return JSON.parse(JSON.stringify(obj))
+}
+
+export function navigateToElementBottom(element) {
+  if (element) {
+    element.scrollTop = element.scrollHeight - element.clientHeight;
+  }
 }
