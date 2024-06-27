@@ -1,10 +1,6 @@
 <script setup>
-import { ref, defineComponent } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-
-defineComponent({
-  name: 'VueFlowStyleSettings',
-})
 
 const emit = defineEmits(['save'])
 
@@ -33,7 +29,7 @@ const save = () => {
     <a-form :model="styleSettings" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }" autocomplete="off">
       <a-form-item :label="t('components.workspace.vueFlowStyleSettings.edge_type')" name="edge_type">
         <a-select v-model:value="styleSettings.edge.type">
-          <a-select-option value="bezier">
+          <a-select-option value="default">
             {{ t('components.workspace.vueFlowStyleSettings.edge_type_bezier') }}
           </a-select-option>
           <a-select-option value="step">
