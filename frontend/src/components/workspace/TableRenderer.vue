@@ -9,6 +9,10 @@ const props = defineProps({
     required: true,
     default: '',
   },
+  bordered: {
+    type: Boolean,
+    default: false,
+  },
 })
 
 const columns = computed(() => {
@@ -60,7 +64,7 @@ const exportTable = () => {
 <template>
   <a-flex vertical gap="small">
     <div class="table-container custom-scrollbar">
-      <a-table :dataSource="parsedData" :columns="columns" />
+      <a-table :dataSource="parsedData" :columns="columns" :bordered="bordered" />
     </div>
     <a-button type="text" @click="exportTable">
       <template #icon>
