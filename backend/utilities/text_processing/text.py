@@ -4,6 +4,7 @@ import re
 import io
 import csv
 
+from markdownify import MarkdownConverter, chomp
 from langchain_text_splitters import (
     TokenTextSplitter,
     MarkdownTextSplitter,
@@ -72,3 +73,28 @@ def split_text(text: str, rules: dict, flat: bool = False):
             {"index": index, "text": paragraph, "word_counts": len(paragraph)}
             for index, paragraph in enumerate(paragraphs)
         ]
+
+
+class CustomMarkdownConverter(MarkdownConverter):
+    def convert_b(self, el, text, convert_as_inline):
+        return self.custom_bold_conversion(el, text, convert_as_inline)
+
+    convert_strong = convert_b
+
+    def custom_bold_conversion(self, el, text, convert_as_inline):
+        markup = 2 * self.options["strong_em_symbol"]
+        prefix, suffix, text = chomp(text)
+        if not text:
+            return ""
+        return "%s%s%s%s%s " % (prefix, markup, text, markup, suffix)
+
+
+def markdownify(html, **options):
+    return CustomMarkdownConverter(**options).convert(html)
+
+
+def clean_markdown(text: str):
+    content = "\n\n".join([s.strip() for s in text.split("\n") if s.strip()])
+    content = content.replace("![]()", "").replace("*\n", "")
+    content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
+    return content
