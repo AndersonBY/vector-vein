@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-26 17:22:29
+ * @Last Modified time: 2024-06-28 02:36:24
  */
 export default {
   lang: 'English',
@@ -1595,6 +1595,10 @@ export default {
         'database_button_title': 'Switch to database interface',
         'database_button_description': 'Click this button to switch to the database interface. You can create your personal knowledge base here and upload your data for use in workflows.',
       },
+      initial_setup: 'Initial setup',
+      domain_tip: 'It is recommended that users outside of China use vectorvein.ai.',
+      setting_tip1: 'If you need to use AI-related functions, be sure to configure the relevant information of the large language model in the settings in the upper right corner.',
+      setting_tip2: 'Different workflows/Agents may use different large language models. If you only use certain specific models, it is recommended to check and configure the model you use before running the workflow or using the Agent.',
     },
   },
   settings: {

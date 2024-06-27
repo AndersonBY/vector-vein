@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-26 17:22:14
+ * @Last Modified time: 2024-06-28 02:35:48
  */
 export default {
   lang: '中文',
@@ -1595,6 +1595,10 @@ export default {
         'database_button_title': '切换知识库/数据库界面',
         'database_button_description': '点击此按钮可以切换到数据界面。您可以在此创建您的个人知识库并上传您的数据以在工作流中使用。',
       },
+      initial_setup: '初始设置',
+      domain_tip: '中国用户建议使用 vectorvein.com',
+      setting_tip1: '如需使用 AI 相关功能请务必在右上角设置中配置大语言模型的相关信息。',
+      setting_tip2: '不同的 工作流/Agent 可能会使用不同的大语言模型，若您只使用某些特定的模型，建议在运行工作流或使用 Agent 之前检查并配置为您使用的模型。',
     },
   },
   settings: {

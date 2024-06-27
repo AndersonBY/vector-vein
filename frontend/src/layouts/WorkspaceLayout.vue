@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from "@/stores/userSettings"
 import { currentTourVersion } from '@/utils/common'
 import { settingAPI } from "@/api/user"
+import InitialSetupModal from '@/components/settings/InitialSetupModal.vue'
 import BasicHeader from '@/components/layouts/BasicHeader.vue'
 
 const { t } = useI18n()
@@ -12,9 +13,13 @@ const loading = ref(true)
 const userSettingsStore = useUserSettingsStore()
 const { setting } = storeToRefs(userSettingsStore)
 const openTour = ref(false)
+const initialSetupModalOpen = ref(false)
 
 onBeforeMount(async () => {
   const settingsResponse = await settingAPI('get', {})
+  if (!settingsResponse.data.data.initial_setup) {
+    initialSetupModalOpen.value = true
+  }
   userSettingsStore.setSetting(settingsResponse.data)
   if (typeof setting.value.data.tour_version === "undefined" ? 0 : setting.value.data.tour_version < currentTourVersion) {
     setting.value.data.tour_version = currentTourVersion
@@ -54,7 +59,7 @@ const onTourClose = () => {
     </a-layout-content>
 
     <a-tour v-model:current="tourCurrentStep" :open="openTour" :steps="tourSteps" @close="onTourClose" />
-
+    <InitialSetupModal :open="initialSetupModalOpen" :settings="setting" />
     <a-back-top />
   </a-layout>
 </template>
