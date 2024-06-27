@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 13:38:33
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-18 21:42:53
+ * @Last Modified time: 2024-06-25 16:57:09
  */
 export function createTemplateData() {
   const specialWidthHeightModels = [
@@ -10,15 +10,39 @@ export function createTemplateData() {
     'stable-diffusion-xl-1024-v1-0',
   ]
   const sd3Models = [
-    'sd3',
-    'sd3-turbo',
-    'sd-core',
+    "sd-ultra",
+    "sd3-large",
+    "sd3-large-turbo",
+    "sd3-medium",
+    "sd-core",
   ]
   return {
     "description": "description",
     "task_name": "image_generation.stable_diffusion",
     "has_inputs": true,
     "template": {
+      "provider": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "stable-diffusion-official",
+        "options": [
+          {
+            "value": "self-host",
+            "label": "self-host"
+          },
+          {
+            "value": "stable-diffusion-official",
+            "label": "stable-diffusion-official"
+          },
+        ],
+        "name": "provider",
+        "display_name": "provider",
+        "type": "str",
+        "clear_after_run": false,
+        "list": true,
+        "field_type": "select"
+      },
       "prompt": {
         "required": true,
         "placeholder": "",
@@ -45,15 +69,23 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "stable-diffusion-xl-1024-v1-0",
+        "value": "sd3-medium",
         "options": [
           {
-            "value": "sd3",
-            "label": "SD3"
+            "value": "sd-ultra",
+            "label": "Ultra"
           },
           {
-            "value": "sd3-turbo",
-            "label": "SD3 Turbo"
+            "value": "sd3-large",
+            "label": "Stable Diffusion 3 Large"
+          },
+          {
+            "value": "sd3-large-turbo",
+            "label": "Stable Diffusion 3 Large Turbo"
+          },
+          {
+            "value": "sd3-medium",
+            "label": "Stable Diffusion 3 Medium"
           },
           {
             "value": "sd-core",
@@ -66,10 +98,6 @@ export function createTemplateData() {
           {
             "value": "stable-diffusion-xl-1024-v0-9",
             "label": "SDXL 0.9"
-          },
-          {
-            "value": "stable-diffusion-xl-beta-v2-2-2",
-            "label": "SDXL 0.8"
           },
         ],
         "name": "model",
@@ -89,6 +117,7 @@ export function createTemplateData() {
         "type": "float",
         "list": false,
         "field_type": "number",
+        "group": "default",
         "condition": (fieldsData) => {
           return !sd3Models.includes(fieldsData.model.value)
         },
@@ -146,37 +175,10 @@ export function createTemplateData() {
         "clear_after_run": false,
         "list": true,
         "field_type": "select",
+        "group": "default",
         "condition": (fieldsData) => {
           return !sd3Models.includes(fieldsData.model.value)
         },
-      },
-      "width": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "value": 1024,
-        "name": "width",
-        "display_name": "width",
-        "type": "int",
-        "list": false,
-        "field_type": "number",
-        "condition": (fieldsData) => {
-          return !specialWidthHeightModels.includes(fieldsData.model.value) && !sd3Models.includes(fieldsData.model.value)
-        }
-      },
-      "height": {
-        "required": true,
-        "placeholder": "",
-        "show": false,
-        "value": 1024,
-        "name": "height",
-        "display_name": "height",
-        "type": "int",
-        "list": false,
-        "field_type": "number",
-        "condition": (fieldsData) => {
-          return !specialWidthHeightModels.includes(fieldsData.model.value) && !sd3Models.includes(fieldsData.model.value)
-        }
       },
       "size": {
         "required": true,
@@ -306,7 +308,8 @@ export function createTemplateData() {
         "type": "str",
         "clear_after_run": false,
         "list": true,
-        "field_type": "select"
+        "field_type": "select",
+        "group": "default",
       },
       "output": {
         "required": true,
