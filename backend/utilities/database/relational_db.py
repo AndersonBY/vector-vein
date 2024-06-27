@@ -10,7 +10,7 @@ import sqlparse
 import pandas as pd
 
 from models import UserRelationalDatabase, UserRelationalTable, Status
-from utilities.print_utils import mprint_error
+from utilities.general import mprint
 
 
 def get_table_names(conn: sqlite3.Connection):
@@ -186,7 +186,6 @@ def create_relational_database_table(
     file: str | None = None,
     sql_statement: str | None = None,
 ):
-    print(table, add_method, file, sql_statement)
     database = table.database
 
     table_name = None
@@ -245,8 +244,8 @@ def create_relational_database_table(
             table.save()
             return False
     except Exception as e:
-        mprint_error(f"Failed to create table {table.tid.hex}: {e}")
-        mprint_error(traceback.format_exc())
+        mprint.error(f"Failed to create table {table.tid.hex}: {e}")
+        mprint.error(traceback.format_exc())
         table.status = Status.INVALID
         table.save()
         return False
@@ -298,7 +297,7 @@ class UserDatabaseControl:
             connection.close()
             return result[0]
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to get table max rows: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to get table max rows: {e}")
             return 0
 
     def set_table_max_rows(self, table_name: str, max_rows: int):
@@ -320,7 +319,7 @@ class UserDatabaseControl:
             connection.close()
             return 0
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to delete table: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to delete table: {e}")
             return -1
 
     def update(self, table_name: str, records: list):
@@ -342,7 +341,7 @@ class UserDatabaseControl:
             self.set_table_max_rows(table_name, table_max_rows)
             return table_max_rows
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to update: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to update: {e}")
             return -1
 
     def delete(self, table_name: str, records: list):
@@ -361,7 +360,7 @@ class UserDatabaseControl:
             self.set_table_max_rows(table_name, table_max_rows)
             return table_max_rows
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to delete: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to delete: {e}")
             return -1
 
     def add(self, table_name: str, records: list):
@@ -371,7 +370,7 @@ class UserDatabaseControl:
         table_max_rows = self.get_table_max_rows(table_name)
 
         if table_max_rows + len(records) > self.max_row_quota:
-            mprint_error(f"database {self.db.rid.hex} is too large")
+            mprint.error(f"database {self.db.rid.hex} is too large")
             return -1
 
         try:
@@ -390,7 +389,7 @@ class UserDatabaseControl:
             self.set_table_max_rows(table_name, table_max_rows)
             return table_max_rows
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to add: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to add: {e}")
             return -1
 
     def add_from_file(self, table_name: str, file: str):
@@ -408,7 +407,7 @@ class UserDatabaseControl:
 
             return self.add(table_name, records)
         except Exception as e:
-            mprint_error(f"database {self.db.rid.hex} failed to add from file: {e}")
+            mprint.error(f"database {self.db.rid.hex} failed to add from file: {e}")
             return -1
 
     def run_sql(
@@ -476,7 +475,7 @@ class UserDatabaseControl:
 
         except Exception as e:
             connection.rollback()
-            mprint_error(f"Failed to run sql: {e}")
+            mprint.error(f"Failed to run sql: {e}")
             results = []
         finally:
             connection.close()
