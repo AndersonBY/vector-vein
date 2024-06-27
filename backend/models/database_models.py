@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 12:20:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 02:23:51
+# @Last Modified time: 2024-06-15 01:39:23
 import uuid
 import datetime
 
@@ -45,6 +45,7 @@ class UserVectorDatabase(BaseModel):
     info = JSONField(default=dict)
     embedding_size = IntegerField(default=1536)
     embedding_model = CharField(default="text-embedding-ada-002")
+    embedding_provider = CharField(default="openai")
 
     create_time = DateTimeField(default=datetime.datetime.now)
     update_time = DateTimeField(default=datetime.datetime.now)

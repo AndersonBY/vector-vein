@@ -2,18 +2,30 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 12:42:01
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 02:35:36
-from .base import database, model_serializer
+# @Last Modified time: 2024-06-17 16:08:07
+from .base import (
+    database,
+    run_migrations,
+    model_serializer,
+    create_migrations,
+)
 from .user_models import User, Setting
 from .database_models import (
-    UserObject,
-    UserVectorDatabase,
-    UserRelationalDatabase,
-    UserRelationalTable,
-    DatabaseStatus,
     Status,
+    UserObject,
+    DatabaseStatus,
+    UserVectorDatabase,
+    UserRelationalTable,
+    UserRelationalDatabase,
 )
-from .workflow_models import WorkflowTag, Workflow, WorkflowRunRecord, WorkflowRunSchedule, WorkflowTemplate
+from .workflow_models import (
+    Workflow,
+    WorkflowTag,
+    WorkflowTemplate,
+    WorkflowRunRecord,
+    WorkflowRunSchedule,
+)
+from .agent_models import Conversation, Message, Agent
 
 
 def create_tables():
@@ -32,5 +44,37 @@ def create_tables():
             UserVectorDatabase,
             UserRelationalDatabase,
             UserRelationalTable,
+            Conversation,
+            Conversation.related_workflows.get_through_model(),
+            Conversation.related_templates.get_through_model(),
+            Message,
+            Agent,
+            Agent.related_workflows.get_through_model(),
+            Agent.related_templates.get_through_model(),
         ]
     )
+
+
+__all__ = [
+    "User",
+    "Agent",
+    "Status",
+    "Setting",
+    "Message",
+    "database",
+    "Workflow",
+    "UserObject",
+    "WorkflowTag",
+    "Conversation",
+    "create_tables",
+    "DatabaseStatus",
+    "run_migrations",
+    "model_serializer",
+    "WorkflowTemplate",
+    "create_migrations",
+    "WorkflowRunRecord",
+    "UserVectorDatabase",
+    "UserRelationalTable",
+    "WorkflowRunSchedule",
+    "UserRelationalDatabase",
+]

@@ -2,9 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 12:20:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2023-05-17 11:52:37
+# @Last Modified time: 2024-06-07 02:37:36
 import uuid
-import datetime
+from datetime import datetime
 
 from peewee import (
     CharField,
@@ -37,8 +37,8 @@ class WorkflowTag(BaseModel):
         ("VA", "有效"),
     )
     status = CharField(max_length=16, choices=STATUS_CHOICES, default="VA")
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    create_time = DateTimeField(default=datetime.now)
+    update_time = DateTimeField(default=datetime.now)
 
     def __str__(self):
         return f"{self.title}|{self.tid.hex}"
@@ -66,9 +66,11 @@ class Workflow(BaseModel):
     version = CharField(max_length=128, null=True)
     is_fast_access = BooleanField(default=False)
 
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    create_time = DateTimeField(default=datetime.now)
+    update_time = DateTimeField(default=datetime.now)
     expire_time = DateTimeField(null=True)
+
+    tool_call_data = JSONField(default=dict)
 
     def __str__(self):
         return self.wid.hex
@@ -76,6 +78,13 @@ class Workflow(BaseModel):
 
 class WorkflowRunRecord(BaseModel):
     """用户工作流运行记录"""
+
+    class RunFromTypes:
+        WEB = "WEB"
+        SCHEDULE = "SCHEDULE"
+        API = "API"
+        WORKFLOW = "WORKFLOW"
+        CHAT = "CHAT"
 
     rid = UUIDField(primary_key=True, default=uuid.uuid4)
     user = ForeignKeyField(User, null=True, backref="workflow_run_records")
@@ -90,9 +99,12 @@ class WorkflowRunRecord(BaseModel):
     status = CharField(max_length=16, choices=STATUS_CHOICES, default="QUEUED")
     data = JSONField(default=dict)
     schedule_time = DateTimeField(null=True)
-    start_time = DateTimeField(default=datetime.datetime.now)
+    start_time = DateTimeField(default=datetime.now)
     end_time = DateTimeField(null=True)
     used_credits = IntegerField(default=0)
+
+    run_from = CharField(max_length=16, choices=RunFromTypes.__dict__.items(), default=RunFromTypes.WEB)
+    source_message = UUIDField(null=True)
 
     def __str__(self):
         return self.rid.hex
@@ -113,8 +125,8 @@ class WorkflowRunSchedule(BaseModel):
     data = JSONField(default=dict)
     cron_expression = CharField(max_length=128, null=True)
     schedule_time = DateTimeField(null=True)
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    create_time = DateTimeField(default=datetime.now)
+    update_time = DateTimeField(default=datetime.now)
 
     def __str__(self):
         return self.sid.hex
@@ -144,8 +156,10 @@ class WorkflowTemplate(BaseModel):
     is_official = BooleanField(default=False)
     official_order = IntegerField(default=0)
 
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    create_time = DateTimeField(default=datetime.now)
+    update_time = DateTimeField(default=datetime.now)
+
+    tool_call_data = JSONField(default=dict)
 
     def __str__(self):
         return self.tid.hex
