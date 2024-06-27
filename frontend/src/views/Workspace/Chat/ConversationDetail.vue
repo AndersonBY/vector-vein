@@ -1,0 +1,494 @@
+<script setup>
+import { ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
+import { Send, Edit, Link } from '@icon-park/vue-next'
+import { message } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
+import { useRoute } from "vue-router"
+import { storeToRefs } from 'pinia'
+import { useUserChatsStore } from '@/stores/userChats'
+import ReconnectingWebSocket from 'reconnecting-websocket'
+import ChatMessage from '@/components/workspace/chat/ChatMessage.vue'
+import ScrollEndButton from '@/components/ScrollEndButton.vue'
+import ShareChat from '@/components/workspace/chat/ShareChat.vue'
+import WorkflowsPopoverShow from '@/components/workspace/chat/WorkflowsPopoverShow.vue'
+import SettingsPopoverShow from '@/components/workspace/chat/SettingsPopoverShow.vue'
+import ModelSelectButton from '@/components/workspace/chat/ModelSelectButton.vue'
+import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
+import AttachmentsList from '@/components/workspace/chat/AttachmentsList.vue'
+import RecordingButton from '@/components/workspace/chat/RecordingButton.vue'
+import AudioReplySettingButton from '@/components/workspace/chat/AudioReplySettingButton.vue'
+import { navigateToElementBottom } from '@/utils/util'
+import { conversationAPI, messageAPI } from '@/api/chat'
+
+const { t } = useI18n()
+const loading = ref(false)
+const route = useRoute()
+const conversationId = ref(route.params.conversationId)
+const selectedWorkflows = reactive({
+  workflows: {},
+  templates: {},
+})
+
+const userChatsStore = useUserChatsStore()
+const { unsentChats } = storeToRefs(userChatsStore)
+
+const fetchConversation = async (cid) => {
+  const res = await conversationAPI('get', { cid: cid })
+  if (res.status != 200) {
+    message.error(t('workspace.chatSpace.fetch_conversation_failed'))
+    return
+  }
+  conversation.value = res.data.conversation
+  userChatsStore.addConversation(conversation.value)
+  messages.value = res.data.messages
+  selectedWorkflows.workflows = {}
+  selectedWorkflows.templates = {}
+  conversation.value.related_workflows.forEach((workflow) => {
+    selectedWorkflows.workflows[workflow.wid] = workflow
+  })
+  conversation.value.related_templates.forEach((workflow) => {
+    selectedWorkflows.templates[workflow.tid] = workflow
+  })
+
+  loading.value = false
+  nextTick(() => {
+    navigateToElementBottom(chatBodyElementRef.value)
+  })
+}
+
+watch(() => route.params.conversationId, async (newVal, oldVal) => {
+  conversationId.value = newVal
+  if (oldVal == newVal || newVal == undefined) {
+    return
+  }
+  loading.value = true
+  if (chatSocket !== null) {
+    chatSocket.close()
+    chatSocket = null
+  }
+  await fetchConversation(newVal)
+})
+
+onBeforeMount(async () => {
+  if (unsentChats.value.length == 0) {
+    loading.value = true
+  }
+  await fetchConversation(conversationId.value)
+  if (unsentChats.value.length > 0) {
+    attachments.value = unsentChats.value[0].attachments
+    await sendMessage(unsentChats.value[0].content, true)
+    userChatsStore.clearUnsentChats()
+  }
+})
+
+onBeforeUnmount(() => {
+  if (chatSocket !== null) {
+    chatSocket.close()
+    chatSocket = null
+  }
+})
+
+onMounted(() => {
+  // Expose for Python usage.
+  window.setAttachments = (files) => {
+    attachments.value = files
+  }
+})
+
+const sending = ref(false)
+const conversation = ref({ settings: { agent_audio_reply: false } })
+const messages = ref([])
+const userInput = ref('')
+const attachments = ref([])
+
+const chatBodyElementRef = ref(null)
+
+const websocketStatus = ref('connecting')
+let chatSocket = null
+const receiving = ref(false)
+
+const aiMessage = reactive({
+  loading: true,
+  mid: 'tmp',
+  status: 'P',
+  author_type: 'A',
+  content_type: 'TXT',
+  create_time: new Date().getTime(),
+  workflow_invoke_step: '',
+  metadata: { selected_workflow: {}, record_id: '' },
+  content: { text: '', tool: {}, selected_workflow: {} },
+})
+const clearAiMessage = () => {
+  aiMessage.loading = true
+  aiMessage.mid = 'tmp'
+  aiMessage.status = 'P'
+  aiMessage.content_type = 'TXT'
+  aiMessage.workflow_invoke_step = ''
+  aiMessage.create_time = new Date().getTime()
+  aiMessage.metadata = { selected_workflow: {}, record_id: '' }
+  aiMessage.content = { text: '', tool: {}, selected_workflow: {} }
+}
+
+const sendWebsocketMsg = (msg) => {
+  if (chatSocket === null) {
+    chatSocket = new ReconnectingWebSocket(
+      `ws://localhost:8765/ws/chat/${conversationId.value}/`,
+      null,
+      { maxReconnectAttempts: 5 }
+    )
+  } else {
+    chatSocket.send(JSON.stringify(msg))
+  }
+  chatSocket.onmessage = async (e) => {
+    const data = JSON.parse(e.data)
+    if (!data.end) {
+      receiving.value = true
+      aiMessage.loading = false
+      aiMessage.status = 'G'
+      if (data.workflow_invoke_step === 'generating_params') {
+        aiMessage.workflow_invoke_step = 'generating_params'
+        aiMessage.content_type = 'WKF'
+        aiMessage.content.text += data.content ?? ''
+        nextTick(() => {
+          navigateToElementBottom(chatBodyElementRef.value)
+        })
+      } else if (data.workflow_invoke_step === 'wait_for_invoke') {
+        aiMessage.workflow_invoke_step = 'wait_for_invoke'
+        aiMessage.content_type = 'WKF'
+        aiMessage.content.text += data.content ?? ''
+        aiMessage.metadata.selected_workflow = data.selected_workflow
+        nextTick(() => {
+          navigateToElementBottom(chatBodyElementRef.value)
+        })
+      } else if (data.tool_calls?.length > 0) {
+        aiMessage.content_type = 'WKF'
+        aiMessage.content.tool = data.tool_calls[0].function.name
+        aiMessage.content.text += data.content ?? ''
+      } else if (data.content === null) {
+        return
+      } else {
+        aiMessage.workflow_invoke_step = ''
+        aiMessage.content_type = 'TXT'
+        aiMessage.content.text += data.content ?? ''
+      }
+    } else {
+      // 收到 end 字段，表示这一轮对话结束
+      receiving.value = false
+      if (data.title !== null) {
+        conversation.value.title = data.title
+        userChatsStore.updateConversation(conversationId.value, 'title', data.title)
+      }
+      await messageAPI('done_notice', { mid: aiMessage.mid })
+      aiMessage.content.text = data.content
+      aiMessage.status = aiMessage.content_type == 'WKF' ? 'W' : 'S'
+      if (aiMessage.content_type == 'WKF') {
+        aiMessage.workflow_invoke_step = 'wait_for_invoke'
+      }
+
+      messages.value[messages.value.length - 1][0] = JSON.parse(JSON.stringify(aiMessage))
+      clearAiMessage()
+    }
+    navigateToElementBottom(chatBodyElementRef.value)
+  }
+  chatSocket.onopen = () => {
+    websocketStatus.value = 'success'
+    chatSocket.send(JSON.stringify(msg))
+    console.log('chat websocket connected')
+  }
+  chatSocket.onerror = () => {
+    websocketStatus.value = 'error'
+    console.log('chat websocket error')
+  }
+}
+
+const sendMessage = async (content, needTitle = false) => {
+  if (!content) {
+    return
+  }
+  let parentMid = null
+  if (messages.value.length > 0) {
+    const lastValidMessage = messages.value.findLast(message => message[0].mid !== 'tmp')
+    if (lastValidMessage) {
+      parentMid = lastValidMessage[0].mid
+    }
+  }
+  const userMessage = {
+    loading: false,
+    mid: 'tmp',
+    status: 'S',
+    author_type: 'U',
+    content_type: 'TXT',
+    create_time: new Date().getTime(),
+    metadata: {},
+    content: { text: content },
+    attachments: attachments.value,
+  }
+  messages.value.push([userMessage])
+  nextTick(() => {
+    navigateToElementBottom(chatBodyElementRef.value)
+  })
+  const res = await messageAPI('send', {
+    need_title: needTitle,
+    parent_mid: parentMid,
+    cid: conversationId.value,
+    content: content,
+    content_type: 'TXT',
+    attachments: attachments.value,
+  })
+  if (res.status != 200) {
+    message.error({ description: t('workspace.chatSpace.send_message_failed') })
+    return
+  }
+  const userMessageMid = res.data.user_message_mid
+  userMessage.mid = userMessageMid
+  attachments.value = []
+
+  aiMessage.loading = true
+  aiMessage.mid = res.data.ai_message_mid
+  aiMessage.create_time = new Date().getTime()
+
+  messages.value.push([aiMessage])
+  nextTick(() => {
+    navigateToElementBottom(chatBodyElementRef.value)
+  })
+
+  sendWebsocketMsg(res.data)
+  userInput.value = ''
+}
+
+const onAppendAnswer = async (mid) => {
+  const res = await messageAPI('append_answer', {
+    cid: conversationId.value,
+    mid: mid,
+  })
+  if (res.status != 200) {
+    return
+  }
+  aiMessage.mid = res.data.ai_message_mid
+  aiMessage.create_time = new Date().getTime()
+
+  messages.value.push([aiMessage])
+  nextTick(() => {
+    navigateToElementBottom(chatBodyElementRef.value)
+  })
+
+  sendWebsocketMsg(res.data)
+}
+
+const editable = reactive({
+  onEnd: async () => {
+    const response = await conversationAPI('update', {
+      'cid': conversationId.value,
+      'title': conversation.value.title,
+    })
+    if (response.status == 200) {
+      message.success(t('common.save_success'))
+      userChatsStore.updateConversation(conversationId.value, 'title', conversation.value.title)
+    } else {
+      message.error(response.msg)
+    }
+  },
+})
+
+const isDragging = ref(false)
+const handleDragEnter = (event) => {
+  event.preventDefault()
+  isDragging.value = true
+}
+
+const handleDragOver = (event) => {
+  event.preventDefault()
+  isDragging.value = true
+}
+
+const handleDragLeave = (event) => {
+  event.preventDefault()
+  isDragging.value = false
+}
+
+const handleDrop = (event) => {
+  event.preventDefault()
+  isDragging.value = false
+  const items = event.dataTransfer.items
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i]
+    if (item.kind === 'file') {
+      const { name } = item.getAsFile()
+      window.pywebview.api.get_drop_file_path(name).then(dropFilePath => {
+        attachments.value.push(dropFilePath)
+        message.success(t('components.workspace.uploaderFieldUse.upload_success', { file: name }))
+      })
+    }
+  }
+}
+</script>
+
+<template>
+  <div class="main-container" @dragenter="handleDragEnter" @drop="handleDrop" @dragover="handleDragOver">
+    <div v-show="isDragging" class="drag-overlay" @dragleave="handleDragLeave">
+      {{ t('workspace.chatSpace.drop_to_upload') }}
+    </div>
+    <div class="chat-header">
+      <a-flex align="flex-end" gap="small" class="title">
+        <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;" :editable="editable"
+          v-model:content="conversation.title">
+          <template #editableIcon>
+            <Edit class="title-edit-button" />
+          </template>
+        </a-typography-title>
+      </a-flex>
+      <ShareChat :key="conversation.cid" disabled :conversation="conversation" type="icon-button" />
+    </div>
+    <div ref="chatBodyElementRef" class="chat-body custom-scrollbar">
+      <a-spin :spinning="loading">
+        <template v-for="chatMessageSection in messages">
+          <ChatMessage :loading="chatMessageSection[0].loading" :cid="conversationId" :mid="chatMessageSection[0].mid"
+            v-model:status="chatMessageSection[0].status" :authorType="chatMessageSection[0].author_type"
+            :contentType="chatMessageSection[0].content_type" :createTime="chatMessageSection[0].create_time"
+            :metadata="chatMessageSection[0].metadata" :content="chatMessageSection[0].content"
+            :workflowInvokeStep="chatMessageSection[0].workflow_invoke_step"
+            :attachments="chatMessageSection[0]?.attachments"
+            :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
+            @append-answer="onAppendAnswer" />
+        </template>
+      </a-spin>
+      <ScrollEndButton :target="chatBodyElementRef" direction="bottom" bottom="0" left="calc(50% - 16px)" />
+    </div>
+    <div class="chat-footer-input">
+      <div class="chat-input-actions">
+        <template v-if="!loading">
+          <SettingsPopoverShow :key="conversationId" :settings="conversation.settings" />
+          <WorkflowsPopoverShow :key="conversationId" :selectedFlows="selectedWorkflows" />
+          <ModelSelectButton :key="conversationId" :cid="conversationId" v-model:model="conversation.model"
+            v-model:modelProvider="conversation.model_provider" />
+          <AudioReplySettingButton :key="conversationId" v-model:audioReply="conversation.settings.agent_audio_reply"
+            v-model:audioVoice="conversation.settings.agent_audio_voice" />
+        </template>
+      </div>
+      <div class="chat-input-area">
+        <a-textarea v-model:value="userInput" :placeholder="t('workspace.chatSpace.textarea_tip')"
+          :auto-size="{ minRows: 2, maxRows: 10 }" style="padding-right: 7rem;"
+          @keyup.ctrl.enter="sendMessage(userInput)" />
+        <RecordingButton class="chat-recording-btn" :transcribe="true" v-model:text="userInput"
+          @finished="sendMessage" />
+        <a-tooltip :title="t('workspace.chatSpace.upload_attachments')">
+          <UploaderFieldUse class="chat-attachment-btn" v-model="attachments" supportFileTypes="*.*" :acceptPaste="true"
+            :multiple="true" :showUploadList="false" :singleButton="true"
+            :singleButtonProps="{ type: 'text', loading: sending, disabled: receiving }">
+            <template #icon>
+              <Link />
+            </template>
+          </UploaderFieldUse>
+        </a-tooltip>
+        <a-tooltip :title="t('workspace.chatSpace.send_message')">
+          <a-button type="primary" class="chat-send-btn" :loading="sending"
+            :disabled="userInput.length == 0 || receiving" @click="sendMessage(userInput)">
+            <template #icon>
+              <Send />
+            </template>
+          </a-button>
+        </a-tooltip>
+      </div>
+      <AttachmentsList v-model="attachments" />
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.main-container {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.main-container .drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.473);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  color: #fff;
+  z-index: 100;
+}
+
+.main-container .chat-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid rgba(0, 0, 0, .1);
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #fff;
+}
+
+.main-container .chat-header .title-edit-button {
+  opacity: 0;
+}
+
+.main-container .chat-header:hover .title-edit-button {
+  opacity: 1;
+  transition: opacity .3s;
+}
+
+.main-container .chat-body {
+  flex: 1 1;
+  overflow: auto;
+  overflow-x: hidden;
+  padding: 20px 20px 40px;
+  position: relative;
+  overscroll-behavior: none;
+  background-color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.main-container .chat-footer-input {
+  position: relative;
+  width: 100%;
+  padding: 10px 20px 20px;
+  box-sizing: border-box;
+  border-top: 1px solid rgba(0, 0, 0, .1);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background-color: #fff;
+  border-bottom-right-radius: 20px;
+}
+
+.main-container .chat-footer-input .chat-input-area {
+  position: relative;
+}
+
+.main-container .chat-footer-input .chat-input-actions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+}
+
+.main-container .chat-send-btn {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+}
+
+.main-container .chat-attachment-btn {
+  position: absolute;
+  right: 3.25rem;
+  bottom: 0.75rem;
+}
+
+.main-container .chat-recording-btn {
+  position: absolute;
+  right: 5.25rem;
+  bottom: 0.75rem;
+}
+</style>
