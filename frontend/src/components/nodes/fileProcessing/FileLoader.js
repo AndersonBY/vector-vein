@@ -1,8 +1,8 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-29 02:46:49
+ * @Date:   2024-04-15 14:05:21
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 19:36:05
+ * @Last Modified time: 2024-06-24 19:17:09
  */
 export function createTemplateData() {
   return {
@@ -14,13 +14,10 @@ export function createTemplateData() {
         "required": true,
         "placeholder": "",
         "show": true,
-        "multiline": true,
         "value": [],
-        "password": false,
         "name": "files",
         "display_name": "files",
         "type": "str",
-        "clear_after_run": true,
         "list": false,
         "field_type": "file"
       },
@@ -50,13 +47,10 @@ export function createTemplateData() {
         "required": true,
         "placeholder": "",
         "show": false,
-        "multiline": true,
         "value": "",
-        "password": false,
         "name": "output",
         "display_name": "output",
         "type": "str",
-        "clear_after_run": true,
         "list": false,
         "field_type": "",
         "is_output": true
