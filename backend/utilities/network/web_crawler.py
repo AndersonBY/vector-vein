@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:54:18
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-01 13:57:35
+# @Last Modified time: 2024-06-15 18:44:15
 import re
 import json
 import time
@@ -16,8 +16,8 @@ from bs4 import BeautifulSoup
 from readability import Document
 from markdownify import MarkdownConverter, chomp
 
-from utilities.settings import Settings
-from utilities.print_utils import mprint, mprint_error
+from utilities.general import mprint
+from utilities.config import Settings
 
 
 headers = {
@@ -57,10 +57,6 @@ def proxies_for_requests():
             proxy_url = f"http://{http_proxy_host[0]}"
             proxies_for_requests[protocol] = proxy_url
         return proxies_for_requests
-
-
-mprint(f"Proxies: {proxies()}")
-mprint(f"Proxies for requests: {proxies_for_requests()}")
 
 
 def decrypt_aes_ecb_base64(ciphertext_base64, key):
@@ -106,7 +102,7 @@ def crawl_text_from_url(url: str):
             crawl_success = True
             break
         except Exception as e:
-            mprint_error(e)
+            mprint.error(e)
             try_times += 1
             time.sleep(1)
 
