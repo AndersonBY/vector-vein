@@ -1,7 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
 DEFAULT_SETTINGS = {
-    "openai_api_type": "openai",
+    "openai_api_type": "open_ai",
     "openai_api_key": "",
     "openai_api_base": "https://api.openai.com/v1",
     "azure_openai": {
