@@ -2,12 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:43:01
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 14:35:08
+# @Last Modified time: 2024-06-15 14:32:42
 import time
 from functools import wraps
 
+from utilities.general import mprint
 from utilities.workflow import Workflow
-from utilities.print_utils import mprint_error
 
 
 class Task:
@@ -54,7 +54,7 @@ def on_finish(workflow_data: dict):
 
 
 def on_error(*args, **kwargs):
-    mprint_error(f"workflow error: {args}, {kwargs}")
+    mprint.error(f"workflow error: {args}, {kwargs}")
     workflow_data = args[-1]
     workflow = Workflow(workflow_data)
     workflow.report_workflow_status(500)
@@ -72,7 +72,7 @@ def timer(func):
             node_id = args[1]
         else:
             node_id = kwargs.get("node_id")
-        print(f"{node_id} Function {func.__name__} took {elapsed_time} seconds to run.")
+        mprint(f"<Node:{node_id}> Function {func.__name__} took {elapsed_time} seconds to run.")
         if node_id is not None and isinstance(result, dict):
             if "node_run_time" not in result:
                 result["node_run_time"] = {}
