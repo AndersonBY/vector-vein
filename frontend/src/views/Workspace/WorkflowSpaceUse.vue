@@ -114,58 +114,54 @@ const openEditor = async () => {
     <a-skeleton active />
   </div>
   <div class="space-container" v-else>
-    <a-flex justify="space-between" align="flex-end">
-      <div>
-        <a-typography-title>
-          {{ currentWorkflow.title }}
-        </a-typography-title>
-        <a-space>
-          <a-typography-text type="secondary">
-            {{ t('workspace.workflowSpace.update_time', { time: formatTime(currentWorkflow.update_time) }) }}
-          </a-typography-text>
-          <a-divider type="vertical" />
-          <a-typography-link @click="briefModalOpen = true">
-            {{ t('workspace.workflowSpace.brief') }}
-            <a-modal :open="briefModalOpen" :title="t('workspace.workflowSpace.brief')" :width="briefModalWidth"
-              :footer="null" class="introduction-modal" @cancel="briefModalOpen = false">
-              <ImageCarousel :images="currentWorkflow.images" />
-              <VueMarkdown v-highlight :source="currentWorkflow.brief"
-                class="custom-scrollbar markdown-body custom-hljs" />
-            </a-modal>
-          </a-typography-link>
-          <RelatedWorkflowsModal :workflowId="workflowId" />
-          <a-divider type="vertical" />
-          <a-tag :color="tag.color" v-for="(tag, index) in currentWorkflow.tags" :key="index">
-            {{ tag.title }}
-          </a-tag>
-        </a-space>
-      </div>
-      <div>
-        <a-space>
-          <WorkflowRunRecordsDrawer :workflowId="workflowId" @open-record="setWorkflowRecord" />
-          <a-dropdown>
-            <template #overlay>
-              <a-menu>
-                <a-menu-item key="edit" @click="openEditor">
-                  {{ t('workspace.workflowSpace.edit') }}
-                </a-menu-item>
-                <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
-                  :key="`AgentInvokeDataEdit-${saveTime}`" />
-                <a-divider style="margin: 8px 0;" />
-                <a-menu-item key="delete" @click="deleteWorkflow">
-                  <a-typography-text type="danger">
-                    {{ t('workspace.workflowSpace.delete') }}
-                  </a-typography-text>
-                </a-menu-item>
-              </a-menu>
-            </template>
-            <a-button>
-              {{ t('workspace.workflowSpace.more_actions') }}
-              <Down />
-            </a-button>
-          </a-dropdown>
-        </a-space>
-      </div>
+    <a-typography-title>
+      {{ currentWorkflow.title }}
+    </a-typography-title>
+    <a-flex justify="space-between" align="flex-end" wrap="wrap" gap="small">
+      <a-flex wrap="wrap" gap="small">
+        <a-typography-text type="secondary">
+          {{ t('workspace.workflowSpace.update_time', { time: formatTime(currentWorkflow.update_time) }) }}
+        </a-typography-text>
+        <a-divider type="vertical" />
+        <a-typography-link @click="briefModalOpen = true">
+          {{ t('workspace.workflowSpace.brief') }}
+          <a-modal :open="briefModalOpen" :title="t('workspace.workflowSpace.brief')" :width="briefModalWidth"
+            :footer="null" class="introduction-modal" @cancel="briefModalOpen = false">
+            <ImageCarousel :images="currentWorkflow.images" />
+            <VueMarkdown v-highlight :source="currentWorkflow.brief"
+              class="custom-scrollbar markdown-body custom-hljs" />
+          </a-modal>
+        </a-typography-link>
+        <RelatedWorkflowsModal :workflowId="workflowId" />
+        <a-divider type="vertical" />
+        <a-tag :color="tag.color" v-for="(tag, index) in currentWorkflow.tags" :key="index">
+          {{ tag.title }}
+        </a-tag>
+      </a-flex>
+      <a-space>
+        <WorkflowRunRecordsDrawer :workflowId="workflowId" @open-record="setWorkflowRecord" />
+        <a-dropdown>
+          <template #overlay>
+            <a-menu>
+              <a-menu-item key="edit" @click="openEditor">
+                {{ t('workspace.workflowSpace.edit') }}
+              </a-menu-item>
+              <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
+                :key="`AgentInvokeDataEdit-${saveTime}`" />
+              <a-divider style="margin: 8px 0;" />
+              <a-menu-item key="delete" @click="deleteWorkflow">
+                <a-typography-text type="danger">
+                  {{ t('workspace.workflowSpace.delete') }}
+                </a-typography-text>
+              </a-menu-item>
+            </a-menu>
+          </template>
+          <a-button>
+            {{ t('workspace.workflowSpace.more_actions') }}
+            <Down />
+          </a-button>
+        </a-dropdown>
+      </a-space>
     </a-flex>
     <a-divider />
     <WorkflowUse ref="workflowUseRef" :workflow="currentWorkflow" :isTemplate="false" />
