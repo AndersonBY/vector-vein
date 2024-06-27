@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 16:09:41
+# @Last Modified time: 2024-06-15 16:38:42
 from pathlib import Path
 
 from models import (
@@ -10,12 +10,17 @@ from models import (
     model_serializer,
     UserVectorDatabase,
 )
-from api.utils import get_user_object_general
-from utilities.settings import Settings
-from utilities.files import get_files_contents
-from utilities.web_crawler import crawl_text_from_url
-from utilities.text import split_text
-from utilities.embeddings import get_embedding_from_open_ai
+from api.utils import get_user_object_general, JResponse
+from utilities.config import cache
+from utilities.text_processing import split_text
+from utilities.network import crawl_text_from_url
+from utilities.file_processing import get_files_contents
+from background_task.tasks import (
+    embedding_and_upload,
+    q_delete_point,
+    q_create_collection,
+    q_delete_collection,
+)
 
 
 class DatabaseAPI:
@@ -27,11 +32,9 @@ class DatabaseAPI:
             vid=payload.get("vid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
-        database = model_serializer(database)
-        response = {"status": 200, "msg": "success", "data": database}
-        return response
+            return JResponse(status=status, msg=msg)
+
+        return JResponse(data=model_serializer(database))
 
     def update(self, payload):
         status, msg, database = get_user_object_general(
@@ -39,35 +42,28 @@ class DatabaseAPI:
             vid=payload.get("vid", None),
         )
         if status != 200:
-            return {"status": status, "msg": msg, "data": {}}
+            return JResponse(status=status, msg=msg)
+
         database.name = payload.get("name", database.name)
         database.save()
-        return {"status": 200, "msg": msg}
+        return JResponse()
 
     def list(self, payload):
-        databases = UserVectorDatabase.select().order_by("create_time")
-        databases_list = model_serializer(databases, many=True)
-        response = {"status": 200, "msg": "success", "data": databases_list}
-        return response
+        databases = UserVectorDatabase.select().order_by(UserVectorDatabase.create_time.desc())
+        return JResponse(data=model_serializer(databases, many=True))
 
     def create(self, payload):
-        embedding_model = payload.get("embedding_model", "text-embedding-ada-002")
         database: UserVectorDatabase = UserVectorDatabase.create(
             name=payload.get("name", ""),
-            embedding_model=embedding_model,
+            embedding_size=payload.get("embedding_size", 1536),
+            embedding_model=payload.get("embedding_model", "text-embedding-ada-002"),
+            embedding_provider=payload.get("embedding_provider", "openai"),
         )
-        self.vdb_queues["request"].put(
-            {
-                "function_name": "create_collection",
-                "parameters": dict(vid=database.vid.hex, size=database.embedding_size),
-            }
-        )
+        q_create_collection.delay(vid=database.vid.hex, size=database.embedding_size)
         # TODO: Get create result
         database.status = "VALID"
         database.save()
-        database = model_serializer(database)
-        response = {"status": 200, "msg": "success", "data": database}
-        return response
+        return JResponse(data=model_serializer(database))
 
     def delete(self, payload):
         status, msg, database = get_user_object_general(
@@ -75,17 +71,11 @@ class DatabaseAPI:
             vid=payload.get("vid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
-        self.vdb_queues["request"].put(
-            {
-                "function_name": "delete_collection",
-                "parameters": dict(vid=database.vid.hex),
-            }
-        )
-        database.delete_instance()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+            return JResponse(status=status, msg=msg)
+
+        q_delete_collection.delay(vid=database.vid.hex)
+        database.delete_instance(recursive=True)
+        return JResponse()
 
 
 class DatabaseObjectAPI:
@@ -97,11 +87,9 @@ class DatabaseObjectAPI:
             oid=payload.get("oid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
-        user_object = model_serializer(user_object)
-        response = {"status": 200, "msg": "success", "data": user_object}
-        return response
+            return JResponse(status=status, msg=msg)
+
+        return JResponse(data=model_serializer(user_object))
 
     def create(self, payload):
         title = payload.get("title", "")
@@ -111,7 +99,7 @@ class DatabaseObjectAPI:
         content = payload.get("content", "")
         process_rules = payload.get("process_rules", {})
 
-        vector_database = UserVectorDatabase.get(vid=payload.get("vid"))
+        vector_database: UserVectorDatabase = UserVectorDatabase.get(vid=payload.get("vid"))
         object_oids = []
         if add_method == "files":
             for file in files:
@@ -157,61 +145,61 @@ class DatabaseObjectAPI:
                 user_object.save()
                 user_objects.append(user_object)
 
-        settings = Settings()
         for user_object in user_objects:
             paragraphs = split_text(user_object.raw_data["text"], process_rules)
-            for paragraph in paragraphs:
-                paragraph_embedding = get_embedding_from_open_ai(paragraph["text"], settings.data)
-                self.vdb_queues["request"].put(
-                    {
-                        "function_name": "add_point",
-                        "parameters": dict(
-                            vid=vector_database.vid.hex,
-                            point={
-                                "object_id": user_object.oid.hex,
-                                "text": paragraph["text"],
-                                "embedding_type": user_object.data_type.lower(),
-                                "embedding": paragraph_embedding,
-                            },
-                        ),
-                    }
-                )
+            embedding_and_upload.delay(
+                vid=vector_database.vid.hex,
+                object_id=user_object.oid.hex,
+                input=[paragraph["text"] for paragraph in paragraphs],
+                embedding_provider=vector_database.embedding_provider,
+                embedding_model=vector_database.embedding_model,
+                embedding_dimensions=vector_database.embedding_size,
+                embedding_type=user_object.data_type.lower(),
+            )
 
             user_object.info["word_counts"] = sum([paragraph["word_counts"] for paragraph in paragraphs])
             user_object.info["paragraph_counts"] = len(paragraphs)
             user_object.info["process_rules"] = process_rules
             user_object.raw_data["segments"] = paragraphs
-            user_object.status = "VA"
             user_object.save()
-        user_object = model_serializer(user_object)
-        response = {"status": 200, "msg": "success", "data": user_object}
-        return response
+
+        if add_method == "files":
+            return JResponse(data=model_serializer(user_objects, many=True))
+        else:
+            return JResponse(data=model_serializer(user_objects[0]))
 
     def list(self, payload):
-        page_num = payload.get("page", 1)
-        page_size = min(payload.get("page_size", 10), 100)
+        page_num = int(payload.get("page", 1))
+        page_size = min(int(payload.get("page_size", 10)), 100)
         sort_field = payload.get("sort_field", "create_time")
         sort_order = payload.get("sort_order", "descend")
-        sort_field = f"-{sort_field}" if sort_order == "descend" else sort_field
-        user_objects = (
-            UserObject.select().join(UserVectorDatabase).where(UserVectorDatabase.vid == payload.get("vid", None))
-        )
+
+        sort_field_obj = getattr(UserVectorDatabase, sort_field)
+        if sort_order == "descend":
+            sort_field_obj = sort_field_obj.desc()
+
+        database_vid = payload.get("vid")
+        user_objects = UserObject.select().join(UserVectorDatabase).where(UserVectorDatabase.vid == database_vid)
+
         user_objects_count = user_objects.count()
         offset = (page_num - 1) * page_size
         limit = page_size
-        user_objects = user_objects.order_by(sort_field).offset(offset).limit(limit)
+
+        user_objects = user_objects.order_by(sort_field_obj).offset(offset).limit(limit)
         user_objects_list = model_serializer(user_objects, many=True)
-        response = {
-            "status": 200,
-            "msg": "success",
-            "data": {
+
+        for user_object in user_objects_list:
+            if user_object["status"] == "PR":
+                user_object["progress"] = cache.get(f"qdrant-point-progress:{database_vid}:{user_object['oid']}")
+
+        return JResponse(
+            data={
                 "objects": user_objects_list,
                 "total": user_objects_count,
                 "page_size": page_size,
                 "page": page_num,
-            },
-        }
-        return response
+            }
+        )
 
     def update(self, payload):
         status, msg, user_object = get_user_object_general(
@@ -219,12 +207,12 @@ class DatabaseObjectAPI:
             oid=payload.get("oid"),
         )
         if status != 200:
-            return {"status": status, "msg": msg, "data": {}}
+            return JResponse(status=status, msg=msg)
+
         user_object.title = payload.get("title", "")
         user_object.info = payload.get("info", {})
         user_object.save()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()
 
     def delete(self, payload):
         status, msg, user_object = get_user_object_general(
@@ -232,14 +220,7 @@ class DatabaseObjectAPI:
             oid=payload.get("oid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
-        self.vdb_queues["request"].put(
-            {
-                "function_name": "delete_point",
-                "parameters": dict(vid=user_object.vector_database.vid.hex, object_id=user_object.oid.hex),
-            }
-        )
-        user_object.delete_instance()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+            return JResponse(status=status, msg=msg)
+        q_delete_point.delay(vid=user_object.vector_database.vid.hex, object_id=user_object.oid.hex)
+        user_object.delete_instance(recursive=True)
+        return JResponse()
