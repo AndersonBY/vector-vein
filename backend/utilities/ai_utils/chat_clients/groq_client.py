@@ -2,35 +2,29 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-17 18:29:45
+# @Last Modified time: 2024-06-17 13:30:42
 from .openai_compatible_client import OpenAICompatibleChatClient, AsyncOpenAICompatibleChatClient
 
 
-DEFAULT_MODEL = "glm-4-air"
+DEFAULT_MODEL = "llama3-70b-8192"
 MODEL_MAX_INPUT_LENGTH = {
-    "glm-3-turbo": 128000,
-    "glm-4": 128000,
-    "glm-4-0520": 128000,
-    "glm-4-air": 128000,
-    "glm-4-airx": 128000,
-    "glm-4-flash": 128000,
-    "glm-4v": 2000,
+    "mixtral-8x7b-32768": 32768,
+    "llama3-70b-8192": 8192,
+    "llama3-8b-8192": 8192,
+    "gemma-7b-it": 8192,
 }
 MODEL_FUNCTION_CALLING_AVAILABLE = {
-    "glm-3-turbo": True,
-    "glm-4": True,
-    "glm-4-0520": True,
-    "glm-4-air": True,
-    "glm-4-airx": True,
-    "glm-4-flash": True,
-    "glm-4v": False,
+    "mixtral-8x7b-32768": True,
+    "llama3-70b-8192": True,
+    "llama3-8b-8192": True,
+    "gemma-7b-it": True,
 }
 
-API_KEY_SETTING_NAME = "zhipuai_api_key"
-API_BASE_SETTING_NAME = "zhipuai_api_base"
+API_KEY_SETTING_NAME = "groq_api_key"
+API_BASE_SETTING_NAME = "groq_api_base"
 
 
-class ZhiPuAIChatClient(OpenAICompatibleChatClient):
+class GroqChatClient(OpenAICompatibleChatClient):
     DEFAULT_MODEL = DEFAULT_MODEL
     MODEL_MAX_INPUT_LENGTH = MODEL_MAX_INPUT_LENGTH
     MODEL_FUNCTION_CALLING_AVAILABLE = MODEL_FUNCTION_CALLING_AVAILABLE
@@ -38,7 +32,7 @@ class ZhiPuAIChatClient(OpenAICompatibleChatClient):
     API_BASE_SETTING_NAME = API_BASE_SETTING_NAME
 
 
-class AsyncZhiPuAIChatClient(AsyncOpenAICompatibleChatClient):
+class AsyncGroqChatClient(AsyncOpenAICompatibleChatClient):
     DEFAULT_MODEL = DEFAULT_MODEL
     MODEL_MAX_INPUT_LENGTH = MODEL_MAX_INPUT_LENGTH
     MODEL_FUNCTION_CALLING_AVAILABLE = MODEL_FUNCTION_CALLING_AVAILABLE

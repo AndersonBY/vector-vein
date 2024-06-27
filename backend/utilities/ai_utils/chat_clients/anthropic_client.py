@@ -2,21 +2,23 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 15:05:16
+# @Last Modified time: 2024-06-18 01:27:41
 import json
 
 from anthropic import Anthropic, AsyncAnthropic
 from anthropic._types import NotGiven, NOT_GIVEN
-from anthropic.types import ContentBlockDeltaEvent
-
-from utilities.settings import Settings
-from .base_client import BaseChatClient, BaseAsyncChatClient
-from .utils import (
-    cutoff_messages,
-    get_tool_call_data_in_openai_format,
-    generate_tool_use_system_prompt,
-    tool_use_re,
+from anthropic.types import (
+    ToolUseBlock,
+    TextBlock,
+    RawMessageStartEvent,
+    RawContentBlockStartEvent,
+    RawContentBlockDeltaEvent,
+    RawMessageDeltaEvent,
 )
+
+from utilities.config import Settings
+from .base_client import BaseChatClient, BaseAsyncChatClient
+from .utils import cutoff_messages
 
 
 MODEL_MAX_INPUT_LENGTH = {
@@ -26,11 +28,38 @@ MODEL_MAX_INPUT_LENGTH = {
 }
 
 
+def refactor_tool_use_params(tools: list):
+    return [
+        {
+            "name": tool["function"]["name"],
+            "description": tool["function"]["description"],
+            "input_schema": tool["function"]["parameters"],
+        }
+        for tool in tools
+    ]
+
+
+def refactor_tool_calls(tool_calls: list):
+    return [
+        {
+            "index": index,
+            "id": tool["id"],
+            "type": "function",
+            "function": {
+                "name": tool["name"],
+                "arguments": json.dumps(tool["input"], ensure_ascii=False),
+            },
+        }
+        for index, tool in enumerate(tool_calls)
+    ]
+
+
 def format_messages_alternate(messages: list) -> list:
     # messages: roles must alternate between "user" and "assistant", and not multiple "user" roles in a row
     # reformat multiple "user" roles in a row into {"role": "user", "content": [{"type": "text", "text": "Hello, Claude"}, {"type": "text", "text": "How are you?"}]}
     # same for assistant role
     # if not multiple "user" or "assistant" roles in a row, keep it as is
+
     formatted_messages = []
     current_role = None
     current_content = []
@@ -47,6 +76,8 @@ def format_messages_alternate(messages: list) -> list:
 
         if isinstance(content, str):
             current_content.append({"type": "text", "text": content})
+        elif isinstance(content, list):
+            current_content.extend(content)
         else:
             current_content.append(content)
 
@@ -75,7 +106,7 @@ class AnthropicChatClient(BaseChatClient):
         settings = Settings()
         self._client = Anthropic(
             api_key=settings.anthropic_api_key,
-            base_url=settings.anthropic_base_url,
+            base_url=settings.anthropic_api_base,
         )
 
     def create_completion(
@@ -102,13 +133,9 @@ class AnthropicChatClient(BaseChatClient):
             system_prompt = ""
 
         if self.context_length_control == "latest":
-            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
         messages = format_messages_alternate(messages)
-
-        if tools:
-            tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
-            system_prompt += "\n\n" + generate_tool_use_system_prompt(tools=tools_str, format_type="anthropic")
 
         response = self._client.messages.create(
             model=self.model,
@@ -117,52 +144,80 @@ class AnthropicChatClient(BaseChatClient):
             stream=self.stream,
             temperature=self.temperature,
             max_tokens=max_tokens,
+            tools=refactor_tool_use_params(tools) if tools else tools,
+            tool_choice=tool_choice,
         )
 
         if self.stream:
 
             def generator():
-                chunk_count = 0
-                full_content = ""
-                result = {}
+                result = {"content": ""}
                 for chunk in response:
-                    if not isinstance(chunk, ContentBlockDeltaEvent):
+                    message = {"content": ""}
+                    if isinstance(chunk, RawMessageStartEvent):
+                        result["usage"] = {"prompt_tokens": chunk.message.usage.input_tokens}
                         continue
-
-                    chunk_count += 1
-                    message = {"content": chunk.delta.text}
-                    full_content += message["content"] if message["content"] else ""
-                    if tools:
-                        tool_call_data = get_tool_call_data_in_openai_format(
-                            full_content, input_format="anthropic", tools=tools
+                    elif isinstance(chunk, RawContentBlockStartEvent):
+                        if chunk.content_block.type == "tool_use":
+                            result["tool_calls"] = message["tool_calls"] = [
+                                {
+                                    "index": 0,
+                                    "id": chunk.content_block.id,
+                                    "function": {
+                                        "arguments": "",
+                                        "name": chunk.content_block.name,
+                                    },
+                                    "type": "function",
+                                }
+                            ]
+                        elif chunk.content_block.type == "text":
+                            message["content"] = chunk.content_block.text
+                        yield message
+                    elif isinstance(chunk, RawContentBlockDeltaEvent):
+                        if chunk.delta.type == "text_delta":
+                            message["content"] = chunk.delta.text
+                            result["content"] += chunk.delta.text
+                        elif chunk.delta.type == "input_json_delta":
+                            result["tool_calls"][0]["function"]["arguments"] += chunk.delta.partial_json
+                            message["tool_calls"] = [
+                                {
+                                    "index": 0,
+                                    "id": result["tool_calls"][0]["id"],
+                                    "function": {
+                                        "arguments": chunk.delta.partial_json,
+                                        "name": result["tool_calls"][0]["function"]["name"],
+                                    },
+                                    "type": "function",
+                                }
+                            ]
+                        yield message
+                    elif isinstance(chunk, RawMessageDeltaEvent):
+                        result["usage"]["completion_tokens"] = chunk.usage.output_tokens
+                        result["usage"]["total_tokens"] = (
+                            result["usage"]["prompt_tokens"] + result["usage"]["completion_tokens"]
                         )
-                        if tool_call_data:
-                            message["tool_calls"] = tool_call_data["tool_calls"]
-                    if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
-                        message["content"] = ""
-                        result = message
-                        continue
-                    yield message
-                if result:
-                    yield result
+                        yield {"usage": result["usage"]}
 
             return generator()
         else:
             result = {
-                "content": response.content[0].text,
+                "content": "",
                 "usage": {
                     "prompt_tokens": response.usage.input_tokens,
                     "completion_tokens": response.usage.output_tokens,
                     "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
                 },
             }
-            if tools:
-                tool_call_data = get_tool_call_data_in_openai_format(
-                    result["content"], input_format="anthropic", tools=tools
-                )
-                if tool_call_data:
-                    result["tool_calls"] = tool_call_data["tool_calls"]
-                    result["content"] = tool_use_re.sub("", result["content"])
+            tool_calls = []
+            for content_block in response.content:
+                if isinstance(content_block, TextBlock):
+                    result["content"] += content_block.text
+                elif isinstance(content_block, ToolUseBlock):
+                    tool_calls.append(content_block.model_dump())
+
+            if tool_calls:
+                result["tool_calls"] = refactor_tool_calls(tool_calls)
+
             return result
 
 
@@ -185,7 +240,7 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
         settings = Settings()
         self._client = AsyncAnthropic(
             api_key=settings.anthropic_api_key,
-            base_url=settings.anthropic_base_url,
+            base_url=settings.anthropic_api_base,
         )
 
     async def create_completion(
@@ -212,13 +267,9 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             system_prompt = ""
 
         if self.context_length_control == "latest":
-            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
         messages = format_messages_alternate(messages)
-
-        if tools:
-            tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
-            system_prompt += "\n\n" + generate_tool_use_system_prompt(tools=tools_str, format_type="anthropic")
 
         response = await self._client.messages.create(
             model=self.model,
@@ -227,50 +278,78 @@ class AsyncAnthropicChatClient(BaseAsyncChatClient):
             stream=self.stream,
             temperature=self.temperature,
             max_tokens=max_tokens,
+            tools=refactor_tool_use_params(tools) if tools else tools,
+            tool_choice=tool_choice,
         )
 
         if self.stream:
 
             async def generator():
-                chunk_count = 0
-                full_content = ""
-                result = {}
+                result = {"content": ""}
                 async for chunk in response:
-                    if not isinstance(chunk, ContentBlockDeltaEvent):
+                    message = {"content": ""}
+                    if isinstance(chunk, RawMessageStartEvent):
+                        result["usage"] = {"prompt_tokens": chunk.message.usage.input_tokens}
                         continue
-
-                    chunk_count += 1
-                    message = {"content": chunk.delta.text}
-                    full_content += message["content"] if message["content"] else ""
-                    if tools:
-                        tool_call_data = get_tool_call_data_in_openai_format(
-                            full_content, input_format="anthropic", tools=tools
+                    elif isinstance(chunk, RawContentBlockStartEvent):
+                        if chunk.content_block.type == "tool_use":
+                            result["tool_calls"] = message["tool_calls"] = [
+                                {
+                                    "index": 0,
+                                    "id": chunk.content_block.id,
+                                    "function": {
+                                        "arguments": "",
+                                        "name": chunk.content_block.name,
+                                    },
+                                    "type": "function",
+                                }
+                            ]
+                        elif chunk.content_block.type == "text":
+                            message["content"] = chunk.content_block.text
+                        yield message
+                    elif isinstance(chunk, RawContentBlockDeltaEvent):
+                        if chunk.delta.type == "text_delta":
+                            message["content"] = chunk.delta.text
+                            result["content"] += chunk.delta.text
+                        elif chunk.delta.type == "input_json_delta":
+                            result["tool_calls"][0]["function"]["arguments"] += chunk.delta.partial_json
+                            message["tool_calls"] = [
+                                {
+                                    "index": 0,
+                                    "id": result["tool_calls"][0]["id"],
+                                    "function": {
+                                        "arguments": chunk.delta.partial_json,
+                                        "name": result["tool_calls"][0]["function"]["name"],
+                                    },
+                                    "type": "function",
+                                }
+                            ]
+                        yield message
+                    elif isinstance(chunk, RawMessageDeltaEvent):
+                        result["usage"]["completion_tokens"] = chunk.usage.output_tokens
+                        result["usage"]["total_tokens"] = (
+                            result["usage"]["prompt_tokens"] + result["usage"]["completion_tokens"]
                         )
-                        if tool_call_data:
-                            message["tool_calls"] = tool_call_data["tool_calls"]
-                    if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
-                        message["content"] = ""
-                        result = message
-                        continue
-                    yield message
-                if result:
-                    yield result
+                        yield {"usage": result["usage"]}
 
             return generator()
         else:
             result = {
-                "content": response.content[0].text,
+                "content": "",
                 "usage": {
                     "prompt_tokens": response.usage.input_tokens,
                     "completion_tokens": response.usage.output_tokens,
                     "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
                 },
             }
-            if tools:
-                tool_call_data = get_tool_call_data_in_openai_format(
-                    result["content"], input_format="anthropic", tools=tools
-                )
-                if tool_call_data:
-                    result["tool_calls"] = tool_call_data["tool_calls"]
-                    result["content"] = tool_use_re.sub("", result["content"])
+            tool_calls = []
+            for content_block in response.content:
+                if isinstance(content_block, TextBlock):
+                    result["content"] += content_block.text
+                elif isinstance(content_block, ToolUseBlock):
+                    tool_calls.append(content_block.model_dump())
+
+            if tool_calls:
+                result["tool_calls"] = refactor_tool_calls(tool_calls)
+
             return result

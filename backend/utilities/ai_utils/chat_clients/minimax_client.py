@@ -2,12 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:23:26
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 15:07:06
+# @Last Modified time: 2024-06-18 01:28:36
 import json
 
 import httpx
 
-from utilities.settings import Settings
+from utilities.config import Settings
 from .base_client import BaseChatClient, BaseAsyncChatClient
 from .utils import cutoff_messages
 
@@ -16,10 +16,11 @@ MODEL_MAX_INPUT_LENGTH = {
     "abab5-chat": 6144,
     "abab5.5-chat": 16384,
     "abab6-chat": 32768,
+    "abab6.5s-chat": 245760,
 }
 
 
-def get_tool_call_data_in_openai_format(response):
+def extract_tool_calls(response):
     try:
         message = response["choices"][0].get("delta") or response["choices"][0].get("message", {})
         tool_calls = message.get("tool_calls")
@@ -58,7 +59,7 @@ class MiniMaxChatClient(BaseChatClient):
         self.temperature = temperature
         self.context_length_control = context_length_control
         settings = Settings()
-        self.url = f"https://api.minimax.chat/v1/text/chatcompletion_v2?GroupId={settings.minimax_group_id}"
+        self.url = settings.minimax_api_base
         self.headers = {"Authorization": f"Bearer {settings.minimax_api_key}", "Content-Type": "application/json"}
 
     def create_completion(
@@ -78,7 +79,7 @@ class MiniMaxChatClient(BaseChatClient):
         if temperature is not None:
             self.temperature = temperature
 
-        messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+        messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
         if tools is not None:
             tools_params = {
@@ -88,7 +89,9 @@ class MiniMaxChatClient(BaseChatClient):
                         "function": {
                             "name": tool["function"]["name"],
                             "description": tool["function"].get("description", ""),
-                            "parameters": json.dumps(tool["function"].get("parameters", {})),
+                            "parameters": json.dumps(
+                                tool["function"].get("parameters", {})
+                            ),  # 非要搞不同，parameters 是个字符串
                         },
                     }
                     for tool in tools
@@ -118,14 +121,11 @@ class MiniMaxChatClient(BaseChatClient):
         if self.stream:
 
             def generator():
-                chunk_count = 0
                 for chunk in response.iter_lines():
                     if chunk:
-                        chunk_count += 1
                         chunk_data = json.loads(chunk[6:])
-                        tool_calls_params = get_tool_call_data_in_openai_format(chunk_data)
-                        if tool_calls_params:
-                            has_tool_calls = True
+                        tool_calls_params = extract_tool_calls(chunk_data)
+                        has_tool_calls = True if tool_calls_params else False
                         if has_tool_calls:
                             if "usage" not in chunk_data:
                                 continue
@@ -146,7 +146,7 @@ class MiniMaxChatClient(BaseChatClient):
             return generator()
         else:
             result = response.json()
-            tool_calls_params = get_tool_call_data_in_openai_format(result)
+            tool_calls_params = extract_tool_calls(result)
             return {
                 "content": result["choices"][0]["message"].get("content"),
                 "usage": {
@@ -176,7 +176,7 @@ class AsyncMiniMaxChatClient(BaseAsyncChatClient):
         self.temperature = temperature
         self.context_length_control = context_length_control
         settings = Settings()
-        self.url = f"https://api.minimax.chat/v1/text/chatcompletion_v2?GroupId={settings.minimax_group_id}"
+        self.url = settings.minimax_api_base
         self.headers = {"Authorization": f"Bearer {settings.minimax_api_key}", "Content-Type": "application/json"}
         self.http_client = httpx.AsyncClient()
 
@@ -197,7 +197,7 @@ class AsyncMiniMaxChatClient(BaseAsyncChatClient):
         if temperature is not None:
             self.temperature = temperature
 
-        messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+        messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
         if tools is not None:
             tools_params = {
@@ -227,46 +227,49 @@ class AsyncMiniMaxChatClient(BaseAsyncChatClient):
             **tools_params,
         }
 
-        response = await self.http_client.post(
-            url=self.url,
-            headers=self.headers,
-            json=request_body,
-            timeout=60,
-        )
-
         if self.stream:
 
             async def generator():
-                chunk_count = 0
-                has_tool_calls = False
-                async for chunk in response.aiter_lines():
-                    if chunk:
-                        chunk_count += 1
-                        chunk_data = json.loads(chunk[6:])
-                        tool_calls_params = get_tool_call_data_in_openai_format(chunk_data)
-                        if tool_calls_params:
-                            has_tool_calls = True
-                        if has_tool_calls:
-                            if "usage" not in chunk_data:
-                                continue
+                async with self.http_client.stream(
+                    "POST",
+                    url=self.url,
+                    headers=self.headers,
+                    json=request_body,
+                    timeout=60,
+                ) as response:
+                    has_tool_calls = False
+                    async for chunk in response.aiter_lines():
+                        if chunk:
+                            chunk_data = json.loads(chunk[6:])
+                            tool_calls_params = extract_tool_calls(chunk_data)
+                            has_tool_calls = True if tool_calls_params else False
+                            if has_tool_calls:
+                                if "usage" not in chunk_data:
+                                    continue
+                                else:
+                                    yield {
+                                        "content": chunk_data["choices"][0]["message"].get("content"),
+                                        "role": "assistant",
+                                        **tool_calls_params,
+                                    }
                             else:
+                                if "usage" in chunk_data:
+                                    continue
                                 yield {
-                                    "content": chunk_data["choices"][0]["message"].get("content"),
+                                    "content": chunk_data["choices"][0]["delta"]["content"],
                                     "role": "assistant",
-                                    **tool_calls_params,
                                 }
-                        else:
-                            if "usage" in chunk_data:
-                                continue
-                            yield {
-                                "content": chunk_data["choices"][0]["delta"]["content"],
-                                "role": "assistant",
-                            }
 
             return generator()
         else:
-            result = await response.json()
-            tool_calls_params = get_tool_call_data_in_openai_format(result)
+            response = await self.http_client.post(
+                url=self.url,
+                headers=self.headers,
+                json=request_body,
+                timeout=60,
+            )
+            result = response.json()
+            tool_calls_params = extract_tool_calls(result)
             return {
                 "content": result["choices"][0]["message"].get("content"),
                 "usage": {

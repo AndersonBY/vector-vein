@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:23:26
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 15:52:44
+# @Last Modified time: 2024-06-25 22:04:26
 from typing import Union, AsyncGenerator
 
 import httpx
@@ -12,8 +12,8 @@ from openai._streaming import Stream, AsyncStream
 from openai._types import NotGiven, NOT_GIVEN
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
-from utilities.settings import Settings
-from utilities.web_crawler import proxies
+from utilities.config import Settings
+from utilities.network import proxies
 from .base_client import BaseChatClient, BaseAsyncChatClient
 from .utils import cutoff_messages
 
@@ -21,7 +21,79 @@ from .utils import cutoff_messages
 MODEL_MAX_INPUT_LENGTH = {
     "gpt-35-turbo": 16385,
     "gpt-4": 128000,
+    "gpt-4o": 128000,
+    "gpt-4v": 128000,
 }
+
+
+def get_openai_client_and_model(is_async: bool = False, model_id: str = ""):
+    """Base on user settings, return the OpenAI client and model id"""
+    settings = Settings()
+    if settings.openai_api_type == "azure":
+        if model_id == "gpt-35-turbo":
+            setting_key = "gpt_35_deployment"
+        elif model_id == "gpt-4":
+            setting_key = "gpt_4_deployment"
+        elif model_id == "gpt-4o":
+            setting_key = "gpt_4o_deployment"
+        elif model_id == "gpt-4v":
+            setting_key = "gpt_4v_deployment"
+        elif model_id == "tts-1":
+            setting_key = "tts_deployment"
+        elif model_id == "tts-1-hd":
+            setting_key = "tts_hd_deployment"
+        elif model_id == "whisper-1":
+            setting_key = "whisper_deployment"
+        elif model_id == "text-embedding-ada-002":
+            setting_key = "text_embedding_ada_002_deployment"
+        elif model_id == "dall-e-3":
+            setting_key = "dalle3_deployment"
+        else:
+            setting_key = model_id
+
+        model_id = settings.get(f"azure_openai.{setting_key}.id")
+
+        if is_async:
+            client = AsyncAzureOpenAI(
+                azure_endpoint=settings.get(f"azure_openai.{setting_key}.endpoint.api_base"),
+                api_key=settings.get(f"azure_openai.{setting_key}.endpoint.api_key"),
+                api_version="2024-05-01-preview",
+                http_client=httpx.AsyncClient(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+        else:
+            client = AzureOpenAI(
+                azure_endpoint=settings.get(f"azure_openai.{setting_key}.endpoint.api_base"),
+                api_key=settings.get(f"azure_openai.{setting_key}.endpoint.api_key"),
+                api_version="2024-05-01-preview",
+                http_client=httpx.Client(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+    else:
+        if is_async:
+            client = AsyncOpenAI(
+                api_key=settings.openai_api_key,
+                base_url=settings.get("openai_api_base", "https://api.openai.com/v1"),
+                http_client=httpx.AsyncClient(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+        else:
+            client = OpenAI(
+                api_key=settings.openai_api_key,
+                base_url=settings.get("openai_api_base", "https://api.openai.com/v1"),
+                http_client=httpx.Client(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+
+    return client, model_id
 
 
 class OpenAIChatClient(BaseChatClient):
@@ -40,28 +112,6 @@ class OpenAIChatClient(BaseChatClient):
         self.stream = stream
         self.temperature = temperature
         self.context_length_control = context_length_control
-        self.settings = Settings()
-        self.openai_api_type = self.settings.openai_api_type
-        if self.openai_api_type == "azure":
-            self.client = AzureOpenAI(
-                azure_endpoint=self.settings.azure_endpoint,
-                api_key=self.settings.azure_api_key,
-                api_version="2024-03-01-preview",
-                http_client=httpx.Client(
-                    proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                ),
-            )
-
-        else:
-            self.client = OpenAI(
-                api_key=self.settings.openai_api_key,
-                base_url=self.settings.get("openai_api_base", "https://api.openai.com/v1"),
-                http_client=httpx.Client(
-                    proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                ),
-            )
 
     def create_completion(
         self,
@@ -80,17 +130,9 @@ class OpenAIChatClient(BaseChatClient):
         if temperature is not None:
             self.temperature = temperature
         if self.context_length_control == "latest":
-            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
-        if self.openai_api_type == "azure":
-            if self.model == "gpt-3.5":
-                model_id = self.settings.azure_gpt_35_deployment_id
-            elif self.model == "gpt-4":
-                model_id = self.settings.azure_gpt_4_deployment_id
-            else:
-                model_id = self.model
-        else:
-            model_id = self.model
+        self.client, model_id = get_openai_client_and_model(is_async=False, model_id=self.model)
 
         response: ChatCompletion | Stream[ChatCompletionChunk] = self.client.chat.completions.create(
             model=model_id,
@@ -138,28 +180,6 @@ class AsyncOpenAIChatClient(BaseAsyncChatClient):
         self.stream = stream
         self.temperature = temperature
         self.context_length_control = context_length_control
-        self.settings = Settings()
-        self.openai_api_type = self.settings.openai_api_type
-        if self.openai_api_type == "azure":
-            self.client = AsyncAzureOpenAI(
-                azure_endpoint=self.settings.azure_endpoint,
-                api_key=self.settings.azure_api_key,
-                api_version="2024-03-01-preview",
-                http_client=httpx.Client(
-                    proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                ),
-            )
-
-        else:
-            self.client = AsyncOpenAI(
-                api_key=self.settings.openai_api_key,
-                base_url=self.settings.get("openai_api_base", "https://api.openai.com/v1"),
-                http_client=httpx.Client(
-                    proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                ),
-            )
 
     async def create_completion(
         self,
@@ -178,17 +198,9 @@ class AsyncOpenAIChatClient(BaseAsyncChatClient):
         if temperature is not None:
             self.temperature = temperature
         if self.context_length_control == "latest":
-            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
+            messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model], model=self.model)
 
-        if self.openai_api_type == "azure":
-            if self.model == "gpt-3.5":
-                model_id = self.settings.azure_gpt_35_deployment_id
-            elif self.model == "gpt-4":
-                model_id = self.settings.azure_gpt_4_deployment_id
-            else:
-                model_id = self.model
-        else:
-            model_id = self.model
+        self.client, model_id = get_openai_client_and_model(is_async=True, model_id=self.model)
 
         response: ChatCompletion | AsyncStream[ChatCompletionChunk] = await self.client.chat.completions.create(
             model=model_id,
@@ -203,10 +215,8 @@ class AsyncOpenAIChatClient(BaseAsyncChatClient):
         if self.stream:
 
             async def generator():
-                chunk_count = 0
                 async for chunk in response:
                     if len(chunk.choices) > 0:
-                        chunk_count += 1
                         yield chunk.choices[0].delta.model_dump()
 
             return generator()

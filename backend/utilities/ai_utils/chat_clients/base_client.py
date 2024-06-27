@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:22:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-02-26 19:20:44
+# @Last Modified time: 2024-06-11 16:24:14
 class BaseChatClient:
     DEFAULT_MODEL: str | None = None
 

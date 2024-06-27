@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 15:09:41
+# @Last Modified time: 2024-06-09 00:19:24
 import json
 
 from openai import OpenAI, AsyncOpenAI
@@ -10,59 +10,29 @@ from openai._streaming import Stream, AsyncStream
 from openai._types import NotGiven, NOT_GIVEN
 from openai.types.chat import ChatCompletion, ChatCompletionChunk
 
-from utilities.settings import Settings
+from utilities.config import Settings
 from .base_client import BaseChatClient, BaseAsyncChatClient
 from .utils import (
     cutoff_messages,
-    get_tool_call_data_in_openai_format,
+    extract_tool_calls,
     generate_tool_use_system_prompt,
     tool_use_re,
 )
 
 
 MODEL_MAX_INPUT_LENGTH = {
+    "mixtral-8x22b": 60000,
     "mistral-small": 30000,
     "mistral-medium": 30000,
     "mistral-large": 30000,
 }
 
 MODEL_NAME_MAP = {
+    "mixtral-8x22b": "open-mixtral-8x22b",
     "mistral-small": "mistral-small-latest",
     "mistral-medium": "mistral-medium-latest",
     "mistral-large": "mistral-large-latest",
 }
-
-
-def format_tool_calls_result(tool_calls: list, use_pydantic: bool = False):
-    if not use_pydantic:
-        return [
-            {
-                "index": i,
-                "id": f"call_{i}",
-                "function": {
-                    "name": tool_call["name"],
-                    "arguments": json.dumps(tool_call["arguments"], ensure_ascii=False),
-                },
-                "type": "function",
-            }
-            for i, tool_call in enumerate(tool_calls)
-        ]
-    else:
-        tool_calls_result = []
-        for i, tool_call in enumerate(tool_calls):
-            arguments = json.loads(tool_call.function.arguments)
-            tool_calls_result.append(
-                {
-                    "index": i,
-                    "id": f"call_{i}",
-                    "function": {
-                        "name": tool_call.function.name,
-                        "arguments": json.dumps(arguments, ensure_ascii=False),
-                    },
-                    "type": "function",
-                }
-            )
-        return tool_calls_result
 
 
 class MistralChatClient(BaseChatClient):
@@ -84,8 +54,9 @@ class MistralChatClient(BaseChatClient):
         settings = Settings()
         self._mistral_ai_client = OpenAI(
             api_key=settings.mistral_api_key,
-            base_url="https://api.mistral.ai/v1",
+            base_url=settings.mistral_api_base,
         )
+        self._native_function_calling_available = False
 
     def create_completion(
         self,
@@ -107,13 +78,22 @@ class MistralChatClient(BaseChatClient):
         if self.context_length_control == "latest":
             messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
 
+        if self.model in ("mixtral-8x22b", "mistral-small", "mistral-large"):
+            self._native_function_calling_available = True
+
         if tools:
-            tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
-            additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
-            if messages[0].get("role") == "system":
-                messages[0]["content"] += "\n\n" + additional_system_prompt
+            if self._native_function_calling_available:
+                tools_params = dict(tools=tools, tool_choice=tool_choice)
             else:
-                messages.insert(0, {"role": "system", "content": additional_system_prompt})
+                tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
+                additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
+                if messages[0].get("role") == "system":
+                    messages[0]["content"] += "\n\n" + additional_system_prompt
+                else:
+                    messages.insert(0, {"role": "system", "content": additional_system_prompt})
+                tools_params = {}
+        else:
+            tools_params = {}
 
         client = self._mistral_ai_client
 
@@ -123,30 +103,32 @@ class MistralChatClient(BaseChatClient):
             stream=self.stream,
             temperature=self.temperature,
             max_tokens=max_tokens,
+            **tools_params,
         )
 
         if self.stream:
 
             def generator():
-                chunk_count = 0
                 full_content = ""
                 result = {}
                 for chunk in response:
                     if len(chunk.choices) > 0:
-                        chunk_count += 1
-                        message = chunk.choices[0].delta.model_dump()
-                        full_content += message["content"] if message["content"] else ""
-                        if tools:
-                            tool_call_data = get_tool_call_data_in_openai_format(full_content.replace("\\_", "_"))
-                            if tool_call_data:
-                                message["tool_calls"] = tool_call_data["tool_calls"]
-                        if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
-                            message["content"] = ""
-                            result = message
-                            continue
-                        yield message
-                if result:
-                    yield result
+                        if self._native_function_calling_available:
+                            yield chunk.choices[0].delta.model_dump()
+                        else:
+                            message = chunk.choices[0].delta.model_dump()
+                            full_content += message["content"] if message["content"] else ""
+                            if tools:
+                                tool_call_data = extract_tool_calls(full_content.replace("\\_", "_"))
+                                if tool_call_data:
+                                    message["tool_calls"] = tool_call_data["tool_calls"]
+                            if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
+                                message["content"] = ""
+                                result = message
+                                continue
+                            yield message
+                            if result:
+                                yield result
 
             return generator()
         else:
@@ -155,7 +137,7 @@ class MistralChatClient(BaseChatClient):
                 "usage": response.usage.model_dump(),
             }
             if tools:
-                tool_call_data = get_tool_call_data_in_openai_format(result["content"])
+                tool_call_data = extract_tool_calls(result["content"])
                 if tool_call_data:
                     result["tool_calls"] = tool_call_data["tool_calls"]
                     result["content"] = tool_use_re.sub("", result["content"])
@@ -181,8 +163,9 @@ class AsyncMistralChatClient(BaseAsyncChatClient):
         settings = Settings()
         self._mistral_ai_client = AsyncOpenAI(
             api_key=settings.mistral_api_key,
-            base_url="https://api.mistral.ai/v1",
+            base_url=settings.mistral_api_base,
         )
+        self._native_function_calling_available = False
 
     async def create_completion(
         self,
@@ -204,13 +187,22 @@ class AsyncMistralChatClient(BaseAsyncChatClient):
         if self.context_length_control == "latest":
             messages = cutoff_messages(messages, max_count=MODEL_MAX_INPUT_LENGTH[self.model])
 
+        if self.model in ("mixtral-8x22b", "mistral-small", "mistral-large"):
+            self._native_function_calling_available = True
+
         if tools:
-            tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
-            additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
-            if messages[0].get("role") == "system":
-                messages[0]["content"] += "\n\n" + additional_system_prompt
+            if self._native_function_calling_available:
+                tools_params = dict(tools=tools, tool_choice=tool_choice)
             else:
-                messages.insert(0, {"role": "system", "content": additional_system_prompt})
+                tools_str = json.dumps(tools, ensure_ascii=False, indent=None)
+                additional_system_prompt = generate_tool_use_system_prompt(tools=tools_str)
+                if messages[0].get("role") == "system":
+                    messages[0]["content"] += "\n\n" + additional_system_prompt
+                else:
+                    messages.insert(0, {"role": "system", "content": additional_system_prompt})
+                tools_params = {}
+        else:
+            tools_params = {}
 
         client = self._mistral_ai_client
 
@@ -220,30 +212,32 @@ class AsyncMistralChatClient(BaseAsyncChatClient):
             stream=self.stream,
             temperature=self.temperature,
             max_tokens=max_tokens,
+            **tools_params,
         )
 
         if self.stream:
 
             async def generator():
-                chunk_count = 0
                 full_content = ""
                 result = {}
                 async for chunk in response:
                     if len(chunk.choices) > 0:
-                        chunk_count += 1
-                        message = chunk.choices[0].delta.model_dump()
-                        full_content += message["content"] if message["content"] else ""
-                        if tools:
-                            tool_call_data = get_tool_call_data_in_openai_format(full_content.replace("\\_", "_"))
-                            if tool_call_data:
-                                message["tool_calls"] = tool_call_data["tool_calls"]
-                        if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
-                            message["content"] = ""
-                            result = message
-                            continue
-                        yield message
-                if result:
-                    yield result
+                        if self._native_function_calling_available:
+                            yield chunk.choices[0].delta.model_dump()
+                        else:
+                            message = chunk.choices[0].delta.model_dump()
+                            full_content += message["content"] if message["content"] else ""
+                            if tools:
+                                tool_call_data = extract_tool_calls(full_content.replace("\\_", "_"))
+                                if tool_call_data:
+                                    message["tool_calls"] = tool_call_data["tool_calls"]
+                            if full_content in ("<", "<|", "<|▶", "<|▶|") or full_content.startswith("<|▶|>"):
+                                message["content"] = ""
+                                result = message
+                                continue
+                            yield message
+                            if result:
+                                yield result
 
             return generator()
         else:
@@ -252,7 +246,7 @@ class AsyncMistralChatClient(BaseAsyncChatClient):
                 "usage": response.usage.model_dump(),
             }
             if tools:
-                tool_call_data = get_tool_call_data_in_openai_format(result["content"])
+                tool_call_data = extract_tool_calls(result["content"])
                 if tool_call_data:
                     result["tool_calls"] = tool_call_data["tool_calls"]
                     result["content"] = tool_use_re.sub("", result["content"])
