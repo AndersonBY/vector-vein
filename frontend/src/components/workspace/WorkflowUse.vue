@@ -412,7 +412,8 @@ defineExpose({
           </div>
 
           <div v-else-if="node.type == 'Table'">
-            <TableRenderer :data="node.data.template.output.value" style="width: 100%;" />
+            <TableRenderer :data="node.data.template.output.value" :bordered="node.data.template.bordered.value"
+              style="width: 100%;" />
           </div>
 
           <div v-else-if="node.type == 'Html'">
