@@ -2,14 +2,16 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 17:24:31
+# @Last Modified time: 2024-06-15 18:44:21
 import uuid
 from copy import deepcopy
 from typing import List, Dict
 from datetime import datetime
+from functools import cached_property
 
-from models import WorkflowRunRecord
-from utilities.print_utils import mprint_error
+from models import WorkflowRunRecord, Message
+from models import Workflow as WorkflowModel
+from utilities.general import mprint
 
 
 class DAG:
@@ -375,15 +377,36 @@ class Workflow:
 
     def report_workflow_status(self, status: int, error_task: str = ""):
         try:
-            workflow_obj = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
-            workflow_obj.status = "FINISHED" if status == 200 else "FAILED"
-            workflow_obj.data = self.workflow_data
-            workflow_obj.data["error_task"] = error_task
-            workflow_obj.end_time = datetime.now()
-            workflow_obj.save()
+            workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
+
+            workflow_record.status = "FINISHED" if status == 200 else "FAILED"
+            workflow_record.data = self.workflow_data
+            workflow_record.data["error_task"] = error_task
+            workflow_record.end_time = datetime.now()
+
+            if workflow_record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
+                source_message_mid = workflow_record.source_message
+                source_message = Message.get(mid=source_message_mid)
+                if source_message.status == Message.StatusTypes.RUNNING_WORKFLOW:
+                    # 如果是从聊天中调用的工作流，运行完成后先更新 message
+                    # If the workflow is called from a chat, update the message first after running
+                    workflow_data_obj = WorkflowData(workflow_record.data)
+                    output_contents = workflow_data_obj.output_contents
+                    source_message.metadata["workflow_result"] = "\n\n".join(
+                        [
+                            f"# {output_content['title']}\n{output_content['value']}"
+                            if output_content["title"]
+                            else f"{output_content['value']}"
+                            for output_content in output_contents
+                        ]
+                    )
+                    source_message.status = Message.StatusTypes.SUCCESS
+                    source_message.save()
+
+            workflow_record.save()
             return True
         except Exception as e:
-            mprint_error(f"report_workflow_status failed: {e}")
+            mprint.error(f"report_workflow_status failed: {e}")
             return False
 
     def set_node_status(
@@ -398,3 +421,167 @@ class Workflow:
     @property
     def data(self):
         return self.workflow_data
+
+
+class WorkflowData:
+    NON_FORM_TYPES = ["typography-paragraph"]
+
+    def __init__(self, workflow_data: dict):
+        self.workflow_data = workflow_data
+
+    @cached_property
+    def related_workflows(self) -> dict:
+        related_workflows = {}
+        for node in self.workflow_data["nodes"]:
+            if node["type"] == "WorkflowInvoke":
+                workflow_id = node["data"]["template"]["workflow_id"]["value"]
+                workflow = WorkflowModel.get(WorkflowModel.wid == workflow_id)
+                related_workflows.update(workflow.data.get("related_workflows", {}))
+                related_workflows[workflow_id] = workflow.data
+
+        return related_workflows
+
+    def replace_workflow_invoke_nodes_ids(self, id_map: dict):
+        for node in self.workflow_data["nodes"]:
+            if node["type"] != "WorkflowInvoke":
+                continue
+            workflow_id = node["data"]["template"]["workflow_id"]["value"]
+            if workflow_id not in id_map:
+                continue
+            node["data"]["template"]["workflow_id"]["value"] = id_map[workflow_id]
+        return self.workflow_data
+
+    @cached_property
+    def ui_design(self):
+        def update_node_list(nodes, unused_nodes, new_node):
+            # 查找是否已经有相同id的节点
+            prev_node_index = None
+            for i, node in enumerate(nodes):
+                if node["id"] == new_node["id"]:
+                    prev_node_index = i
+                    break
+
+            # 如果找到了，替换原节点，否则追加新节点
+            if prev_node_index is not None:
+                nodes[prev_node_index] = new_node
+            else:
+                nodes.append(new_node)
+
+            # 清理unused_nodes列表
+            unused_nodes[:] = [node for node in unused_nodes if node["id"] != new_node["id"]]
+
+        def update_field_list(fields, unused_fields, new_field):
+            # 查找是否已经有相同的nodeId和fieldName的字段
+            prev_field_index = None
+            for i, field in enumerate(fields):
+                if field.get("nodeId") == new_field["nodeId"] and field["fieldName"] == new_field["fieldName"]:
+                    prev_field_index = i
+                    break
+
+            # 如果找到了，替换原字段，否则追加新字段
+            if prev_field_index is not None:
+                fields[prev_field_index] = new_field
+            else:
+                fields.append(new_field)
+
+            # 清理unused_fields列表
+            unused_fields[:] = [
+                field
+                for field in unused_fields
+                if not (field.get("nodeId") == new_field["nodeId"] and field["fieldName"] == new_field["fieldName"])
+            ]
+
+        def remove_unused_fields(fields, unused_fields):
+            for field in unused_fields:
+                if "field_type" not in field or field["field_type"] not in WorkflowData.NON_FORM_TYPES:
+                    fields[:] = [
+                        n
+                        for n in fields
+                        if not (n["nodeId"] == field.get("nodeId") and n["fieldName"] == field["fieldName"])
+                    ]
+
+        def remove_unused_nodes(nodes, unused_nodes):
+            for node in unused_nodes:
+                if "field_type" not in node or node["field_type"] not in WorkflowData.NON_FORM_TYPES:
+                    nodes[:] = [n for n in nodes if n["id"] != node["id"]]
+
+        def has_show_fields(node):
+            return any(field_data.get("show", False) for field_data in node["data"]["template"].values())
+
+        ui = self.workflow_data.get("ui", {})
+        input_fields = ui.get("inputFields", [])
+        unused_input_fields = input_fields[:]
+        output_nodes = ui.get("outputNodes", [])
+        unused_output_nodes = output_nodes[:]
+        trigger_nodes = ui.get("triggerNodes", [])
+        unused_trigger_nodes = trigger_nodes[:]
+        workflow_invoke_output_nodes = []
+
+        for node in self.workflow_data.get("nodes", []):
+            if node["category"] == "triggers":
+                trigger_nodes.append(node)
+                unused_trigger_nodes = [n for n in unused_trigger_nodes if n["id"] != node["id"]]
+            elif node["category"] == "outputs":
+                if node["type"] == "WorkflowInvokeOutput":
+                    workflow_invoke_output_nodes.append(node)
+                    continue
+                # Check for visibility of the node based on its type
+                elif "template" in node["data"] and not node["data"]["template"].get("show", {}).get("value", True):
+                    continue
+                update_node_list(output_nodes, unused_output_nodes, node)
+            else:
+                if not node["data"].get("has_inputs") and has_show_fields(node):
+                    continue
+                for field, field_data in node["data"]["template"].items():
+                    if field_data.get("show"):
+                        node_field = field_data.copy()
+                        node_field["category"] = node["category"]
+                        node_field["nodeId"] = node["id"]
+                        node_field["fieldName"] = field
+                        update_field_list(input_fields, unused_input_fields, node_field)
+
+        # Remove unused fields and nodes
+        remove_unused_fields(input_fields, unused_input_fields)
+        remove_unused_nodes(output_nodes, unused_output_nodes)
+        remove_unused_nodes(trigger_nodes, unused_trigger_nodes)
+
+        return {
+            "input_fields": input_fields,
+            "output_nodes": output_nodes,
+            "trigger_nodes": trigger_nodes,
+            "workflow_invoke_output_nodes": workflow_invoke_output_nodes,
+        }
+
+    @cached_property
+    def output_contents(self):
+        output_nodes = self.ui_design["output_nodes"]
+        parsed_nodes = []
+
+        for node in output_nodes:
+            parsed_node = {"type": node["type"], "title": "", "value": ""}
+
+            if node["type"] == "Text":
+                parsed_node["title"] = node["data"]["template"]["output_title"]["value"]
+                parsed_node["value"] = node["data"]["template"]["text"]["value"]
+            elif node["type"] == "Audio":
+                parsed_node["title"] = "Audio"
+                parsed_node["value"] = node["data"]["template"]["audio_url"]["value"]
+            elif node["type"] == "Mindmap":
+                parsed_node["title"] = "Mindmap"
+                parsed_node["value"] = node["data"]["template"]["content"]["value"]
+            elif node["type"] == "Mermaid":
+                parsed_node["title"] = "Mermaid"
+                parsed_node["value"] = node["data"]["template"]["content"]["value"]
+            elif node["type"] == "Echarts":
+                parsed_node["title"] = "Echarts"
+                parsed_node["value"] = node["data"]["template"]["option"]["value"]
+            elif node["type"] == "Table":
+                parsed_node["title"] = "Table"
+                parsed_node["value"] = node["data"]["template"]["option"]["value"]
+            elif node["type"] == "Html":
+                parsed_node["title"] = "HTML"
+                parsed_node["value"] = node["data"]["template"]["output"]["value"]
+
+            parsed_nodes.append(parsed_node)
+
+        return parsed_nodes
