@@ -2,13 +2,13 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-02 19:24:47
+# @Last Modified time: 2024-06-15 18:44:25
 import queue
 import inspect
 import traceback
 
+from utilities.general import mprint
 from utilities.workflow import Workflow
-from utilities.print_utils import mprint, mprint_error
 from worker.tasks import chain, on_finish
 from worker.tasks import (
     llms,
@@ -55,7 +55,7 @@ for module in task_modules:
     task_functions[module_name] = functions
 
 
-def main_worker(task_queue: queue.Queue, vdb_queues: dict):
+def workflow_worker(task_queue: queue.Queue):
     """
     Main worker. Run in a separate thread.
 
@@ -66,7 +66,7 @@ def main_worker(task_queue: queue.Queue, vdb_queues: dict):
     mprint("Task worker start")
     while True:
         task_data = task_queue.get()
-        mprint("worker receive task")
+        mprint("worker receive workflow request")
         try:
             data: dict = task_data.get("data")
             workflow = Workflow(data)
@@ -74,60 +74,16 @@ def main_worker(task_queue: queue.Queue, vdb_queues: dict):
             func_list = []
             for task in sorted_tasks:
                 module, function = task["task_name"].split(".")
-                if module == "vector_db":
-                    func_list.append(task_functions[module][function].s(task["node_id"], vdb_queues))
-                else:
-                    func_list.append(task_functions[module][function].s(task["node_id"]))
+                func_list.append(task_functions[module][function].s(task["node_id"]))
             task_chain = chain(*func_list, on_finish.s())
             task_chain(workflow.data)
         except Exception as e:
-            mprint_error(traceback.format_exc())
-            mprint_error(f"main_worker error: {e}")
-            mprint_error(f"error_task: {e.task_name}")
+            mprint.error(traceback.format_exc())
+            mprint.error(f"workflow worker error: {e}")
+            mprint.error(f"error_task: {e.task_name}")
             for module_name, functions in task_functions.items():
                 if e.task_name in functions:
-                    mprint_error(f"error_module: {module_name}")
+                    mprint.error(f"error_module: {module_name}")
                     break
             workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
         task_queue.task_done()
-
-
-def main_vector_database(vdb_queues: dict):
-    """
-    Vector database worker. Run in a separate thread.
-    Qdrant local version uses SQLite which does not support multi-threading.
-
-    Args:
-        vdb_queue (queue.Queue): Vector database related request queue
-    """
-    from utilities.qdrant_utils import (
-        add_point,
-        delete_point,
-        search_point,
-        create_collection,
-        delete_collection,
-    )
-
-    qrant_utils_functions = {
-        "add_point": add_point,
-        "delete_point": delete_point,
-        "search_point": search_point,
-        "create_collection": create_collection,
-        "delete_collection": delete_collection,
-    }
-    vdb_request_queue = vdb_queues["request"]
-    vdb_response_queue = vdb_queues["response"]
-    mprint("Vector database worker start")
-    while True:
-        request = vdb_request_queue.get()
-        function_name: dict = request.get("function_name")
-        parameters: dict = request.get("parameters")
-        mprint(f"vector_database receive request {function_name}")
-        try:
-            function = qrant_utils_functions[function_name]
-            response = function(**parameters)
-            if function_name == "search_point":
-                vdb_response_queue.put(response)
-        except Exception as e:
-            mprint_error(f"main_vector_database error: {e}")
-        vdb_request_queue.task_done()
