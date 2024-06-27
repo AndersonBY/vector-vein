@@ -3,9 +3,12 @@ import { computed, onBeforeMount, h } from 'vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import { theme, Spin } from 'ant-design-vue'
+import { useRouter } from "vue-router"
 import { useUserSettingsStore } from '@/stores/userSettings'
 import LoadingElement from "@/components/LoadingElement.vue"
 
+
+const router = useRouter()
 
 const userSettings = useUserSettingsStore()
 
@@ -17,6 +20,9 @@ onBeforeMount(async () => {
     }
   }
   await userSettings.init()
+
+  // Expose router to window for python usage
+  window.router = router
 })
 
 const antDesignLocale = computed(() => {
