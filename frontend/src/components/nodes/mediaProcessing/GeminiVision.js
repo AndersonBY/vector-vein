@@ -1,13 +1,13 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-15 12:08:53
+ * @Date:   2024-04-15 12:02:48
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 14:47:09
+ * @Last Modified time: 2024-06-17 19:40:42
  */
 export function createTemplateData() {
   return {
     "description": "description",
-    "task_name": "media_processing.gpt_vision",
+    "task_name": "media_processing.gemini_vision",
     "has_inputs": true,
     "template": {
       "text_prompt": {
@@ -20,6 +20,28 @@ export function createTemplateData() {
         "type": "str",
         "list": false,
         "field_type": "textarea"
+      },
+      "llm_model": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "gemini-1.5-pro",
+        "options": [
+          {
+            "value": "gemini-1.5-pro",
+            "label": "gemini-1.5-pro"
+          },
+          {
+            "value": "gemini-1.5-flash",
+            "label": "gemini-1.5-flash"
+          },
+        ],
+        "name": "llm_model",
+        "display_name": "llm_model",
+        "type": "str",
+        "clear_after_run": false,
+        "list": true,
+        "field_type": "select"
       },
       "images_or_urls": {
         "required": false,
@@ -71,58 +93,6 @@ export function createTemplateData() {
         "condition": (fieldsData) => {
           return fieldsData.images_or_urls.value == 'urls'
         },
-      },
-      "model": {
-        "required": false,
-        "placeholder": "",
-        "show": false,
-        "value": "gpt-4o",
-        "options": [
-          {
-            "value": "gpt-4o",
-            "label": "gpt-4o"
-          },
-          {
-            "value": "gpt-4",
-            "label": "gpt-4"
-          },
-          {
-            "value": "gpt-4v",
-            "label": "gpt-4v"
-          },
-        ],
-        "name": "model",
-        "display_name": "model",
-        "type": "str",
-        "clear_after_run": false,
-        "list": true,
-        "field_type": "select"
-      },
-      "detail_type": {
-        "required": false,
-        "placeholder": "",
-        "show": false,
-        "value": "auto",
-        "options": [
-          {
-            "value": "auto",
-            "label": "auto"
-          },
-          {
-            "value": "low",
-            "label": "low"
-          },
-          {
-            "value": "high",
-            "label": "high"
-          },
-        ],
-        "name": "detail_type",
-        "display_name": "detail_type",
-        "type": "str",
-        "clear_after_run": false,
-        "list": true,
-        "field_type": "select"
       },
       "output": {
         "required": true,
