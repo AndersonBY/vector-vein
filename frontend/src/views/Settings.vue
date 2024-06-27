@@ -2,86 +2,55 @@
 import { ref, reactive, toRaw, onBeforeMount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { MenuFoldOne, MenuUnfoldOne, More, Robot, Mail, Delete } from '@icon-park/vue-next'
+import {
+  More,
+  Mail,
+  Robot,
+  Search,
+  CubeFive,
+  Acoustic,
+  MenuFoldOne,
+  KeyboardOne,
+  MenuUnfoldOne,
+  Communication,
+} from '@icon-park/vue-next'
 import { useUserSettingsStore } from '@/stores/userSettings'
-import { deepCopy } from '@/utils/util'
-import { settingAPI } from "@/api/user"
+import LocalLLMSettings from "@/components/settings/LocalLLMSettings.vue"
+import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
+import AzureOpenAISettings from "@/components/settings/AzureOpenAISettings.vue"
+import { chatModelOptions } from '@/utils/common'
+import { settingAPI, hardwareAPI } from "@/api/user"
+import QuestionPopover from "@/components/QuestionPopover.vue"
 
 const { t } = useI18n()
-const loading = ref(false)
+const loading = ref(true)
 
 const userSettings = useUserSettingsStore()
 
+const microphoneDeviceOptions = ref([])
+
 onBeforeMount(async () => {
+  const devices = await hardwareAPI('list_microphones', {})
+  microphoneDeviceOptions.value = devices.data.map((device) => ({
+    label: device.name,
+    value: device.index,
+  }))
+
+  const defaultSettingsResp = await settingAPI('get_default_settings')
+  settingForm.data = defaultSettingsResp.data
+
   const res = await settingAPI('get', {})
   userSettings.setSetting(res.data)
   settingForm.id = res.data.id
-  // LLMs settings
-  settingForm.data.openai_api_type = res.data.data.openai_api_type || 'open_ai'
-  settingForm.data.openai_api_key = res.data.data.openai_api_key || ''
-  settingForm.data.openai_api_base = res.data.data.openai_api_base || 'https://api.openai.com/v1'
-  settingForm.data.azure_api_key = res.data.data.azure_api_key || ''
-  settingForm.data.azure_endpoint = res.data.data.azure_endpoint || ''
-  settingForm.data.azure_gpt_35_deployment_id = res.data.data.azure_gpt_35_deployment_id || ''
-  settingForm.data.azure_gpt_4_deployment_id = res.data.data.azure_gpt_4_deployment_id || ''
-  settingForm.data.azure_gpt_4v_deployment_id = res.data.data.azure_gpt_4v_deployment_id || ''
-  settingForm.data.openai_embedding_engine = res.data.data.openai_embedding_engine || ''
-  settingForm.data.moonshot_api_base = res.data.data.moonshot_api_base || 'https://api.moonshot.cn/v1'
-  settingForm.data.moonshot_api_key = res.data.data.moonshot_api_key || ''
-  settingForm.data.zhipuai_api_base = res.data.data.zhipuai_api_base || 'https://open.bigmodel.cn/api/paas/v4/'
-  settingForm.data.zhipuai_api_key = res.data.data.zhipuai_api_key || ''
-  settingForm.data.anthropic_api_base = res.data.data.anthropic_api_base || 'https://api.anthropic.com/v1'
-  settingForm.data.anthropic_api_key = res.data.data.anthropic_api_key || ''
-  // Local LLMs
-  settingForm.data.local_llms = res.data.data.local_llms || []
-  // Others
-  settingForm.data.output_folder = res.data.data.output_folder || './'
-  settingForm.data.data_path = res.data.data.data_path || './data'
-  settingForm.data.log_path = res.data.data.log_path || './log'
-  // Email settings
-  settingForm.data.email_user = res.data.data.email_user || ''
-  settingForm.data.email_password = res.data.data.email_password || ''
-  settingForm.data.email_smtp_host = res.data.data.email_smtp_host || ''
-  settingForm.data.email_smtp_port = res.data.data.email_smtp_port || ''
-  settingForm.data.email_smtp_ssl = res.data.data.email_smtp_ssl || true
-  settingForm.data.pexels_api_key = res.data.data.pexels_api_key || ''
-  settingForm.data.stable_diffusion_base_url = res.data.data.stable_diffusion_base_url || 'http://127.0.0.1:7860'
-  settingForm.data.use_system_proxy = res.data.data.use_system_proxy || true
-  settingForm.data.website_domain = res.data.data.website_domain || 'vectorvein.ai'
+
+  const userData = res.data.data || {}
+  settingForm.data = { ...defaultSettingsResp.data, ...userData }
+
   loading.value = false
 })
 const settingForm = reactive({
   id: 1,
-  data: {
-    openai_api_type: 'openai',
-    openai_api_key: '',
-    openai_api_base: 'https://api.openai.com/v1',
-    azure_api_key: '',
-    azure_endpoint: '',
-    azure_gpt_35_deployment_id: '',
-    azure_gpt_4_deployment_id: '',
-    azure_gpt_4v_deployment_id: '',
-    openai_embedding_engine: '',
-    moonshot_api_base: 'https://api.moonshot.cn/v1',
-    moonshot_api_key: '',
-    zhipuai_api_base: 'https://open.bigmodel.cn/api/paas/v4/',
-    zhipuai_api_key: '',
-    anthropic_api_base: 'https://api.anthropic.com/v1',
-    anthropic_api_key: '',
-    local_llms: [],
-    output_folder: './',
-    data_path: './data',
-    log_path: './log',
-    email_user: '',
-    email_password: '',
-    email_smtp_host: '',
-    email_smtp_port: '',
-    email_smtp_ssl: true,
-    pexels_api_key: '',
-    stable_diffusion_base_url: 'http://127.0.0.1:7860',
-    use_system_proxy: true,
-    website_domain: 'vectorvein.ai',
-  }
+  data: {}
 })
 
 const selectFolder = async (settingsKey) => {
@@ -94,15 +63,15 @@ const selectFolder = async (settingsKey) => {
     }
     settingForm.data[settingsKey] = selectedFolder[0]
   } catch (error) {
-    console.log(error)
+    console.error(error)
   }
 }
 
 const saving = ref(false)
-const saveSetting = async () => {
+const saveSetting = async (updateShortcuts = false) => {
   saving.value = true
   userSettings.setSetting(toRaw(settingForm))
-  await settingAPI('update', settingForm)
+  await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts })
   message.success(t('settings.save_success'))
   saving.value = false
 }
@@ -117,86 +86,6 @@ const menuClick = async ({ key }) => {
   selectedKeys.value = [key]
 }
 
-const localLlmsFormStatus = ref()
-const localLlmEditIndex = ref()
-const localLlmForm = reactive({
-  model_family: '',
-  api_base: '',
-  api_key: '',
-  models: [],
-})
-const localLlmFormRemove = (index) => {
-  settingForm.data.local_llms.splice(index, 1)
-}
-const localLlmFormEdit = (llm, index) => {
-  localLlmForm.model_family = llm.model_family
-  localLlmForm.models = deepCopy(toRaw(llm.models))
-  localLlmForm.api_base = llm.api_base
-  localLlmForm.api_key = llm.api_key
-  localLlmsFormStatus.value = 'edit'
-  localLlmEditIndex.value = index
-}
-const localLlmFormSave = () => {
-  if (localLlmsFormStatus.value === 'edit') {
-    settingForm.data.local_llms[localLlmEditIndex.value].model_family = localLlmForm.model_family
-    settingForm.data.local_llms[localLlmEditIndex.value].models = deepCopy(toRaw(localLlmForm.models))
-    settingForm.data.local_llms[localLlmEditIndex.value].api_base = localLlmForm.api_base
-    settingForm.data.local_llms[localLlmEditIndex.value].api_key = localLlmForm.api_key
-  } else {
-    settingForm.data.local_llms.push(deepCopy(toRaw(localLlmForm)))
-  }
-  localLlmForm.model_family = ''
-  localLlmForm.models = []
-  localLlmForm.api_base = ''
-  localLlmForm.api_key = ''
-  localLlmsFormStatus.value = ''
-}
-
-const localLlmModelFormStatus = ref()
-const localLlmModelEditIndex = ref()
-const localLlmModelFormModalOpen = ref(false)
-const localLlmModelForm = reactive({
-  model_label: '',
-  model_id: '',
-  rpm: 60,
-  concurrent: 1,
-  max_tokens: 8192,
-})
-const localLlmModelRemove = (index) => {
-  localLlmForm.models.splice(index, 1)
-}
-const localLlmModelEdit = (model, index) => {
-  localLlmModelForm.model_id = model.model_id
-  localLlmModelForm.model_label = model.model_label
-  localLlmModelForm.rpm = model.rpm
-  localLlmModelForm.concurrent = model.concurrent
-  localLlmModelForm.max_tokens = model.max_tokens
-  localLlmModelFormStatus.value = 'edit'
-  localLlmModelEditIndex.value = index
-  localLlmModelFormModalOpen.value = true
-}
-const localLlmModelAdd = () => {
-  localLlmModelFormStatus.value = 'add'
-  localLlmModelFormModalOpen.value = true
-}
-const localLlmModelSave = () => {
-  localLlmModelFormModalOpen.value = false
-  if (localLlmModelFormStatus.value === 'edit') {
-    localLlmForm.models[localLlmModelEditIndex.value].model_label = localLlmModelForm.model_label
-    localLlmForm.models[localLlmModelEditIndex.value].model_id = localLlmModelForm.model_id
-    localLlmForm.models[localLlmModelEditIndex.value].rpm = localLlmModelForm.rpm
-    localLlmForm.models[localLlmModelEditIndex.value].concurrent = localLlmModelForm.concurrent
-    localLlmForm.models[localLlmModelEditIndex.value].max_tokens = localLlmModelForm.max_tokens
-  } else {
-    localLlmForm.models.push(deepCopy(toRaw(localLlmModelForm)))
-  }
-  localLlmModelForm.model_id = ''
-  localLlmModelForm.model_label = ''
-  localLlmModelForm.rpm = 60
-  localLlmModelForm.concurrent = 1
-  localLlmModelForm.max_tokens = 8192
-}
-
 const websiteDomainOptions = [
   { label: 'vectorvein.ai', value: 'vectorvein.ai' },
   { label: 'vectorvein.com', value: 'vectorvein.com' },
@@ -209,7 +98,8 @@ const websiteDomainOptions = [
       collapsible :collapsedWidth="48" @collapse="onCollapse" breakpoint="lg" theme="light"
       :style="{ overflowY: sidebarHover ? 'auto' : 'hidden' }" @mouseover="sidebarHover = true"
       @mouseleave="sidebarHover = false">
-      <a-menu v-model:selectedKeys="selectedKeys" @click="menuClick" theme="light" mode="inline" style="height: 100%">
+      <a-menu v-model:selectedKeys="selectedKeys" @click="menuClick" theme="light" mode="inline"
+        style="height: 100%; padding-bottom: 40px;">
         <a-menu-item key="llms">
           <template #icon>
             <Robot />
@@ -221,6 +111,36 @@ const websiteDomainOptions = [
             <Robot />
           </template>
           {{ t('settings.local_llms') }}
+        </a-menu-item>
+        <a-menu-item key="tts">
+          <template #icon>
+            <Acoustic />
+          </template>
+          {{ t('settings.tts') }}
+        </a-menu-item>
+        <a-menu-item key="embedding_models">
+          <template #icon>
+            <CubeFive />
+          </template>
+          {{ t('settings.embedding_models') }}
+        </a-menu-item>
+        <a-menu-item key="agent">
+          <template #icon>
+            <Communication />
+          </template>
+          {{ t('settings.agent_settings') }}
+        </a-menu-item>
+        <a-menu-item key="web_search">
+          <template #icon>
+            <Search />
+          </template>
+          {{ t('settings.web_search') }}
+        </a-menu-item>
+        <a-menu-item key="shortcut">
+          <template #icon>
+            <KeyboardOne />
+          </template>
+          {{ t('settings.shortcut_settings') }}
         </a-menu-item>
         <a-menu-item key="email">
           <template #icon>
@@ -250,79 +170,144 @@ const websiteDomainOptions = [
             {{ t('settings.save') }}
           </a-button>
         </template>
-        <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-          <a-form-item :label="t('settings.openai_api_type')">
-            <a-radio-group v-model:value="settingForm.data.openai_api_type">
-              <a-radio-button value="open_ai">
-                {{ t('settings.openai') }}
-              </a-radio-button>
-              <a-radio-button value="azure">
-                {{ t('settings.azure') }}
-              </a-radio-button>
-            </a-radio-group>
-          </a-form-item>
+        <a-tabs tab-position="left">
+          <a-tab-pane key="openai" tab="OpenAI">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="t('settings.openai_api_type')">
+                <a-radio-group v-model:value="settingForm.data.openai_api_type">
+                  <a-radio-button value="open_ai">
+                    {{ t('settings.openai') }}
+                  </a-radio-button>
+                  <a-radio-button value="azure">
+                    {{ t('settings.azure') }}
+                  </a-radio-button>
+                </a-radio-group>
+              </a-form-item>
 
-          <template v-if="settingForm.data.openai_api_type == 'azure'">
-            <a-form-item :label="t('settings.azure_api_key')">
-              <a-input-password v-model:value="settingForm.data.azure_api_key" />
-            </a-form-item>
-
-            <a-form-item :label="t('settings.azure_endpoint')">
-              <a-input v-model:value="settingForm.data.azure_endpoint" />
-            </a-form-item>
-
-            <a-form-item :label="t('settings.azure_gpt_35_deployment_id')">
-              <a-input v-model:value="settingForm.data.azure_gpt_35_deployment_id" />
-            </a-form-item>
-
-            <a-form-item :label="t('settings.azure_gpt_4_deployment_id')">
-              <a-input v-model:value="settingForm.data.azure_gpt_4_deployment_id" />
-            </a-form-item>
-
-            <a-form-item :label="t('settings.azure_gpt_4v_deployment_id')">
-              <a-input v-model:value="settingForm.data.azure_gpt_4v_deployment_id" />
-            </a-form-item>
-
-            <a-form-item :label="t('settings.openai_embedding_engine')">
-              <a-input v-model:value="settingForm.data.openai_embedding_engine" />
-            </a-form-item>
-          </template>
-          <template v-else>
-            <a-form-item :label="t('settings.openai_api_key')">
-              <a-input-password v-model:value="settingForm.data.openai_api_key" />
-            </a-form-item>
-            <a-form-item :label="t('settings.openai_api_base')">
-              <a-input v-model:value="settingForm.data.openai_api_base" />
-            </a-form-item>
-          </template>
-
-          <a-divider />
-
-          <a-form-item :label="t('settings.moonshot_api_base')">
-            <a-input v-model:value="settingForm.data.moonshot_api_base" />
-          </a-form-item>
-          <a-form-item :label="t('settings.moonshot_api_key')">
-            <a-input-password v-model:value="settingForm.data.moonshot_api_key" />
-          </a-form-item>
-
-          <a-divider />
-
-          <a-form-item :label="t('settings.zhipuai_api_base')">
-            <a-input v-model:value="settingForm.data.zhipuai_api_base" />
-          </a-form-item>
-          <a-form-item :label="t('settings.zhipuai_api_key')">
-            <a-input-password v-model:value="settingForm.data.zhipuai_api_key" />
-          </a-form-item>
-
-          <a-divider />
-
-          <a-form-item :label="t('settings.anthropic_api_base')">
-            <a-input v-model:value="settingForm.data.anthropic_api_base" />
-          </a-form-item>
-          <a-form-item :label="t('settings.anthropic_api_key')">
-            <a-input-password v-model:value="settingForm.data.anthropic_api_key" />
-          </a-form-item>
-        </a-form>
+              <template v-if="settingForm.data.openai_api_type == 'azure'">
+                <AzureOpenAISettings v-model="settingForm.data.azure_openai" />
+              </template>
+              <template v-else>
+                <a-form-item :label="t('settings.openai_api_base')">
+                  <a-input v-model:value="settingForm.data.openai_api_base" />
+                </a-form-item>
+                <a-form-item :label="t('settings.openai_api_key')">
+                  <a-input-password v-model:value="settingForm.data.openai_api_key" />
+                </a-form-item>
+              </template>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="moonshot" tab="Moonshot">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="t('settings.moonshot_api_base')">
+                <a-input v-model:value="settingForm.data.moonshot_api_base" />
+              </a-form-item>
+              <a-form-item :label="t('settings.moonshot_api_key')">
+                <a-input-password v-model:value="settingForm.data.moonshot_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="zhipuai" :tab="t('settings.zhipuai')">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="`${t('settings.zhipuai')} API Base`">
+                <a-input v-model:value="settingForm.data.zhipuai_api_base" />
+              </a-form-item>
+              <a-form-item :label="`${t('settings.zhipuai')} API Key`">
+                <a-input-password v-model:value="settingForm.data.zhipuai_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="anthropic" tab="Anthropic">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="t('settings.anthropic_api_base')">
+                <a-input v-model:value="settingForm.data.anthropic_api_base" />
+              </a-form-item>
+              <a-form-item :label="t('settings.anthropic_api_key')">
+                <a-input-password v-model:value="settingForm.data.anthropic_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="minimax" tab="MiniMax">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item label="MiniMax API Base">
+                <a-input v-model:value="settingForm.data.minimax_api_base" />
+              </a-form-item>
+              <a-form-item label="MiniMax API Key">
+                <a-input-password v-model:value="settingForm.data.minimax_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="qwen" :tab="t('settings.qwen')">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="`${t('settings.qwen')} API Base`">
+                <a-input v-model:value="settingForm.data.qwen_api_base" />
+              </a-form-item>
+              <a-form-item :label="`${t('settings.qwen')} API Key`">
+                <a-input-password v-model:value="settingForm.data.qwen_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="mistral" tab="Mistral">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item label="Mistral API Base">
+                <a-input v-model:value="settingForm.data.mistral_api_base" />
+              </a-form-item>
+              <a-form-item label="Mistral API Key">
+                <a-input-password v-model:value="settingForm.data.mistral_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="deepseek" tab="DeepSeek">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item label="DeepSeek API Base">
+                <a-input v-model:value="settingForm.data.deepseek_api_base" />
+              </a-form-item>
+              <a-form-item label="DeepSeek API Key">
+                <a-input-password v-model:value="settingForm.data.deepseek_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="lingyiwanwu" :tab="t('settings.lingyiwanwu')">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="`${t('settings.lingyiwanwu')} API Base`">
+                <a-input v-model:value="settingForm.data.lingyiwanwu_api_base" />
+              </a-form-item>
+              <a-form-item :label="`${t('settings.lingyiwanwu')} API Key`">
+                <a-input-password v-model:value="settingForm.data.lingyiwanwu_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="gemini" tab="Gemini">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item label="Gemini API Base">
+                <a-input v-model:value="settingForm.data.gemini_api_base" />
+              </a-form-item>
+              <a-form-item label="Gemini API Key">
+                <a-input-password v-model:value="settingForm.data.gemini_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="groq" tab="Groq">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item label="Groq API Base">
+                <a-input v-model:value="settingForm.data.groq_api_base" />
+              </a-form-item>
+              <a-form-item label="Groq API Key">
+                <a-input-password v-model:value="settingForm.data.groq_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+          <a-tab-pane key="baichuan" :tab="t('settings.baichuan')">
+            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+              <a-form-item :label="`${t('settings.baichuan')} API Base`">
+                <a-input v-model:value="settingForm.data.baichuan_api_base" />
+              </a-form-item>
+              <a-form-item :label="`${t('settings.baichuan')} API Key`">
+                <a-input-password v-model:value="settingForm.data.baichuan_api_key" />
+              </a-form-item>
+            </a-form>
+          </a-tab-pane>
+        </a-tabs>
       </a-card>
 
       <a-card v-show="selectedKeys == 'local_llms'" :title="t('settings.local_llms')" :loading="loading">
@@ -331,80 +316,108 @@ const websiteDomainOptions = [
             {{ t('settings.save') }}
           </a-button>
         </template>
-        <a-row :gutter="[12, 12]">
-          <a-col :sm="24" :md="8">
-            <a-flex vertical gap="small">
-              <a-flex v-for="(llmFamily, index) in settingForm.data.local_llms" gap="small" align="center">
-                <a-button type="text" block @click="localLlmFormEdit(llmFamily, index)">
-                  {{ llmFamily.model_family }}
-                </a-button>
-                <a-button type="text" @click="localLlmFormRemove(index)">
-                  <template #icon>
-                    <Delete fill="#ff4d4f" />
-                  </template>
-                </a-button>
-              </a-flex>
-              <a-button type="dashed" block @click="localLlmsFormStatus = 'add'">
-                {{ t('settings.add_model_family') }}
-              </a-button>
+        <LocalLLMSettings v-model="settingForm.data.local_llms" />
+      </a-card>
+
+      <a-card v-show="selectedKeys == 'embedding_models'" :title="t('settings.embedding_models')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting" :loading="saving">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <a-tabs tab-position="left">
+          <a-tab-pane key="text-embeddings-inference" tab="text-embeddings-inference">
+            <a-flex vertical justify="center" gap="middle">
+              <a-alert message="text-embeddings-inference deployment" type="info">
+                <template #description>
+                  <a-typography-link style="text-align: center;"
+                    href="https://github.com/huggingface/text-embeddings-inference">
+                    https://github.com/huggingface/text-embeddings-inference
+                  </a-typography-link>
+                </template>
+              </a-alert>
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item label="API Base">
+                  <a-input v-model:value="settingForm.data.embedding_models.text_embeddings_inference.api_base" />
+                </a-form-item>
+                <a-form-item label="API Key">
+                  <a-input-password
+                    v-model:value="settingForm.data.embedding_models.text_embeddings_inference.api_key" />
+                </a-form-item>
+              </a-form>
             </a-flex>
-          </a-col>
-          <a-col v-show="['edit', 'add'].includes(localLlmsFormStatus)" :sm="24" :md="16">
-            <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-              <a-form-item :label="t('settings.model_family')">
-                <a-input v-model:value="localLlmForm.model_family" />
-              </a-form-item>
-              <a-form-item :label="t('settings.model_family_api_base')">
-                <a-input v-model:value="localLlmForm.api_base" />
-              </a-form-item>
-              <a-form-item :label="t('settings.model_family_api_key')">
-                <a-input v-model:value="localLlmForm.api_key" />
-              </a-form-item>
-              <a-form-item :label="t('settings.models')">
-                <a-flex vertical gap="small">
-                  <a-flex v-for="(model, index) in localLlmForm.models" gap="small" align="center">
-                    <a-button type="text" block @click="localLlmModelEdit(model, index)">
-                      {{ model.model_label }}
-                    </a-button>
-                    <a-button type="text" @click="localLlmModelRemove(index)">
-                      <template #icon>
-                        <Delete fill="#ff4d4f" />
-                      </template>
-                    </a-button>
-                  </a-flex>
-                  <a-button type="dashed" block @click="localLlmModelAdd">
-                    {{ t('settings.add_model') }}
-                  </a-button>
-                </a-flex>
-                <a-modal v-model:open="localLlmModelFormModalOpen" :title="t('settings.add_model')"
-                  @ok="localLlmModelSave">
-                  <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                    <a-form-item :label="t('settings.model_label')">
-                      <a-input v-model:value="localLlmModelForm.model_label" />
-                    </a-form-item>
-                    <a-form-item :label="t('settings.model_id')">
-                      <a-input v-model:value="localLlmModelForm.model_id" />
-                    </a-form-item>
-                    <a-form-item :label="t('settings.model_rpm')">
-                      <a-input-number v-model:value="localLlmModelForm.rpm" />
-                    </a-form-item>
-                    <a-form-item :label="t('settings.model_concurrent')">
-                      <a-input-number v-model:value="localLlmModelForm.concurrent" />
-                    </a-form-item>
-                    <a-form-item :label="t('settings.model_max_tokens')">
-                      <a-input-number v-model:value="localLlmModelForm.max_tokens" />
-                    </a-form-item>
-                  </a-form>
-                </a-modal>
-              </a-form-item>
-            </a-form>
-            <a-flex justify="flex-end">
-              <a-button type="primary" block @click="localLlmFormSave">
-                {{ t('settings.save_model_family') }}
-              </a-button>
+          </a-tab-pane>
+        </a-tabs>
+      </a-card>
+
+      <a-card v-show="selectedKeys == 'tts'" :title="t('settings.tts')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting" :loading="saving">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <a-tabs tab-position="left">
+          <a-tab-pane key="piper" tab="piper">
+            <a-flex vertical justify="center" gap="middle">
+              <a-alert message="piper-tts deployment" type="info">
+                <template #description>
+                  <a-typography-link style="text-align: center;"
+                    href="https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md">
+                    https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md
+                  </a-typography-link>
+                </template>
+              </a-alert>
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item label="API Base">
+                  <a-input v-model:value="settingForm.data.tts.piper.api_base" />
+                </a-form-item>
+              </a-form>
             </a-flex>
-          </a-col>
-        </a-row>
+          </a-tab-pane>
+        </a-tabs>
+      </a-card>
+
+      <a-card v-show="selectedKeys == 'web_search'" :title="t('settings.web_search')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting" :loading="saving">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <a-tabs tab-position="left">
+          <a-tab-pane key="jina.ai" tab="jina.ai">
+            <a-flex vertical justify="center" gap="middle">
+              <a-alert message="jina.ai" type="info">
+                <template #description>
+                  <a-typography-link style="text-align: center;" href="https://jina.ai/reader/">
+                    https://jina.ai/reader/
+                  </a-typography-link>
+                </template>
+              </a-alert>
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item label="jina.ai API Key">
+                  <a-input-password v-model:value="settingForm.data.web_search.jinaai.api_key" />
+                </a-form-item>
+              </a-form>
+            </a-flex>
+          </a-tab-pane>
+          <a-tab-pane key="bing" tab="bing">
+            <a-flex vertical justify="center" gap="middle">
+              <a-alert message="Bing search API" type="info">
+                <template #description>
+                  <a-typography-link style="text-align: center;"
+                    href="https://www.microsoft.com/en-us/bing/apis/bing-web-search-api">
+                    https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
+                  </a-typography-link>
+                </template>
+              </a-alert>
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item label="OCP_APIM_SUBSCRIPTION_KEY">
+                  <a-input-password v-model:value="settingForm.data.web_search.bing.ocp_apim_subscription_key" />
+                </a-form-item>
+              </a-form>
+            </a-flex>
+          </a-tab-pane>
+        </a-tabs>
       </a-card>
 
       <a-card v-show="selectedKeys == 'email'" :title="t('settings.email_settings')" :loading="loading">
@@ -436,6 +449,15 @@ const websiteDomainOptions = [
         </a-form>
       </a-card>
 
+      <a-card v-if="selectedKeys == 'shortcut'" :title="t('settings.shortcut_settings')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting(true)">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <ShortcutSettings v-model="settingForm.data.shortcuts" />
+      </a-card>
+
       <a-card v-show="selectedKeys == 'other'" :title="t('settings.other')" :loading="loading">
         <template #extra>
           <a-button type="primary" @click="saveSetting">
@@ -443,6 +465,11 @@ const websiteDomainOptions = [
           </a-button>
         </template>
         <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+          <a-form-item :label="t('settings.website_domain')">
+            <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions"
+              style="width: 100%;" />
+          </a-form-item>
+
           <a-form-item :label="t('settings.pexels_api_key')">
             <a-input-password v-model:value="settingForm.data.pexels_api_key" />
           </a-form-item>
@@ -451,12 +478,16 @@ const websiteDomainOptions = [
             <a-input v-model:value="settingForm.data.stable_diffusion_base_url" />
           </a-form-item>
 
+          <a-form-item :label="t('settings.stability_key')">
+            <a-input-password v-model:value="settingForm.data.stability_key" />
+          </a-form-item>
+
           <a-form-item :label="t('settings.use_system_proxy')">
             <a-checkbox v-model:checked="settingForm.data.use_system_proxy" />
           </a-form-item>
 
-          <a-form-item :label="t('settings.website_domain')">
-            <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions"
+          <a-form-item :label="t('settings.microphone_device')">
+            <a-select v-model:value="settingForm.data.microphone_device" :options="microphoneDeviceOptions"
               style="width: 100%;" />
           </a-form-item>
 
@@ -494,6 +525,30 @@ const websiteDomainOptions = [
           </a-form-item>
         </a-form>
       </a-card>
+
+      <a-card v-show="selectedKeys == 'agent'" :title="t('settings.agent_settings')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+          <a-form-item :label="t('settings.agent_auto_title')">
+            <a-checkbox v-model:checked="settingForm.data.agent.auto_title" />
+          </a-form-item>
+          <a-form-item v-show="settingForm.data.agent.auto_title" :label="t('settings.agent_auto_title_model')">
+            <a-cascader style="width: 100%;" v-model:value="settingForm.data.agent.auto_title_model"
+              :options="chatModelOptions" />
+          </a-form-item>
+          <a-form-item>
+            <template #label>
+              {{ t('settings.agent_screenshot_monitor_device') }}
+              <QuestionPopover :contents="[t('settings.agent_screenshot_monitor_device_question_popover')]" />
+            </template>
+            <a-input-number v-model:value="settingForm.data.agent.screenshot_monitor_device" />
+          </a-form-item>
+        </a-form>
+      </a-card>
     </a-layout-content>
   </a-layout>
 </template>
@@ -505,10 +560,6 @@ const websiteDomainOptions = [
   margin-top: 64px;
   max-width: 72rem;
   gap: 0.75rem;
-}
-
-.field-label {
-  float: right;
 }
 
 .sider-menu {
