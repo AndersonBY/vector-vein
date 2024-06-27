@@ -3,7 +3,7 @@ import { ref, nextTick, watch, onBeforeMount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { Home, Star, More, Delete } from '@icon-park/vue-next'
+import { Home, Star, More, Delete, ExpandLeft, ExpandRight } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { formatTime } from '@/utils/util'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -21,6 +21,7 @@ const router = useRouter()
 const workflowId = ref(route.params.workflowId)
 const selectedKeys = ref([workflowId.value])
 const openKeys = ref(['user-workflows'])
+const collapsed = ref(false)
 
 const setSelectedKeys = (route) => {
   if (route.name == 'WorkflowSpaceMain') {
@@ -60,7 +61,7 @@ const add = async (template) => {
 
   nextTick(async () => {
     selectedKeys.value = [workflow.wid]
-    await router.push(`/workflow/editor/${workflow.wid}`)
+    await router.push({ name: 'WorkflowEditor', params: { workflowId: workflow.wid } })
   })
 }
 
@@ -78,12 +79,22 @@ const deleteWorkflowFromFastAccess = async (wid) => {
 <template>
   <div class="space-container">
     <a-layout class="layout">
-      <a-layout-sider width="200" style="background: #fff" breakpoint="lg" collapsed-width="0">
+      <a-layout-sider width="200" v-model:collapsed="collapsed"
+        :style="{ background: '#fff', padding: collapsed ? '0' : '8px' }" breakpoint="lg" collapsed-width="0"
+        :zeroWidthTriggerStyle="{ background: 'unset', top: 0 }">
+        <template #trigger>
+          <a-button type="text" @click="collapsed = !collapsed">
+            <template #icon>
+              <ExpandLeft v-if="collapsed" />
+              <ExpandRight v-else />
+            </template>
+          </a-button>
+        </template>
         <a-skeleton v-if="loading" active />
         <a-menu v-else v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline"
           style="height: 100%">
           <a-menu-item key="my_index" id="my_index">
-            <router-link to="/workflow/">
+            <router-link :to="{ name: 'WorkflowSpaceMain' }">
               <Home theme="filled" />
               {{ t('workspace.workflowSpace.workflow_index') }}
             </router-link>
@@ -98,7 +109,8 @@ const deleteWorkflowFromFastAccess = async (wid) => {
             <a-menu-item :key="workflow.wid" v-for="workflow in userFastAccessWorkflows">
               <div class="starred-workflow-item">
                 <a-tooltip placement="topLeft" :title="workflow.title">
-                  <router-link :to="`/workflow/${workflow.wid}`" style="overflow: hidden;">
+                  <router-link :to="{ name: 'WorkflowUse', params: { workflowId: workflow.wid } }"
+                    style="overflow: hidden;">
                     {{ workflow.title }}
                   </router-link>
                 </a-tooltip>
@@ -142,7 +154,6 @@ const deleteWorkflowFromFastAccess = async (wid) => {
 
 .space-container .layout {
   height: 100%;
-  padding: 24px 0;
   background: #fff;
 }
 
