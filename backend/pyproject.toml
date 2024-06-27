@@ -31,22 +31,31 @@ dependencies = [
     "pydantic>=2.7.1",
     "lxml[html_clean]>=5.2.1",
     "PyMuPDF>=1.24.5",
+    "peewee-migrate>=1.12.2",
+    "websockets>=12.0",
+    "diskcache>=5.6.3",
+    "mss>=9.0.1",
+    "Pillow>=10.3.0",
+    "pyaudio>=0.2.14",
+    "pynput>=1.7.7",
+    "bilili>=1.4.15",
+    "pathvalidate>=3.2.0",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.10,<3.12"
-version = "0.1.5"
+version = "0.2.0"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.1.5 -t p"
-build-debug.cmd = "python build.py -v 0.1.5 -t d"
-build-debug.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.5"}
+build = "python build.py -v 0.2.0 -t p"
+build-debug.cmd = "python build.py -v 0.2.0 -t d"
+build-debug.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.0"}
 build-front = "python build.py -t f"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.5"}
+dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.0"}
 fullstack-dev.cmd = "python run_fullstack_dev.py"
-fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.1.5", "VITE_LOCAL" = "http://localhost:5173/"}
+fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.0", "VITE_LOCAL" = "http://localhost:5173/"}
