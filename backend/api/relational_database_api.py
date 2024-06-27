@@ -13,13 +13,14 @@ from models import (
     UserRelationalDatabase,
 )
 from api.utils import get_user_object_general
-from utilities.relational_db import (
+from utilities.config import config
+from utilities.database import (
     UserDatabaseControl,
     get_schema_from_sql,
     get_schema_from_table,
     create_relational_database_table,
 )
-from utilities.print_utils import mprint_error
+from utilities.general import mprint
 
 
 class RelationalDatabaseAPI:
@@ -49,7 +50,7 @@ class RelationalDatabaseAPI:
         return {"status": 200, "msg": msg}
 
     def list(self, payload):
-        databases = UserRelationalDatabase.select().order_by("create_time")
+        databases = UserRelationalDatabase.select().order_by(UserRelationalDatabase.create_time.desc())
         databases_list = model_serializer(databases, many=True)
         response = {"status": 200, "msg": "success", "data": databases_list}
         return response
@@ -59,7 +60,7 @@ class RelationalDatabaseAPI:
             name=payload.get("name", ""),
         )
 
-        database_path = Path(self.data_path) / "relational_db" / f"{database.rid.hex}.db"
+        database_path = Path(config.data_path) / "relational_db" / f"{database.rid.hex}.db"
         database_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(database_path.as_posix())
         conn.close()
@@ -84,7 +85,7 @@ class RelationalDatabaseAPI:
         if database_path.exists():
             database_path.unlink()
 
-        database.delete_instance()
+        database.delete_instance(recursive=True)
         return {"status": 200, "msg": "success", "data": {}}
 
     def run_sql(self, payload):
@@ -162,28 +163,37 @@ class RelationalDatabaseTableAPI:
         return dict(status=200, data={"tid": table.tid.hex})
 
     def list(self, payload):
-        page_num = payload.get("page", 1)
-        page_size = min(payload.get("page_size", 10), 100)
+        page_num = int(payload.get("page", 1))
+        page_size = min(int(payload.get("page_size", 10)), 100)
         sort_field = payload.get("sort_field", "create_time")
         sort_order = payload.get("sort_order", "descend")
-        sort_field = f"-{sort_field}" if sort_order == "descend" else sort_field
+
+        sort_field_obj = getattr(UserRelationalTable, sort_field)
+        if sort_order == "descend":
+            sort_field_obj = sort_field_obj.desc()
+
         user_tables = (
             UserRelationalTable.select()
             .join(UserRelationalDatabase)
             .where(UserRelationalDatabase.rid == payload.get("rid", None))
         )
+
         status = payload.get("status")
         if status:
             status = [status] if isinstance(status, str) else status
             user_tables = user_tables.where(UserRelationalTable.status.in_(status))
+
         tids = payload.get("tids")
         if tids:
             user_tables = user_tables.where(UserRelationalTable.tid.in_(tids))
+
         user_tables_count = user_tables.count()
         offset = (page_num - 1) * page_size
         limit = page_size
-        user_tables = user_tables.order_by(sort_field).offset(offset).limit(limit)
+
+        user_tables = user_tables.order_by(sort_field_obj).offset(offset).limit(limit)
         user_tables_list = model_serializer(user_tables, many=True)
+
         response = {
             "status": 200,
             "msg": "success",
@@ -217,7 +227,7 @@ class RelationalDatabaseTableAPI:
             return {"status": status, "msg": msg, "data": {}}
         user_db_ctl = UserDatabaseControl(table.database)
         user_db_ctl.delete_table(table.name)
-        table.delete_instance()
+        table.delete_instance(recursive=True)
         return {"status": 200, "msg": "success", "data": {}}
 
     def get_table_schema(self, payload):
@@ -242,14 +252,14 @@ class RelationalDatabaseTableAPI:
                 table_schema = result
                 return dict(status=200, data=table_schema)
             except Exception:
-                mprint_error(traceback.format_exc())
+                mprint.error(traceback.format_exc())
                 return dict(status=500, msg="Failed to get table schema")
         elif payload.get("sql_statement"):
             try:
                 table_schema = get_schema_from_sql(payload.get("sql_statement"))
                 return dict(status=200, data=table_schema)
             except Exception:
-                mprint_error(traceback.format_exc())
+                mprint.error(traceback.format_exc())
                 return dict(status=500, msg="Failed to get table schema")
 
 

@@ -2,9 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-29 20:04:11
-import uuid
-from pathlib import Path
+# @Last Modified time: 2024-06-25 20:51:34
 from datetime import datetime
 
 from peewee import fn
@@ -17,9 +15,25 @@ from models import (
     WorkflowRunRecord,
     WorkflowRunSchedule,
 )
-from api.utils import get_user_object_general, WorkflowData
-from utilities.files import copy_file
-from utilities.static_file_server import StaticFileServer
+from api.utils import (
+    JResponse,
+    run_workflow_common,
+    get_user_object_general,
+)
+from utilities.workflow import WorkflowData
+from utilities.file_processing import static_file_server
+from background_task.tasks import update_workflow_tool_call_data
+
+
+def copy_images(images):
+    """Copy images to static folder and store in url format"""
+    copied_images = []
+    for image in images:
+        if image.startswith("http://localhost"):
+            continue
+        image_url = static_file_server.get_static_file_url(image, "images")
+        copied_images.append(image_url)
+    return copied_images
 
 
 class WorkflowAPI:
@@ -31,11 +45,9 @@ class WorkflowAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            return JResponse(status=status, msg=msg)
         workflow = model_serializer(workflow, manytomany=True)
-        response = {"status": 200, "msg": "success", "data": workflow}
-        return response
+        return JResponse(msg="success", data=workflow)
 
     def create(self, payload):
         title = payload.get("title", "").encode("utf16", errors="surrogatepass").decode("utf16")
@@ -44,14 +56,18 @@ class WorkflowAPI:
         tags = payload.get("tags", [])
         data = payload.get("data", {"nodes": [], "edges": []})
         language = payload.get("language", "zh-CN")
+        tool_call_data = payload.get("tool_call_data", {})
 
         workflow: Workflow = Workflow.create(
             title=title,
             brief=brief,
             data=data,
             language=language,
-            images=images,
+            images=copy_images(images),
         )
+        tool_call_data["workflow_id"] = workflow.wid.hex
+        workflow.tool_call_data = tool_call_data
+        workflow.save()
         for tag in tags:
             tag_qs = WorkflowTag.select().where(WorkflowTag.title == tag["title"])
             if tag_qs.exists():
@@ -64,8 +80,7 @@ class WorkflowAPI:
                 )
                 workflow.tags.add(tag_obj)
         workflow = model_serializer(workflow, manytomany=True)
-        response = {"status": 200, "msg": "success", "data": workflow}
-        return response
+        return JResponse(data=workflow)
 
     def update(self, payload):
         wid = payload.get("wid", None)
@@ -74,8 +89,8 @@ class WorkflowAPI:
             wid=wid,
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            return JResponse(status=status, msg=msg)
+
         data = payload.get("data", {})
         title = payload.get("title", "").encode("utf16", errors="surrogatepass").decode("utf16")
         brief = payload.get("brief", "").encode("utf16", errors="surrogatepass").decode("utf16")
@@ -89,31 +104,25 @@ class WorkflowAPI:
             else:
                 tag_obj = WorkflowTag.create(title=tag)
                 workflow.tags.add(tag_obj)
+
+        title_changed = workflow.title != title
+
         workflow.title = title
         workflow.brief = brief
 
         related_workflows = WorkflowData(data).related_workflows
         if wid in related_workflows.keys():
-            return {"status": 400, "msg": "workflow can not be related to itself", "data": {}}
+            return JResponse(status=400, msg="workflow can not be related to itself")
         data["related_workflows"] = related_workflows
 
-        # Copy images to static folder and store in url format
-        copied_images = []
-        for image in images:
-            if image.startswith("http://localhost"):
-                continue
-            image_ext = Path(image).resolve().suffix
-            image_name = uuid.uuid4().hex + image_ext
-            copied_image_path = Path(self.data_path) / "static" / "images" / image_name
-            copy_file(image, copied_image_path)
-            image_url = StaticFileServer.get_file_url(f"images/{image_name}")
-            copied_images.append(image_url)
-        workflow.images = copied_images
+        workflow.images = copy_images(images)
         workflow.data = data
         workflow.update_time = datetime.now()
         workflow.save()
-        response = {"status": 200, "msg": "success", "data": model_serializer(workflow, manytomany=True)}
-        return response
+
+        update_workflow_tool_call_data.delay(workflow_wid=workflow.wid.hex, force=title_changed)
+
+        return JResponse(data=model_serializer(workflow, manytomany=True))
 
     def delete(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -121,11 +130,9 @@ class WorkflowAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            return JResponse(status=status, msg=msg)
         workflow.delete_instance()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()
 
     def list(self, payload):
         tags = payload.get("tags", [])
@@ -139,7 +146,7 @@ class WorkflowAPI:
         if workflow_related:
             status, msg, workflow = get_user_object_general(Workflow, wid=workflow_related)
             if status != 200:
-                return {"status": status, "msg": msg, "data": {}}
+                return JResponse(status=status, msg=msg)
             related_workflow_ids = list(WorkflowData(workflow.data).related_workflows.keys())
             workflows = Workflow.select().where(Workflow.wid.in_(related_workflow_ids))
         else:
@@ -173,12 +180,8 @@ class WorkflowAPI:
             response_data["fast_access_workflows"] = model_serializer(
                 fast_access_workflows, many=True, manytomany=True
             )
-        response = {
-            "status": 200,
-            "msg": "success",
-            "data": response_data,
-        }
-        return response
+
+        return JResponse(data=response_data)
 
     def run(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -186,32 +189,28 @@ class WorkflowAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
 
         workflow_data = payload.get("data", {})
-        workflow_data["wid"] = workflow.wid.hex
 
-        record = WorkflowRunRecord.create(
+        record_rid = run_workflow_common(
+            worker_queue=self.worker_queue,
+            workflow_data=workflow_data,
             workflow=workflow,
-            data=workflow_data,
-            status="RUNNING",
+            run_from=WorkflowRunRecord.RunFromTypes.WEB,
         )
-        workflow_data["rid"] = record.rid.hex
-        self.worker_queue.put({"data": workflow_data})
-        response = {"status": 200, "msg": "success", "data": {"rid": record.rid.hex}}
-        return response
+
+        return JResponse(data={"rid": record_rid})
 
     def check_status(self, payload):
         rid = payload.get("rid", None)
         if rid is None:
-            response = {"status": 400, "msg": "rid is None", "data": {}}
-            return response
+            return JResponse(status=400, msg="rid is None")
 
         record_qs = WorkflowRunRecord.select().join(Workflow).where(WorkflowRunRecord.rid == rid)
         if not record_qs.exists():
             response = {"status": 404, "msg": "record not found", "data": {}}
-            return response
+            return JResponse(status=404, msg="record not found")
 
         record = record_qs.first()
         if record.status == "FINISHED":
@@ -224,7 +223,7 @@ class WorkflowAPI:
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
             response = {"status": 500, "msg": record.status, "data": workflow_serializer_data}
-        return response
+        return JResponse(**response)
 
     def add_to_fast_access(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -232,13 +231,11 @@ class WorkflowAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
 
         workflow.is_fast_access = True
         workflow.save()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()
 
     def delete_from_fast_access(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -246,13 +243,21 @@ class WorkflowAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
 
         workflow.is_fast_access = False
         workflow.save()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()
+
+    def update_tool_call_data(self, payload):
+        wid = payload.get("wid", None)
+        status, msg, workflow = get_user_object_general(Workflow, wid=wid)
+        if status != 200:
+            return JResponse(status=status, msg=msg)
+        tool_call_data = payload.get("tool_call_data", {})
+        workflow.tool_call_data = tool_call_data
+        workflow.save()
+        return JResponse()
 
 
 class WorkflowTemplateAPI:
@@ -264,11 +269,9 @@ class WorkflowTemplateAPI:
             tid=payload.get("tid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
         workflow_template = model_serializer(workflow_template, manytomany=True)
-        response = {"status": 200, "msg": "success", "data": workflow_template}
-        return response
+        return JResponse(data=workflow_template)
 
     def add(self, payload):
         status, msg, workflow_template = get_user_object_general(
@@ -276,8 +279,7 @@ class WorkflowTemplateAPI:
             tid=payload.get("tid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
         workflow_template.used_count += 1
         workflow_template.save()
         workflow = Workflow.objects.create(
@@ -287,29 +289,33 @@ class WorkflowTemplateAPI:
             data=workflow_template.data,
         )
         workflow = model_serializer(workflow, manytomany=True)
-        response = {"status": 200, "msg": "success", "data": workflow}
-        return response
+        return JResponse(data=workflow)
 
     def list(self, payload):
-        page_num = payload.get("page", 1)
-        page_size = min(payload.get("page_size", 10), 100)
+        page_num = int(payload.get("page", 1))
+        page_size = min(int(payload.get("page_size", 10)), 100)
         sort_field = payload.get("sort_field", "update_time")
         sort_order = payload.get("sort_order", "descend")
-        sort_field = "-" + sort_field if sort_order == "descend" else sort_field
+
+        sort_field_obj = getattr(WorkflowTemplate, sort_field)
+        if sort_order == "descend":
+            sort_field_obj = sort_field_obj.desc()
+
         workflow_templates = WorkflowTemplate.select()
         workflow_templates_count = workflow_templates.count()
         offset = (page_num - 1) * page_size
         limit = page_size
-        workflow_templates = workflow_templates.order_by(sort_field).offset(offset).limit(limit)
+
+        workflow_templates = workflow_templates.order_by(sort_field_obj).offset(offset).limit(limit)
         workflow_templates_list = model_serializer(workflow_templates, many=True, manytomany=True)
+
         response_data = {
             "templates": workflow_templates_list,
             "total": workflow_templates_count,
             "page_size": page_size,
             "page": page_num,
         }
-        response = {"status": 200, "msg": "success", "data": response_data}
-        return response
+        return JResponse(data=response_data)
 
 
 class WorkflowRunRecordAPI:
@@ -321,11 +327,9 @@ class WorkflowRunRecordAPI:
             rid=payload.get("rid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
         workflow = model_serializer(workflow, manytomany=True)
-        response = {"status": 200, "msg": "success", "data": workflow}
-        return response
+        return JResponse(data=workflow)
 
     def list(self, payload):
         page_num = payload.get("page", 1)
@@ -347,17 +351,14 @@ class WorkflowRunRecordAPI:
         limit = page_size
         records = records.offset(offset).limit(limit)
         records_list = model_serializer(records, many=True, manytomany=True)
-        response = {
-            "status": 200,
-            "msg": "success",
-            "data": {
+        return JResponse(
+            data={
                 "records": records_list,
                 "total": records_count,
                 "page_size": page_size,
                 "page": page_num,
-            },
-        }
-        return response
+            }
+        )
 
 
 class WorkflowTagAPI:
@@ -369,15 +370,12 @@ class WorkflowTagAPI:
             tid=payload.get("tid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
         workflow_tag = model_serializer(workflow_tag)
-        response = {"status": 200, "msg": "success", "data": workflow_tag}
-        return response
+        return JResponse(data=workflow_tag)
 
     def list(self, payload):
-        response = {"status": 200, "msg": "success", "data": model_serializer(WorkflowTag.select(), many=True)}
-        return response
+        return JResponse(data=model_serializer(WorkflowTag.select(), many=True))
 
 
 # TODO: Implement this
@@ -390,8 +388,7 @@ class WorkflowRunScheduleAPI:
             wid=payload.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
         workflow_data = payload.get("data", {})
         workflow.data = workflow_data
         workflow.save()
@@ -413,8 +410,7 @@ class WorkflowRunScheduleAPI:
         # minute, hour, day_of_month, month_of_year, day_of_week = cron_expression.split(" ")
         # timezone = pytz.timezone(payload.get("timezone", "Asia/Shanghai"))
         # TODO: Add to scheduler
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()
 
     def delete(request):
         status, msg, workflow = get_user_object_general(
@@ -422,8 +418,7 @@ class WorkflowRunScheduleAPI:
             wid=request.data.get("wid", None),
         )
         if status != 200:
-            response = {"status": status, "msg": msg, "data": {}}
-            return response
+            JResponse(status=status, msg=msg)
 
         run_schedule_qs = WorkflowRunSchedule.select().join(Workflow).where(Workflow.id == workflow.id)
         if not run_schedule_qs.exists():
@@ -433,5 +428,4 @@ class WorkflowRunScheduleAPI:
         run_schedule = run_schedule_qs.first()
         # TODO: Remove from scheduler
         run_schedule.delete()
-        response = {"status": 200, "msg": "success", "data": {}}
-        return response
+        return JResponse()

@@ -2,19 +2,21 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-07 13:49:55
+# @Last Modified time: 2024-06-25 15:22:18
 import httpx
 
-from utilities.web_crawler import proxies
-from utilities.print_utils import mprint_error
+from utilities.general import mprint
+from utilities.network import proxies
+from utilities.config import Settings, cache
+from .utils import JResponse
 
 
 headers = {"user-agent": "vector-vein client"}
-base_url = "https://vectorvein.com"
 
 
 def request(method: str, path: str, payload=None):
-    url = base_url + path
+    settings = Settings()
+    url = f"https://{settings.website_domain}{path}"
     try_times = 0
     while try_times < 3:
         try:
@@ -29,25 +31,40 @@ def request(method: str, path: str, payload=None):
             )
             return response.json()
         except Exception as e:
-            mprint_error(e)
+            mprint.error(e)
             try_times += 1
-    return {"status": 500, "msg": "request failed", "data": {}}
+    return JResponse(status=500, msg="request failed")
 
 
 class OfficialSiteAPI:
     name = "official_site"
 
     def get_update_info(self, payload):
-        path = "/api/v1/client-software/update-info"
-        response_data = request("GET", path, payload)["data"]
-        official_version = response_data["version"]
-        # compare official_version with self.version
-        # Version format: major.minor.patch
-        official_version = tuple(map(int, official_version.split(".")))
-        current_version = tuple(map(int, self.version.split(".")))
-        response_data["updatable"] = official_version > current_version
-        response = {"status": 200, "msg": "success", "data": response_data}
-        return response
+        if cache.get("update_info"):
+            return JResponse(data=cache.get("update_info"))
+        else:
+            path = "/api/v1/client-software/update-info"
+            response_data = request("GET", path, payload)["data"]
+            official_version = response_data["version"]
+            # compare official_version with self.version
+            # Version format: major.minor.patch
+            official_version = tuple(map(int, official_version.split(".")))
+            current_version = tuple(map(int, self.version.split(".")))
+            response_data["updatable"] = official_version > current_version
+            cache.set("update_info", response_data, expire=600)
+            return JResponse(data=response_data)
+
+    def list_agents(self, payload):
+        path = "/api/v1/client-software/agent/list"
+        return request("GET", path, payload)
+
+    def get_agent(self, payload):
+        path = "/api/v1/client-software/agent/get"
+        return request("GET", path, payload)
+
+    def duplicate_agent(self, payload):
+        path = "/api/v1/client-software/agent/duplicate"
+        return request("GET", path, payload)
 
     def list_templates(self, payload):
         path = "/api/v1/client-software/template/list"

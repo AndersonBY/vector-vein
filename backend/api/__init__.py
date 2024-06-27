@@ -2,21 +2,25 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 01:29:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-06 02:38:57
+# @Last Modified time: 2024-06-26 16:47:11
 import os
+import uuid
+import base64
 import subprocess
+from io import BytesIO
+from pathlib import Path
+
+from PIL import Image
 
 from utilities.config import config
-from utilities.print_utils import mprint_error
+from utilities.general import mprint
 
 
 class API:
-    def __init__(self, debug=False, version=None, worker_queue=None, vdb_queues=None):
+    def __init__(self, debug=False, version=None, worker_queue=None):
         self.debug = debug
         self.version = version
         self.worker_queue = worker_queue
-        self.vdb_queues = vdb_queues
-        self.data_path = config.data_path
 
     def add_apis(self, APIClass):
         for method_name in dir(APIClass):
@@ -32,5 +36,33 @@ class API:
                 subprocess.Popen(["open", file])
             return True
         except Exception as e:
-            mprint_error(e)
+            mprint.error(e)
             return False
+
+    def get_local_file_base64(self, file):
+        try:
+            with open(file, "rb") as f:
+                data = f.read()
+                if file.endswith(".png"):
+                    return f"data:image/png;base64,{base64.b64encode(data).decode()}"
+                elif file.endswith(".jpg") or file.endswith(".jpeg"):
+                    return f"data:image/jpeg;base64,{base64.b64encode(data).decode()}"
+                elif file.endswith(".gif"):
+                    return f"data:image/gif;base64,{base64.b64encode(data).decode()}"
+                else:
+                    return base64.b64encode(data).decode()
+        except Exception as e:
+            mprint.error(e)
+            return None
+
+    def save_image(self, image_base64):
+        image_path = Path(config.data_path) / "images" / f"{uuid.uuid4().hex}.png"
+
+        header, base64_data = image_base64.split(",", 1)
+
+        image_data = base64.b64decode(base64_data)
+
+        image = Image.open(BytesIO(image_data))
+        image.save(image_path)
+
+        return str(image_path.resolve())
