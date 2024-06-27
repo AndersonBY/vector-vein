@@ -29,6 +29,11 @@ const userSettings = useUserSettingsStore()
 
 const microphoneDeviceOptions = ref([])
 
+const settingForm = reactive({
+  id: 1,
+  data: {}
+})
+
 onBeforeMount(async () => {
   const devices = await hardwareAPI('list_microphones', {})
   microphoneDeviceOptions.value = devices.data.map((device) => ({
@@ -47,10 +52,6 @@ onBeforeMount(async () => {
   settingForm.data = { ...defaultSettingsResp.data, ...userData }
 
   loading.value = false
-})
-const settingForm = reactive({
-  id: 1,
-  data: {}
 })
 
 const selectFolder = async (settingsKey) => {
