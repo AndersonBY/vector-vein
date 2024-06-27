@@ -4,7 +4,7 @@ import re
 import time
 import json
 import asyncio
-from multiprocessing import Process
+from threading import Thread
 
 import websockets
 
@@ -21,7 +21,7 @@ class WebSocketServer:
         self.host = host
         self.port = port
         self.server = None
-        self.process = None
+        self.thread = None
 
     async def handler(self, websocket, path):
         conversation_id = re.match(r"^/ws/chat/(.+)/$", path)
@@ -177,19 +177,19 @@ class WebSocketServer:
         )
 
     def start(self):
-        self.process = Process(target=self.run)
-        self.process.start()
+        self.thread = Thread(target=self.run, daemon=True)
+        self.thread.start()
 
     def run(self):
         mprint(f"WebSocket server started at ws://{self.host}:{self.port}")
-        loop = asyncio.get_event_loop()
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         self.server = websockets.serve(self.handler, self.host, self.port)
         loop.run_until_complete(self.server)
         loop.run_forever()
 
     def stop(self):
-        if self.process:
+        if self.thread:
             mprint("Stopping WebSocket server")
-            self.process.terminate()
-            self.process.join()
-            self.process = None
+            self.thread.join()
+            self.thread = None

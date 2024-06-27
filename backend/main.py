@@ -2,12 +2,11 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-26 16:41:35
+# @Last Modified time: 2024-06-28 00:42:59
 import os
 import time
 import queue
 import threading
-import multiprocessing
 from pathlib import Path
 
 import mimetypes
@@ -92,7 +91,6 @@ def main():
                 return file_paths
             time.sleep(0.1)
         return []
-
 
     task_queue = queue.Queue()
     api = API(DEBUG, VERSION, task_queue)
@@ -193,6 +191,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if os.name == "nt":
-        multiprocessing.freeze_support()
     main()

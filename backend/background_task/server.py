@@ -3,8 +3,8 @@
 # This is a simple simulation of a background task handler like Celery.
 import time
 import traceback
-import multiprocessing
 from pathlib import Path
+from threading import Thread
 
 from diskcache import Deque
 from qdrant_client import QdrantClient
@@ -21,40 +21,35 @@ class BackgroundTaskServer:
         self.task_queue_directory = self.cache_dir / "background_task"
         self.qdrant_tasks_queue_directory = self.cache_dir / "qdrant_task"
         self.num_workers = num_workers
-        self.processes = []
+        self.threads = []
 
     def start(self):
         for worker_num in range(self.num_workers):
-            process = multiprocessing.Process(
-                target=self.run,
-                args=(self.task_queue_directory, worker_num),
-            )
-            process.start()
-            self.processes.append(process)
+            thread = Thread(target=self.run, args=(self.task_queue_directory, worker_num), daemon=True)
+            thread.start()
+            self.threads.append(thread)
 
         # Qdrant local mode can only have one client.
-        # All qdrant tasks should be processed in the same process.
+        # All qdrant tasks should be processed in the same thread.
         # https://github.com/qdrant/qdrant-client
-        qdrant_process = multiprocessing.Process(
-            target=self.run_qdrant_task_server,
-            args=(self.qdrant_tasks_queue_directory,),
+        qdrant_thread = Thread(
+            target=self.run_qdrant_task_server, args=(self.qdrant_tasks_queue_directory,), daemon=True
         )
-        qdrant_process.start()
-        self.processes.append(qdrant_process)
+        qdrant_thread.start()
+        self.threads.append(qdrant_thread)
 
     def stop(self):
         mprint("Stopping background task server...")
-        for process in self.processes:
-            if process:
-                process.terminate()
-                process.join()
-        self.processes = []
+        for thread in self.threads:
+            if thread:
+                thread.join()
+        self.threads = []
 
     @staticmethod
-    def run(task_queue_direrctory: str | Path | None = None, worker_num: int = 0):
+    def run(task_queue_directory: str | Path | None = None, worker_num: int = 0):
         from background_task.tasks import get_task
 
-        task_queue = Deque(directory=task_queue_direrctory)
+        task_queue = Deque(directory=task_queue_directory)
         sleep_time = 1
         task_name = ""
 
