@@ -2,14 +2,19 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 21:31:14
+# @Last Modified time: 2024-06-25 21:43:04
+from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
 import httpx
 import yt_dlp
+from pathvalidate import sanitize_filename
+from bilili.api.acg_video import get_acg_video_subtitle
 
+from utilities.general import mprint
+from utilities.config import Settings
 from utilities.workflow import Workflow
-from utilities.web_crawler import crawl_text_from_url, proxies
+from utilities.network import crawl_text_from_url, proxies
 from worker.tasks import task, timer
 
 
@@ -90,49 +95,78 @@ def bilibili_crawler(
 ):
     workflow = Workflow(workflow_data)
     url_or_bvid = workflow.get_node_field_value(node_id, "url_or_bvid")
+    download_video = workflow.get_node_field_value(node_id, "download_video", False)
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
-    if "b23.tv" in url_or_bvid:
-        resp = httpx.get(url_or_bvid, headers=headers, proxies=proxies(), follow_redirects=True)
-        url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
-    elif len(url_or_bvid) < 10:
-        resp = httpx.get(f"https://b23.tv/{url_or_bvid}", headers=headers, follow_redirects=True)
-        url_or_bvid = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
-
-    if "bilibili.com" in url_or_bvid:
-        if not url_or_bvid.startswith("http"):
-            url_or_bvid = "https://" + url_or_bvid
-        parsed_url = urlparse(url_or_bvid)
-        path_components = parsed_url.path.split("/")
-        bvid = path_components[2].split("?")[0]
-        query_dict = parse_qs(parsed_url.query)
-        part_number = int(query_dict.get("p", ["1"])[0])
+    if isinstance(url_or_bvid, list):
+        urls = url_or_bvid
     else:
-        bvid = url_or_bvid
-        part_number = 1
+        urls = [url_or_bvid]
 
-    aid, cid = get_aid_cid(bvid, part_number=part_number)
-    resp = httpx.get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies())
-    title = resp.json()["data"]["title"]
+    subtitles = []
+    titles = []
+    videos = []
+    for url in urls:
+        if "b23.tv" in url:
+            resp = httpx.get(url, headers=headers, follow_redirects=True)
+            url = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
+        elif len(url) < 10:
+            # 猜测是 https://b23.tv/TPsdmV5 这样的格式被 AI 识别为 TPsdmV5 输入了
+            resp = httpx.get(f"https://b23.tv/{url}", headers=headers, follow_redirects=True)
+            url = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
 
-    resp = httpx.get(
-        f"https://api.bilibili.com/x/player/wbi/v2?aid={aid}&cid={cid}", headers=headers, proxies=proxies()
-    )
-    subtitle_list = resp.json()["data"]["subtitle"]["subtitles"]
-    if len(subtitle_list) == 0:
-        subtitle_data = [] if output_type == "list" else ""
-    else:
-        # TODO: 这里直接选择列表第一个作为字幕了，对于多语言字幕未来要考虑让用户选择语言？
-        subtitle_url = subtitle_list[0]["subtitle_url"]
-        if subtitle_url.startswith("//"):
-            subtitle_url = "https:" + subtitle_url
-        subtitle_resp = httpx.get(subtitle_url, headers=headers)
-        subtitle_data_list = subtitle_resp.json()["body"]
-        subtitle_data_list = [item["content"] for item in subtitle_data_list]
-        subtitle_data = "\n".join(subtitle_data_list) if output_type == "str" else subtitle_data_list
+        if "bilibili.com" in url:
+            if not url.startswith("http"):
+                url = "https://" + url
+            parsed_url = urlparse(url)
+            path_components = parsed_url.path.split("/")
+            bvid = path_components[2].split("?")[0]
+            query_dict = parse_qs(parsed_url.query)
+            part_number = int(query_dict.get("p", ["1"])[0])
+        else:
+            bvid = url
+            part_number = 1
+
+        aid, cid = get_aid_cid(bvid, part_number=part_number)
+        resp = httpx.get(
+            f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies()
+        )
+        title: str = resp.json()["data"]["title"]
+        subtitle_list = get_acg_video_subtitle(bvid=bvid, cid=cid)
+        if len(subtitle_list) == 0:
+            subtitle_data = [] if output_type == "list" else ""
+        else:
+            # TODO: 这里直接选择列表第一个作为字幕了，对于多语言字幕未来要考虑让用户选择语言？
+            subtitle_data_list = subtitle_list[0]["lines"]
+            subtitle_data_list = [item["content"] for item in subtitle_data_list]
+            subtitle_data = "\n".join(subtitle_data_list) if output_type == "str" else subtitle_data_list
+
+        if download_video:
+            output_folder = Path(Settings().output_folder) / sanitize_filename(title)
+            ydl_opts = {
+                "outtmpl": str(output_folder) + "/%(title)s.%(ext)s",
+                "merge_output_format": "mp4",
+            }
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                ydl.download([url])
+
+            for path in output_folder.iterdir():
+                if path.is_file() and path.suffix == ".mp4":
+                    video = str(path.absolute())
+        else:
+            video = ""
+
+        titles.append(title)
+        subtitles.append(subtitle_data)
+        videos.append(video)
+
+    title = titles if isinstance(url_or_bvid, list) else titles[0]
+    subtitle_data = subtitles if isinstance(url_or_bvid, list) else subtitles[0]
+    video = videos if isinstance(url_or_bvid, list) else videos[0]
 
     workflow.update_node_field_value(node_id, "output_subtitle", subtitle_data)
     workflow.update_node_field_value(node_id, "output_title", title)
+    workflow.update_node_field_value(node_id, "output_video", video)
     return workflow.data
 
 
@@ -196,7 +230,7 @@ def youtube_crawler(
                         break
                 break
         else:
-            print("No subtitle found")
+            mprint.error("No subtitle found")
             title_results.append(title)
             text_results.append("")
             if get_comments:
