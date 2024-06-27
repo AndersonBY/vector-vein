@@ -43,7 +43,7 @@ const databases = reactive({
       onClick: async (event) => {
         if (record.status != 'VALID') return
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('database-title')) {
-          await router.push(`/data/relational-db/${record.rid}`)
+          await router.push({ name: 'RelationalDatabaseDetail', params: { databaseId: record.rid } })
         }
       },
       onMouseenter: (event) => { databases.hoverRowRid = record.rid },

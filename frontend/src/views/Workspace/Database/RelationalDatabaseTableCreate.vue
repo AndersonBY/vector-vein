@@ -82,7 +82,7 @@ const create = async () => {
     table_schema: tableSchema.value,
   })
   if (response.status === 200) {
-    await router.push(`/data/relational-db/${databaseId}`)
+    await router.push({ name: 'RelationalDatabaseDetail', params: { databaseId: databaseId } })
   } else if (response.status === 400) {
     message.error(t('workspace.databaseTableCreate.table_name_already_exists'))
   } else if (response.status === 402) {
@@ -182,13 +182,13 @@ const removeColumn = (index) => {
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link :to="`/data?tab=relational-database`">
+            <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'relational-database' } }">
               <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <router-link :to="`/data/relational-db/${database.rid}`">
+            <router-link :to="{ name: 'RelationalDatabaseDetail', params: { databaseId: database.rid } }">
               <DatabaseSetting />
               {{ database.name }}
             </router-link>

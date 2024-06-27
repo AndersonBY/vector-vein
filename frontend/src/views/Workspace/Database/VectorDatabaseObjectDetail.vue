@@ -140,13 +140,13 @@ const infoEditorModal = reactive({
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link :to="`/data`">
+            <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'vector-database' } }">
               <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <router-link :to="`/data/vector-db/${database.vid}`">
+            <router-link :to="{ name: 'VectorDatabaseDetail', params: { databaseId: database.vid } }">
               <DatabaseSetting />
               {{ database.name }}
             </router-link>

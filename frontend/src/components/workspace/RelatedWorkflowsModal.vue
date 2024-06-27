@@ -55,20 +55,22 @@ onBeforeMount(async () => {
         <a-tab-pane v-for="relatedWorkflow in relatedWorkflows" :key="relatedWorkflow[queryKey]"
           :tab="relatedWorkflow.title">
           <template v-if="isTemplate || relatedWorkflow.is_template">
-            <router-link :to="`/workflow/template/${relatedWorkflow.tid}`" class="workflow-title">
+            <router-link :to="{ name: 'WorkflowTemplate', params: { workflowTemplateId: relatedWorkflow.tid } }"
+              class="workflow-title">
               {{ t('workspace.workflowTemplate.template') }}: {{ relatedWorkflow.title }}
             </router-link>
           </template>
           <template v-else>
-            <router-link :to="`/workflow/${relatedWorkflow.wid}`" class="workflow-title">
+            <router-link :to="{ name: 'WorkflowUse', params: { workflowId: relatedWorkflow.wid } }"
+              class="workflow-title">
               {{ relatedWorkflow.title }}
             </router-link>
           </template>
           <a-typography-text type="secondary">
             {{ t('workspace.workflowSpace.update_time', {
-    time: new
-      Date(parseInt(relatedWorkflow.update_time)).toLocaleString()
-  }) }}
+              time: new
+                Date(parseInt(relatedWorkflow.update_time)).toLocaleString()
+            }) }}
           </a-typography-text>
           <a-divider></a-divider>
           <VueMarkdown v-highlight :source="relatedWorkflow.brief" :options="{ html: true }"

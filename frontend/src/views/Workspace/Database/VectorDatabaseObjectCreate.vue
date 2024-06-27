@@ -93,7 +93,7 @@ const create = async () => {
     message.error(t('workspace.databaseObjectCreate.create_failed'))
   }
   creating.value = false
-  await router.push({ name: 'VectorDatabaseObjectDetail', params: { databaseId, objectId: response.data.oid } })
+  await router.push({ name: 'VectorDatabaseDetail', params: { databaseId } })
 }
 
 </script>
@@ -107,13 +107,13 @@ const create = async () => {
       <a-col :xl="16" :lg="18" :md="20" :sm="22" :xs="24">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link :to="`/data`">
+            <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'vector-database' } }">
               <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
           </a-breadcrumb-item>
           <a-breadcrumb-item>
-            <router-link :to="`/data/vector-db/${database.vid}`">
+            <router-link :to="{ name: 'VectorDatabaseDetail', params: { databaseId: database.vid } }">
               <DatabaseSetting />
               {{ database.name }}
             </router-link>
@@ -266,7 +266,7 @@ const create = async () => {
             </a-col>
           </a-row>
 
-          <a-space style="float: right;">
+          <a-space style="float: right; margin-top: 12px;">
             <a-button :disabled="currentStep == 0" @click="currentStep -= 1">
               {{ t('common.previous_step') }}
             </a-button>

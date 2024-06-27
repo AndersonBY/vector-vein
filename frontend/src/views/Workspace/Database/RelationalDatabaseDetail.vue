@@ -82,7 +82,7 @@ const databaseTables = reactive({
       onClick: async (event) => {
         if (record.status != 'VA') return
         if (event.target.classList.contains('ant-table-cell') || event.target.classList.contains('table-name')) {
-          await router.push(`/data/relational-db/${databaseId}/table/${record.tid}`)
+          await router.push({ name: 'RelationalDatabaseTableDetail', params: { databaseId, tableId: record.tid } })
         }
       },
       onMouseenter: (event) => { databaseTables.hoverRowTid = record.tid },
@@ -165,7 +165,7 @@ const infoEditorModal = reactive({
       <a-col :xl="18" :lg="20" :md="22" :sm="24" :xs="24">
         <a-breadcrumb>
           <a-breadcrumb-item>
-            <router-link :to="`/data?tab=relational-database`">
+            <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'relational-database' } }">
               <FileCabinet />
               {{ t('components.layout.basicHeader.data_space') }}
             </router-link>
@@ -203,7 +203,8 @@ const infoEditorModal = reactive({
                 </a-form>
               </a-modal>
               <a-tooltip :title="t('workspace.databaseDetail.add_object')">
-                <a-button type="text" size="large" @click="router.push(`/data/relational-db/${databaseId}/create`)">
+                <a-button type="text" size="large"
+                  @click="router.push({ name: 'RelationalDatabaseTableCreate', params: { databaseId } })">
                   <template #icon>
                     <Upload />
                   </template>

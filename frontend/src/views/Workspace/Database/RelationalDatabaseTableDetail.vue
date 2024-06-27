@@ -215,13 +215,13 @@ const addRecordModal = reactive({
   <div class="dataspace-container" v-else>
     <a-breadcrumb>
       <a-breadcrumb-item>
-        <router-link :to="`/data?tab=relational-database`">
+        <router-link :to="{ name: 'DataSpaceMain', query: { tab: 'relational-database' } }">
           <FileCabinet />
           {{ t('components.layout.basicHeader.data_space') }}
         </router-link>
       </a-breadcrumb-item>
       <a-breadcrumb-item>
-        <router-link :to="`/data/relational-db/${databaseId}`">
+        <router-link :to="{ name: 'RelationalDatabaseDetail', params: { databaseId: databaseId } }">
           <DatabaseSetting />
           {{ database.name }}
         </router-link>

@@ -50,6 +50,7 @@ const addTemplateToUserWorkflows = async () => {
   userWorkflowsStore.setUserWorkflowsTotal(userWorkflowsStore.userWorkflowsTotal + 1)
   addingTemplate.value = false
   await router.push({ name: 'WorkflowUse', params: { workflowId: response.data.wid } })
+  window.location.reload()
 }
 </script>
 
@@ -60,7 +61,7 @@ const addTemplateToUserWorkflows = async () => {
   <a-spin :spinning="updating" class="space-container" v-else>
     <a-breadcrumb>
       <a-breadcrumb-item>
-        <router-link to="/workflow?tab=official-workflow-templates">
+        <router-link :to="{ name: 'WorkflowSpaceMain', query: { tab: 'official-workflow-templates' } }">
           {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
         </router-link>
       </a-breadcrumb-item>
@@ -105,8 +106,6 @@ const addTemplateToUserWorkflows = async () => {
             <a-button type="primary" size="large" block @click="addTemplateToUserWorkflows" :loading="addingTemplate"
               style="margin-bottom: 10px;">
               {{ t('workspace.workflowTemplate.add_to_my_workflows') }}
-              <a-divider type="vertical" style="border-inline-start-color: rgb(255, 255, 255);" />
-              <BranchTwo />{{ templateData.used_count }}
             </a-button>
 
             <a-button v-if="templateData.is_owner" type="primary" @click="openEditor" block>
@@ -135,7 +134,7 @@ const addTemplateToUserWorkflows = async () => {
   top: 0;
   left: 0;
   width: 100%;
-  height: 100%;
+  min-height: 100%;
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 1;
   display: flex;
@@ -143,10 +142,12 @@ const addTemplateToUserWorkflows = async () => {
   gap: 10px;
   justify-content: center;
   align-items: center;
+  padding: 80px 40px;
 }
 
 .workflow-use-mask .hint {
   color: #ffffffbd;
+  text-align: center;
 }
 
 .collapse-button {

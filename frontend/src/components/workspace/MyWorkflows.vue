@@ -277,6 +277,7 @@ const clone = async (workflowWid) => {
 }
 
 const openRecord = async (record) => {
+  console.log(record)
   await router.push({ name: 'WorkflowUse', params: { workflowId: record.wid }, query: { rid: record.rid } })
 }
 </script>
@@ -404,7 +405,7 @@ const openRecord = async (record) => {
         </a-typography-paragraph>
         <a-typography-paragraph type="secondary">
           {{ t('components.workspace.myWorkflows.no_workflows_2') }}
-          <router-link to="/workflow/?tab=official-workflow-templates">
+          <router-link :to="{ name: 'WorkflowSpaceMain', query: { tab: 'official-workflow-templates' } }">
             {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
           </router-link>
         </a-typography-paragraph>
