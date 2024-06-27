@@ -1,13 +1,13 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-15 13:17:37
+ * @Date:   2024-04-15 13:22:49
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:49:13
+ * @Last Modified time: 2024-05-02 12:38:43
  */
 export function createTemplateData() {
   return {
     "description": "description",
-    "task_name": "llms.claude",
+    "task_name": "llms.mini_max",
     "has_inputs": true,
     "template": {
       "prompt": {
@@ -25,31 +25,19 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku",
+        "value": "abab6.5s-chat",
         "options": [
           {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
+            "value": "abab5.5-chat",
+            "label": "abab5.5-chat"
           },
           {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
+            "value": "abab6-chat",
+            "label": "abab6-chat"
           },
           {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
-          },
-          {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
-          },
-          {
-            "value": "claude-2.1",
-            "label": "claude-2.1"
-          },
-          {
-            "value": "claude-instant-1.2",
-            "label": "claude-instant-1.2"
+            "value": "abab6.5s-chat",
+            "label": "abab6.5s-chat"
           },
         ],
         "name": "llm_model",

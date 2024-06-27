@@ -4,8 +4,8 @@ from typing import List, Optional
 
 import pydantic
 
-from utilities.settings import Settings
-from utilities.ratelimit import is_request_allowed, add_request_record
+from utilities.config import Settings
+from utilities.general.ratelimit import is_request_allowed, add_request_record
 
 
 class EndpointSetting(pydantic.BaseModel):

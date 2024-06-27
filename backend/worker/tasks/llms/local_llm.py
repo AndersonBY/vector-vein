@@ -1,6 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-03-29 01:35:54
-from utilities.settings import Settings
+from utilities.config import Settings
 from utilities.workflow import Workflow
 from .base_llm import BaseLLMTask
 from .types.model import ModelSetting, EndpointSetting

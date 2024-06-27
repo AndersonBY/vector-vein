@@ -28,4 +28,24 @@ class ChatGLMTask(BaseLLMTask):
             endpoints=endpoints,
             max_output_tokens=8192,
         ),
+        "glm-4-0520": ModelSetting(
+            id="glm-4-0520",
+            endpoints=endpoints,
+            max_output_tokens=8192,
+        ),
+        "glm-4-air": ModelSetting(
+            id="glm-4-air",
+            endpoints=endpoints,
+            max_output_tokens=8192,
+        ),
+        "glm-4-airx": ModelSetting(
+            id="glm-4-airx",
+            endpoints=endpoints,
+            max_output_tokens=8192,
+        ),
+        "glm-4-flash": ModelSetting(
+            id="glm-4-flash",
+            endpoints=endpoints,
+            max_output_tokens=8192,
+        ),
     }

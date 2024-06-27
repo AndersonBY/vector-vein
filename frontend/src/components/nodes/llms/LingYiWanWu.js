@@ -1,13 +1,13 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-15 13:17:37
+ * @Date:   2024-04-15 13:21:37
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:49:13
+ * @Last Modified time: 2024-05-24 11:47:47
  */
 export function createTemplateData() {
   return {
     "description": "description",
-    "task_name": "llms.claude",
+    "task_name": "llms.ling_yi_wan_wu",
     "has_inputs": true,
     "template": {
       "prompt": {
@@ -25,31 +25,27 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku",
+        "value": "yi-large",
         "options": [
           {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
+            "value": "yi-large",
+            "label": "yi-large",
           },
           {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
+            "value": "yi-large-turbo",
+            "label": "yi-large-turbo",
           },
           {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
+            "value": "yi-medium",
+            "label": "yi-medium",
           },
           {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
+            "value": "yi-medium-200k",
+            "label": "yi-medium-200k",
           },
           {
-            "value": "claude-2.1",
-            "label": "claude-2.1"
-          },
-          {
-            "value": "claude-instant-1.2",
-            "label": "claude-instant-1.2"
+            "value": "yi-spark",
+            "label": "yi-spark",
           },
         ],
         "name": "llm_model",

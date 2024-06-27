@@ -5,7 +5,7 @@ import time
 from anthropic import Anthropic
 from anthropic.types.message import Message
 
-from utilities.print_utils import mprint
+from utilities.general import mprint
 from .base_llm import BaseLLMTask
 from .types.model import ModelSetting, EndpointSetting
 from .types.output import ModelOutput
@@ -39,6 +39,17 @@ class ClaudeTask(BaseLLMTask):
         ),
         "claude-3-opus": ModelSetting(
             id="claude-3-opus-20240229",
+            endpoints=[
+                EndpointSetting(
+                    endpoint_settings_key="anthropic_api_base",
+                    api_key_settings_key="anthropic_api_key",
+                    rpm=50,
+                    tpm=30000,
+                )
+            ],
+        ),
+        "claude-3-5-sonnet": ModelSetting(
+            id="claude-3-5-sonnet-20240620",
             endpoints=[
                 EndpointSetting(
                     endpoint_settings_key="anthropic_api_base",

@@ -1,13 +1,13 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-15 13:17:37
+ * @Date:   2024-04-15 12:20:07
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:49:13
+ * @Last Modified time: 2024-06-08 13:11:17
  */
 export function createTemplateData() {
   return {
     "description": "description",
-    "task_name": "llms.claude",
+    "task_name": "llms.aliyun_qwen",
     "has_inputs": true,
     "template": {
       "prompt": {
@@ -25,31 +25,31 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku",
+        "value": "qwen2-72b-instruct",
         "options": [
           {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
+            "value": "qwen1.5-7b-chat",
+            "label": "qwen1.5-7b-chat"
           },
           {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
+            "value": "qwen1.5-14b-chat",
+            "label": "qwen1.5-14b-chat"
           },
           {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
+            "value": "qwen1.5-32b-chat",
+            "label": "qwen1.5-32b-chat"
           },
           {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
+            "value": "qwen1.5-72b-chat",
+            "label": "qwen1.5-72b-chat"
           },
           {
-            "value": "claude-2.1",
-            "label": "claude-2.1"
+            "value": "qwen1.5-110b-chat",
+            "label": "qwen1.5-110b-chat"
           },
           {
-            "value": "claude-instant-1.2",
-            "label": "claude-instant-1.2"
+            "value": "qwen2-72b-instruct",
+            "label": "qwen2-72b-instruct"
           },
         ],
         "name": "llm_model",

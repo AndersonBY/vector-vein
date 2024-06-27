@@ -1,13 +1,13 @@
 /**
  * @Author: Bi Ying
- * @Date:   2024-04-15 13:17:37
+ * @Date:   2024-04-15 12:27:06
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:49:13
+ * @Last Modified time: 2024-06-24 22:20:51
  */
 export function createTemplateData() {
   return {
     "description": "description",
-    "task_name": "llms.claude",
+    "task_name": "llms.baichuan",
     "has_inputs": true,
     "template": {
       "prompt": {
@@ -25,31 +25,31 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku",
+        "value": "Baichuan3-Turbo",
         "options": [
           {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
+            "value": "Baichuan4",
+            "label": "Baichuan4"
           },
           {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
+            "value": "Baichuan3-Turbo",
+            "label": "Baichuan3-Turbo"
           },
           {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
+            "value": "Baichuan3-Turbo-128k",
+            "label": "Baichuan3-Turbo-128k"
           },
           {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
+            "value": "Baichuan2-Turbo",
+            "label": "Baichuan2-Turbo"
           },
           {
-            "value": "claude-2.1",
-            "label": "claude-2.1"
+            "value": "Baichuan2-Turbo-192k",
+            "label": "Baichuan2-Turbo-192k"
           },
           {
-            "value": "claude-instant-1.2",
-            "label": "claude-instant-1.2"
+            "value": "Baichuan2-53B",
+            "label": "Baichuan2-53B"
           },
         ],
         "name": "llm_model",

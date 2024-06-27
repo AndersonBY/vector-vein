@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 12:30:13
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 12:30:51
+ * @Last Modified time: 2024-06-12 20:26:40
  */
 export function createTemplateData() {
   return {
@@ -34,6 +34,22 @@ export function createTemplateData() {
           {
             "value": "glm-4",
             "label": "glm-4"
+          },
+          {
+            "value": "glm-4-0520",
+            "label": "glm-4-0520",
+          },
+          {
+            "value": "glm-4-air",
+            "label": "glm-4-air",
+          },
+          {
+            "value": "glm-4-airx",
+            "label": "glm-4-airx",
+          },
+          {
+            "value": "glm-4-flash",
+            "label": "glm-4-flash",
           },
         ],
         "name": "llm_model",

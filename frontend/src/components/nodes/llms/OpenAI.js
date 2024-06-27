@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 13:25:09
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 16:11:46
+ * @Last Modified time: 2024-06-07 15:34:56
  */
 export function createTemplateData() {
   return {
@@ -34,6 +34,10 @@ export function createTemplateData() {
           {
             "value": "gpt-4",
             "label": "gpt-4-turbo"
+          },
+          {
+            "value": "gpt-4o",
+            "label": "gpt-4o"
           },
         ],
         "name": "llm_model",

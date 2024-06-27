@@ -8,10 +8,10 @@ import httpx
 from openai import AzureOpenAI, OpenAI
 from openai.types.chat import ChatCompletionMessage
 
+from utilities.general import mprint
+from utilities.network import proxies
 from utilities.workflow import Workflow
-from utilities.web_crawler import proxies
-from utilities.embeddings import get_token_counts
-from utilities.print_utils import mprint, mprint_error
+from utilities.ai_utils import get_token_counts
 from .types.model import ModelSetting
 from .types.output import ModelOutput
 
@@ -140,7 +140,7 @@ class BaseLLMTask:
                 try:
                     function_call_arguments = json.loads(tool_call.function.arguments)
                 except json.decoder.JSONDecodeError:
-                    mprint_error(tool_call.function.arguments)
+                    mprint.error(tool_call.function.arguments)
                     function_call_arguments = {}
                 break
 
@@ -180,8 +180,8 @@ class BaseLLMTask:
                     self.total_prompt_tokens += result.prompt_tokens
                     self.total_completion_tokens += result.completion_tokens
                 except Exception as exc:
-                    mprint_error(f"Generated an exception: {exc}")
-                    mprint_error(f"Prompt: {self.prompts[index]}")
+                    mprint.error(f"Generated an exception: {exc}")
+                    mprint.error(f"Prompt: {self.prompts[index]}")
 
         content_output = self.content_outputs[0] if isinstance(self.input_prompt, str) else self.content_outputs
         self.workflow.update_node_field_value(self.node_id, "output", content_output)
