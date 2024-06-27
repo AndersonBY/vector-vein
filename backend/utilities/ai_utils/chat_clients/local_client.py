@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-17 12:23:18
+# @Last Modified time: 2024-06-28 03:20:15
 import json
 
 from openai import OpenAI, AsyncOpenAI
@@ -66,7 +66,7 @@ class LocalChatClient(BaseChatClient):
             self.temperature = temperature
 
         self.model_settings = next(
-            (item for item in self.family_settings["models"] if item["model_id"] == self.model), None
+            (item for item in self.family_settings["models"] if item["model_id"].lower() == self.model.lower()), None
         )
 
         self._native_function_calling_available = self.model_settings.get("function_calling", False)
@@ -182,7 +182,7 @@ class AsyncLocalChatClient(BaseAsyncChatClient):
             self.temperature = temperature
 
         self.model_settings = next(
-            (item for item in self.family_settings["models"] if item["model_id"] == self.model), None
+            (item for item in self.family_settings["models"] if item["model_id"].lower() == self.model.lower()), None
         )
 
         self._native_function_calling_available = self.model_settings.get("function_calling", False)
