@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-04-30 16:08:12
+# @Last Modified time: 2024-06-09 00:14:21
 import markdown2
 from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
@@ -10,7 +10,7 @@ from langchain_text_splitters import (
 )
 
 from utilities.workflow import Workflow
-from utilities.text import split_text
+from utilities.text_processing import split_text
 from worker.tasks import task, timer
 
 
@@ -141,8 +141,8 @@ def text_splitters(
         text=text,
         rules={
             "split_method": split_method,
-            "chunk_length": chunk_length,
-            "chunk_overlap": chunk_overlap,
+            "chunk_length": int(chunk_length),
+            "chunk_overlap": int(chunk_overlap),
             "delimiter": delimiter,
         },
         flat=True,
