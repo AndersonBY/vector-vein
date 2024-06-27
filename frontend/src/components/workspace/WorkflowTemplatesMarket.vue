@@ -93,10 +93,7 @@ const workflowTemplates = reactive({
   },
   load: async (params) => {
     workflowTemplates.loading = true
-    const res = await officialSiteAPI('list_templates', {
-      client: 'PC',
-      ...params
-    })
+    const res = await officialSiteAPI('list_templates', { client: 'PC', ...params })
     if (res.status == 200) {
       workflowTemplates.data = res.data.templates.map(item => {
         item.create_time = formatTime(item.create_time)
@@ -133,7 +130,7 @@ const navigateToTemplate = async (tid) => {
         <a-col :xl="6" :lg="8" :md="8" :sm="12" :xs="24" v-for="(template, index) in workflowTemplates.data"
           :key="template.tid" @click="navigateToTemplate(template.tid)">
           <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
-            :brief="template.brief" :author="template.user" :forks="template.used_count" />
+            :brief="template.brief" :author="template.user" :forks="false" />
         </a-col>
       </a-row>
     </a-spin>
