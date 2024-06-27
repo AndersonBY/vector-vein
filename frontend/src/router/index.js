@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-02-05 01:38:00
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 20:27:29
+ * @Last Modified time: 2024-06-25 13:12:45
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
@@ -30,6 +30,7 @@ const routes = [
         name: 'WorkflowSpace',
         meta: {
           title: 'router.workspace.children.workflow_space',
+          headerKey: 'workflow',
         },
         component: () => import('@/views/Workspace/WorkflowSpace.vue'),
         children: [
@@ -64,11 +65,12 @@ const routes = [
         name: 'DataSpace',
         meta: {
           title: 'router.workspace.children.data_space',
+          headerKey: 'data',
         },
         children: [
           {
             path: '',
-            name: 'DataSpace',
+            name: 'DataSpaceMain',
             meta: {
               title: 'router.workspace.children.data_space',
             },
@@ -121,6 +123,68 @@ const routes = [
               title: 'router.workspace.children.database_object_detail',
             },
             component: () => import('@/views/Workspace/Database/RelationalDatabaseTableDetail.vue')
+          },
+        ]
+      },
+      {
+        path: 'agent/:agentId/chat',
+        name: 'chatSpace',
+        meta: {
+          title: 'router.workspace.children.chat_space',
+          headerKey: 'agent',
+        },
+        component: () => import('@/views/Workspace/Chat/ChatSpace.vue'),
+        children: [
+          {
+            path: '',
+            name: 'conversationNew',
+            meta: {
+              title: 'router.workspace.children.conversation_detail',
+            },
+            component: () => import('@/views/Workspace/Chat/ConversationNew.vue')
+          },
+          {
+            path: ':conversationId',
+            name: 'conversationDetail',
+            meta: {
+              title: 'router.workspace.children.conversation_detail',
+            },
+            component: () => import('@/views/Workspace/Chat/ConversationDetail.vue')
+          },
+        ]
+      },
+      {
+        path: 'agent',
+        name: 'agentSpace',
+        meta: {
+          title: 'router.workspace.children.agent_space',
+          headerKey: 'agent',
+        },
+        component: () => import('@/views/Workspace/Agent/AgentSpace.vue'),
+        children: [
+          {
+            path: 'my-agents',
+            name: 'myAgents',
+            meta: {
+              title: 'router.workspace.children.my_agents',
+            },
+            component: () => import('@/views/Workspace/Agent/MyAgents.vue')
+          },
+          {
+            path: 'public-agents',
+            name: 'publicAgents',
+            meta: {
+              title: 'router.workspace.children.public_agents',
+            },
+            component: () => import('@/views/Workspace/Agent/PublicAgents.vue')
+          },
+          {
+            path: ':agentId',
+            name: 'agentDetail',
+            meta: {
+              title: 'router.workspace.children.agent_detail',
+            },
+            component: () => import('@/views/Workspace/Agent/AgentDetail.vue'),
           },
         ]
       },
