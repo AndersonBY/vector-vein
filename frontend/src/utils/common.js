@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 03:11:31
+ * @Last Modified time: 2024-06-28 13:40:15
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -268,16 +268,16 @@ export const nonLocalChatModelOptions = [
   },
 ]
 
-export const getChatModelOptions = (t) => {
+export const getChatModelOptions = (flat = false) => {
   const userSettings = useUserSettingsStore()
   const { setting } = storeToRefs(userSettings)
-  return nonLocalChatModelOptions.concat(setting.value.data?.local_llms?.map((provider) => {
+  const chatModels = nonLocalChatModelOptions.concat(setting.value.data?.local_llms?.map((provider) => {
     return {
       value: '_local__' + provider.model_family,
       label: h(TypographyText, {}, () =>
         h(Flex, { gap: 'small', style: 'display: inline-flex;' }, () => [
           provider.model_family,
-          h(Tag, { color: 'green', bordered: false }, () => t('workspace.chatSpace.local_model'))
+          h(Tag, { color: 'green', bordered: false }, () => 'Local')
         ])
       ),
       children: provider.models.map((model) => ({
@@ -286,9 +286,12 @@ export const getChatModelOptions = (t) => {
       })),
     }
   }))
+  if (flat) {
+    return chatModels.map((item) => item.children).flat()
+  } else {
+    return chatModels
+  }
 }
-
-export const allModels = computed(() => chatModelOptions.value.map((item) => item.children).flat())
 
 export const statusColorMap = {
   'INVALID': 'red',

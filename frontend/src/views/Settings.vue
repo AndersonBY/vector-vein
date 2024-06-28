@@ -28,7 +28,7 @@ const loading = ref(true)
 const userSettings = useUserSettingsStore()
 
 const microphoneDeviceOptions = ref([])
-const chatModelOptions = ref(getChatModelOptions(t))
+const chatModelOptions = ref(getChatModelOptions())
 
 const settingForm = reactive({
   id: 1,
@@ -76,7 +76,7 @@ const saveSetting = async (updateShortcuts = false) => {
   await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts })
   message.success(t('settings.save_success'))
   saving.value = false
-  chatModelOptions.value = getChatModelOptions(t)
+  chatModelOptions.value = getChatModelOptions()
 }
 
 const selectedKeys = ref(['llms'])

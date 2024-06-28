@@ -25,7 +25,7 @@ const emit = defineEmits(['update:model', 'update:modelProvider'])
 
 const { t } = useI18n()
 const open = ref(false)
-const chatModelOptions = ref(getChatModelOptions(t))
+const chatModelOptions = ref(getChatModelOptions())
 
 const model = ref(props.model)
 const modelProvider = ref([props.modelProvider])

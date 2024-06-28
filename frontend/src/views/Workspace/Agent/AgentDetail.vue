@@ -38,7 +38,7 @@ const savedSelectedFlows = ref({
 const updateTime = computed(() => {
   return formatTime(agentData.value.update_time)
 })
-const chatModelOptions = ref(getChatModelOptions(t))
+const chatModelOptions = ref(getChatModelOptions())
 
 const loadAgentData = async (aid) => {
   loading.value = true
