@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-26 16:01:31
+# @Last Modified time: 2024-06-28 14:29:34
 from utilities.workflow import Workflow
 from utilities.file_processing import get_files_contents, remove_markdown_image, remove_url_and_email
 from worker.tasks import task, timer
@@ -18,6 +18,9 @@ def file_loader(
     files = workflow.get_node_field_value(node_id, "files")
     need_remove_image: bool = workflow.get_node_field_value(node_id, "remove_image", True)
     need_remove_url_and_email: bool = workflow.get_node_field_value(node_id, "remove_url_and_email", True)
+
+    if isinstance(files, str):
+        files = [files]
 
     results = get_files_contents(files)
     output = []
@@ -43,6 +46,8 @@ def file_upload(
 ):
     workflow = Workflow(workflow_data)
     files = workflow.get_node_field_value(node_id, "files")
+    if isinstance(files, str):
+        files = [files]
     if len(files) == 1:
         workflow.update_node_field_value(node_id, "output", files[0])
     else:
