@@ -3,18 +3,13 @@ import { onBeforeMount, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { storeToRefs } from 'pinia'
-import { useUserSettingsStore } from '@/stores/userSettings'
 import WorkflowCard from '@/components/workspace/WorkflowCard.vue'
 import InputSearch from "@/components/InputSearch.vue"
 import { formatTime } from '@/utils/util'
 import { officialSiteAPI } from '@/api/remote'
 
 const { t } = useI18n()
-const loading = ref(true)
 const router = useRouter()
-const userSettingsStore = useUserSettingsStore()
-const { language } = storeToRefs(userSettingsStore)
 const tags = ref([])
 const tagsOptions = computed(() => {
   let options = [{
@@ -38,7 +33,7 @@ onBeforeMount(async () => {
     workflowTemplates.searchText = searchText
   }
   const [templates, tagsResponse] = await Promise.all([
-    workflowTemplates.load({ is_official: true, ...searchTextQuery }),
+    workflowTemplates.load({ ...searchTextQuery }),
     officialSiteAPI('list_tags', {}),
   ])
   if (tagsResponse.status == 200) {
@@ -50,50 +45,53 @@ const workflowTemplates = reactive({
   data: [],
   loading: true,
   current: 1,
-  pageSize: 10,
+  pageSize: 24,
   total: 0,
-  pagination: computed(() => ({
-    total: workflowTemplates.total,
-    current: workflowTemplates.current,
-    pageSize: workflowTemplates.pageSize,
-  })),
+  sorter: {
+    field: 'official_order',
+    order: 'descend',
+  },
   selectTag: 'all',
   selectTagChange: async () => {
     workflowTemplates.loading = true
     await workflowTemplates.load({
       tags: [workflowTemplates.selectTag],
-      is_official: true,
     })
     workflowTemplates.loading = false
   },
-  hoverRowWid: null,
-  handleTableChange: (page, filters, sorter) => {
+  handlePaginationChange: (page, pageSize) => {
     workflowTemplates.load({
-      page_size: page.pageSize,
-      page: page.current,
-      sort_field: sorter.field,
-      sort_order: sorter.order,
-      tags: filters.tags,
+      page_size: pageSize,
+      page: page,
     })
   },
   searching: false,
   searchText: '',
   searchWorkflows: async () => {
     workflowTemplates.searching = true
-    await workflowTemplates.load({ page_size: workflowTemplates.pageSize, search_text: workflowTemplates.searchText })
+    await workflowTemplates.load({ search_text: workflowTemplates.searchText })
     workflowTemplates.searching = false
     await router.push({ query: { ...router.currentRoute.value.query, search_text: workflowTemplates.searchText } })
   },
   clearSearch: async () => {
     workflowTemplates.searching = true
     workflowTemplates.searchText = ''
-    await workflowTemplates.load({ page_size: workflowTemplates.pageSize })
+    await workflowTemplates.load({})
     workflowTemplates.searching = false
     await router.push({ query: { ...router.currentRoute.value.query, search_text: undefined } })
   },
   load: async (params) => {
     workflowTemplates.loading = true
-    const res = await officialSiteAPI('list_templates', { client: 'PC', ...params })
+    const res = await officialSiteAPI('list_templates', {
+      is_official: true,
+      client: 'PC',
+      page_size: workflowTemplates.pageSize,
+      page: workflowTemplates.current,
+      sort_field: workflowTemplates.sorter.field,
+      sort_order: workflowTemplates.sorter.order,
+      tags: [workflowTemplates.selectTag],
+      ...params
+    })
     if (res.status == 200) {
       workflowTemplates.data = res.data.templates.map(item => {
         item.create_time = formatTime(item.create_time)
@@ -131,6 +129,13 @@ const navigateToTemplate = async (tid) => {
           :key="template.tid" @click="navigateToTemplate(template.tid)">
           <WorkflowCard :id="template.tid" :title="template.title" :tags="template.tags" :images="template.images"
             :brief="template.brief" :author="template.user" :forks="false" />
+        </a-col>
+        <a-col :span="24">
+          <a-flex justify="flex-end">
+            <a-pagination v-model:current="workflowTemplates.current" v-model:pageSize="workflowTemplates.pageSize"
+              :total="workflowTemplates.total" :hideOnSinglePage="true" show-less-items
+              @change="workflowTemplates.handlePaginationChange" />
+          </a-flex>
         </a-col>
       </a-row>
     </a-spin>
