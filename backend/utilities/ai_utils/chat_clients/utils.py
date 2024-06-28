@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-20 13:53:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 22:13:25
+# @Last Modified time: 2024-06-28 18:07:06
 import re
 import json
 
@@ -191,7 +191,8 @@ def format_messages(messages: list, backend: str = "openai", native_multimodal: 
                 if backend == "gemini":
                     parts = [{"text": content}]
                     for attachment in message["attachments"]:
-                        parts.append(format_image_message(image=attachment, backend=backend))
+                        if attachment.endswith(images_extensions):
+                            parts.append(format_image_message(image=attachment, backend=backend))
                     formatted_message = {"role": role, "parts": parts}
                 else:
                     formatted_message = {
@@ -201,6 +202,7 @@ def format_messages(messages: list, backend: str = "openai", native_multimodal: 
                             *[
                                 format_image_message(image=attachment, backend=backend)
                                 for attachment in message["attachments"]
+                                if attachment.endswith(images_extensions)
                             ],
                         ],
                     }
