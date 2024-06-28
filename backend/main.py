@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-28 00:42:59
+# @Last Modified time: 2024-06-28 17:06:50
 import os
 import time
 import queue
@@ -153,12 +153,16 @@ def main():
         f"VectorVein v{VERSION}",
         url=url,
         js_api=api,
-        width=1600,
-        height=1000,
+        width=config.get("window.width", 1600),
+        height=config.get("window.height", 1000),
+        x=config.get("window.x", 0),
+        y=config.get("window.y", 0),
+        on_top=config.get("window.on_top", False),
         confirm_close=True,
     )
 
     def on_close():
+        config.close()
         background_task_server.stop()
         shortcuts_listener.stop()
         ws_server.stop()
@@ -172,17 +176,26 @@ def main():
         """
         files = e["dataTransfer"]["files"]
         if len(files) == 0:
-            return
+            return e
 
         for file in files:
             cache.set(f"drop_file_{file.get('name')}", file.get("pywebviewFullPath"), expire=60)
 
+        return e
+
+    def on_moved(x, y):
+        config.save("window.x", x)
+        config.save("window.y", y)
+
+    def on_resized(width, height):
+        config.save("window.width", width)
+        config.save("window.height", height)
+
     def bind(window):
-        # window.dom.document.events.dragenter += DOMEventHandler(lambda e: e, True, True)
-        # window.dom.document.events.dragstart += DOMEventHandler(lambda e: e, True, True)
-        # window.dom.document.events.dragover += DOMEventHandler(lambda e: e, True, True)
-        window.dom.document.events.drop += DOMEventHandler(on_drop, True, True)
+        window.dom.document.events.drop += DOMEventHandler(on_drop)
         window.events.closed += on_close
+        window.events.resized += on_resized
+        window.events.moved += on_moved
 
     mprint(f"Debug: {DEBUG}")
     mprint(f"Version: {VERSION}")
