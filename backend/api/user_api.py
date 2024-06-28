@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-28 17:04:33
+# @Last Modified time: 2024-06-28 23:11:43
 import json
 import time
 
@@ -146,7 +146,9 @@ class HardwareAPI:
     name = "hardware"
 
     def list_microphones(self, payload):
-        microphones = Microphone().list_devices()
+        mic = Microphone()
+        microphones = mic.list_devices()
+        mic.close()
         return JResponse(data=microphones)
 
     def check_microphone(self, payload):
