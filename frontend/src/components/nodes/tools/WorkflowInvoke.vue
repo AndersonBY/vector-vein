@@ -6,6 +6,7 @@ import { nonFormItemsTypes } from '@/utils/workflow'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import WorkflowSelect from '@/components/workspace/WorkflowSelect.vue'
+import { deepCopy } from '@/utils/util'
 import { createTemplateData } from './WorkflowInvoke'
 
 const props = defineProps({
@@ -20,7 +21,7 @@ const props = defineProps({
 })
 
 const route = useRoute()
-const selectType = route.path.startsWith('/workflow/editor/') ? 'workflow' : 'officialTemplate'
+const selectType = route.path.startsWith('/workspace/workflow/editor/') ? 'workflow' : 'officialTemplate'
 const showUser = selectType == 'template'
 
 const { t } = useI18n()
@@ -51,12 +52,17 @@ const workflowSelectModal = reactive({
         delete fieldsData.value[field]
       }
     })
+    const fieldNamesIds = new Set()
     workflowSelectModal.data.inputFields.forEach((field) => {
       if (nonFormItemsTypes.includes(field.field_type)) return
-      fieldsData.value[field.name] = JSON.parse(JSON.stringify(field))
-      fieldsData.value[field.name].node = fieldsData.value[field.name].nodeId
+      let fieldKey = field.name
+      while (fieldNamesIds.has(fieldKey)) {
+        fieldKey = `${fieldKey}_${Math.floor(Math.random() * 1000)}`
+      }
+      fieldsData.value[fieldKey] = deepCopy(field)
+      fieldsData.value[fieldKey].node = fieldsData.value[fieldKey].nodeId
+      fieldNamesIds.add(fieldKey)
     })
-    const fieldNamesIds = new Set()
     const outputNodes = workflowSelectModal.data.outputNodes.concat(workflowSelectModal.data.workflowInvokeOutputNodes)
     outputNodes.forEach((node) => {
       if (node.field_type == 'typography-paragraph') return
@@ -70,28 +76,32 @@ const workflowSelectModal = reactive({
       let outputFieldKey = ''
 
       if (node.type == 'Text') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.text))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.text)
         fieldName = `${fieldName}_${node.data.template.output_title.value}`
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.data.template.output_title.value || 'text'}`
         outputFieldKey = 'text'
       } else if (node.type == 'Audio') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.audio_url || {}))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.audio_url || {})
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
         outputFieldKey = 'audio_url'
+      } else if (['Document', 'Table', 'Html'].includes(node.type)) {
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.output || {})
+        fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
+        outputFieldKey = 'output'
       } else if (node.type == 'Mindmap') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.content))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.content)
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
         outputFieldKey = 'content'
       } else if (node.type == 'Mermaid') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.content))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.content)
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
         outputFieldKey = 'content'
       } else if (node.type == 'Echarts') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.option))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.option)
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.type}`
         outputFieldKey = 'option'
       } else if (node.type == 'WorkflowInvokeOutput') {
-        fieldsData.value[fieldKey] = JSON.parse(JSON.stringify(node.data.template.value))
+        fieldsData.value[fieldKey] = deepCopy(node.data.template.value)
         fieldsData.value[fieldKey].display_name = `${nodeIdSlice}_${node.data.template.display_name.value}`
         outputFieldKey = 'value'
       }
