@@ -2,8 +2,15 @@
 # @Date:   2024-06-06 02:09:59
 # config.py
 import json
+import threading
 from pathlib import Path
 from threading import Lock
+
+
+DEFAULT_CONFIG = {
+    "data_path": "./data",
+    "window": {"width": 1600, "height": 1000, "x": 0, "y": 0, "fullscreen": False, "on_top": False},
+}
 
 
 class Config:
@@ -19,27 +26,62 @@ class Config:
         return cls._instance
 
     def _initialize(self):
-        self.default_config = {"data_path": "./data"}
         self.config_path = Path("./config.json")
+        self._dirty = False
+        self._save_interval = 5
+        self._save_timer = None
+
         if not self.config_path.is_file():
             with open(self.config_path, "w", encoding="utf8") as config_file:
-                json.dump(self.default_config, config_file)
+                json.dump(DEFAULT_CONFIG, config_file)
 
+        self.config = DEFAULT_CONFIG
         with open(self.config_path, "r") as config_file:
-            self.config = json.load(config_file)
+            self.config.update(json.load(config_file))
 
     def get(self, key, default=None):
-        return self.config.get(key, default)
+        keys = key.split(".")
+        value = self.config
+        for key in keys:
+            if isinstance(value, dict) and key in value:
+                value = value[key]
+            else:
+                return default
+        return value
 
     def save(self, key, value):
-        self.config[key] = value
-        with open(self.config_path, "w", encoding="utf8") as config_file:
-            json.dump(self.config, config_file, indent=4, ensure_ascii=False)
+        keys = key.split(".")
+        config = self.config
+        for k in keys[:-1]:
+            if k not in config or not isinstance(config[k], dict):
+                config[k] = {}
+            config = config[k]
+        config[keys[-1]] = value
+        self._dirty = True
 
-    def update(self, key, value):
-        self.config[key] = value
+        if self._save_timer is None:
+            self._start_save_timer()
+
+    def _save_to_file(self):
         with open(self.config_path, "w", encoding="utf8") as config_file:
             json.dump(self.config, config_file, indent=4, ensure_ascii=False)
+        self._dirty = False
+
+    def _start_save_timer(self):
+        self._save_timer = threading.Timer(self._save_interval, self._periodic_save)
+        self._save_timer.start()
+
+    def _periodic_save(self):
+        if self._dirty:
+            self._save_to_file()
+        self._save_timer = None
+
+    def close(self):
+        if self._save_timer is not None:
+            self._save_timer.cancel()
+            self._save_timer = None
+        if self._dirty:
+            self._save_to_file()
 
     @property
     def data_path(self):
