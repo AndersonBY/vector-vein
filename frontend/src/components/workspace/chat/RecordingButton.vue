@@ -42,7 +42,6 @@ const startRecording = async (payload = {}) => {
         }
       }, 1000)
     } else {
-      console.log(res)
       message.error(t('workspace.chatSpace.recording_failed'))
     }
   } catch (error) {
@@ -72,7 +71,6 @@ const stopRecording = async () => {
   try {
     const res = await hardwareAPI('stop_microphone')
     if (res.status != 200) {
-      console.log(res)
       message.error(t('common.failed'))
     } else {
       await postRecordingHandler(res.data.audio_path)

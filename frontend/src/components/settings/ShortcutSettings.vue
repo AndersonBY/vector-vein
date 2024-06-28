@@ -44,7 +44,6 @@ watch(shortcuts, (newVal) => {
       if (value) {
         for (const existingKey of keys) {
           if (isConflict(value, existingKey)) {
-            console.log(value, existingKey)
             message.error(t('settings.shortcut_conflict', { key1: value, key2: existingKey }));
             return;
           }

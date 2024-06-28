@@ -279,7 +279,6 @@ const clone = async (workflowWid) => {
 }
 
 const openRecord = async (record) => {
-  console.log(record)
   await router.push({ name: 'WorkflowUse', params: { workflowId: record.wid }, query: { rid: record.rid } })
 }
 
