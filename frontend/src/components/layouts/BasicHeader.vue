@@ -25,7 +25,7 @@ import { settingAPI } from '@/api/user'
 const loading = ref(true)
 const route = useRoute()
 const userSettingsStore = useUserSettingsStore()
-const { language } = storeToRefs(userSettingsStore)
+const { language, setting } = storeToRefs(userSettingsStore)
 const { locale, t, te } = useI18n({ useScope: "global" })
 
 const selectedKeys = ref([route.meta?.headerKey || route.path])
@@ -50,7 +50,7 @@ onBeforeMount(() => {
 
 const settingOpen = ref(false)
 
-const windowPinned = ref(false)
+const windowPinned = ref(setting.value.window.on_top)
 const toggleWindowPin = async () => {
   windowPinned.value = !windowPinned.value
   const resp = await settingAPI('update_window_setting', { pin_window: windowPinned.value })
