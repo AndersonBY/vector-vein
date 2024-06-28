@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 02:35:48
+ * @Last Modified time: 2024-06-28 17:46:02
  */
 export default {
   lang: '中文',
@@ -732,7 +732,7 @@ export default {
       'title': '模板编辑器',
       'variable_fields': '变量字段',
       'template': '模板',
-      'drag_to_insert': '拖拽插入',
+      'drag_to_insert': '单击或拖拽插入',
     },
     nodes: {
       common: {

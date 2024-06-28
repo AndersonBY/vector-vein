@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 02:36:24
+ * @Last Modified time: 2024-06-28 17:46:38
  */
 export default {
   lang: 'English',
@@ -730,9 +730,9 @@ export default {
     },
     templateEditorModal: {
       'title': 'Template editor',
-      'variable_fields': 'Variable fields',
+      'variable_fields': 'Variables',
       'template': 'Template',
-      'drag_to_insert': 'Drag to insert',
+      'drag_to_insert': 'Click or drag to insert',
     },
     nodes: {
       common: {
