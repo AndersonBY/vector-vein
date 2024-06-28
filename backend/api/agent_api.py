@@ -533,8 +533,6 @@ class AudioAPI:
         if not audio_file:
             return JResponse(status=400, msg="Missing 'audio_file' in payload")
 
-        client = SpeechRecognitionClient(
-            provider=payload.get("provider", "openai"), model=payload.get("model", "whisper-1")
-        )
+        client = SpeechRecognitionClient()
         transcription = client.transcribe(open(audio_file, "rb"), "text")
         return JResponse(data={"transcription": transcription})

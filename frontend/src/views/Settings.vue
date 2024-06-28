@@ -7,8 +7,10 @@ import {
   Mail,
   Robot,
   Search,
+  Refresh,
   CubeFive,
   Acoustic,
+  Microphone,
   MenuFoldOne,
   KeyboardOne,
   MenuUnfoldOne,
@@ -35,13 +37,18 @@ const settingForm = reactive({
   data: {}
 })
 
-onBeforeMount(async () => {
+const refreshingMics = ref(false)
+const refreshMics = async () => {
+  refreshingMics.value = true
   const devices = await hardwareAPI('list_microphones', {})
   microphoneDeviceOptions.value = devices.data.map((device) => ({
     label: device.name,
     value: device.index,
   }))
+  refreshingMics.value = false
+}
 
+onBeforeMount(async () => {
   const defaultSettingsResp = await settingAPI('get_default_settings')
   settingForm.data = defaultSettingsResp.data
 
@@ -51,6 +58,8 @@ onBeforeMount(async () => {
 
   const userData = res.data.data || {}
   settingForm.data = { ...defaultSettingsResp.data, ...userData }
+
+  await refreshMics()
 
   loading.value = false
 })
@@ -114,6 +123,12 @@ const websiteDomainOptions = [
             <Robot />
           </template>
           {{ t('settings.local_llms') }}
+        </a-menu-item>
+        <a-menu-item key="asr">
+          <template #icon>
+            <Microphone />
+          </template>
+          {{ t('settings.asr') }}
         </a-menu-item>
         <a-menu-item key="tts">
           <template #icon>
@@ -353,6 +368,44 @@ const websiteDomainOptions = [
         </a-tabs>
       </a-card>
 
+      <a-card v-show="selectedKeys == 'asr'" :title="t('settings.asr')" :loading="loading">
+        <template #extra>
+          <a-button type="primary" @click="saveSetting" :loading="saving">
+            {{ t('settings.save') }}
+          </a-button>
+        </template>
+        <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+          <a-form-item :label="t('settings.provider_for_asr')">
+            <a-select v-model:value="settingForm.data.asr.provider"
+              :options="[{ label: 'OpenAI', value: 'openai' }, { label: 'Deepgram', value: 'deepgram' }]" />
+          </a-form-item>
+        </a-form>
+        <a-tabs tab-position="left">
+          <a-tab-pane key="deepgram" tab="Deepgram">
+            <a-flex vertical justify="center" gap="middle">
+              <a-alert message="Deepgram" type="info">
+                <template #description>
+                  <a-typography-link style="text-align: center;" href="https://developers.deepgram.com/docs">
+                    https://developers.deepgram.com/docs
+                  </a-typography-link>
+                </template>
+              </a-alert>
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item label="API Key">
+                  <a-input-password v-model:value="settingForm.data.asr.deepgram.api_key" />
+                </a-form-item>
+                <a-form-item :label="t('common.model')">
+                  <a-input v-model:value="settingForm.data.asr.deepgram.speech_to_text.model" />
+                </a-form-item>
+                <a-form-item :label="t('common.language')">
+                  <a-input v-model:value="settingForm.data.asr.deepgram.speech_to_text.language" />
+                </a-form-item>
+              </a-form>
+            </a-flex>
+          </a-tab-pane>
+        </a-tabs>
+      </a-card>
+
       <a-card v-show="selectedKeys == 'tts'" :title="t('settings.tts')" :loading="loading">
         <template #extra>
           <a-button type="primary" @click="saveSetting" :loading="saving">
@@ -431,23 +484,23 @@ const websiteDomainOptions = [
         </template>
         <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
           <a-form-item :label="t('settings.email_user')">
-            <a-input v-model:value="settingForm.data.email_user" />
+            <a-input v-model:value="settingForm.data.email.user" />
           </a-form-item>
 
           <a-form-item :label="t('settings.email_password')">
-            <a-input-password v-model:value="settingForm.data.email_password" />
+            <a-input-password v-model:value="settingForm.data.email.password" />
           </a-form-item>
 
           <a-form-item :label="t('settings.email_smtp_host')">
-            <a-input v-model:value="settingForm.data.email_smtp_host" />
+            <a-input v-model:value="settingForm.data.email.smtp_host" />
           </a-form-item>
 
           <a-form-item :label="t('settings.email_smtp_port')">
-            <a-input-number v-model:value="settingForm.data.email_smtp_port" />
+            <a-input-number v-model:value="settingForm.data.email.smtp_port" />
           </a-form-item>
 
           <a-form-item :label="t('settings.email_smtp_ssl')">
-            <a-switch v-model:checked="settingForm.data.email_smtp_ssl" />
+            <a-switch v-model:checked="settingForm.data.email.smtp_ssl" />
           </a-form-item>
         </a-form>
       </a-card>
@@ -490,8 +543,15 @@ const websiteDomainOptions = [
           </a-form-item>
 
           <a-form-item :label="t('settings.microphone_device')">
-            <a-select v-model:value="settingForm.data.microphone_device" :options="microphoneDeviceOptions"
-              style="width: 100%;" />
+            <a-flex gap="small" align="center">
+              <a-select v-model:value="settingForm.data.microphone_device" :options="microphoneDeviceOptions"
+                style="width: 100%;" />
+              <a-tooltip :title="t('common.refresh')">
+                <a-button type=text size="small" :loading="refreshingMics" @click="refreshMics">
+                  <Refresh />
+                </a-button>
+              </a-tooltip>
+            </a-flex>
           </a-form-item>
 
           <a-form-item :label="t('settings.output_folder')">

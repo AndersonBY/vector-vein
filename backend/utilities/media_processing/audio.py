@@ -11,6 +11,9 @@ import httpx
 import pyaudio
 import numpy as np
 from openai._types import FileTypes
+from deepgram_captions import DeepgramConverter, srt
+from deepgram import DeepgramClient, PrerecordedOptions
+from deepgram.clients.prerecorded import PrerecordedResponse
 
 from utilities.general import mprint
 from utilities.config import Settings, config
@@ -131,13 +134,38 @@ class TTSClient:
 
 
 class SpeechRecognitionClient:
-    def __init__(self, provider: str = "openai", model: str = "whisper-1"):
+    def __init__(
+        self,
+        provider: str | None = None,
+        model: str | None = None,
+        language: str | None = None,
+    ):
+        if provider is None:
+            settings = Settings()
+            provider = settings.get("asr.provider", "openai")
+
+        if model is None:
+            if provider == "openai":
+                model = "whisper-1"
+            elif provider == "deepgram":
+                model = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
+
+        if language is None:
+            if provider == "openai":
+                language = "en"
+            elif provider == "deepgram":
+                language = settings.get("asr.deepgram.speech_to_text.language", "en")
+
         self.provider = provider
+        self.language = language
 
         if self.provider == "openai":
             from utilities.ai_utils import get_openai_client_and_model
 
             self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
+        elif self.provider == "deepgram":
+            self.client = DeepgramClient(settings.get("asr.deepgram.api_key"))
+            self.model_id = model
 
     def batch_transcribe(self, files: list, output_type: str = "text"):
         outputs = []
@@ -146,24 +174,41 @@ class SpeechRecognitionClient:
         return outputs
 
     def transcribe(self, file: FileTypes, output_type: str = "text"):
-        if output_type == "text":
-            transcription = self.client.audio.transcriptions.create(
-                model=self.model_id, file=file, response_format="text"
+        if self.provider == "openai":
+            if output_type == "text":
+                transcription = self.client.audio.transcriptions.create(
+                    model=self.model_id, file=file, response_format="text"
+                )
+                return transcription
+            elif output_type == "list":
+                transcription = self.client.audio.transcriptions.create(
+                    model=self.model_id,
+                    file=file,
+                    response_format="verbose_json",
+                    timestamp_granularities=["segment"],
+                )
+                return [segment["text"] for segment in transcription.segments]
+            elif output_type == "srt":
+                transcription = self.client.audio.transcriptions.create(
+                    model=self.model_id, file=file, response_format="srt"
+                )
+                return transcription
+        elif self.provider == "deepgram":
+            payload = {"buffer": file}
+            options = PrerecordedOptions(
+                punctuate=True, model=self.model_id, language=self.language, smart_format=True
             )
-            return transcription
-        elif output_type == "list":
-            transcription = self.client.audio.transcriptions.create(
-                model=self.model_id,
-                file=file,
-                response_format="verbose_json",
-                timestamp_granularities=["segment"],
-            )
-            return [segment["text"] for segment in transcription.segments]
-        elif output_type == "srt":
-            transcription = self.client.audio.transcriptions.create(
-                model=self.model_id, file=file, response_format="srt"
-            )
-            return transcription
+            response: PrerecordedResponse = self.client.listen.prerecorded.v("1").transcribe_file(payload, options)
+            if output_type == "text":
+                return response.results.channels[0].alternatives[0].transcript
+            elif output_type == "list":
+                sentences = []
+                for paragraph in response.results.channels[0].alternatives[0].paragraphs.paragraphs:
+                    sentences.extend([sentence.text for sentence in paragraph.sentences])
+                return sentences
+            elif output_type == "srt":
+                transcription = DeepgramConverter(response)
+                return srt(transcription)
 
 
 class Microphone:
@@ -271,18 +316,25 @@ class Microphone:
         return str(self.output_file.resolve())
 
     def list_devices(self):
-        device_count = self.p.get_device_count()
+        device_count = self.p.get_host_api_info_by_index(0).get("deviceCount")
         devices = []
         for i in range(device_count):
-            info = self.p.get_device_info_by_index(i)
+            info = self.p.get_device_info_by_host_api_device_index(0, i)
             if info.get("maxInputChannels") > 0:
                 devices.append(
-                    {"index": i, "name": info.get("name"), "maxInputChannels": info.get("maxInputChannels")}
+                    {
+                        "index": info.get("index"),
+                        "name": info.get("name"),
+                        "maxInputChannels": info.get("maxInputChannels"),
+                    }
                 )
         return devices
 
     def set_device(self, device_index):
         self.device_index = device_index
+
+    def close(self):
+        self.p.terminate()
 
 
 class SoundPlayer:
