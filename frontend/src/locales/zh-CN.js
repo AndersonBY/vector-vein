@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 17:46:02
+ * @Last Modified time: 2024-06-28 19:49:01
  */
 export default {
   lang: '中文',
@@ -143,6 +143,8 @@ export default {
     'sync': '同步',
     'async': '异步',
     'too_many_requests': '请求过快，请稍后再试',
+    'language': '语言',
+    'model': '模型',
   },
   email: {
     verify: {
@@ -1673,6 +1675,8 @@ export default {
     'tts': '语音合成',
     'web_search': '网络搜索',
     'stability_key': 'Stability Key',
+    'asr': '语音识别',
+    'provider_for_asr': '语音识别提供商',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "青涩青年音色",

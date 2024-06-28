@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 17:46:38
+ * @Last Modified time: 2024-06-28 19:49:14
  */
 export default {
   lang: 'English',
@@ -143,6 +143,8 @@ export default {
     'sync': 'Sync',
     'async': 'Async',
     'too_many_requests': 'Too fast, please try again later',
+    'language': 'Language',
+    'model': 'Model',
   },
   email: {
     verify: {
@@ -1673,6 +1675,8 @@ export default {
     'tts': 'Text-To-Speech',
     'web_search': 'Web search',
     'stability_key': 'Stability Key',
+    'asr': 'Speech Recognition',
+    'provider_for_asr': 'Speech Recognition Provider',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",
