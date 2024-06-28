@@ -25,6 +25,8 @@ const { t } = useI18n()
 const emit = defineEmits(['update:open', 'update:template'])
 let innerOpen = ref(props.open)
 let innerTemplate = ref(props.template)
+const textareaRef = ref(null)
+
 const save = () => {
   innerOpen.value = false
   emit('update:open', innerOpen.value)
@@ -43,6 +45,21 @@ watch(() => props.template, (newValue) => {
 
 const handleDragStart = (event, field) => {
   event.dataTransfer.setData('text/plain', `{{${field}}}`)
+}
+
+const insertVariable = (field) => {
+  if (textareaRef.value) {
+    const textarea = textareaRef.value.$el.querySelector('textarea');
+    const startPos = textarea.selectionStart;
+    const endPos = textarea.selectionEnd;
+    const beforeInsert = innerTemplate.value.slice(0, startPos);
+    const afterInsert = innerTemplate.value.slice(endPos);
+    innerTemplate.value = `${beforeInsert}{{${field}}}${afterInsert}`;
+    setTimeout(() => {
+      textarea.setSelectionRange(startPos + `{{${field}}}`.length, startPos + `{{${field}}}`.length);
+      textarea.focus();
+    }, 0);
+  }
 }
 </script>
 
@@ -64,8 +81,8 @@ const handleDragStart = (event, field) => {
           </template>
           <a-space direction="vertical" style="width: 100%">
             <template v-for="field in Object.keys(props.fields)" :key="field">
-              <a-button class="template-variable" block draggable="true" @dragstart="handleDragStart($event, field)"
-                v-if="!['template', 'output'].includes(field)">
+              <a-button v-if="!['template', 'output'].includes(field)" class="template-variable" block draggable="true"
+                @dragstart="handleDragStart($event, field)" @click="insertVariable(field)">
                 {{ field }}
               </a-button>
             </template>
@@ -75,7 +92,8 @@ const handleDragStart = (event, field) => {
       <a-col :span="18">
         <a-card :title="t('components.templateEditorModal.template')">
           <template v-if="typeof props.template === 'string'">
-            <a-textarea class="template-textarea" v-model:value="innerTemplate" :rows="20" showCount />
+            <a-textarea ref="textareaRef" class="template-textarea" v-model:value="innerTemplate" :rows="20"
+              showCount />
           </template>
           <template v-else>
             <a-tabs>
