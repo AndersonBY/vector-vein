@@ -151,7 +151,7 @@ if (typeof files.value === 'string') {
 }
 
 const selectFile = async (e) => {
-  if (e.target.closest('.ant-upload.ant-upload-drag') === null) return
+  if (!props.singleButton && e.target.closest('.ant-upload.ant-upload-drag') === null) return
 
   uploading.value = true
   try {
