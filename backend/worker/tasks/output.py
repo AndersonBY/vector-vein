@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-04-26 21:10:52
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 19:35:48
+# @Last Modified time: 2024-06-28 19:37:00
 import uuid
 from io import StringIO
 from pathlib import Path
@@ -76,11 +76,11 @@ def email(
     content_html: str = workflow.get_node_field_value(node_id, "content_html")
     settings = Settings()
     yag = yagmail.SMTP(
-        user=settings.email_user,
-        password=settings.email_password,
-        host=settings.email_smtp_host,
-        port=settings.email_smtp_port,
-        smtp_ssl=settings.email_smtp_ssl,
+        user=settings.get("email.user"),
+        password=settings.get("email.password"),
+        host=settings.get("email.smtp_host"),
+        port=settings.get("email.smtp_port"),
+        smtp_ssl=settings.get("email.smtp_ssl"),
     )
     email_send_result = yag.send(to_email, subject, [content_html])
     mprint("email_send_result", email_send_result)
