@@ -329,7 +329,7 @@ const navigateToOfficialWorkflowTemplates = async () => {
             @delete="deleteWorkflow(record.wid)" />
         </router-link>
       </a-col>
-      <a-col v-if="workflowRecords.data.length == 0 || true" :span="24">
+      <a-col v-if="workflowRecords.data.length == 0" :span="24">
         <a-typography-paragraph type="secondary">
           {{ t('components.workspace.myWorkflows.no_workflows_1') }}
         </a-typography-paragraph>
