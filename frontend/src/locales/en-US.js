@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 22:53:57
+ * @Last Modified time: 2024-06-30 00:13:26
  */
 export default {
   lang: 'English',
@@ -1558,6 +1558,19 @@ export default {
           'title': 'Gemini-Vision',
           'description': 'Gemini with vision, allowing the model to receive images and answer questions about them.',
           'text_prompt': 'Text prompt',
+          'llm_model': 'Model',
+          'images': 'Images',
+          'urls': 'URLs',
+          'images_or_urls': 'Images or URLs',
+          'images_or_urls_images': 'Images',
+          'images_or_urls_urls': 'URLs',
+          'output': 'Output',
+        },
+        LocalVision: {
+          'title': 'Local multimodal',
+          'description': 'Local multimodal model.',
+          'text_prompt': 'Text prompt',
+          'model_family': 'Model family',
           'llm_model': 'Model',
           'images': 'Images',
           'urls': 'URLs',

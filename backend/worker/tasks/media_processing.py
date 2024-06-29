@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-06-08 13:12:38
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-28 20:32:56
+# @Last Modified time: 2024-06-30 00:29:46
 import time
 
 import httpx
@@ -145,6 +145,71 @@ def glm_vision(
         content_outputs.append(content_output)
         total_prompt_tokens += response["usage"]["prompt_tokens"]
         total_completion_tokens += response["usage"]["completion_tokens"]
+
+        if index < prompts_count - 1:
+            time.sleep(1)
+
+    content_output = content_outputs[0] if isinstance(text_prompt, str) else content_outputs
+    workflow.update_node_field_value(node_id, "output", content_output)
+    return workflow.data
+
+
+@task
+@timer
+def local_vision(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    images_or_urls = workflow.get_node_field_value(node_id, "images_or_urls")
+    images = []
+    if images_or_urls == "images":
+        images = workflow.get_node_field_value(node_id, "images")
+        if isinstance(images, str):
+            images = [images]
+    elif images_or_urls == "urls":
+        urls = workflow.get_node_field_value(node_id, "urls")
+        if isinstance(urls, str):
+            images = [urls]
+
+    text_prompt = workflow.get_node_field_value(node_id, "text_prompt")
+    if isinstance(text_prompt, str):
+        prompts = [text_prompt]
+    elif isinstance(text_prompt, list):
+        prompts = text_prompt
+
+    if len(prompts) < len(images) and len(prompts) == 1:
+        prompts = prompts * len(images)
+    elif len(prompts) > len(images) and len(images) == 1:
+        images = images * len(prompts)
+
+    model_family = "_local__" + workflow.get_node_field_value(node_id, "model_family")
+    model_id = workflow.get_node_field_value(node_id, "llm_model")
+
+    content_outputs = []
+    prompts_count = len(prompts)
+    mprint(f"Prompts count: {prompts_count}")
+
+    client = create_chat_client(model_family, model=model_id, stream=False)
+    for index, prompt in enumerate(prompts):
+        mprint(f"Processing prompt {index + 1}/{prompts_count}")
+        image_processor = ImageProcessor(image_source=images[index])
+        messages = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": image_processor.data_url},
+                    },
+                ],
+            }
+        ]
+
+        response = client.create_completion(messages=messages, max_tokens=1024)
+        content_output = response["content"]
+        content_outputs.append(content_output)
 
         if index < prompts_count - 1:
             time.sleep(1)

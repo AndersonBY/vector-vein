@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:22:44
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-18 02:18:07
+# @Last Modified time: 2024-06-30 00:25:30
 from typing import Literal
 
 from .yi_client import YiChatClient, AsyncYiChatClient
@@ -75,7 +75,7 @@ def create_chat_client(
     **kwargs,
 ) -> BaseChatClient:
     if backend.startswith("_local__"):
-        backend = "local"
+        backend_key = "local"
         family_param = {"family": backend.removeprefix("_local__")}
     elif backend.lower() not in BackendMap["sync"]:
         raise ValueError(f"Unsupported backend: {backend}")

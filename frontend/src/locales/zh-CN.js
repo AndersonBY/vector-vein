@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 22:53:41
+ * @Last Modified time: 2024-06-30 00:13:10
  */
 export default {
   lang: '中文',
@@ -1558,6 +1558,19 @@ export default {
           'title': 'Gemini-Vision',
           'description': '带视觉的 Gemini，允许模型接收图像并回答有关它们的问题。',
           'text_prompt': '文本提示词',
+          'llm_model': '模型',
+          'images': '图片',
+          'urls': '链接',
+          'images_or_urls': '图片或链接',
+          'images_or_urls_images': '图片',
+          'images_or_urls_urls': '链接',
+          'output': '输出',
+        },
+        LocalVision: {
+          'title': '本地多模态',
+          'description': '本地的多模态模型。',
+          'text_prompt': '文本提示词',
+          'model_family': '模型系列',
           'llm_model': '模型',
           'images': '图片',
           'urls': '链接',
