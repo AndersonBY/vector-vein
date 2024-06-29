@@ -381,6 +381,29 @@ const websiteDomainOptions = [
           </a-form-item>
         </a-form>
         <a-tabs tab-position="left">
+          <a-tab-pane key="openai" tab="OpenAI">
+            <a-flex vertical justify="center" gap="middle">
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <a-form-item>
+                  <template #label>
+                    <a-typography-text style="text-wrap: wrap;">
+                      {{ t('settings.asr_openai_setting_same_as_llm') }}
+                    </a-typography-text>
+                  </template>
+                  <a-checkbox v-model:checked="settingForm.data.asr.openai.same_as_llm" />
+                </a-form-item>
+                <a-form-item v-if="!settingForm.data.asr.openai.same_as_llm" :label="t('settings.openai_api_base')">
+                  <a-input v-model:value="settingForm.data.asr.openai.api_base" />
+                </a-form-item>
+                <a-form-item v-if="!settingForm.data.asr.openai.same_as_llm" :label="t('settings.openai_api_key')">
+                  <a-input-password v-model:value="settingForm.data.asr.openai.api_key" />
+                </a-form-item>
+                <a-form-item v-if="!settingForm.data.asr.openai.same_as_llm" :label="t('common.model')">
+                  <a-input v-model:value="settingForm.data.asr.openai.model" />
+                </a-form-item>
+              </a-form>
+            </a-flex>
+          </a-tab-pane>
           <a-tab-pane key="deepgram" tab="Deepgram">
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="Deepgram" type="info">

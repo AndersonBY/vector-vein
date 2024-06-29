@@ -60,6 +60,7 @@ DEFAULT_SETTINGS = {
     "tts": {"piper": {"api_base": "http://localhost:5000"}},
     "asr": {
         "provider": "openai",
+        "openai": {"same_as_llm": True, "api_base": "https://api.openai.com/v1", "api_key": "", "model": "whisper-1"},
         "deepgram": {"api_key": "", "speech_to_text": {"model": "nova-2", "language": "en"}},
     },
     "web_search": {"jinaai": {"api_key": ""}, "bing": {"ocp_apim_subscription_key": ""}},

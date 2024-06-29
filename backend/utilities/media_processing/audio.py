@@ -162,7 +162,16 @@ class SpeechRecognitionClient:
         if self.provider == "openai":
             from utilities.ai_utils import get_openai_client_and_model
 
-            self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
+            if settings.get("asr.openai.same_as_llm", False):
+                self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
+            else:
+                self.client, _ = get_openai_client_and_model(
+                    is_async=False,
+                    model_id=model,
+                    api_base=settings.get("asr.openai.api_base"),
+                    api_key=settings.get("asr.openai.api_key"),
+                )
+                self.model_id = settings.get("asr.openai.model", "whisper-1")
         elif self.provider == "deepgram":
             self.client = DeepgramClient(settings.get("asr.deepgram.api_key"))
             self.model_id = model
