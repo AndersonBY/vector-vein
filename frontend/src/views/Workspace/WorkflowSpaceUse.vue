@@ -185,7 +185,7 @@ const openEditor = async () => {
 
 <style scoped>
 .space-container {
-  height: calc(100vh - 64px);
+  height: calc(100vh - 76px);
 }
 
 .main-use-container {
