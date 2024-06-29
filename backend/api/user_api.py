@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-28 23:11:43
+# @Last Modified time: 2024-06-30 01:48:22
 import json
 import time
 
@@ -115,7 +115,7 @@ class SettingAPI:
         else:
             setting = Setting.select().order_by(Setting.create_time.desc()).first()
         setting = model_serializer(setting)
-        return JResponse(data={**setting, "data_path": config.data_path, "window": config.get("window")})
+        return JResponse(data={**setting, **config})
 
     def update(self, payload):
         setting_id = payload.get("id")
@@ -139,6 +139,11 @@ class SettingAPI:
         if pin_window is not None:
             window.on_top = pin_window
             config.save("window.on_top", pin_window)
+        return JResponse()
+
+    def update_language(self, payload):
+        language = payload.get("language")
+        config.save("language", language)
         return JResponse()
 
 

@@ -3,11 +3,12 @@ import { computed, onBeforeMount, h } from 'vue'
 import zhCN from 'ant-design-vue/es/locale/zh_CN'
 import enUS from 'ant-design-vue/es/locale/en_US'
 import { theme, Spin } from 'ant-design-vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { useUserSettingsStore } from '@/stores/userSettings'
 import LoadingElement from "@/components/LoadingElement.vue"
 
-
+const { locale } = useI18n({ useScope: "global" })
 const router = useRouter()
 
 const userSettings = useUserSettingsStore()
@@ -20,6 +21,7 @@ onBeforeMount(async () => {
     }
   }
   await userSettings.init()
+  locale.value = userSettings.language
 
   // Expose router to window for python usage
   window.router = router
@@ -33,7 +35,6 @@ const antDesignLocale = computed(() => {
   return languageMap[userSettings.language]
 })
 
-const locale = antDesignLocale
 const customTheme = {
   token: {
     colorPrimary: '#28c5e5',
@@ -50,7 +51,7 @@ Spin.setDefaultIndicator({
 </script>
 
 <template>
-  <a-config-provider :locale="locale" :theme="customTheme">
+  <a-config-provider :locale="antDesignLocale" :theme="customTheme">
     <router-view />
   </a-config-provider>
 </template>

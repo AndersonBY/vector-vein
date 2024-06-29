@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 20:46:46
+ * @Last Modified time: 2024-06-30 01:56:14
  */
 import { defineStore } from "pinia"
 import { settingAPI } from "@/api/user"
@@ -91,7 +91,8 @@ export const useUserSettingsStore = defineStore('userSettings', {
     async init() {
       try {
         const res = await settingAPI('get', {})
-        this.setSetting(res.data);
+        this.setSetting(res.data)
+        this.setLanguage(res.data.language || 'en-US')
       } catch (err) {
         console.error("Failed to initialize user settings:", err)
       }

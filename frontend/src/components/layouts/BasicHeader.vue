@@ -37,6 +37,7 @@ const handleLanguageChange = async (value) => {
   userSettingsStore.setLanguage(value)
   locale.value = value
   document.title = getPageTitle(te, t, route.meta.title)
+  await settingAPI('update_language', { language: value })
 }
 
 const screenWidth = ref(window.innerWidth)

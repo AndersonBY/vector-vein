@@ -5,15 +5,17 @@ import json
 import threading
 from pathlib import Path
 from threading import Lock
+from collections.abc import Mapping
 
 
 DEFAULT_CONFIG = {
+    "language": "en-US",
     "data_path": "./data",
     "window": {"width": 1600, "height": 1000, "x": 0, "y": 0, "fullscreen": False, "on_top": False},
 }
 
 
-class Config:
+class Config(Mapping):
     _instance = None
     _lock = Lock()
 
@@ -86,6 +88,15 @@ class Config:
     @property
     def data_path(self):
         return self.get("data_path", "./data")
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __iter__(self):
+        return iter(self.config)
+
+    def __len__(self):
+        return len(self.config)
 
 
 config = Config()
