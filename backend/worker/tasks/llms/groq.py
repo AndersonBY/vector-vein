@@ -8,7 +8,7 @@ class GroqTask(BaseLLMTask):
     NAME: str = "groq"
     DEFAULT_MODEL: str = "mixtral-8x7b-32768"
     MODEL_SETTINGS: dict[str, ModelSetting] = {
-        "mixtral-8x7b-32768": ModelSetting(
+        "groq-mixtral-8x7b-32768": ModelSetting(
             id="mixtral-8x7b-32768",
             endpoints=[
                 EndpointSetting(
@@ -22,7 +22,7 @@ class GroqTask(BaseLLMTask):
             max_output_tokens=4096,
             concurrent=30,
         ),
-        "llama3-70b-8192": ModelSetting(
+        "groq-llama3-70b-8192": ModelSetting(
             id="llama3-70b-8192",
             endpoints=[
                 EndpointSetting(
@@ -36,7 +36,7 @@ class GroqTask(BaseLLMTask):
             max_output_tokens=4096,
             concurrent=30,
         ),
-        "llama3-8b-8192": ModelSetting(
+        "groq-llama3-8b-8192": ModelSetting(
             id="llama3-8b-8192",
             endpoints=[
                 EndpointSetting(
@@ -50,7 +50,7 @@ class GroqTask(BaseLLMTask):
             max_output_tokens=4096,
             concurrent=30,
         ),
-        "gemma-7b-it": ModelSetting(
+        "groq-gemma-7b-it": ModelSetting(
             id="gemma-7b-it",
             endpoints=[
                 EndpointSetting(

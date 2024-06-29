@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:01:30
+ * @Last Modified time: 2024-06-29 16:16:15
  */
 export default {
   lang: '中文',
@@ -1043,7 +1043,7 @@ export default {
         },
         Groq: {
           'title': 'Groq',
-          'description': 'Groq',
+          'description': 'Groq 是一家提供快速 AI 推理的 AI 基础设施公司。',
           'prompt': '输入内容（Prompt）',
           'llm_model': '模型',
           'temperature': 'AI 偏好（温度）',

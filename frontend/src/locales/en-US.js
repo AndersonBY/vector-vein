@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:01:50
+ * @Last Modified time: 2024-06-29 16:16:27
  */
 export default {
   lang: 'English',
@@ -1043,7 +1043,7 @@ export default {
         },
         Groq: {
           'title': 'Groq',
-          'description': 'Groq',
+          'description': 'Groq is the AI infrastructure company that delivers fast AI inference.',
           'prompt': 'Prompt',
           'llm_model': 'Model',
           'temperature': 'AI preference (temperature)',

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 13:34:20
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-16 22:31:10
+ * @Last Modified time: 2024-06-29 16:25:59
  */
 export function createTemplateData() {
   return {
@@ -25,23 +25,23 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "mixtral-8x7b-32768",
+        "value": "groq-mixtral-8x7b-32768",
         "options": [
           {
             "label": "mixtral-8x7b-32768",
-            "value": "mixtral-8x7b-32768",
+            "value": "groq-mixtral-8x7b-32768",
           },
           {
             "label": "llama3-70b-8192",
-            "value": "llama3-70b-8192",
+            "value": "groq-llama3-70b-8192",
           },
           {
             "label": "llama3-8b-8192",
-            "value": "llama3-8b-8192",
+            "value": "groq-llama3-8b-8192",
           },
           {
             "label": "gemma-7b-it",
-            "value": "gemma-7b-it",
+            "value": "groq-gemma-7b-it",
           },
         ],
         "name": "llm_model",
