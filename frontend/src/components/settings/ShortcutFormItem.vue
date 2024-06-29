@@ -66,7 +66,12 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <a-form-item :label="name">
+  <a-form-item>
+    <template #label>
+      <a-typography-text style="text-wrap: wrap;">
+        {{ name }}
+      </a-typography-text>
+    </template>
     <a-flex gap="small" align="center">
       <a-input v-model:value="shortcut"
         :placeholder="loading ? t('settings.waiting_for_combo_key') : t('settings.shortcut_not_set')" disabled>
