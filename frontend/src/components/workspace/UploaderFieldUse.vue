@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   InboxOut,
@@ -72,6 +72,47 @@ const emit = defineEmits(['update:firstFile'])
 const files = defineModel()
 const fileList = ref([])
 const uploading = ref(false)
+
+watch(() => files.value, (newValue) => {
+  if (typeof files.value === 'string') {
+    fileList.value = [files.value].map(file => {
+      return {
+        uid: file,
+        name: file,
+        originalName: file,
+        status: 'done',
+        url: file,
+      }
+    })
+    files.value = [files.value]
+  } else if (typeof files.value === 'object') {
+    fileList.value = files.value.map(file => {
+      return {
+        uid: file,
+        name: file,
+        originalName: file,
+        status: 'done',
+        url: file,
+      }
+    })
+  } else {
+    if (props.firstFile) {
+      files.value = [props.firstFile]
+      fileList.value = [props.firstFile].map(file => {
+        return {
+          uid: file,
+          name: file,
+          originalName: file,
+          status: 'done',
+          url: file,
+        }
+      })
+    } else {
+      files.value = []
+      fileList.value = []
+    }
+  }
+})
 
 onMounted(async () => {
   if (props.acceptPaste) document.addEventListener('paste', pasteUpload)
