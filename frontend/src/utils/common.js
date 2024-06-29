@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 13:40:15
+ * @Last Modified time: 2024-06-29 16:06:14
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -325,6 +325,60 @@ export const backgroundColors = [
   '#F3B562',
   '#F06060',
 ]
+
+export const modelTagBackgroundColorMap = {
+  'gpt-35-turbo': '#19c37d',
+  'gpt-4': '#000',
+  'gpt-4o': '#000',
+  'abab5.5-chat': '#eb3368',
+  'abab6-chat': '#eb3368',
+  'glm-3-turbo': '#3875F6',
+  'glm-4': '#3875F6',
+  'glm-4-0520': '#3875F6',
+  'glm-4-air': '#3875F6',
+  'glm-4-airx': '#3875F6',
+  'glm-4-flash': '#3875F6',
+  'qwen1.5-7b-chat': '#5444CB',
+  'qwen1.5-14b-chat': '#5444CB',
+  'qwen1.5-32b-chat': '#5444CB',
+  'qwen1.5-72b-chat': '#5444CB',
+  'qwen1.5-110b-chat': '#5444CB',
+  'qwen2-72b-instruct': '#5444CB',
+  'moonshot-v1-8k': '#0B0C0F',
+  'moonshot-v1-32k': '#0B0C0F',
+  'moonshot-v1-128k': '#0B0C0F',
+  'claude-3-haiku-20240307': '#CA9F7B',
+  'claude-3-opus-20240229': '#CA9F7B',
+  'claude-3-sonnet-20240229': '#CA9F7B',
+  'mixtral-8x7b': '#FF7000',
+  'mistral-small': '#FF7000',
+  'mistral-medium': '#FF7000',
+  'mistral-large': '#FF7000',
+  'deepseek-chat': '#556AF5',
+  'deepseek-coder': '#556AF5',
+  'yi-large': '#133426',
+  'yi-large-turbo': '#133426',
+  'yi-medium': '#133426',
+  'yi-medium-200k': '#133426',
+  'yi-spark': '#133426',
+}
+
+export const modelProviderTagBgColorMap = {
+  'AliyunQwen': '#5444CB',
+  'Baichuan': '#EE8137',
+  'ChatGLM': '#3875F6',
+  'Claude': '#CA9F7B',
+  'Anthropic': '#CA9F7B',
+  'Deepseek': '#556AF5',
+  'Gemini': '#1D43F5',
+  'Groq': '#f55036',
+  'LingYiWanWu': '#133426',
+  'LocalLlm': '#0aafc8',
+  'MiniMax': '#eb3368',
+  'Mistral': '#FF7000',
+  'Moonshot': '#0B0C0F',
+  'OpenAI': '#000',
+}
 
 export const nodeCategoryOptions = [
   {

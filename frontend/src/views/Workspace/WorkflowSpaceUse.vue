@@ -11,8 +11,9 @@ import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsD
 import AgentInvokeDataEdit from "@/components/workspace/workflowActions/AgentInvokeDataEdit.vue"
 import RelatedWorkflowsModal from "@/components/workspace/RelatedWorkflowsModal.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
+import ModelProviderTag from "@/components/workspace/ModelProviderTag.vue"
 import { formatTime } from "@/utils/util"
-import { getUIDesignFromWorkflow } from '@/utils/workflow'
+import { getUIDesignFromWorkflow, extractModels } from '@/utils/workflow'
 import { workflowAPI, workflowRunRecordAPI } from "@/api/workflow"
 
 const { t } = useI18n()
@@ -26,6 +27,7 @@ const briefModalWidth = ref(window.innerWidth <= 768 ? '90vw' : '60vw')
 const inputFields = ref([])
 const outputNodes = ref([])
 const triggerNodes = ref([])
+const llmModels = ref(new Set())
 
 onBeforeMount(async () => {
   const getWorkflowRequest = workflowAPI('get', { wid: workflowId })
@@ -49,6 +51,7 @@ onBeforeMount(async () => {
   }
 
   savedWorkflow.value = currentWorkflow.value
+  llmModels.value = extractModels(currentWorkflow.value)
   loading.value = false
 
   if (route.query.rid) {
@@ -118,25 +121,37 @@ const openEditor = async () => {
       {{ currentWorkflow.title }}
     </a-typography-title>
     <a-flex justify="space-between" align="flex-end" wrap="wrap" gap="small">
-      <a-flex wrap="wrap" gap="small">
-        <a-typography-text type="secondary">
-          {{ t('workspace.workflowSpace.update_time', { time: formatTime(currentWorkflow.update_time) }) }}
-        </a-typography-text>
-        <a-divider type="vertical" />
-        <a-typography-link @click="briefModalOpen = true">
-          {{ t('workspace.workflowSpace.brief') }}
-          <a-modal :open="briefModalOpen" :title="t('workspace.workflowSpace.brief')" :width="briefModalWidth"
-            :footer="null" class="introduction-modal" @cancel="briefModalOpen = false">
-            <ImageCarousel :images="currentWorkflow.images" />
-            <VueMarkdown v-highlight :source="currentWorkflow.brief"
-              class="custom-scrollbar markdown-body custom-hljs" />
-          </a-modal>
-        </a-typography-link>
-        <RelatedWorkflowsModal :workflowId="workflowId" />
-        <a-divider type="vertical" />
-        <a-tag :color="tag.color" v-for="(tag, index) in currentWorkflow.tags" :key="index">
-          {{ tag.title }}
-        </a-tag>
+      <a-flex vertical gap="small">
+        <a-flex wrap="wrap" gap="small">
+          <a-typography-text type="secondary">
+            {{ t('workspace.workflowSpace.update_time', { time: formatTime(currentWorkflow.update_time) }) }}
+          </a-typography-text>
+          <a-divider type="vertical" />
+          <a-typography-link @click="briefModalOpen = true">
+            {{ t('workspace.workflowSpace.brief') }}
+            <a-modal :open="briefModalOpen" :title="t('workspace.workflowSpace.brief')" :width="briefModalWidth"
+              :footer="null" class="introduction-modal" @cancel="briefModalOpen = false">
+              <ImageCarousel :images="currentWorkflow.images" />
+              <VueMarkdown v-highlight :source="currentWorkflow.brief"
+                class="custom-scrollbar markdown-body custom-hljs" />
+            </a-modal>
+          </a-typography-link>
+          <RelatedWorkflowsModal :workflowId="workflowId" />
+        </a-flex>
+        <a-flex v-if="currentWorkflow.tags.length > 0" gap="small" align="center">
+          <a-typography-text type="secondary">
+            {{ t('common.tags') }}:
+          </a-typography-text>
+          <a-tag :color="tag.color" v-for="(tag, index) in currentWorkflow.tags" :key="index">
+            {{ tag.title }}
+          </a-tag>
+        </a-flex>
+        <a-flex v-if="llmModels.size > 0" gap="small" align="center">
+          <a-typography-text type="secondary">
+            {{ t('common.model') }}:
+          </a-typography-text>
+          <ModelProviderTag :modelProvider="provider" v-for="provider in llmModels" />
+        </a-flex>
       </a-flex>
       <a-space>
         <WorkflowRunRecordsDrawer :workflowId="workflowId" @open-record="setWorkflowRecord" />

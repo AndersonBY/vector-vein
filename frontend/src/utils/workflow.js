@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2023-05-08 15:37:42
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-05 18:06:19
+ * @Last Modified time: 2024-06-29 16:05:33
  */
 'use strict';
 import { message } from 'ant-design-vue'
@@ -302,4 +302,24 @@ export function checkFieldsValid(inputFields) {
     checkFieldsValid = false
   }
   return checkFieldsValid
+}
+
+export function extractModels(workflow) {
+  let models = new Set()
+  workflow.data.nodes.forEach((node) => {
+    if (node.category == 'llms') {
+      models.add(node.type)
+    } else if (node.category == 'mediaProcessing') {
+      if (node.type == 'ClaudeVision') {
+        models.add('Claude')
+      } else if (node.type == 'GeminiVision') {
+        models.add('Gemini')
+      } else if (node.type == 'GlmVision') {
+        models.add('ChatGLM')
+      } else if (node.type == 'GptVision') {
+        models.add('OpenAI')
+      }
+    }
+  })
+  return models
 }

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 19:49:01
+ * @Last Modified time: 2024-06-29 16:01:30
  */
 export default {
   lang: '中文',
@@ -399,6 +399,7 @@ export default {
       'diagnosis_workflow_record': '诊断工作流运行记录',
       'diagnosis_workflow_record_tip': '你现在可以针对具体某一条工作流记录进行诊断，查看各个节点的运行情况、运行时间等信息。',
       'more_actions': '更多操作',
+      'api_key_is_empty': '模型 {model} 的 API Key 未设置！',
     },
     workflowEditor: {
       'exit_not_saved_confirm': '工作流尚未保存，确认退出？',

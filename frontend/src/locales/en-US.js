@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-28 19:49:14
+ * @Last Modified time: 2024-06-29 16:01:50
  */
 export default {
   lang: 'English',
@@ -399,6 +399,7 @@ export default {
       'diagnosis_workflow_record': 'Diagnosis workflow run record',
       'diagnosis_workflow_record_tip': 'You can now diagnose a specific workflow run record to view the running status, running time of each node.',
       'more_actions': 'More',
+      'api_key_is_empty': 'The API Key of model {model} is not set!',
     },
     workflowEditor: {
       'exit_not_saved_confirm': 'Workflow not saved, confirm exit?',
