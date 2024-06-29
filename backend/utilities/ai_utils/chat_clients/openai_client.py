@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:23:26
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 22:04:26
+# @Last Modified time: 2024-06-29 18:13:29
 from typing import Union, AsyncGenerator
 
 import httpx
@@ -26,8 +26,35 @@ MODEL_MAX_INPUT_LENGTH = {
 }
 
 
-def get_openai_client_and_model(is_async: bool = False, model_id: str = ""):
+def get_openai_client_and_model(
+    is_async: bool = False,
+    model_id: str = "",
+    api_base: str | None = None,
+    api_key: str | None = None,
+):
     """Base on user settings, return the OpenAI client and model id"""
+
+    if api_base is not None and api_key is not None:
+        if is_async:
+            client = AsyncOpenAI(
+                api_key=api_key,
+                base_url=api_base,
+                http_client=httpx.AsyncClient(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+        else:
+            client = OpenAI(
+                api_key=api_key,
+                base_url=api_base,
+                http_client=httpx.Client(
+                    proxies=proxies(),
+                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                ),
+            )
+        return client, model_id
+
     settings = Settings()
     if settings.openai_api_type == "azure":
         if model_id == "gpt-35-turbo":
