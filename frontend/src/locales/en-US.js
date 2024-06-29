@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:16:27
+ * @Last Modified time: 2024-06-29 17:57:07
  */
 export default {
   lang: 'English',
@@ -1678,6 +1678,7 @@ export default {
     'stability_key': 'Stability Key',
     'asr': 'Speech Recognition',
     'provider_for_asr': 'Speech Recognition Provider',
+    'asr_openai_setting_same_as_llm': 'Same as the settings in the Language Models tab',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",

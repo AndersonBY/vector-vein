@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:16:15
+ * @Last Modified time: 2024-06-29 17:56:26
  */
 export default {
   lang: '中文',
@@ -1678,6 +1678,7 @@ export default {
     'stability_key': 'Stability Key',
     'asr': '语音识别',
     'provider_for_asr': '语音识别提供商',
+    'asr_openai_setting_same_as_llm': '与大语言模型选项卡中设置相同',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "青涩青年音色",
