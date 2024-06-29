@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 17:57:07
+ * @Last Modified time: 2024-06-29 22:53:57
  */
 export default {
   lang: 'English',
@@ -1638,6 +1638,7 @@ export default {
     'model_concurrent': 'Concurrency',
     'model_max_tokens': 'Context length',
     'model_function_calling': 'Support function calling',
+    'model_native_multimodal': 'Support native multimodal',
     'add_model_family': 'Add model family',
     'add_model': 'Add model',
     'save_model_family': 'Save model family',

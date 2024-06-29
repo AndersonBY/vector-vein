@@ -13,7 +13,7 @@ from utilities.config import Settings, cache
 from utilities.media_processing import TTSClient
 from utilities.ai_utils import create_async_chat_client, tool_use_re, format_messages
 from background_task.tasks import summarize_conversation_title
-from .utils import get_tool_call_data, get_tool_related_workflow, MULTIMOAL_MODELS
+from .utils import get_tool_call_data, get_tool_related_workflow, check_multimodal_available
 
 
 class WebSocketServer:
@@ -48,7 +48,7 @@ class WebSocketServer:
         model = request_data["conversation"]["model"].lower()
         mprint(f"Agent chat start: {backend} {model}")
 
-        native_multimodal = settings.get("native_multimodal", False) and model in MULTIMOAL_MODELS
+        native_multimodal = settings.get("native_multimodal", False) and check_multimodal_available(model, backend)
 
         system_message = {
             "role": "system",

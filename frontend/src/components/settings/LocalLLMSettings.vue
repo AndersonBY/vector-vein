@@ -53,6 +53,7 @@ const localLlmModelForm = reactive({
   concurrent: 1,
   max_tokens: 8192,
   function_calling: false,
+  native_multimodal: false,
 })
 const localLlmModelRemove = (index) => {
   localLlmForm.models.splice(index, 1)
@@ -64,6 +65,7 @@ const localLlmModelEdit = (model, index) => {
   localLlmModelForm.concurrent = model.concurrent
   localLlmModelForm.max_tokens = model.max_tokens
   localLlmModelForm.function_calling = model.function_calling
+  localLlmModelForm.native_multimodal = model.native_multimodal
   localLlmModelFormStatus.value = 'edit'
   localLlmModelEditIndex.value = index
   localLlmModelFormModalOpen.value = true
@@ -81,6 +83,7 @@ const localLlmModelSave = () => {
     localLlmForm.models[localLlmModelEditIndex.value].concurrent = localLlmModelForm.concurrent
     localLlmForm.models[localLlmModelEditIndex.value].max_tokens = localLlmModelForm.max_tokens
     localLlmForm.models[localLlmModelEditIndex.value].function_calling = localLlmModelForm.function_calling
+    localLlmForm.models[localLlmModelEditIndex.value].native_multimodal = localLlmModelForm.native_multimodal
   } else {
     localLlmForm.models.push(deepCopy(toRaw(localLlmModelForm)))
   }
@@ -90,6 +93,7 @@ const localLlmModelSave = () => {
   localLlmModelForm.concurrent = 1
   localLlmModelForm.max_tokens = 8192
   localLlmModelForm.function_calling = false
+  localLlmModelForm.native_multimodal = false
 }
 </script>
 
@@ -158,6 +162,9 @@ const localLlmModelSave = () => {
               </a-form-item>
               <a-form-item :label="t('settings.model_function_calling')">
                 <a-checkbox v-model:checked="localLlmModelForm.function_calling" />
+              </a-form-item>
+              <a-form-item :label="t('settings.model_native_multimodal')">
+                <a-checkbox v-model:checked="localLlmModelForm.native_multimodal" />
               </a-form-item>
             </a-form>
           </a-modal>

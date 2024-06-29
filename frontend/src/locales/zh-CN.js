@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 17:56:26
+ * @Last Modified time: 2024-06-29 22:53:41
  */
 export default {
   lang: '中文',
@@ -1638,6 +1638,7 @@ export default {
     'model_concurrent': '并发数',
     'model_max_tokens': '上下文长度',
     'model_function_calling': '接口支持函数调用',
+    'model_native_multimodal': '原生多模态支持',
     'add_model_family': '添加模型系列',
     'add_model': '添加模型',
     'save_model_family': '保存模型系列',

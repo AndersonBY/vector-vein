@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-20 13:53:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-28 18:07:06
+# @Last Modified time: 2024-06-29 23:24:00
 import re
 import json
 
@@ -152,6 +152,11 @@ def format_image_message(image: str, backend: str = "openai") -> dict:
                 "mime_type": image_processor.mime_type,
                 "data": image_processor.base64_image,
             }
+        }
+    else:
+        return {
+            "type": "image_url",
+            "image_url": {"url": image_processor.data_url},
         }
 
 
