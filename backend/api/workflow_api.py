@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 20:51:34
+# @Last Modified time: 2024-06-29 14:21:23
 from datetime import datetime
 
 from peewee import fn
@@ -339,6 +339,7 @@ class WorkflowRunRecordAPI:
         sort_field = getattr(WorkflowRunRecord, sort_field)
         wid = payload.get("wid", "")
         status = payload.get("status", [])
+        need_workflow = payload.get("need_workflow", False)
         if sort_order == "descend":
             sort_field = sort_field.desc()
         records = WorkflowRunRecord.select().join(Workflow).order_by(sort_field)
@@ -351,6 +352,15 @@ class WorkflowRunRecordAPI:
         limit = page_size
         records = records.offset(offset).limit(limit)
         records_list = model_serializer(records, many=True, manytomany=True)
+
+        if need_workflow:
+            for record in records_list:
+                workflow = Workflow.get(Workflow.wid == record["workflow"])
+                record["workflow"] = {
+                    "title": workflow.title,
+                    "wid": workflow.wid.hex,
+                }
+
         return JResponse(
             data={
                 "records": records_list,
