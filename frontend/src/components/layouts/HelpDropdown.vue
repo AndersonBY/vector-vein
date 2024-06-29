@@ -47,6 +47,11 @@ const openUpdateInfo = ref(false)
         {{ t('components.layout.helpDropdown.documentation') }}
       </a>
     </a-menu-item>
+    <a-menu-item key="slack">
+      <a href="https://join.slack.com/t/vectorveinhq/shared_invite/zt-1vit9yh0n-CPhrqdA5zZVEHHyW75qkQA" target="_blank">
+        Slack
+      </a>
+    </a-menu-item>
     <a-menu-item key="/update" v-if="updateInfo.updatable" @click="openUpdateInfo = true">
       {{ t('components.layout.helpDropdown.update_available') }}
       <a-modal :open="openUpdateInfo" :footer="null" @cancel="openUpdateInfo = false">
