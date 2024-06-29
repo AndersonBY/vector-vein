@@ -140,7 +140,7 @@ const deleteWorkflowFromFastAccess = async (wid) => {
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>
-      <a-layout-content :style="{ padding: '0 24px', minHeight: '280px' }">
+      <a-layout-content :style="{ padding: '12px 24px', minHeight: '280px' }">
         <router-view :key="workflowId"></router-view>
       </a-layout-content>
     </a-layout>

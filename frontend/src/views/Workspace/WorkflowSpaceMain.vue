@@ -29,7 +29,6 @@ const tabChange = async (key) => {
       <MyWorkflows v-model="activeKey" />
     </a-tab-pane>
     <a-tab-pane key="official-workflow-templates">
-
       <template #tab>
         <span>
           <MoreApp theme="filled" />
@@ -40,9 +39,3 @@ const tabChange = async (key) => {
     </a-tab-pane>
   </a-tabs>
 </template>
-
-<style scoped>
-.space-container {
-  height: calc(100vh - 64px);
-}
-</style>
