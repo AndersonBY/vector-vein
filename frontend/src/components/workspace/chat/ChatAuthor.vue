@@ -37,7 +37,7 @@ const authorNickname = computed(() => {
   if (props.author.nickname) {
     return props.author.nickname
   } else {
-    return t('common.vectorvein_user')
+    return t('common.me')
   }
 })
 
