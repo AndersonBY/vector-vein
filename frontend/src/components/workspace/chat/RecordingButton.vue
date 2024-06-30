@@ -26,21 +26,29 @@ const emit = defineEmits(['finished', 'update:text'])
 const audioFile = ref('')
 
 const stopCheckTimer = ref()
+const autoStop = ref(false)
 
 const startRecording = async (payload = {}) => {
   recording.value = true
+  autoStop.value = payload.auto_stop
   try {
     const res = await hardwareAPI('start_microphone', payload)
     if (res.status == 200) {
       message.success(t('workspace.chatSpace.recording_start'))
-      stopCheckTimer.value = setInterval(async () => {
-        const checkResp = await hardwareAPI('check_microphone')
-        if (!checkResp.data?.is_recording) {
-          clearInterval(stopCheckTimer.value)
-          recording.value = false
-          await postRecordingHandler(checkResp.data.audio_path)
-        }
-      }, 1000)
+      if (autoStop.value) {
+        stopCheckTimer.value = setInterval(async () => {
+          const checkResp = await hardwareAPI('check_microphone')
+          if (!recording.value) {
+            clearInterval(stopCheckTimer.value)
+            return
+          }
+          if (!checkResp.data?.is_recording) {
+            clearInterval(stopCheckTimer.value)
+            recording.value = false
+            await postRecordingHandler(checkResp.data.audio_path)
+          }
+        }, 1000)
+      }
     } else {
       message.error(t('workspace.chatSpace.recording_failed'))
     }
