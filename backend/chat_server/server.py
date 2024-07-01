@@ -8,9 +8,9 @@ from threading import Thread
 
 import websockets
 
+from tts_server.server import tts_server
 from utilities.general import mprint
 from utilities.config import Settings, cache
-from utilities.media_processing import TTSClient
 from utilities.ai_utils import create_async_chat_client, tool_use_re, format_messages
 from background_task.tasks import summarize_conversation_title
 from .utils import get_tool_call_data, get_tool_related_workflow, check_multimodal_available
@@ -22,7 +22,6 @@ class WebSocketServer:
         self.port = port
         self.server = None
         self.thread = None
-        self.tts_client = None
 
     async def handler(self, websocket, path):
         conversation_id = re.match(r"^/ws/chat/(.+)/$", path)
@@ -143,11 +142,7 @@ class WebSocketServer:
 
         if settings.get("agent_audio_reply") and len(full_content) > 0:
             provider, voice = settings.get("agent_audio_voice", ["openai", "onyx"])
-            if self.tts_client is not None:
-                self.tts_client.stop()
-                self.tts_client = None
-            self.tts_client = TTSClient(provider=provider)
-            self.tts_client.stream(text=full_content, voice=voice, non_block=True, skip_code_block=True)
+            tts_server.stream(text=full_content, provider=provider, voice=voice, skip_code_block=True)
 
         response_data = {
             "conversation_title": conversation_title,

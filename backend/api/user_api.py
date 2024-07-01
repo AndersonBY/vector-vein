@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-30 01:48:22
+# @Last Modified time: 2024-07-01 14:53:42
 import json
 import time
 
@@ -10,6 +10,7 @@ import webview
 
 from .utils import JResponse
 from models import Setting, Conversation, Agent, model_serializer
+from tts_server.server import tts_server
 from utilities.media_processing import Microphone
 from utilities.shortcuts import shortcuts_listener
 from utilities.media_processing import get_screenshot
@@ -162,6 +163,7 @@ class HardwareAPI:
         return JResponse(data={"is_recording": self.mic.is_recording, "audio_path": self.mic.latest_saved_file})
 
     def start_microphone(self, payload):
+        tts_server.stop()
         settings = Settings()
         self.mic = Microphone(device_index=settings.get("microphone_device", 0))
         try:
