@@ -128,11 +128,11 @@ const loadMore = async () => {
 
 const openChat = (cid) => {
   isConversationsListOpen.value = false
-  router.push({ name: 'conversationDetail', params: { conversationId: cid } })
+  router.push({ name: 'conversationDetail', params: { agentId: agentData.aid, conversationId: cid } })
 }
 const openNewChat = () => {
   isConversationsListOpen.value = false
-  router.push({ name: 'conversationNew' })
+  router.push({ name: 'conversationNew', params: { agentId: agentData.aid } })
 }
 
 const deleteChat = (chat) => {
