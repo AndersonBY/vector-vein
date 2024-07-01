@@ -375,6 +375,17 @@ const websiteDomainOptions = [
           </a-button>
         </template>
         <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+          <a-form-item :label="t('settings.microphone_device')">
+            <a-flex gap="small" align="center">
+              <a-select v-model:value="settingForm.data.microphone_device" :options="microphoneDeviceOptions"
+                style="width: 100%;" />
+              <a-tooltip :title="t('common.refresh')">
+                <a-button type=text size="small" :loading="refreshingMics" @click="refreshMics">
+                  <Refresh />
+                </a-button>
+              </a-tooltip>
+            </a-flex>
+          </a-form-item>
           <a-form-item :label="t('settings.provider_for_asr')">
             <a-select v-model:value="settingForm.data.asr.provider"
               :options="[{ label: 'OpenAI', value: 'openai' }, { label: 'Deepgram', value: 'deepgram' }]" />
@@ -563,18 +574,6 @@ const websiteDomainOptions = [
 
           <a-form-item :label="t('settings.use_system_proxy')">
             <a-checkbox v-model:checked="settingForm.data.use_system_proxy" />
-          </a-form-item>
-
-          <a-form-item :label="t('settings.microphone_device')">
-            <a-flex gap="small" align="center">
-              <a-select v-model:value="settingForm.data.microphone_device" :options="microphoneDeviceOptions"
-                style="width: 100%;" />
-              <a-tooltip :title="t('common.refresh')">
-                <a-button type=text size="small" :loading="refreshingMics" @click="refreshMics">
-                  <Refresh />
-                </a-button>
-              </a-tooltip>
-            </a-flex>
           </a-form-item>
 
           <a-form-item :label="t('settings.output_folder')">
