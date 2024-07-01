@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-30 03:51:45
+ * @Last Modified time: 2024-07-01 02:45:11
  */
 export default {
   lang: 'English',
@@ -1121,6 +1121,7 @@ export default {
           'to_email': 'To email',
           'subject': 'Subject',
           'content_html': 'Content HTML',
+          'attachments': 'Attachments',
         },
         Document: {
           'title': 'Document',
