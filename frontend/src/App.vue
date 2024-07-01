@@ -159,6 +159,10 @@ textarea::-webkit-scrollbar-track {
   font-size: 1.015rem;
 }
 
+.markdown-body {
+  user-select: text;
+}
+
 .markdown-body .code-block .header {
   background-color: #343541;
   display: flex;
