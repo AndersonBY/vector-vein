@@ -1,5 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-06-09 15:53:58
+import re
 import time
 import json
 import wave
@@ -22,6 +23,8 @@ from utilities.config import Settings, config
 class TTSClient:
     def __init__(self, provider: str = "openai", model: str | None = None):
         self.audio_sample_rate = 24_000
+        self.streaming = False
+        self._stop_flag = False
 
         settings = Settings()
         self.provider = provider
@@ -77,6 +80,8 @@ class TTSClient:
             return output_file_path
 
     def _stream_audio(self, text: str, voice: str | None):
+        self.streaming = True
+        self._stop_flag = False
         p = pyaudio.PyAudio()
         stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
         if self.provider == "openai":
@@ -84,6 +89,8 @@ class TTSClient:
                 model=self.model_id, voice=voice, input=text, response_format="pcm"
             ) as response:
                 for chunk in response.iter_bytes(1024):
+                    if self._stop_flag:
+                        break
                     stream.write(chunk)
         elif self.provider == "minimax":
             url = "https://api.minimax.chat/v1/tts/stream"
@@ -105,6 +112,8 @@ class TTSClient:
             }
             with httpx.stream("POST", url, headers=headers, json=body) as response:
                 for chunk in response.iter_lines():
+                    if self._stop_flag:
+                        break
                     if not chunk.startswith("data:"):
                         continue
                     data = json.loads(chunk[5:])
@@ -122,8 +131,12 @@ class TTSClient:
         stream.stop_stream()
         stream.close()
         p.terminate()
+        self.streaming = False
 
-    def stream(self, text: str, voice: str | None = None, non_block: bool = False):
+    def stream(self, text: str, voice: str | None = None, non_block: bool = False, skip_code_block: bool = False):
+        if skip_code_block:
+            text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
+
         if non_block:
             thread = threading.Thread(target=self._stream_audio, args=(text, voice))
             thread.start()
@@ -131,6 +144,9 @@ class TTSClient:
         else:
             self._stream_audio(text, voice)
             return True
+
+    def stop(self):
+        self._stop_flag = True
 
 
 class SpeechRecognitionClient:
