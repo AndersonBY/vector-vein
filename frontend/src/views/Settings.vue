@@ -348,7 +348,7 @@ const websiteDomainOptions = [
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="text-embeddings-inference deployment" type="info">
                 <template #description>
-                  <a-typography-link style="text-align: center;"
+                  <a-typography-link style="text-align: center;" target="_blank"
                     href="https://github.com/huggingface/text-embeddings-inference">
                     https://github.com/huggingface/text-embeddings-inference
                   </a-typography-link>
@@ -419,7 +419,8 @@ const websiteDomainOptions = [
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="Deepgram" type="info">
                 <template #description>
-                  <a-typography-link style="text-align: center;" href="https://developers.deepgram.com/docs">
+                  <a-typography-link style="text-align: center;" target="_blank"
+                    href="https://developers.deepgram.com/docs">
                     https://developers.deepgram.com/docs
                   </a-typography-link>
                 </template>
@@ -451,7 +452,7 @@ const websiteDomainOptions = [
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="piper-tts deployment" type="info">
                 <template #description>
-                  <a-typography-link style="text-align: center;"
+                  <a-typography-link style="text-align: center;" target="_blank"
                     href="https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md">
                     https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md
                   </a-typography-link>
@@ -478,7 +479,7 @@ const websiteDomainOptions = [
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="jina.ai" type="info">
                 <template #description>
-                  <a-typography-link style="text-align: center;" href="https://jina.ai/reader/">
+                  <a-typography-link style="text-align: center;" target="_blank" href="https://jina.ai/reader/">
                     https://jina.ai/reader/
                   </a-typography-link>
                 </template>
@@ -494,7 +495,7 @@ const websiteDomainOptions = [
             <a-flex vertical justify="center" gap="middle">
               <a-alert message="Bing search API" type="info">
                 <template #description>
-                  <a-typography-link style="text-align: center;"
+                  <a-typography-link style="text-align: center;" target="_blank"
                     href="https://www.microsoft.com/en-us/bing/apis/bing-web-search-api">
                     https://www.microsoft.com/en-us/bing/apis/bing-web-search-api
                   </a-typography-link>
