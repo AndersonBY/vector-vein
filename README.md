@@ -157,6 +157,10 @@ If you need to modify the frontend code, you need to run the following command i
 pnpm install
 ```
 
+> When pulling the project code for the first time, you also need to run `pnpm install` to install the front-end dependencies.
+>
+> If you don't need to develop any front-end code at all, you can directly copy the `web` folder from the release version into the `backend` folder.
+
 After the frontend dependencies are installed, you need to compile the frontend code into the static file directory of the backend. A shortcut instruction has been provided in the project. Run the following command in the **backend** directory to pack and copy the frontend resources:
 
 ```bash
