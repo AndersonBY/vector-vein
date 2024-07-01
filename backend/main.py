@@ -2,10 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-01 14:56:25
+# @Last Modified time: 2024-07-01 18:26:53
 import os
 import time
-import queue
 import threading
 from pathlib import Path
 
@@ -46,7 +45,7 @@ from utilities.shortcuts import shortcuts_listener
 from utilities.network import proxies_for_requests
 from utilities.file_processing import static_file_server
 from models import create_tables, run_migrations
-from worker import workflow_worker
+from worker import WorkflowServer
 from tts_server.server import tts_server
 from chat_server.server import WebSocketServer
 from background_task.server import BackgroundTaskServer
@@ -93,8 +92,7 @@ def main():
             time.sleep(0.1)
         return []
 
-    task_queue = queue.Queue()
-    api = API(DEBUG, VERSION, task_queue)
+    api = API(DEBUG, VERSION)
     api_class_list = [
         WorkflowAPI,
         WorkflowTagAPI,
@@ -128,8 +126,8 @@ def main():
     if "https" in _proxies_for_requests:
         os.environ["https_proxy"] = _proxies_for_requests["https"]
 
-    worker_thread = threading.Thread(target=workflow_worker, args=(task_queue,), daemon=True)
-    worker_thread.start()
+    workflow_server = WorkflowServer()
+    workflow_server.start()
 
     static_file_server_thread = threading.Thread(target=static_file_server.start, daemon=True)
     static_file_server_thread.start()

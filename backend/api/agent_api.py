@@ -387,7 +387,6 @@ class MessageAPI:
                 original_node["data"]["template"][field]["value"] = node_data[field]
 
         record_rid = run_workflow_common(
-            worker_queue=self.worker_queue,
             workflow_data=workflow_data,
             workflow=workflow,
             message=message,

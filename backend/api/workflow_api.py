@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-29 14:21:23
+# @Last Modified time: 2024-07-01 18:31:32
 from datetime import datetime
 
 from peewee import fn
@@ -194,7 +194,6 @@ class WorkflowAPI:
         workflow_data = payload.get("data", {})
 
         record_rid = run_workflow_common(
-            worker_queue=self.worker_queue,
             workflow_data=workflow_data,
             workflow=workflow,
             run_from=WorkflowRunRecord.RunFromTypes.WEB,

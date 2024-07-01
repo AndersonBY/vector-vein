@@ -2,13 +2,18 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 14:21:40
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-08 03:12:43
+# @Last Modified time: 2024-07-01 18:34:20
+from pathlib import Path
+
+from diskcache import Deque
+
 from models import (
     Message,
     Workflow,
     model_serializer,
     WorkflowRunRecord,
 )
+from utilities.config import config
 
 
 def get_user_object_general(ObjectClass, **kwargs):
@@ -99,7 +104,6 @@ def get_history_messages(
 
 
 def run_workflow_common(
-    worker_queue,
     workflow_data: dict,
     workflow: Workflow,
     message=None,
@@ -117,7 +121,9 @@ def run_workflow_common(
         source_message=source_message,
     )
     workflow_data["rid"] = record.rid.hex
-    worker_queue.put({"data": workflow_data})
+
+    worker_queue = Deque(directory=Path(config.data_path) / "cache" / "workflow_task")
+    worker_queue.appendleft({"data": workflow_data})
 
     return record.rid.hex
 

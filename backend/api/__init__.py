@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 01:29:11
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-26 16:47:11
+# @Last Modified time: 2024-07-01 18:18:40
 import os
 import uuid
 import base64
@@ -17,10 +17,9 @@ from utilities.general import mprint
 
 
 class API:
-    def __init__(self, debug=False, version=None, worker_queue=None):
+    def __init__(self, debug=False, version=None):
         self.debug = debug
         self.version = version
-        self.worker_queue = worker_queue
 
     def add_apis(self, APIClass):
         for method_name in dir(APIClass):
