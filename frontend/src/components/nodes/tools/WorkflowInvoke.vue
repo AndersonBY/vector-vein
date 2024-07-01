@@ -61,6 +61,7 @@ const workflowSelectModal = reactive({
       }
       fieldsData.value[fieldKey] = deepCopy(field)
       fieldsData.value[fieldKey].node = fieldsData.value[fieldKey].nodeId
+      fieldsData.value[fieldKey].name = fieldKey
       fieldNamesIds.add(fieldKey)
     })
     const outputNodes = workflowSelectModal.data.outputNodes.concat(workflowSelectModal.data.workflowInvokeOutputNodes)
