@@ -113,7 +113,7 @@ You can add our official templates to your workflow or create a new one. It is r
 
 The workflow editor interface is shown above. You can edit the name, tags, and detailed description at the top. The left side is the node list of the workflow, and the right is the canvas of the workflow. You can drag the desired node from the left side to the canvas, and then connect the node through the wire to form a workflow.
 
-You can view a tutorial on creating a simple crawler + AI summary mind map workflow [here](TUTORIAL_en.md).
+You can view a tutorial on creating a simple crawler + AI summary mind map workflow [here](TUTORIAL.md).
 
 You can also try this [online interactive tutorial](https://vectorvein.ai/workspace/workflow/editor/tutorial).
 

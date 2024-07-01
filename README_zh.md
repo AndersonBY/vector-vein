@@ -111,7 +111,7 @@ set COMMANDLINE_ARGS=--api
 
 工作流编辑界面如上图所示，顶部可以编辑名称、标签以及详细描述。左侧是工作流的节点列表，右侧是工作流的画布，您可以从左侧找到想要的节点拖拽到画布中，然后通过连线连接节点，形成工作流。
 
-您可以查看一个简易的 爬虫 + AI 总结思维导图工作流的 [创建教学](TUTORIAL.md) 。
+您可以查看一个简易的 爬虫 + AI 总结思维导图工作流的 [创建教学](TUTORIAL_zh.md) 。
 
 还可以试一下这个 [在线互动教程](https://vectorvein.com/workspace/workflow/editor/tutorial) 。
 
