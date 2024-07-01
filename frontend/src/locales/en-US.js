@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-01 02:45:11
+ * @Last Modified time: 2024-07-01 15:59:46
  */
 export default {
   lang: 'English',
@@ -1620,7 +1620,7 @@ export default {
     },
   },
   settings: {
-    'llms': 'Language Models',
+    'llms': 'Remove LLMs',
     'other': 'Other',
     'open': 'Open setting',
     'close': 'Close setting',
