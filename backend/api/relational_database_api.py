@@ -46,6 +46,7 @@ class RelationalDatabaseAPI:
         if status != 200:
             return {"status": status, "msg": msg, "data": {}}
         database.name = payload.get("name", database.name)
+        database.update_time = datetime.now()
         database.save()
         return {"status": 200, "msg": msg}
 
@@ -207,15 +208,16 @@ class RelationalDatabaseTableAPI:
         return response
 
     def update(self, payload):
-        status, msg, user_object = get_user_object_general(
+        status, msg, table = get_user_object_general(
             UserRelationalTable,
             tid=payload.get("tid"),
         )
         if status != 200:
             return {"status": status, "msg": msg, "data": {}}
-        user_object.title = payload.get("title", "")
-        user_object.info = payload.get("info", {})
-        user_object.save()
+        table.title = payload.get("title", "")
+        table.info = payload.get("info", {})
+        table.update_time = datetime.now()
+        table.save()
         return {"status": 200, "msg": "success", "data": {}}
 
     def delete(self, payload):

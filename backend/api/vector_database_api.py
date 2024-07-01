@@ -2,8 +2,9 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-15 16:38:42
+# @Last Modified time: 2024-07-01 11:25:34
 from pathlib import Path
+from datetime import datetime
 
 from models import (
     UserObject,
@@ -45,6 +46,7 @@ class DatabaseAPI:
             return JResponse(status=status, msg=msg)
 
         database.name = payload.get("name", database.name)
+        database.update_time = datetime.now()
         database.save()
         return JResponse()
 
@@ -211,6 +213,7 @@ class DatabaseObjectAPI:
 
         user_object.title = payload.get("title", "")
         user_object.info = payload.get("info", {})
+        user_object.update_time = datetime.now()
         user_object.save()
         return JResponse()
 

@@ -1,6 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-06-06 11:38:21
 import json
+from datetime import datetime
 
 from models import (
     Agent,
@@ -106,6 +107,7 @@ class ConversationAPI:
         conversation.title = payload.get("title", conversation.title)
         conversation.model = payload.get("model", conversation.model)
         conversation.model_provider = payload.get("model_provider", conversation.model_provider)
+        conversation.update_time = datetime.now()
         conversation.save()
 
         return JResponse()
@@ -256,6 +258,7 @@ class MessageAPI:
         )
 
         conversation.current_message = ai_message.mid
+        conversation.update_time = ai_message.create_time
         conversation.save()
 
         history_messages = get_history_messages(
@@ -309,6 +312,7 @@ class MessageAPI:
         title = response.get("conversation_title")
         if title and message.conversation.title != title:
             message.conversation.title = title
+            message.conversation.update_time = datetime.now()
             message.conversation.save()
 
         return JResponse()
@@ -520,6 +524,7 @@ class AgentAPI:
         workflows = Workflow.select().where(Workflow.wid.in_(related_workflows))
         agent.related_workflows.add(list(workflows))
         agent.version += 1
+        agent.update_time = datetime.now()
         agent.save()
 
         return JResponse(data={**model_serializer(agent, manytomany=True), "is_owner": True})
