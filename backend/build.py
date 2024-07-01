@@ -2,11 +2,12 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 13:34:28
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-05-04 12:32:42
+# @Last Modified time: 2024-07-01 15:51:14
 import os
 import shlex
 import shutil
 import argparse
+import platform
 import subprocess
 from pathlib import Path
 
@@ -28,6 +29,25 @@ def build_production(version):
         version_txt_path.parent.mkdir(parents=True, exist_ok=True)
     with open("./dist/vector-vein/version.txt", "w") as f:
         f.write(version)
+
+    system_name = platform.system().lower()
+    if system_name == "darwin":
+        platform_name = "mac"
+    elif system_name == "windows":
+        platform_name = "windows"
+    else:
+        platform_name = "linux"
+
+    # Create the ZIP file
+    zip_filename = f"vector-vein-{platform_name}-v{version}.zip"
+    zip_filepath = Path(f"./dist/{zip_filename}")
+
+    # Compress the directory
+    shutil.make_archive(
+        base_name=zip_filepath.with_suffix(""), format="zip", root_dir="./dist", base_dir="vector-vein"
+    )
+
+    print(f"Created {zip_filename} at {zip_filepath}")
 
 
 def build_development(version):
