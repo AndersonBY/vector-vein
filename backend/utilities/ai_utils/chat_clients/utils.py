@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-20 13:53:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-29 23:24:00
+# @Last Modified time: 2024-07-01 11:30:59
 import re
 import json
 
@@ -111,7 +111,24 @@ def cutoff_messages(
     for index, message in enumerate(reversed(messages)):
         if not message[content_key]:
             continue
-        messages_length += get_token_counts(message[content_key], model)
+        count = 0
+        if isinstance(message[content_key], str):
+            contents = [message[content_key]]
+        elif isinstance(message[content_key], list):
+            contents = message[content_key]
+        else:
+            contents = [str(message[content_key])]
+
+        for content in contents:
+            # TODO: Add non text token counts
+            if isinstance(content, dict) and "text" not in content:
+                continue
+            if isinstance(content, dict):
+                content_text = content["text"]
+            else:
+                content_text = str(content)
+            count += get_token_counts(content_text, model)
+        messages_length += count
         if messages_length < max_count:
             continue
         if index == 0:
