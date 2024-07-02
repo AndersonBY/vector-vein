@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:06:14
+ * @Last Modified time: 2024-07-02 17:38:49
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -161,6 +161,10 @@ export const nonLocalChatModelOptions = [
       {
         label: "claude-3-opus",
         value: "claude-3-opus-20240229",
+      },
+      {
+        label: "claude-3-5-sonnet",
+        value: "claude-3-5-sonnet-20240620",
       },
     ]
   },
@@ -350,6 +354,7 @@ export const modelTagBackgroundColorMap = {
   'claude-3-haiku-20240307': '#CA9F7B',
   'claude-3-opus-20240229': '#CA9F7B',
   'claude-3-sonnet-20240229': '#CA9F7B',
+  'claude-3-5-sonnet-20240620': '#CA9F7B',
   'mixtral-8x7b': '#FF7000',
   'mistral-small': '#FF7000',
   'mistral-medium': '#FF7000',

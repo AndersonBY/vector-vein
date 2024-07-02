@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-18 01:27:41
+# @Last Modified time: 2024-07-02 17:37:48
 import json
 
 from anthropic import Anthropic, AsyncAnthropic
@@ -25,6 +25,7 @@ MODEL_MAX_INPUT_LENGTH = {
     "claude-3-opus-20240229": 200000,
     "claude-3-sonnet-20240229": 200000,
     "claude-3-haiku-20240307": 200000,
+    "claude-3-5-sonnet-20240620": 200000,
 }
 
 
