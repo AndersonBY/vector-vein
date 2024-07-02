@@ -64,6 +64,7 @@ class ConversationAPI:
             conversation.save()
 
         conversation_serializer = model_serializer(conversation, manytomany=True)
+        conversation_serializer["agent"] = model_serializer(conversation.agent)
         _, _, start_message = get_user_object_general(Message, mid=conversation.current_message)
         history_messages = get_history_messages(start_message, count=None)
         return JResponse(
