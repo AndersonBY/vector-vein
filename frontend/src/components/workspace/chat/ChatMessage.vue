@@ -114,7 +114,7 @@ const author = computed(() => {
     }
   } else if (props.authorType == 'U' && props.anonymous) {
     return {
-      nickname: t('common.vectorvein_user'),
+      nickname: t('common.me'),
       type: 'U',
     }
   } else if (props.authorType == 'A') {
