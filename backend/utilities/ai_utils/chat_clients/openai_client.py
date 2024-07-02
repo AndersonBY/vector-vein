@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:23:26
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-29 18:13:29
+# @Last Modified time: 2024-07-02 20:21:26
 from typing import Union, AsyncGenerator
 
 import httpx
@@ -174,10 +174,10 @@ class OpenAIChatClient(BaseChatClient):
         if self.stream:
 
             def generator():
-                chunk_count = 0
                 for chunk in response:
                     if len(chunk.choices) > 0:
-                        chunk_count += 1
+                        if not chunk.choices[0].delta:
+                            continue
                         yield chunk.choices[0].delta.model_dump()
 
             return generator()
@@ -244,6 +244,8 @@ class AsyncOpenAIChatClient(BaseAsyncChatClient):
             async def generator():
                 async for chunk in response:
                     if len(chunk.choices) > 0:
+                        if not chunk.choices[0].delta:
+                            continue
                         yield chunk.choices[0].delta.model_dump()
 
             return generator()
