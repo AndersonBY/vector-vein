@@ -19,21 +19,21 @@ const parseOption = (option) => {
   if (typeof option === 'string') {
     try {
       parsedOption = JSON.parse(option)
+      parsedOption.toolbox = {
+        show: true,
+        feature: {
+          saveAsImage: {
+            show: true,
+            title: t('components.workspace.echartsRenderer.download_image'),
+            type: 'png',
+            pixelRatio: 2,
+          },
+        },
+      }
     } catch (e) {
       console.error(e)
       parsedOption = {}
     }
-  }
-  parsedOption.toolbox = {
-    show: true,
-    feature: {
-      saveAsImage: {
-        show: true,
-        title: t('components.workspace.echartsRenderer.download_image'),
-        type: 'png',
-        pixelRatio: 2,
-      },
-    },
   }
   return parsedOption
 }
