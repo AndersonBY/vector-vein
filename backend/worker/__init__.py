@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 16:56:55
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-01 18:37:48
+# @Last Modified time: 2024-07-03 11:18:48
 import time
 import inspect
 import traceback
@@ -106,6 +106,12 @@ class WorkflowServer:
                     sleep_time = 1
             except Exception as e:
                 mprint.error(traceback.format_exc())
-                mprint.error(f"Error running workflow task: {e}")
+                mprint.error(f"workflow worker error: {e}")
+                mprint.error(f"error_task: {e.task_name}")
+                for module_name, functions in task_functions.items():
+                    if e.task_name in functions:
+                        mprint.error(f"error_module: {module_name}")
+                        break
+                workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
 
             time.sleep(sleep_time)
