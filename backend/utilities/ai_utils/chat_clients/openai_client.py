@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:23:26
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-02 20:21:26
+# @Last Modified time: 2024-07-03 18:45:15
 from typing import Union, AsyncGenerator
 
 import httpx
@@ -41,7 +41,7 @@ def get_openai_client_and_model(
                 base_url=api_base,
                 http_client=httpx.AsyncClient(
                     proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                    transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"),
                 ),
             )
         else:
@@ -87,7 +87,7 @@ def get_openai_client_and_model(
                 api_version="2024-05-01-preview",
                 http_client=httpx.AsyncClient(
                     proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                    transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"),
                 ),
             )
         else:
@@ -107,7 +107,7 @@ def get_openai_client_and_model(
                 base_url=settings.get("openai_api_base", "https://api.openai.com/v1"),
                 http_client=httpx.AsyncClient(
                     proxies=proxies(),
-                    transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                    transport=httpx.AsyncHTTPTransport(local_address="0.0.0.0"),
                 ),
             )
         else:
