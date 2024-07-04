@@ -4,9 +4,7 @@ import { Send, Link } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from "vue-router"
-import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
-import { useUserSettingsStore } from '@/stores/userSettings'
 import WorkflowsPopoverShow from '@/components/workspace/chat/WorkflowsPopoverShow.vue'
 import SettingsPopoverShow from '@/components/workspace/chat/SettingsPopoverShow.vue'
 import ModelSelectButton from '@/components/workspace/chat/ModelSelectButton.vue'
@@ -19,7 +17,7 @@ import { defaultSettings } from '@/utils/common'
 import logoUrl from "@/assets/logo.svg"
 import { conversationAPI, agentAPI } from '@/api/chat'
 
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const loading = ref(true)
 const route = useRoute()
 const router = useRouter()
@@ -28,14 +26,12 @@ const agentId = route.params.agentId
 const agentData = ref({})
 
 const userChatsStore = useUserChatsStore()
-const userSettingsStore = useUserSettingsStore()
-const { language } = storeToRefs(userSettingsStore)
 
 const conversation = reactive({
   aid: agentId,
   cid: '',
   title: t('workspace.chatSpace.new_chat'),
-  settings: defaultSettings[language.value],
+  settings: defaultSettings[locale.value],
   model: 'gpt-35-turbo',
   model_provider: 'OpenAI',
   update_time: new Date().getTime(),
@@ -57,8 +53,12 @@ onBeforeMount(async () => {
     conversation.settings = agentData.value.settings
     conversation.model = agentData.value.model
     conversation.model_provider = agentData.value.model_provider
-    selectedFlows.workflows = agentData.value.related_workflows
-    selectedFlows.templates = agentData.value.related_templates
+    agentData.value.related_workflows.forEach((workflow) => {
+      selectedFlows.workflows[workflow.wid] = workflow
+    })
+    agentData.value.related_templates.forEach((workflow) => {
+      selectedFlows.templates[workflow.tid] = workflow
+    })
   } else {
     message.error(response.msg)
   }
