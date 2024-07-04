@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
-import { Send, Edit, Link } from '@icon-park/vue-next'
+import { Send, Edit, Link, Plus } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
-import { useRoute } from "vue-router"
+import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
 import ReconnectingWebSocket from 'reconnecting-websocket'
@@ -23,7 +23,9 @@ import { conversationAPI, messageAPI } from '@/api/chat'
 const { t } = useI18n()
 const loading = ref(false)
 const route = useRoute()
+const router = useRouter()
 const conversationId = ref(route.params.conversationId)
+const agentId = ref(route.params.agentId)
 const selectedWorkflows = reactive({
   workflows: {},
   templates: {},
@@ -69,6 +71,11 @@ watch(() => route.params.conversationId, async (newVal, oldVal) => {
   await fetchConversation(newVal)
 })
 
+const windowWidth = ref(window.innerWidth)
+const updateWidth = () => {
+  windowWidth.value = window.innerWidth
+}
+
 onBeforeMount(async () => {
   if (unsentChats.value.length == 0) {
     loading.value = true
@@ -86,6 +93,8 @@ onBeforeUnmount(() => {
     chatSocket.close()
     chatSocket = null
   }
+
+  window.removeEventListener('resize', updateWidth)
 })
 
 onMounted(() => {
@@ -93,6 +102,8 @@ onMounted(() => {
   window.setAttachments = (files) => {
     attachments.value = files
   }
+
+  window.addEventListener('resize', updateWidth)
 })
 
 const sending = ref(false)
@@ -357,6 +368,14 @@ const handleDrop = (event) => {
     <div class="chat-footer-input">
       <div class="chat-input-actions">
         <template v-if="!loading">
+          <a-tooltip v-if="windowWidth < 768" :title="t('workspace.chatSpace.new_chat')">
+            <a-button size="small" type="text" shape="round"
+              @click="router.push({ name: 'conversationNew', params: { agentId } })">
+              <template #icon>
+                <Plus />
+              </template>
+            </a-button>
+          </a-tooltip>
           <SettingsPopoverShow :key="conversationId" :settings="conversation.settings" />
           <WorkflowsPopoverShow :key="conversationId" :selectedFlows="selectedWorkflows" />
           <ModelSelectButton :key="conversationId" :cid="conversationId" v-model:model="conversation.model"
