@@ -20,6 +20,7 @@ import { useUserSettingsStore } from '@/stores/userSettings'
 import LocalLLMSettings from "@/components/settings/LocalLLMSettings.vue"
 import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
 import AzureOpenAISettings from "@/components/settings/AzureOpenAISettings.vue"
+import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
 import { settingAPI, hardwareAPI } from "@/api/user"
 import QuestionPopover from "@/components/QuestionPopover.vue"
@@ -447,25 +448,7 @@ const websiteDomainOptions = [
             {{ t('settings.save') }}
           </a-button>
         </template>
-        <a-tabs tab-position="left">
-          <a-tab-pane key="piper" tab="piper">
-            <a-flex vertical justify="center" gap="middle">
-              <a-alert message="piper-tts deployment" type="info">
-                <template #description>
-                  <a-typography-link style="text-align: center;" target="_blank"
-                    href="https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md">
-                    https://github.com/rhasspy/piper/blob/master/src/python_run/README_http.md
-                  </a-typography-link>
-                </template>
-              </a-alert>
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="API Base">
-                  <a-input v-model:value="settingForm.data.tts.piper.api_base" />
-                </a-form-item>
-              </a-form>
-            </a-flex>
-          </a-tab-pane>
-        </a-tabs>
+        <TTSSettings v-model="settingForm.data.tts" />
       </a-card>
 
       <a-card v-show="selectedKeys == 'web_search'" :title="t('settings.web_search')" :loading="loading">

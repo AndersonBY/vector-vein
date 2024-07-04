@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-02 17:38:49
+ * @Last Modified time: 2024-07-04 03:25:21
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -474,6 +474,9 @@ export const defaultSettings = {
 
 export const agentVoiceOptions = computed(() => {
   const { t, te } = useI18n()
+  const userSettings = useUserSettingsStore()
+  const { setting } = storeToRefs(userSettings)
+  const reechoVoices = setting.value.data?.tts?.reecho?.voices ?? []
   const options = [
     {
       value: 'openai',
@@ -608,6 +611,16 @@ export const agentVoiceOptions = computed(() => {
           label: 'default',
         }
       ]
+    },
+    {
+      value: 'reecho',
+      label: 'Reecho',
+      children: reechoVoices.map((voice) => {
+        return {
+          value: voice.voice_id,
+          label: voice.voice_label,
+        }
+      })
     }
   ]
   options.forEach((provider) => {

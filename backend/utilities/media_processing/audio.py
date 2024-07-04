@@ -5,6 +5,7 @@ import time
 import json
 import wave
 import threading
+import subprocess
 from pathlib import Path
 from datetime import datetime
 
@@ -37,11 +38,14 @@ class TTSClient:
             self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
         elif self.provider == "minimax":
             if model is None:
-                model = "speech-01"
+                model = "speech-01-turbo"
             self.api_key = settings.minimax_api_key
             self.model_id = model
         elif self.provider == "piper":
             self.api_base = settings.get("tts.piper.api_base")
+            self.model_id = model
+        elif self.provider == "reecho":
+            self.api_key = settings.get("tts.reecho.api_key")
             self.model_id = model
 
     def create(self, text: str, voice: str | None = None, output_folder: str | None = None):
@@ -58,23 +62,47 @@ class TTSClient:
             response.write_to_file(output_file_path)
             return output_file_path
         elif self.provider == "minimax":
-            url = "https://api.minimax.chat/v1/text_to_speech"
-            headers = {
-                "content-type": "application/json",
-                "authorization": f"Bearer {self.api_key}",
-            }
+            url = "https://api.minimax.chat/v1/t2a_pro"
+            headers = {"authorization": f"Bearer {self.api_key}"}
             data = {
                 "voice_id": voice,
                 "text": "你好",
-                "model": self.model_id,
+                "model": "speech-02",
                 "speed": 1.0,
                 "vol": 1.0,
                 "pitch": 0,
+                "output_format": "mp3",
+                "audio_sample_rate": self.audio_sample_rate,
+                "bitrate": 128000,
             }
             response = httpx.post(url, headers=headers, json=data)
-            if response.status_code != 200 or "json" in response.headers["Content-Type"]:
+            if response.status_code != 200:
                 mprint.error("Minimax TTS failed", response.status_code, response.text)
                 return None
+            result = response.json()
+            audio_url = result["audio_file"]
+            response = httpx.get(audio_url)
+            with open(output_file_path, "wb") as f:
+                f.write(response.content)
+            return output_file_path
+        elif self.provider == "reecho":
+            url = "https://v1.reecho.cn/api/tts/simple-generate"
+            payload = {
+                "voiceId": voice,
+                "text": text,
+                "promptId": "default",
+                "randomness": 95,
+                "stability_boost": 100,
+                "probability_optimization": 99,
+                "break_clone": False,
+                "flash": True,
+                "origin_audio": False,
+                "stream": False,
+            }
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            response = httpx.post(url, headers=headers, json=payload, timeout=None)
+            audio_url = response.json()["data"]["audio"]
+            response = httpx.get(audio_url, headers=headers, timeout=None)
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
             return output_file_path
@@ -83,8 +111,8 @@ class TTSClient:
         self.streaming = True
         self._stop_flag = False
         p = pyaudio.PyAudio()
-        stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
         if self.provider == "openai":
+            stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             with self.client.audio.speech.with_streaming_response.create(
                 model=self.model_id, voice=voice, input=text, response_format="pcm"
             ) as response:
@@ -93,22 +121,28 @@ class TTSClient:
                         break
                     stream.write(chunk)
         elif self.provider == "minimax":
-            url = "https://api.minimax.chat/v1/tts/stream"
+            stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
+            url = "https://api.minimax.chat/v1/t2a_v2"
             headers = {
                 "accept": "application/json, text/plain, */*",
                 "content-type": "application/json",
                 "authorization": f"Bearer {self.api_key}",
             }
             body = {
-                "voice_id": voice,
-                "text": text,
                 "model": self.model_id,
-                "speed": 1,
-                "vol": 1,
-                "pitch": 0,
-                "audio_sample_rate": self.audio_sample_rate,
-                "bitrate": 128000,
-                "format": "pcm",
+                "text": text,
+                "voice_setting": {
+                    "voice_id": voice,
+                    "speed": 1,
+                    "vol": 1,
+                    "pitch": 0,
+                },
+                "audio_setting": {
+                    "sample_rate": self.audio_sample_rate,
+                    "bitrate": 128000,
+                    "format": "pcm",
+                },
+                "stream": True,
             }
             with httpx.stream("POST", url, headers=headers, json=body) as response:
                 for chunk in response.iter_lines():
@@ -123,10 +157,68 @@ class TTSClient:
                         audio = bytes.fromhex(data["data"]["audio"])
                         stream.write(audio)
         elif self.provider == "piper":
+            stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             headers = {"content-type": "text/plain"}
             with httpx.stream("POST", self.api_base, headers=headers, data=text) as response:
                 for chunk in response.iter_bytes():
                     stream.write(chunk)
+        elif self.provider == "reecho":
+            url = "https://v1.reecho.cn/api/tts/simple-generate"
+            payload = {
+                "voiceId": voice,
+                "text": text,
+                "promptId": "default",
+                "randomness": 95,
+                "stability_boost": 100,
+                "probability_optimization": 99,
+                "break_clone": False,
+                "flash": True,
+                "origin_audio": False,
+                "stream": True,
+            }
+            headers = {"Authorization": f"Bearer {self.api_key}"}
+            response = httpx.post(url, headers=headers, json=payload, timeout=None)
+            stream_url = response.json()["data"]["streamUrl"]
+
+            CHUNK = 1024
+            FORMAT = pyaudio.paInt16
+            CHANNELS = 2
+            RATE = 44100
+
+            p = pyaudio.PyAudio()
+            stream = p.open(format=FORMAT, channels=CHANNELS, rate=RATE, output=True)
+
+            ffmpeg_command = [
+                "ffmpeg",
+                "-headers",
+                f"Authorization: Bearer {self.api_key}",
+                "-i",
+                stream_url,
+                "-f",
+                "s16le",
+                "-acodec",
+                "pcm_s16le",
+                "-ac",
+                str(CHANNELS),
+                "-ar",
+                str(RATE),
+                "-",
+            ]
+
+            try:
+                ffmpeg_process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+
+                # Read decoded PCM audio data from ffmpeg's stdout and play it
+                while True:
+                    data = ffmpeg_process.stdout.read(CHUNK)
+                    if len(data) == 0:
+                        break
+                    stream.write(data)
+
+                # Wait for ffmpeg process to finish
+                ffmpeg_process.wait()
+            except KeyboardInterrupt:
+                print("Stream stopped")
 
         stream.stop_stream()
         stream.close()

@@ -1,5 +1,8 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
+from collections.abc import Mapping
+
+
 DEFAULT_SETTINGS = {
     "initial_setup": False,
     "openai_api_type": "open_ai",
@@ -57,7 +60,10 @@ DEFAULT_SETTINGS = {
     "microphone_device": 0,
     "shortcuts": {},
     "embedding_models": {"text_embeddings_inference": {"api_base": "http://localhost:8080/embed"}},
-    "tts": {"piper": {"api_base": "http://localhost:5000"}},
+    "tts": {
+        "piper": {"api_base": "http://localhost:5000"},
+        "reecho": {"api_key": "", "voices": []},
+    },
     "asr": {
         "provider": "openai",
         "openai": {"same_as_llm": True, "api_base": "https://api.openai.com/v1", "api_key": "", "model": "whisper-1"},
@@ -65,6 +71,19 @@ DEFAULT_SETTINGS = {
     },
     "web_search": {"jinaai": {"api_key": ""}, "bing": {"ocp_apim_subscription_key": ""}},
 }
+
+
+def deep_merge(default, custom):
+    """
+    Recursively merge two dictionaries. The values from `custom` will overwrite
+    the values from `default` only if they are at the same depth.
+    """
+    for key, value in custom.items():
+        if isinstance(value, Mapping) and key in default and isinstance(default[key], Mapping):
+            default[key] = deep_merge(default[key], value)
+        else:
+            default[key] = value
+    return default
 
 
 class Settings:
@@ -83,7 +102,7 @@ class Settings:
             setting = SettingModel.create(data=DEFAULT_SETTINGS)
         else:
             setting = SettingModel.select().order_by(SettingModel.create_time.desc()).first()
-            setting.data = {**DEFAULT_SETTINGS, **setting.data}
+            setting.data = deep_merge(DEFAULT_SETTINGS.copy(), setting.data)
             setting.save()
         self.data = model_serializer(setting)["data"]
 
