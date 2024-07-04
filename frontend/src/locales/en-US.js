@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-04 03:21:11
+ * @Last Modified time: 2024-07-04 18:02:31
  */
 export default {
   lang: 'English',
@@ -300,6 +300,7 @@ export default {
       'native_multimodal': 'Native multimodal',
       'native_multimodal_description': 'If the model supports multimodal, uploaded images will be passed directly to the model.',
       'drop_to_upload': 'Drop to upload attachments',
+      'no_selected_workflows': 'No selected workflows',
     },
     agentSpace: {
       'my_agents': 'My AI agent',

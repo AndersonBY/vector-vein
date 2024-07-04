@@ -32,7 +32,9 @@ const { t } = useI18n()
 
 <template>
   <div>
-    <a-popover :title="t('workspace.chatSpace.selected_workflows')" placement="topLeft">
+    <a-popover
+      :title="Object.keys(selectedFlows.workflows).length == 0 && Object.keys(selectedFlows.templates).length == 0 ? t('workspace.chatSpace.no_selected_workflows') : t('workspace.chatSpace.selected_workflows')"
+      placement="topLeft">
       <template #content>
         <ul>
           <li v-for="flow in selectedFlows.workflows">
