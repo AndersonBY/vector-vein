@@ -161,6 +161,8 @@ class TTSClient:
             headers = {"content-type": "text/plain"}
             with httpx.stream("POST", self.api_base, headers=headers, data=text) as response:
                 for chunk in response.iter_bytes():
+                    if self._stop_flag:
+                        break
                     stream.write(chunk)
         elif self.provider == "reecho":
             url = "https://v1.reecho.cn/api/tts/simple-generate"
@@ -211,7 +213,7 @@ class TTSClient:
                 # Read decoded PCM audio data from ffmpeg's stdout and play it
                 while True:
                     data = ffmpeg_process.stdout.read(CHUNK)
-                    if len(data) == 0:
+                    if len(data) == 0 or self._stop_flag:
                         break
                     stream.write(data)
 
