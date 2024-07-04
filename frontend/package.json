@@ -13,7 +13,7 @@
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/lang-sql": "^6.7.0",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.28.3",
+    "@codemirror/view": "^6.28.4",
     "@icon-park/vue-next": "^1.4.2",
     "@liripeng/vue-audio-player": "^2.0.3",
     "@vue-flow/background": "^1.3.0",
@@ -52,12 +52,12 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.3",
     "@vitejs/plugin-vue": "^4.6.2",
-    "@vue-flow/core": "^1.37.1",
+    "@vue-flow/core": "^1.38.2",
     "@vue/eslint-config-prettier": "^7.1.0",
     "eslint": "^8.57.0",
-    "eslint-plugin-vue": "^9.26.0",
+    "eslint-plugin-vue": "^9.27.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.3.2"
+    "vite": "^5.3.3"
   }
 }
