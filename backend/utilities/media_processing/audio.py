@@ -4,6 +4,7 @@ import re
 import time
 import json
 import wave
+import platform
 import threading
 import subprocess
 from pathlib import Path
@@ -208,7 +209,17 @@ class TTSClient:
             ]
 
             try:
-                ffmpeg_process = subprocess.Popen(ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+                if platform.system() == "Windows":
+                    ffmpeg_process = subprocess.Popen(
+                        ffmpeg_command,
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.DEVNULL,
+                        creationflags=subprocess.CREATE_NO_WINDOW,
+                    )
+                else:
+                    ffmpeg_process = subprocess.Popen(
+                        ffmpeg_command, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL
+                    )
 
                 # Read decoded PCM audio data from ffmpeg's stdout and play it
                 while True:
