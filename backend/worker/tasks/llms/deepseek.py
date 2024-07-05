@@ -18,7 +18,7 @@ class DeepSeekTask(BaseLLMTask):
                     tpm=320000,
                 )
             ],
-            max_tokens=30000,
+            max_tokens=128000,
             max_output_tokens=4096,
             concurrent=30,
         ),
@@ -32,7 +32,7 @@ class DeepSeekTask(BaseLLMTask):
                     tpm=400000,
                 )
             ],
-            max_tokens=15000,
+            max_tokens=128000,
             max_output_tokens=4096,
             concurrent=30,
         ),

@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-18 01:27:55
+# @Last Modified time: 2024-07-04 22:50:08
 import json
 
 from openai import OpenAI, AsyncOpenAI
@@ -21,8 +21,8 @@ from .utils import (
 
 
 MODEL_MAX_INPUT_LENGTH = {
-    "deepseek-chat": 30000,
-    "deepseek-coder": 15000,
+    "deepseek-chat": 128000,
+    "deepseek-coder": 128000,
 }
 
 
