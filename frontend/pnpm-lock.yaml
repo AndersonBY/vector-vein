@@ -27,8 +27,8 @@ importers:
         specifier: ^1.4.2
         version: 1.4.2(vue@3.4.31)
       '@liripeng/vue-audio-player':
-        specifier: ^2.0.3
-        version: 2.0.3
+        specifier: ^2.0.4
+        version: 2.0.4
       '@vue-flow/background':
         specifier: ^1.3.0
         version: 1.3.0(@vue-flow/core@1.38.2(vue@3.4.31))(vue@3.4.31)
@@ -63,8 +63,8 @@ importers:
         specifier: ^5.6.1
         version: 5.6.1
       highlight.js:
-        specifier: ^11.9.0
-        version: 11.9.0
+        specifier: ^11.10.0
+        version: 11.10.0
       json-as-xlsx:
         specifier: ^2.5.6
         version: 2.5.6
@@ -463,8 +463,8 @@ packages:
   '@lezer/python@1.1.14':
     resolution: {integrity: sha512-ykDOb2Ti24n76PJsSa4ZoDF0zH12BSw1LGfQXCYJhJyOGiFTfGaX0Du66Ze72R+u/P35U+O6I9m8TFXov1JzsA==}
 
-  '@liripeng/vue-audio-player@2.0.3':
-    resolution: {integrity: sha512-EF1dzeSUocHx+oPAjAmI8x09KvetOGKdvnsY5hLac7tZK2t2WGC8qkXt5qLTUXIYmfQJBC86PYOgtk04QSxUxw==}
+  '@liripeng/vue-audio-player@2.0.4':
+    resolution: {integrity: sha512-mhKuIsko1cGZcXoDsQWbfVS0zieFDFPTwAIJ9ntrPvw5Uq2wHamGteTpW+pRgp3R98XB7hcdnTUty4wTnqKzSQ==}
 
   '@nodelib/fs.scandir@2.1.5':
     resolution: {integrity: sha512-vq24Bq3ym5HEQm2NKCr3yXDwjc7vTsEThRDnkp2DK9p1uqLR+DHurm/NOTo0KG7HYHU7eppKZj3MyqYuMBf62g==}
@@ -1145,8 +1145,8 @@ packages:
     resolution: {integrity: sha512-cgwlv/1iFQiFnU96XXgROh8xTeetsnJiDsTc7TYCLFd9+/WNkIqPTxiM/8pSd8VIrhXGTf1Ny1q1hquVqDJB5w==}
     engines: {node: '>= 4'}
 
-  dompurify@3.1.5:
-    resolution: {integrity: sha512-lwG+n5h8QNpxtyrJW/gJWckL+1/DQiYMX8f7t8Z2AZTPw1esVrqjI63i7Zc2Gz0aKzLVMYC1V1PL/ky+aY/NgA==}
+  dompurify@3.1.6:
+    resolution: {integrity: sha512-cTOAhc36AalkjtBpfG6O8JimdTMWNXjiePT2xQH/ppBGi/4uIpmj8eKyIkMJErXWARyINV/sB38yf8JCLF5pbQ==}
 
   domutils@3.1.0:
     resolution: {integrity: sha512-H78uMmQtI2AhgDJjWeQmHwJJ2bLPD3GMmO7Zja/ZZh84wkm+4ut+IUnUdRa8uCGX88DiVx1j6FRe1XfxEgjEZA==}
@@ -1329,8 +1329,8 @@ packages:
     resolution: {integrity: sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==}
     engines: {node: '>= 0.4'}
 
-  highlight.js@11.9.0:
-    resolution: {integrity: sha512-fJ7cW7fQGCYAkgv4CPfwFHrfd/cLS4Hau96JuJ+ZTOWhjnhoeN1ub1tFmALm/+lW5z4WCAuAV9bm05AP0mS6Gw==}
+  highlight.js@11.10.0:
+    resolution: {integrity: sha512-SYVnVFswQER+zu1laSya563s+F8VDGt7o35d4utbamowvUNLLMovFqwCLSocpZTz3MgaSRA1IbqRWZv97dtErQ==}
     engines: {node: '>=12.0.0'}
 
   htmlparser2@8.0.2:
@@ -2386,7 +2386,7 @@ snapshots:
       '@lezer/highlight': 1.2.0
       '@lezer/lr': 1.4.1
 
-  '@liripeng/vue-audio-player@2.0.3':
+  '@liripeng/vue-audio-player@2.0.4':
     dependencies:
       vue: 3.4.31
       vue-router: 4.4.0(vue@3.4.31)
@@ -3172,7 +3172,7 @@ snapshots:
     dependencies:
       domelementtype: 2.3.0
 
-  dompurify@3.1.5: {}
+  dompurify@3.1.6: {}
 
   domutils@3.1.0:
     dependencies:
@@ -3404,7 +3404,7 @@ snapshots:
     dependencies:
       function-bind: 1.1.2
 
-  highlight.js@11.9.0: {}
+  highlight.js@11.10.0: {}
 
   htmlparser2@8.0.2:
     dependencies:
@@ -3586,7 +3586,7 @@ snapshots:
     dependencies:
       '@babel/runtime': 7.24.7
       '@iktakahiro/markdown-it-katex': 4.0.1
-      highlight.js: 11.9.0
+      highlight.js: 11.10.0
       js-yaml: 4.1.0
       katex: 0.16.11
       markdown-it: 14.1.0
@@ -3646,7 +3646,7 @@ snapshots:
       d3-sankey: 0.12.3
       dagre-d3-es: 7.0.10
       dayjs: 1.11.11
-      dompurify: 3.1.5
+      dompurify: 3.1.6
       elkjs: 0.9.3
       katex: 0.16.11
       khroma: 2.1.0
