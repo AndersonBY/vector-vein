@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
-import VueMarkdown from 'vue-markdown-render'
+import TextOutput from "./TextOutput.vue"
 
 const props = defineProps({
   placeholder: {
@@ -24,7 +24,6 @@ const preview = ref(false)
     </a-form-item-rest>
     <a-textarea v-model:value="markdown" :autoSize="{ minRows: 3, maxRows: 10 }" :placeholder="props.placeholder"
       v-show="!preview" />
-    <VueMarkdown v-highlight v-model:source="markdown" class="custom-scrollbar markdown-body custom-hljs"
-      v-show="preview" />
+    <TextOutput v-show="preview" :text="markdown" :showCopy="false" />
   </div>
 </template>

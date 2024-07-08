@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { message } from 'ant-design-vue'
 import { DocDetail, DatabaseSetting, FileCabinet, Check, Close, Edit } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
+import TextOutput from '@/components/TextOutput.vue'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 
 const { t } = useI18n()
@@ -210,8 +210,7 @@ const infoEditorModal = reactive({
                 {{ t('workspace.databaseObjectDetail.source_url') }}
               </a-typography-link>
               <a-divider v-if="databaseObject.source_url?.length > 0"></a-divider>
-              <VueMarkdown v-highlight :source="databaseObject.raw_data?.text || ''"
-                class="custom-scrollbar markdown-body custom-hljs" />
+              <TextOutput :text="databaseObject.raw_data?.text || ''" :showCopy="false" />
             </a-tab-pane>
 
             <a-tab-pane key="params_info" :tab="t('workspace.databaseObjectDetail.params_info')">

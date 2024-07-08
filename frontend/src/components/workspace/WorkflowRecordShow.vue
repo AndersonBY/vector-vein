@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from "vue"
-import VueMarkdown from 'vue-markdown-render'
 import { Dot } from '@icon-park/vue-next'
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
@@ -79,8 +78,7 @@ const outputNodes = ref(uiDesign.outputNodes)
       <template v-else>
         <a-col :span="24">
           <div v-if="node.field_type == 'typography-paragraph'">
-            <vue-markdown v-highlight :source="node.value" :options="{ html: true }"
-              class="markdown-body custom-hljs ui-special-item" />
+            <TextOutput :text="node.value" :showCopy="false" class="ui-special-item" />
           </div>
         </a-col>
       </template>

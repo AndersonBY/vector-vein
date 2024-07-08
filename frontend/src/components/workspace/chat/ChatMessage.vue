@@ -2,7 +2,6 @@
 import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import VueMarkdown from 'vue-markdown-render'
 import { Share, LoadingFour } from '@icon-park/vue-next'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
@@ -12,6 +11,7 @@ import ChatAuthor from '@/components/workspace/chat/ChatAuthor.vue'
 import WorkflowRecordShow from '@/components/workspace/WorkflowRecordShow.vue'
 import IconButton from '@/components/IconButton.vue'
 import AttachmentsList from '@/components/workspace/chat/AttachmentsList.vue'
+import TextOutput from '@/components/TextOutput.vue'
 import { workflowAPI, workflowRunRecordAPI } from "@/api/workflow"
 import { messageAPI } from '@/api/chat'
 
@@ -329,8 +329,7 @@ onUnmounted(() => {
         <span class="typing-dot" v-if="loading" />
         <template v-else>
           <template v-if="content?.hasOwnProperty('text')">
-            <vue-markdown ref="markdownRenderRef" v-highlight :source="content.text" :options="{ html: true }"
-              class="markdown-body custom-hljs custom-scrollbar" />
+            <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />
             <div class="chat-message-footer">
               <a-typography-paragraph :copyable="{ text: content.text }" />

@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount } from "vue"
 import { Help } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import VueMarkdown from 'vue-markdown-render'
+import TextOutput from "@/components/TextOutput.vue"
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { websiteBase } from '@/utils/common'
 import { officialSiteAPI } from '@/api/remote'
@@ -63,16 +63,14 @@ const openUpdateInfo = ref(false)
             }) }}
           </a>
         </template>
-        <VueMarkdown v-highlight :source="updateInfo.release_notes[language]"
-          class="custom-scrollbar markdown-body custom-hljs" />
+        <TextOutput :text="updateInfo.release_notes[language]" :showCopy="false" />
       </a-modal>
     </a-menu-item>
     <a-menu-item key="/about" @click="openAboutVectorVein = true">
       {{ t('components.layout.helpDropdown.about_vectorvein') }}
       <a-modal :title="t('components.layout.helpDropdown.about_vectorvein')" :open="openAboutVectorVein" :footer="null"
         @cancel="openAboutVectorVein = false">
-        <VueMarkdown v-highlight :source="t('components.layout.helpDropdown.about_vectorvein_description')"
-          class="custom-scrollbar markdown-body custom-hljs" />
+        <TextOutput :text="t('components.layout.helpDropdown.about_vectorvein_description')" :showCopy="false" />
       </a-modal>
     </a-menu-item>
   </a-sub-menu>

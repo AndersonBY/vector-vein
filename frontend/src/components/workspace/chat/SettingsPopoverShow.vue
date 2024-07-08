@@ -2,9 +2,9 @@
 import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { Setting } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
 import IconButton from '@/components/IconButton.vue'
 import SimpleFormItem from '@/components/SimpleFormItem.vue'
+import TextOutput from "@/components/TextOutput.vue"
 
 const props = defineProps({
   settings: {
@@ -36,8 +36,7 @@ const open = ref(false)
           <a-typography-title :level="4">
             {{ t('workspace.chatSpace.system_prompt') }}
           </a-typography-title>
-          <vue-markdown v-highlight :source="settings.system_prompt" :options="{ html: true }"
-            class="markdown-body custom-hljs custom-scrollbar" />
+          <TextOutput :text="settings.system_prompt" :showCopy="false" />
           <a-divider />
           <SimpleFormItem type="checkbox" :title="t('workspace.chatSpace.auto_run_workflow')"
             :description="t('workspace.chatSpace.auto_run_workflow_description')" v-model="settings.auto_run_workflow"

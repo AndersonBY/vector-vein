@@ -4,7 +4,6 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { Modal, message, TypographyTitle } from 'ant-design-vue'
 import { Down } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
@@ -12,6 +11,7 @@ import AgentInvokeDataEdit from "@/components/workspace/workflowActions/AgentInv
 import RelatedWorkflowsModal from "@/components/workspace/RelatedWorkflowsModal.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
 import ModelProviderTag from "@/components/workspace/ModelProviderTag.vue"
+import TextOutput from "@/components/TextOutput.vue"
 import { formatTime } from "@/utils/util"
 import { getUIDesignFromWorkflow, extractModels } from '@/utils/workflow'
 import { workflowAPI, workflowRunRecordAPI } from "@/api/workflow"
@@ -132,8 +132,7 @@ const openEditor = async () => {
             <a-modal :open="briefModalOpen" :title="t('workspace.workflowSpace.brief')" :width="briefModalWidth"
               :footer="null" class="introduction-modal" @cancel="briefModalOpen = false">
               <ImageCarousel :images="currentWorkflow.images" />
-              <VueMarkdown v-highlight :source="currentWorkflow.brief"
-                class="custom-scrollbar markdown-body custom-hljs" />
+              <TextOutput :text="currentWorkflow.brief" :showCopy="false" />
             </a-modal>
           </a-typography-link>
           <RelatedWorkflowsModal :workflowId="workflowId" />

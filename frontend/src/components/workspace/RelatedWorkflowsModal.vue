@@ -2,7 +2,7 @@
 import { onBeforeMount, ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import VueMarkdown from 'vue-markdown-render'
+import TextOutput from "@/components/TextOutput.vue"
 import { workflowAPI, workflowTemplateAPI } from "@/api/workflow"
 
 const open = ref(false)
@@ -73,8 +73,7 @@ onBeforeMount(async () => {
             }) }}
           </a-typography-text>
           <a-divider></a-divider>
-          <VueMarkdown v-highlight :source="relatedWorkflow.brief" :options="{ html: true }"
-            class="custom-scrollbar markdown-body custom-hljs" />
+          <TextOutput :text="relatedWorkflow.brief" :showCopy="false" />
         </a-tab-pane>
       </a-tabs>
     </a-modal>

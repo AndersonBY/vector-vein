@@ -4,12 +4,12 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { message } from 'ant-design-vue'
-import { BranchTwo, DoubleRight, DoubleLeft } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
+import { DoubleRight, DoubleLeft } from '@icon-park/vue-next'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
 import RelatedWorkflowsModal from "@/components/workspace/RelatedWorkflowsModal.vue"
+import TextOutput from "@/components/TextOutput.vue"
 import { officialSiteAPI } from '@/api/remote'
 import { workflowAPI } from '@/api/workflow'
 
@@ -113,8 +113,7 @@ const addTemplateToUserWorkflows = async () => {
 
             <ImageCarousel v-if="templateData.images?.length > 0" :images="templateData.images" />
 
-            <VueMarkdown style="width: 100%" v-highlight :source="templateData.brief" :options="{ html: true }"
-              class="custom-scrollbar markdown-body custom-hljs" />
+            <TextOutput :text="templateData.brief" :showCopy="false" />
           </a-space>
         </a-card>
       </a-col>

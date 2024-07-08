@@ -4,7 +4,6 @@ import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
@@ -326,8 +325,7 @@ defineExpose({
             </a-form-item>
             <a-row v-if="field.field_type == 'typography-paragraph'">
               <a-col :span="24" class="ui-special-item-container">
-                <vue-markdown v-highlight :source="field.value" :options="{ html: true }"
-                  class="markdown-body custom-hljs ui-special-item" />
+                <TextOutput :text="field.value" :showCopy="false" class="ui-special-item" />
               </a-col>
             </a-row>
           </div>
@@ -422,8 +420,7 @@ defineExpose({
 
           <div v-else>
             <div v-if="node.field_type == 'typography-paragraph'">
-              <vue-markdown v-highlight :source="node.value" :options="{ html: true }"
-                class="markdown-body custom-hljs ui-special-item" />
+              <TextOutput :text="node.value" :showCopy="false" class="ui-special-item" />
             </div>
           </div>
         </a-spin>

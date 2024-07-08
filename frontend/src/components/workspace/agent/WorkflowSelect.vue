@@ -3,9 +3,9 @@ import { onBeforeMount, ref, reactive, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { WholeSiteAccelerator, TagOne, Time, FullSelection } from '@icon-park/vue-next'
-import VueMarkdown from 'vue-markdown-render'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import InputSearch from "@/components/InputSearch.vue"
+import TextOutput from "@/components/TextOutput.vue"
 import { formatTime } from '@/utils/util'
 import { workflowAPI, workflowTemplateAPI, workflowTagAPI } from "@/api/workflow"
 
@@ -232,8 +232,7 @@ const rowSelection = reactive({
           <template v-if="column.key === 'title'">
             <a-popover>
               <template #content>
-                <vue-markdown v-highlight :source="record.brief" :options="{ html: true }"
-                  class="markdown-body custom-hljs" />
+                <TextOutput :text="record.brief" :showCopy="false" />
               </template>
               <a-typography-text class="workflow-title">
                 {{ record.title }}
