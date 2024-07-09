@@ -1,6 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-06-11 14:39:59
 import string
+import platform
 
 from pynput import keyboard
 
@@ -37,12 +38,15 @@ special_key_values = {
     keyboard.Key.f12.value.vk: keyboard.Key.f12,
     keyboard.Key.home.value.vk: keyboard.Key.home,
     keyboard.Key.end.value.vk: keyboard.Key.end,
-    keyboard.Key.insert.value.vk: keyboard.Key.insert,
-    keyboard.Key.pause.value.vk: keyboard.Key.pause,
-    keyboard.Key.print_screen.value.vk: keyboard.Key.print_screen,
-    keyboard.Key.scroll_lock.value.vk: keyboard.Key.scroll_lock,
-    keyboard.Key.num_lock.value.vk: keyboard.Key.num_lock,
 }
+
+if platform.system() == "Windows":
+    special_key_values[keyboard.Key.insert.value.vk] = keyboard.Key.insert
+    special_key_values[keyboard.Key.pause.value.vk] = keyboard.Key.pause
+    special_key_values[keyboard.Key.print_screen.value.vk] = keyboard.Key.print_screen
+    special_key_values[keyboard.Key.scroll_lock.value.vk] = keyboard.Key.scroll_lock
+    special_key_values[keyboard.Key.num_lock.value.vk] = keyboard.Key.num_lock
+
 
 normal_keys_names = set(string.ascii_lowercase + string.digits + string.punctuation + string.whitespace)
 
