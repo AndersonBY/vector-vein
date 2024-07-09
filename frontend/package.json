@@ -54,7 +54,7 @@
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.10.3",
     "@vitejs/plugin-vue": "^4.6.2",
-    "@vue-flow/core": "^1.38.2",
+    "@vue-flow/core": "^1.38.5",
     "@vue/eslint-config-prettier": "^7.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-vue": "^9.27.0",
