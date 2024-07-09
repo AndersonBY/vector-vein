@@ -18,6 +18,7 @@ import AttachmentsList from '@/components/workspace/chat/AttachmentsList.vue'
 import RecordingButton from '@/components/workspace/chat/RecordingButton.vue'
 import AudioReplySettingButton from '@/components/workspace/chat/AudioReplySettingButton.vue'
 import { navigateToElementBottom } from '@/utils/util'
+import { settingAPI } from '@/api/user'
 import { conversationAPI, messageAPI } from '@/api/chat'
 
 const { t } = useI18n()
@@ -33,6 +34,8 @@ const selectedWorkflows = reactive({
 
 const userChatsStore = useUserChatsStore()
 const { unsentChats } = storeToRefs(userChatsStore)
+
+const wsPort = ref(8765)
 
 const fetchConversation = async (cid) => {
   const res = await conversationAPI('get', { cid: cid })
@@ -86,6 +89,8 @@ onBeforeMount(async () => {
     await sendMessage(unsentChats.value[0].content, true)
     userChatsStore.clearUnsentChats()
   }
+  const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
+  wsPort.value = res.data.port
 })
 
 onBeforeUnmount(() => {

@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-01 14:53:42
+# @Last Modified time: 2024-07-10 00:50:55
 import json
 import time
 
@@ -146,6 +146,11 @@ class SettingAPI:
         language = payload.get("language")
         config.save("language", language)
         return JResponse()
+
+    def get_port(self, payload):
+        port_name = payload.get("port_name")
+        port = cache.get(port_name)
+        return JResponse(data={"port": port})
 
 
 class HardwareAPI:

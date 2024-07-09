@@ -3,6 +3,7 @@
 import re
 import time
 import json
+import socket
 import asyncio
 from threading import Thread
 
@@ -17,11 +18,21 @@ from .utils import get_tool_call_data, get_tool_related_workflow, check_multimod
 
 
 class WebSocketServer:
-    def __init__(self, host="localhost", port=8765):
+    def __init__(self, host="localhost", start_port=8765):
         self.host = host
-        self.port = port
+        self.port = self.find_available_port(start_port)
         self.server = None
         self.thread = None
+    
+    def find_available_port(self, start_port):
+        port = start_port
+        while True:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.bind((self.host, port))
+                    return port
+                except OSError:
+                    port += 1
 
     async def handler(self, websocket, path):
         conversation_id = re.match(r"^/ws/chat/(.+)/$", path)

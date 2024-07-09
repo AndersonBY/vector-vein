@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-14 23:56:32
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-01 18:26:53
+# @Last Modified time: 2024-07-10 00:49:51
 import os
 import time
 import threading
@@ -135,8 +135,9 @@ def main():
     background_task_server = BackgroundTaskServer(num_workers=2)
     background_task_server.start()
 
-    ws_server = WebSocketServer(host="localhost", port=8765)
+    ws_server = WebSocketServer(host="localhost", start_port=8765)
     ws_server.start()
+    cache.set("chat_ws_port", ws_server.port)
 
     log_server = LogServer()
     log_server.start()
