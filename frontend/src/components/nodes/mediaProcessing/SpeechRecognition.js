@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 12:14:23
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:52:58
+ * @Last Modified time: 2024-07-10 17:54:49
  */
 export function createTemplateData() {
   return {
@@ -10,6 +10,28 @@ export function createTemplateData() {
     "task_name": "media_processing.speech_recognition",
     "has_inputs": true,
     "template": {
+      "engine": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "openai",
+        "options": [
+          {
+            "value": "openai",
+            "label": "OpenAI"
+          },
+          {
+            "value": "deepgram",
+            "label": "Deepgram"
+          },
+        ],
+        "name": "engine",
+        "display_name": "engine",
+        "type": "str",
+        "clear_after_run": false,
+        "list": true,
+        "field_type": "select"
+      },
       "files_or_urls": {
         "required": false,
         "placeholder": "",

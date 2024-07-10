@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-06-08 13:12:38
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-30 00:29:46
+# @Last Modified time: 2024-07-10 17:57:12
 import time
 
 import httpx
@@ -419,7 +419,8 @@ def speech_recognition(
             urls = urls
         files_data = [httpx.get(url).content for url in urls]
 
-    client = SpeechRecognitionClient()
+    engine = workflow.get_node_field_value(node_id, "engine", "openai")
+    client = SpeechRecognitionClient(provider=engine)
     output_type = workflow.get_node_field_value(node_id, "output_type")
     outputs = client.batch_transcribe(files_data, output_type)
 

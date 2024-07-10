@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-04 18:02:13
+ * @Last Modified time: 2024-07-10 17:55:03
  */
 export default {
   lang: '中文',
@@ -1585,6 +1585,7 @@ export default {
         SpeechRecognition: {
           'title': '语音识别',
           'description': '用于将语音转换为文本。',
+          'engine': '语音识别引擎',
           'files_or_urls': '文件或链接',
           'files_or_urls_files': '文件',
           'files_or_urls_urls': '链接',

@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-04 18:02:31
+ * @Last Modified time: 2024-07-10 17:54:31
  */
 export default {
   lang: 'English',
@@ -1585,6 +1585,7 @@ export default {
         SpeechRecognition: {
           'title': 'Speech Recognition',
           'description': 'Used to convert speech to text.',
+          'engine': 'ASR Engine',
           'files_or_urls': 'File or URL',
           'files_or_urls_files': 'Files',
           'files_or_urls_urls': 'URLs',
