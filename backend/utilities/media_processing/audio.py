@@ -261,8 +261,9 @@ class SpeechRecognitionClient:
         model: str | None = None,
         language: str | None = None,
     ):
+        settings = Settings()
+
         if provider is None:
-            settings = Settings()
             provider = settings.get("asr.provider", "openai")
 
         if model is None:
@@ -309,7 +310,7 @@ class SpeechRecognitionClient:
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model_id, file=file, response_format="text"
                 )
-                return transcription
+                return transcription.text
             elif output_type == "list":
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model_id,
