@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-18 00:42:28
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-03-04 00:55:40
+ * @Last Modified time: 2024-07-11 11:56:59
  */
 import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
@@ -46,6 +46,20 @@ export default defineConfig(({ command, mode, ssrBuild }) => {
           }
         }
       },
+      plugins: [
+        ...defaultConfig.plugins,
+        {
+          name: 'vite-port-plugin',
+          configureServer(server) {
+            server.httpServer.on('listening', () => {
+              const address = server.httpServer.address();
+              const port = address.port;
+              process.env.VITE_PORT = port;
+              console.log(`VITE_PORT=${port}`);
+            });
+          }
+        }
+      ]
     }
   } else {
     return {
