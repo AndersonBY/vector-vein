@@ -17,7 +17,6 @@ from openai._types import FileTypes
 from deepgram_captions import DeepgramConverter, srt
 from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
-import azure.cognitiveservices.speech as azure_speech
 
 from utilities.general import mprint
 from utilities.config import Settings, config
@@ -111,11 +110,31 @@ class TTSClient:
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
         elif self.provider == "azure":
-            speech_config = azure_speech.SpeechConfig(subscription=self.api_key, region=self.service_region)
-            speech_config.speech_synthesis_voice_name = voice
-            audio_config = azure_speech.audio.AudioOutputConfig(filename=str(output_file_path.absolute()))
-            speech_synthesizer = azure_speech.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
-            speech_synthesizer.speak_text(text)
+            headers = {
+                "Ocp-Apim-Subscription-Key": self.api_key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "riff-24khz-16bit-mono-pcm",
+            }
+
+            ssml = f"""
+            <speak version='1.0' xml:lang='en-US'>
+                <voice xml:lang='en-US' xml:gender='Female' name='{voice}'>
+                    {text}
+                </voice>
+            </speak>
+            """
+
+            url = f"https://{self.service_region}.tts.speech.microsoft.com/cognitiveservices/v1"
+
+            response = httpx.post(url, headers=headers, content=ssml)
+
+            if response.status_code == 200:
+                output_file_path = Path(output_file_path)
+                with open(output_file_path, "wb") as audio_file:
+                    audio_file.write(response.content)
+            else:
+                mprint.error(f"Error: {response.status_code}")
+                mprint.error(response.text)
 
         return output_file_path
 
@@ -244,19 +263,39 @@ class TTSClient:
             except KeyboardInterrupt:
                 print("Stream stopped")
         elif self.provider == "azure":
-            stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
-            speech_config = azure_speech.SpeechConfig(subscription=self.api_key, region=self.service_region)
-            speech_config.speech_synthesis_voice_name = voice
-            speech_synthesizer = azure_speech.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
-            result = speech_synthesizer.start_speaking_text_async(text).get()
-            audio_data_stream = azure_speech.AudioDataStream(result)
-            audio_buffer = bytes(1024)
-            filled_size = audio_data_stream.read_data(audio_buffer)
-            while filled_size > 0:
-                if self._stop_flag:
-                    break
-                filled_size = audio_data_stream.read_data(audio_buffer)
-                stream.write(audio_buffer)
+            headers = {
+                "Ocp-Apim-Subscription-Key": self.api_key,
+                "Content-Type": "application/ssml+xml",
+                "X-Microsoft-OutputFormat": "raw-16khz-16bit-mono-pcm",
+            }
+
+            ssml = f"""
+            <speak version='1.0' xml:lang='zh-CN'>
+                <voice xml:lang='zh-CN' xml:gender='Female' name='{voice}'>
+                    {text}
+                </voice>
+            </speak>
+            """
+
+            url = f"https://{self.service_region}.tts.speech.microsoft.com/cognitiveservices/v1"
+
+            stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.audio_sample_rate, output=True)
+
+            try:
+                with httpx.stream("POST", url, headers=headers, content=ssml) as response:
+                    if response.status_code == 200:
+                        for chunk in response.iter_bytes():
+                            if self._stop_flag:
+                                break
+                            if chunk:
+                                stream.write(chunk)
+                    else:
+                        mprint.error(f"Error: {response.status_code}")
+                        mprint.error(response.text)
+            finally:
+                stream.stop_stream()
+                stream.close()
+                p.terminate()
 
         stream.stop_stream()
         stream.close()
