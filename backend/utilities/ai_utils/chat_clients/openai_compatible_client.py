@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-12-12 15:24:15
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-18 01:29:29
+# @Last Modified time: 2024-07-11 02:05:14
 import json
 from typing import Union, AsyncGenerator
 
@@ -122,10 +122,15 @@ class OpenAICompatibleChatClient(BaseChatClient):
                 "usage": response.usage.model_dump(),
             }
             if tools:
-                tool_call_data = extract_tool_calls(result["content"])
-                if tool_call_data:
-                    result["tool_calls"] = tool_call_data["tool_calls"]
-                    result["content"] = tool_use_re.sub("", result["content"])
+                if self.MODEL_FUNCTION_CALLING_AVAILABLE[self.model] and response.choices[0].message.tool_calls:
+                    result["tool_calls"] = [
+                        tool_call.model_dump() for tool_call in response.choices[0].message.tool_calls
+                    ]
+                else:
+                    tool_call_data = extract_tool_calls(result["content"])
+                    if tool_call_data:
+                        result["tool_calls"] = tool_call_data["tool_calls"]
+                        result["content"] = tool_use_re.sub("", result["content"])
             return result
 
 
@@ -230,8 +235,13 @@ class AsyncOpenAICompatibleChatClient(BaseAsyncChatClient):
                 "usage": response.usage.model_dump(),
             }
             if tools:
-                tool_call_data = extract_tool_calls(result["content"])
-                if tool_call_data:
-                    result["tool_calls"] = tool_call_data["tool_calls"]
-                    result["content"] = tool_use_re.sub("", result["content"])
+                if self.MODEL_FUNCTION_CALLING_AVAILABLE[self.model] and response.choices[0].message.tool_calls:
+                    result["tool_calls"] = [
+                        tool_call.model_dump() for tool_call in response.choices[0].message.tool_calls
+                    ]
+                else:
+                    tool_call_data = extract_tool_calls(result["content"])
+                    if tool_call_data:
+                        result["tool_calls"] = tool_call_data["tool_calls"]
+                        result["content"] = tool_use_re.sub("", result["content"])
             return result
