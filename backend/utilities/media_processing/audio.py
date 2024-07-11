@@ -17,6 +17,7 @@ from openai._types import FileTypes
 from deepgram_captions import DeepgramConverter, srt
 from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
+import azure.cognitiveservices.speech as azure_speech
 
 from utilities.general import mprint
 from utilities.config import Settings, config
@@ -48,6 +49,11 @@ class TTSClient:
         elif self.provider == "reecho":
             self.api_key = settings.get("tts.reecho.api_key")
             self.model_id = model
+        elif self.provider == "azure":
+            self.api_key = settings.get("tts.azure.api_key")
+            self.service_region = settings.get("tts.azure.service_region")
+            self.model_id = model
+            self.audio_sample_rate = 16_000
 
     def create(self, text: str, voice: str | None = None, output_folder: str | None = None):
         datetime_string = datetime.now().strftime("%Y%m%d%H%M%S")
@@ -61,7 +67,6 @@ class TTSClient:
         if self.provider == "openai":
             response = self.client.audio.speech.create(model=self.model_id, voice=voice, input=text)
             response.write_to_file(output_file_path)
-            return output_file_path
         elif self.provider == "minimax":
             url = "https://api.minimax.chat/v1/t2a_pro"
             headers = {"authorization": f"Bearer {self.api_key}"}
@@ -85,7 +90,6 @@ class TTSClient:
             response = httpx.get(audio_url)
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
-            return output_file_path
         elif self.provider == "reecho":
             url = "https://v1.reecho.cn/api/tts/simple-generate"
             payload = {
@@ -106,7 +110,14 @@ class TTSClient:
             response = httpx.get(audio_url, headers=headers, timeout=None)
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
-            return output_file_path
+        elif self.provider == "azure":
+            speech_config = azure_speech.SpeechConfig(subscription=self.api_key, region=self.service_region)
+            speech_config.speech_synthesis_voice_name = voice
+            audio_config = azure_speech.audio.AudioOutputConfig(filename=str(output_file_path.absolute()))
+            speech_synthesizer = azure_speech.SpeechSynthesizer(speech_config=speech_config, audio_config=audio_config)
+            speech_synthesizer.speak_text(text)
+
+        return output_file_path
 
     def _stream_audio(self, text: str, voice: str | None):
         self.streaming = True
@@ -232,6 +243,20 @@ class TTSClient:
                 ffmpeg_process.wait()
             except KeyboardInterrupt:
                 print("Stream stopped")
+        elif self.provider == "azure":
+            stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
+            speech_config = azure_speech.SpeechConfig(subscription=self.api_key, region=self.service_region)
+            speech_config.speech_synthesis_voice_name = voice
+            speech_synthesizer = azure_speech.SpeechSynthesizer(speech_config=speech_config, audio_config=None)
+            result = speech_synthesizer.start_speaking_text_async(text).get()
+            audio_data_stream = azure_speech.AudioDataStream(result)
+            audio_buffer = bytes(1024)
+            filled_size = audio_data_stream.read_data(audio_buffer)
+            while filled_size > 0:
+                if self._stop_flag:
+                    break
+                filled_size = audio_data_stream.read_data(audio_buffer)
+                stream.write(audio_buffer)
 
         stream.stop_stream()
         stream.close()

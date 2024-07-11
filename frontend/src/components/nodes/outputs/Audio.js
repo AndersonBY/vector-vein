@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 02:35:32
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 16:12:13
+ * @Last Modified time: 2024-07-11 18:27:24
  */
 export function createTemplateData() {
   return {
@@ -89,6 +89,14 @@ export function createTemplateData() {
           {
             "value": "piper",
             "label": "piper"
+          },
+          {
+            "value": "reecho",
+            "label": "Reecho"
+          },
+          {
+            "value": "azure",
+            "label": "Azure"
           },
         ],
         "name": "tts_provider",

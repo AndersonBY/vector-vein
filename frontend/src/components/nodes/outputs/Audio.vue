@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
+import { agentVoiceOptions } from '@/utils/common'
 import { createTemplateData } from './Audio'
 
 const props = defineProps({
@@ -21,6 +22,12 @@ Object.entries(templateData.template).forEach(([key, value]) => {
   if (value.is_output) {
     fieldsData.value[key].is_output = true
   }
+})
+
+fieldsData.value.tts_voice.options = computed(() => agentVoiceOptions.value.find((provider) => provider.value == fieldsData.value.tts_provider.value)?.children)
+
+watch(() => fieldsData.value.tts_provider.value, (value) => {
+  fieldsData.value.tts_voice.value = fieldsData.value.tts_voice.options[0].value
 })
 </script>
 

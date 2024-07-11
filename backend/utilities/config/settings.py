@@ -63,6 +63,7 @@ DEFAULT_SETTINGS = {
     "tts": {
         "piper": {"api_base": "http://localhost:5000"},
         "reecho": {"api_key": "", "voices": []},
+        "azure": {"api_key": "", "service_region": "", "voices": []},
     },
     "asr": {
         "provider": "openai",
