@@ -8,15 +8,17 @@ VectorVein License
 
 2. License Grant
 
-Subject to the terms and conditions of this license, the licensor hereby grants you a non-exclusive, worldwide, non-transferable, non-sublicensable, revocable, royalty-free copyright license to use the software solely for non-commercial research purposes.
+Subject to the terms and conditions of this license, the licensor hereby grants you a non-exclusive, worldwide, non-transferable, non-sublicensable, revocable, royalty-free copyright license to use, copy, modify, and create derivative works of the software solely for non-commercial research purposes.
 
-The above copyright and permission notices shall be included in all copies or substantial portions of the software.
+The above copyright and permission notices shall be included in all copies or substantial portions of the software and any derivative works.
 
 3. Restrictions
 
-You may not use all or part of the software for any commercial, military, or illegal purposes, nor may you use, copy, modify, merge, publish, distribute, sublicense, copy, or create derivative works of the software.
+You may not use all or part of the software for any commercial, military, or illegal purposes.
 
 You may not use the software for any activities that may harm China's national security and unity, social public interests, or violate human rights and interests.
+
+Any modifications or derivative works must be distributed under the same VectorVein License.
 
 4. Disclaimer
 
