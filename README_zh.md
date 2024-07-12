@@ -1,4 +1,4 @@
- [English](README_en.md) | 简体中文
+ [English](README_en.md) | 简体中文 | [日本語](README_ja.md)
 
  [![向量脉络](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
 

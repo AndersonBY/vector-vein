@@ -1,4 +1,4 @@
-English | [简体中文](README_zh.md)
+English | [简体中文](README_zh.md) | [日本語](README_ja.md)
 
 [![VectorVein](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.ai)
 
