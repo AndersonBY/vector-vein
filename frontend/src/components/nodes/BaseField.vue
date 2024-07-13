@@ -68,7 +68,7 @@ const editField = () => {
   <div :class="['template-item-field', props.type == 'source' ? 'template-item-output-field' : '']"
     :style="props.style">
     <div class="template-item-field-text">
-      <a-typography-text class="field-name dark-color-text">
+      <a-typography-text class="field-name">
         {{ props.name }}
       </a-typography-text>
       <a-typography-text type="danger" v-if="props.required"> *</a-typography-text>
@@ -186,5 +186,6 @@ const editField = () => {
 .field-name {
   font-weight: 600;
   transition: color .3s;
+  color: var(--site-light-text-color)
 }
 </style>

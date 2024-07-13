@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-18 00:42:28
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-25 17:07:21
+ * @Last Modified time: 2024-07-13 13:52:02
  */
 import { createApp, h } from 'vue'
 import { createPinia } from 'pinia'
@@ -19,7 +19,6 @@ import i18n from '@/locales/index'
 import { getPageTitle } from '@/utils/title'
 
 import 'ant-design-vue/dist/reset.css'
-import 'github-markdown-css'
 import 'highlight.js/styles/monokai-sublime.css'
 import '@icon-park/vue-next/styles/index.css'
 

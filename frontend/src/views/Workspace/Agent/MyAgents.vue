@@ -213,7 +213,7 @@ const agentActions = reactive({
 
 <style scoped>
 .main-container {
-  background-color: #f6f8f8;
+  background-color: var(--component-background);
   padding: 24px;
 }
 </style>

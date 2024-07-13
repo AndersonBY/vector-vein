@@ -234,7 +234,7 @@ const collapseChanged = (data) => {
   box-shadow: 0 0 0 1px #28c5e5;
   border: 1px solid #28c5e5;
   border-radius: 10px;
-  background: white;
+  background: var(--component-background);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -261,6 +261,10 @@ const collapseChanged = (data) => {
 
 .node .debug-info.not-executed-node {
   background-color: #fffbe6;
+}
+
+.node .debug-info span {
+  color: rgba(29, 29, 31, 0.88);
 }
 
 .node .title-container {

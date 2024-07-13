@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, markRaw, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
@@ -52,9 +52,11 @@ const { userDatabases } = storeToRefs(userDatabasesStore)
 const userRelationalDatabasesStore = useUserRelationalDatabasesStore()
 const userWorkflowsStore = useUserWorkflowsStore()
 const userSettingsStore = useUserSettingsStore()
-const { vueFlowStyleSettings } = storeToRefs(userSettingsStore)
+const { vueFlowStyleSettings, theme } = storeToRefs(userSettingsStore)
 const useNodeMessages = useNodeMessagesStore()
 const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
+
+const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
 
 const savedWorkflowHash = ref('')
 const currentWorkflow = ref({})
@@ -632,7 +634,7 @@ const testRunModal = reactive({
       </a-row>
     </div>
 
-    <div v-show="activeTab == t('workspace.workflowEditor.workflow_info')">
+    <div v-show="activeTab == t('workspace.workflowEditor.workflow_info')" class="workflow-info-editor">
       <a-row justify="center">
         <a-col :lg="10" :md="12" :sm="18" :xs="24">
           <a-divider>
@@ -654,8 +656,8 @@ const testRunModal = reactive({
     </div>
 
     <a-layout has-sider style="height: 100%;" v-show="activeTab == t('workspace.workflowEditor.workflow_canvas')">
-      <a-layout-sider :style="{ overflow: 'auto', backgroundColor: '#fff' }" class="custom-scrollbar">
-        <a-menu theme="light" mode="inline">
+      <a-layout-sider :style="{ overflow: 'auto' }" class="custom-scrollbar" :theme="componentTheme">
+        <a-menu :theme="componentTheme" mode="inline">
           <a-sub-menu v-for="category in nodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
             <template #title>
               {{ t(`components.nodes.${category.name}.title`) }}
@@ -668,24 +670,25 @@ const testRunModal = reactive({
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>
-      <a-layout style="background-color: #fff;">
+      <a-layout style="background-color: var(--component-background);">
         <a-alert v-if="diagnosisRecord" banner>
           <template #message>
             <a-flex align="center" justify="space-between">
               <a-typography-text>
                 {{ t('workspace.workflowEditor.diagnosing_record', {
-                record: `${diagnosisRecord.title}
+                  record: `${diagnosisRecord.title}
                 ${diagnosisRecord.data.rid}`
                 }) }}
               </a-typography-text>
             </a-flex>
           </template>
         </a-alert>
-        <a-layout-content :style="{ margin: '24px 16px 0', overflow: 'initial', backgroundColor: '#fff' }">
+        <a-layout-content class="editor-canvas">
           <VueFlow v-model="elements" :node-types="nodeTypes" :edges-updatable="true" @edge-update="onEdgeUpdate"
             @edge-click="onEdgeClick" @edge-double-click="onEdgeDoubleClick" @pane-click="onPaneClick"
             :snap-to-grid="true" :snap-grid="[20, 20]">
-            <MiniMap />
+            <MiniMap pannable :style="{ backgroundColor: 'var(--component-background)' }"
+              :maskColor="theme == 'default' ? 'rgb(240, 242, 243, 0.7)' : 'rgb(60, 60, 60, 0.7)'" />
             <Controls />
             <Background variant="dots" />
             <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
@@ -709,6 +712,7 @@ const testRunModal = reactive({
 .editor-container {
   padding: 20px;
   padding-bottom: 0;
+  background-color: var(--component-background);
 }
 
 .editor-container .title-container {
@@ -716,7 +720,7 @@ const testRunModal = reactive({
   align-items: center;
   height: 40px;
   padding-bottom: 20px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: var(--light-border);
 }
 
 .editor-container .title-container .title {
@@ -728,6 +732,16 @@ const testRunModal = reactive({
 
 .editor-container .ant-layout-sider {
   height: calc(100vh - 40px - 40px);
+}
+
+.editor-canvas {
+  margin: 24px 16px 0;
+  overflow: initial;
+  background-color: var(--component-background);
+}
+
+.workflow-info-editor {
+  height: calc(100vh - 60px);
 }
 </style>
 

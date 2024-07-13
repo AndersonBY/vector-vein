@@ -48,13 +48,13 @@ const onTourClose = () => {
 }
 </script>
 <template>
-  <a-spin :spinning="loading" v-if="loading">
-    <div style="min-height: 100vh">
+  <a-spin :spinning="loading" v-if="loading" style="min-height: 100vh; background-color: var(--component-background);">
+    <div style="min-height: 100vh;">
     </div>
   </a-spin>
-  <a-layout v-else class="workspace-layout">
+  <a-layout v-else class="workspace-layout custom-scrollbar">
     <BasicHeader />
-    <a-layout-content class="layout-content-container" :style="{ marginTop: '64px' }">
+    <a-layout-content class="layout-content-container">
       <router-view class="content-view-container"></router-view>
     </a-layout-content>
 
@@ -74,7 +74,8 @@ const onTourClose = () => {
 
 .workspace-layout {
   min-height: 100vh;
-  background-color: #f4f4f4;
+  overflow-y: scroll;
+  background-color: var(--component-background);
 }
 
 .layout-content-container {

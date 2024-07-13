@@ -1,19 +1,19 @@
 <script setup>
-import { ref, nextTick, watch, onBeforeMount } from "vue"
+import { ref, nextTick, watch, onBeforeMount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { Home, Star, More, Delete, ExpandLeft, ExpandRight } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
-import { formatTime } from '@/utils/util'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
+import { formatTime } from '@/utils/util'
 import { workflowAPI } from "@/api/workflow"
 
 const { t } = useI18n()
 const loading = ref(false)
 const userSettingsStore = useUserSettingsStore()
-const { language } = storeToRefs(userSettingsStore)
+const { language, theme } = storeToRefs(userSettingsStore)
 const userWorkflowsStore = useUserWorkflowsStore()
 const { userFastAccessWorkflows } = storeToRefs(userWorkflowsStore)
 const route = useRoute()
@@ -74,14 +74,16 @@ const deleteWorkflowFromFastAccess = async (wid) => {
     message.error(t('workspace.workflowSpace.delete_from_fast_access_failed'))
   }
 }
+
+const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
 </script>
 
 <template>
   <div class="space-container">
     <a-layout class="layout">
-      <a-layout-sider width="200" v-model:collapsed="collapsed"
-        :style="{ background: '#fff', padding: collapsed ? '0' : '8px' }" breakpoint="lg" collapsed-width="0"
-        :zeroWidthTriggerStyle="{ background: 'unset', top: 0 }">
+      <a-layout-sider width="200" v-model:collapsed="collapsed" :style="{ padding: collapsed ? '0' : '8px' }"
+        breakpoint="lg" collapsed-width="0" :zeroWidthTriggerStyle="{ background: 'unset', top: 0 }"
+        :theme="componentTheme">
         <template #trigger>
           <a-button type="text" @click="collapsed = !collapsed">
             <template #icon>
@@ -92,7 +94,7 @@ const deleteWorkflowFromFastAccess = async (wid) => {
         </template>
         <a-skeleton v-if="loading" active />
         <a-menu v-else v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline"
-          style="height: 100%">
+          :theme="componentTheme" style="height: 100%">
           <a-menu-item key="my_index" id="my_index">
             <router-link :to="{ name: 'WorkflowSpaceMain' }">
               <Home theme="filled" />
@@ -154,7 +156,7 @@ const deleteWorkflowFromFastAccess = async (wid) => {
 
 .space-container .layout {
   height: 100%;
-  background: #fff;
+  background-color: var(--component-background);
 }
 
 .space-container .starred-workflow-item {

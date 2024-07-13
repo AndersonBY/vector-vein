@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-10 00:50:55
+# @Last Modified time: 2024-07-13 12:05:07
 import json
 import time
 
@@ -142,9 +142,10 @@ class SettingAPI:
             config.save("window.on_top", pin_window)
         return JResponse()
 
-    def update_language(self, payload):
-        language = payload.get("language")
-        config.save("language", language)
+    def update_config(self, payload):
+        key = payload.get("key")
+        value = payload.get("value")
+        config.save(key, value)
         return JResponse()
 
     def get_port(self, payload):

@@ -62,7 +62,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 }
 
 .comment-node .title-container {
-  color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -74,7 +73,7 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 }
 
 .comment-node .title-container .comment-text {
-  color: #545454;
+  color: var(--site-secondary-text-color);
   width: 100%;
 }
 

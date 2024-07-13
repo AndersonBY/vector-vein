@@ -37,7 +37,7 @@ const saveSettings = async () => {
 
 const handleLanguageChange = async (value) => {
   userSettingsStore.setLanguage(value)
-  await settingAPI('update_language', { language: value })
+  await settingAPI('update_config', { key: 'language', value })
 }
 </script>
 

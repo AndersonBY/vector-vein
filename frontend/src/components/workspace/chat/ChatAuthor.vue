@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from "vue"
 import { useI18n } from 'vue-i18n'
+import { storeToRefs } from 'pinia'
+import { useUserSettingsStore } from '@/stores/userSettings'
 
 const props = defineProps({
   author: {
@@ -15,11 +17,21 @@ const props = defineProps({
   fontColor: {
     type: String,
     required: false,
-    default: '#0f0f0f',
+    default: 'auto',
   },
 })
 
 const { t } = useI18n()
+const userSettingsStore = useUserSettingsStore()
+const { theme } = storeToRefs(userSettingsStore)
+
+const fontColor = computed(() => {
+  if (props.fontColor == 'auto') {
+    return theme.value == 'default' ? '#0f0f0f' : '#fff'
+  } else {
+    return props.fontColor
+  }
+})
 
 const authorAvatarBackground = computed(() => {
   if (props.author.avatar) {

@@ -242,12 +242,12 @@ const deleteField = (list, index) => {
 .ui-design-layout {
   height: 100%;
   min-height: calc(100vh - 40px - 40px);
-  background-color: #fff;
+  background-color: var(--component-background);
 }
 
 .ui-design-sider {
   overflow: auto;
-  background-color: #fff;
+  background-color: var(--component-background);
   position: fixed;
   min-height: calc(100vh - 40px - 40px);
 }
@@ -259,7 +259,7 @@ const deleteField = (list, index) => {
 .ui-design-sider-content {
   margin: 0 16px 0 200px;
   overflow: initial;
-  background-color: #fff;
+  background-color: var(--component-background);
   padding: 10px;
 }
 
@@ -313,6 +313,13 @@ const deleteField = (list, index) => {
   align-items: center;
   justify-content: center;
   min-height: 150px;
+}
+
+.theme-dark .special-item-container {
+  background-color: #4e4e4e;
+}
+
+.theme-default .special-item-container {
   background-color: #e7e7e7;
 }
 </style>

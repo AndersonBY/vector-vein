@@ -82,7 +82,7 @@ const router = useRouter()
     <div class="card-footer">
       <span class="tag">
       </span>
-      <span class="time">{{ formatTime(updateTime) }}</span>
+      <a-typography-text type="secondary" class="time">{{ formatTime(updateTime) }}</a-typography-text>
     </div>
     <div v-if="showChat" class="card-footer footer-hover-container">
       <a-button type="primary" @click.stop="router.push({ name: 'conversationNew', params: { agentId: aid } })">
@@ -94,9 +94,9 @@ const router = useRouter()
 
 <style scoped>
 .agent-card {
-  background-color: white;
+  background-color: var(--card-background);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-box-shadow);
   padding: 16px;
   cursor: pointer;
   position: relative;
@@ -107,7 +107,7 @@ const router = useRouter()
 }
 
 .agent-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--card-hover-box-shadow);
 }
 
 .card-body {
@@ -134,7 +134,7 @@ const router = useRouter()
 }
 
 .info .head .more:hover {
-  background-color: #f5f5f5;
+  background-color: var(--more-hover-background);
 }
 
 .avatar {
@@ -151,7 +151,6 @@ const router = useRouter()
 }
 
 .description {
-  color: #1c2223cc;
   font-size: 14px;
   line-height: 20px;
 }
@@ -165,7 +164,6 @@ const router = useRouter()
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  color: #1c212359;
   height: 28px;
 }
 

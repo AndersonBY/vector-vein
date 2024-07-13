@@ -5,13 +5,16 @@ import enUS from 'ant-design-vue/es/locale/en_US'
 import { theme, Spin } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
+import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
+import { initTheme } from '@/utils/theme'
 import LoadingElement from "@/components/LoadingElement.vue"
 
 const { locale } = useI18n({ useScope: "global" })
 const router = useRouter()
 
 const userSettings = useUserSettingsStore()
+const { theme: userTheme } = storeToRefs(userSettings)
 
 onBeforeMount(async () => {
   // Only wait when in production mode
@@ -22,6 +25,7 @@ onBeforeMount(async () => {
   }
   await userSettings.init()
   locale.value = userSettings.language
+  initTheme(userSettings.theme)
 
   // Expose router to window for python usage
   window.router = router
@@ -35,15 +39,23 @@ const antDesignLocale = computed(() => {
   return languageMap[userSettings.language]
 })
 
-const customTheme = {
-  token: {
-    colorPrimary: '#28c5e5',
-    colorLink: '#28c5e5',
-    colorTextBase: '#1d1d1f',
-    borderRadius: 8,
-  },
-  algorithm: theme.defaultAlgorithm,
+const themeMap = {
+  default: theme.defaultAlgorithm,
+  dark: theme.darkAlgorithm,
+  compact: theme.compactAlgorithm,
 }
+
+const customTheme = computed(() => {
+  return {
+    token: {
+      colorPrimary: '#28c5e5',
+      colorLink: '#28c5e5',
+      colorTextBase: userTheme.value == 'default' ? '#1d1d1f' : '#fff',
+      borderRadius: 8,
+    },
+    algorithm: themeMap[userTheme.value],
+  }
+})
 
 Spin.setDefaultIndicator({
   indicator: h(LoadingElement),
@@ -52,25 +64,47 @@ Spin.setDefaultIndicator({
 
 <template>
   <a-config-provider :locale="antDesignLocale" :theme="customTheme">
-    <router-view />
+    <router-view :class="`theme-${userTheme}`" />
   </a-config-provider>
 </template>
 
 <style>
-.primary-color-text {
-  color: #179ebf !important;
+:root .theme-default {
+  --color-primary: #28c5e5;
+  --component-background: #fff;
+  --gray-background: #f5f5f5;
+  --border-color: 1px solid #33333322;
+  --light-border: 1px solid #f0f0f0;
+  --site-text-color: rgba(0, 0, 0, 0.88);
+  --site-secondary-text-color: rgba(0, 0, 0, 0.45);
+  --site-light-text-color: #6d6d6d;
+  --card-background: #fff;
+  --card-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --card-hover-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --more-hover-background: #f5f5f5;
+  --conversation-list-background: #d5eef9;
+  --conversation-hover-background-image: linear-gradient(to left, rgb(200 224 234) 60%, rgba(0, 0, 0, 0));
+  --chat-button-selected-background-color: rgba(0, 0, 0, 0.06);
+  --chat-box-shadow: 50px 50px 100px 10px rgba(0, 0, 0, .1);
 }
 
-.primary-color-active-text {
-  color: #28c5e5 !important;
-}
-
-.dark-color-text {
-  color: #6d6d6d !important;
-}
-
-.primary-black {
-  color: #333;
+:root .theme-dark {
+  --color-primary: #28c5e5;
+  --component-background: #141414;
+  --gray-background: #1a1a1a;
+  --border-color: 1px solid #ffffff22;
+  --light-border: 1px solid #1a1a1a;
+  --site-text-color: rgba(255, 255, 255, 0.85);
+  --site-secondary-text-color: rgba(255, 255, 255, 0.61);
+  --site-light-text-color: #c7c7c7;
+  --card-background: #141414;
+  --card-box-shadow: 0 2px 8px rgba(128, 127, 127, 0.274);
+  --card-hover-box-shadow: 0 4px 12px rgba(128, 127, 127, 0.274);
+  --more-hover-background: #252525;
+  --conversation-list-background: #002130;
+  --conversation-hover-background-image: linear-gradient(to left, rgb(0 33 48) 60%, rgba(0, 0, 0, 0));
+  --chat-button-selected-background-color: rgba(255, 255, 255, 0.06);
+  --chat-box-shadow: 50px 50px 100px 10px rgba(128, 127, 127, 0.274);
 }
 
 .vue-flow .add-field-button {
@@ -230,10 +264,6 @@ body {
 
 .no-header-bottom-line.ant-card>.ant-card-body {
   padding-top: 0;
-}
-
-.ant-typography.black-text {
-  color: #303030;
 }
 
 .ant-btn>.i-icon+span,

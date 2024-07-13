@@ -346,7 +346,7 @@ const handleDrop = (event) => {
     </div>
     <div class="chat-header">
       <a-flex align="flex-end" gap="small" class="title">
-        <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;" :editable="editable"
+        <a-typography-title :level="2" style="margin-bottom: 0;" :editable="editable"
           v-model:content="conversation.title">
           <template #editableIcon>
             <Edit class="title-edit-button" />
@@ -444,12 +444,12 @@ const handleDrop = (event) => {
 
 .main-container .chat-header {
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, .1);
+  border-bottom: var(--border-color);
   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
+  background-color: var(--component-background);
 }
 
 .main-container .chat-header .title-edit-button {
@@ -468,7 +468,7 @@ const handleDrop = (event) => {
   padding: 20px 20px 40px;
   position: relative;
   overscroll-behavior: none;
-  background-color: #fff;
+  background-color: var(--component-background);
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -479,11 +479,11 @@ const handleDrop = (event) => {
   width: 100%;
   padding: 10px 20px 20px;
   box-sizing: border-box;
-  border-top: 1px solid rgba(0, 0, 0, .1);
+  border-top: var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-color: #fff;
+  background-color: var(--component-background);
   border-bottom-right-radius: 20px;
 }
 

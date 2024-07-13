@@ -179,8 +179,7 @@ const infoEditorModal = reactive({
         <a-card :loading="loading">
           <template #title>
             <a-flex vertical gap="small" style="padding: 8px 0;">
-              <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;"
-                :content="databaseInfo.name" />
+              <a-typography-title :level="2" style="margin-bottom: 0;" :content="databaseInfo.name" />
               <a-space>
                 <a-tag color="green" :bordered="false">{{ databaseInfo.embedding_provider }}</a-tag>
                 <a-tag color="cyan" :bordered="false">{{ databaseInfo.embedding_model }}</a-tag>

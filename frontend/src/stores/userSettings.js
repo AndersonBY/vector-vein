@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-12-01 17:43:11
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-30 01:56:14
+ * @Last Modified time: 2024-07-13 16:40:38
  */
 import { defineStore } from "pinia"
 import { settingAPI } from "@/api/user"
@@ -53,6 +53,7 @@ const getPopoverRecords = () => {
 
 export const useUserSettingsStore = defineStore('userSettings', {
   state: () => ({
+    theme: 'default',
     language: getValidLanguage(),
     setting: {},
     tourVersion: 0,
@@ -61,6 +62,9 @@ export const useUserSettingsStore = defineStore('userSettings', {
     popoverRecords: getPopoverRecords(),
   }),
   actions: {
+    setTheme(theme) {
+      this.theme = theme
+    },
     setLanguage(language) {
       this.language = language
       localStorage.setItem("userSettings.language", language)
@@ -93,6 +97,7 @@ export const useUserSettingsStore = defineStore('userSettings', {
         const res = await settingAPI('get', {})
         this.setSetting(res.data)
         this.setLanguage(res.data.language || 'en-US')
+        this.setTheme(res.data.theme || 'default')
       } catch (err) {
         console.error("Failed to initialize user settings:", err)
       }

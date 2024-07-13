@@ -4,6 +4,7 @@ import { useRoute } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
+  Moon,
   ToTop,
   Github,
   Setting,
@@ -18,6 +19,7 @@ import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import logoUrl from "@/assets/logo.svg"
 import { getPageTitle } from '@/utils/title'
+import { setTheme } from '@/utils/theme'
 import { languageList } from '@/locales'
 import HelpDropdown from '@/components/layouts/HelpDropdown.vue'
 import { settingAPI } from '@/api/user'
@@ -25,7 +27,7 @@ import { settingAPI } from '@/api/user'
 const loading = ref(true)
 const route = useRoute()
 const userSettingsStore = useUserSettingsStore()
-const { language, setting } = storeToRefs(userSettingsStore)
+const { language, setting, theme } = storeToRefs(userSettingsStore)
 const { locale, t, te } = useI18n({ useScope: "global" })
 
 const selectedKeys = ref([route.meta?.headerKey || route.path])
@@ -37,7 +39,7 @@ const handleLanguageChange = async (value) => {
   userSettingsStore.setLanguage(value)
   locale.value = value
   document.title = getPageTitle(te, t, route.meta.title)
-  await settingAPI('update_language', { language: value })
+  await settingAPI('update_config', { key: 'language', value })
 }
 
 const screenWidth = ref(window.innerWidth)
@@ -60,10 +62,20 @@ const toggleWindowPin = async () => {
     windowPinned.value = !windowPinned.value
   }
 }
+
+const toggleDarkTheme = async () => {
+  const newTheme = theme.value === 'dark' ? 'default' : 'dark'
+  userSettingsStore.setTheme(newTheme)
+  const resp = await settingAPI('update_config', { key: 'theme', value: newTheme })
+  if (resp.status !== 200) {
+    message.error(resp.msg)
+  }
+  setTheme(newTheme)
+}
 </script>
 
 <template>
-  <a-layout-header style="background: #fff;padding: 0 20px;" class="basic-header">
+  <a-layout-header style="background: var(--component-background);padding: 0 20px;" class="basic-header">
     <a-flex v-if="screenWidth > 960" align="middle" justify="space-between" :gutter="[16, 16]">
       <a-flex>
         <div class="logo">
@@ -137,6 +149,14 @@ const toggleWindowPin = async () => {
 
           <HelpDropdown />
         </a-menu>
+
+        <a-tooltip :title="t('components.layout.basicHeader.theme_dark')">
+          <a-button type="text" @click="toggleDarkTheme">
+            <template #icon>
+              <Moon :theme="theme == 'dark' ? 'filled' : 'outline'" />
+            </template>
+          </a-button>
+        </a-tooltip>
 
         <a-tooltip
           :title="!windowPinned ? t('components.layout.basicHeader.pin_window') : t('components.layout.basicHeader.unpin_window')">
@@ -261,7 +281,6 @@ const toggleWindowPin = async () => {
   position: fixed;
   z-index: 1;
   width: 100%;
-  background: #fff;
   box-shadow: 0 2px 10px 0 rgb(0 0 0 / 8%);
 }
 

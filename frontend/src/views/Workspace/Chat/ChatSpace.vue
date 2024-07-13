@@ -212,7 +212,7 @@ const checkScreenSize = () => {
               <a-button class="single-chat-button"
                 :class="[route.params.conversationId == chat.cid ? 'chat-button-selected' : '']" type="text"
                 v-for="chat in chatSectionsByDate[section]" @click="openChat(chat.cid)">
-                <a-typography-text class="single-chat-button-text black-text">
+                <a-typography-text class="single-chat-button-text">
                   {{ chat.title }}
                 </a-typography-text>
                 <a-dropdown :trigger="['click']">
@@ -249,7 +249,7 @@ const checkScreenSize = () => {
 
 <style scoped>
 .chat-button-selected {
-  background-color: rgba(0, 0, 0, 0.06);
+  background-color: var(--chat-button-selected-background-color);
 }
 
 .chat-space-container {
@@ -286,16 +286,15 @@ const checkScreenSize = () => {
     width: 100%;
     display: flex;
     justify-content: flex-end;
-    background-color: #fff;
+    background-color: var(--component-background);
     padding: 10px 10px 0 10px;
   }
 }
 
 @media screen and (min-width: 768px) {
   .chat-space-container .conversation-container {
-    border: 1px solid #dedede;
     border-radius: 20px;
-    box-shadow: 50px 50px 100px 10px rgba(0, 0, 0, .1);
+    box-shadow: var(--chat-box-shadow);
     min-width: 600px;
     min-height: 370px;
     max-width: 1200px;
@@ -319,7 +318,7 @@ const checkScreenSize = () => {
 
 .chat-space-container .conversation-container .conversations-list {
   width: 260px;
-  background-color: #d5eef9;
+  background-color: var(--conversation-list-background);
   overflow-y: scroll;
   padding: 0 0.75rem;
 }
@@ -366,7 +365,8 @@ const checkScreenSize = () => {
   border-radius: 0.5rem;
   padding-top: 0.875rem;
   align-items: center;
-  background-color: #d5eef9;
+  background-color: var(--conversation-list-background);
+  ;
   z-index: 10;
 }
 
@@ -415,7 +415,7 @@ const checkScreenSize = () => {
   padding: 0 5px;
   z-index: 5;
   opacity: 0;
-  background-image: linear-gradient(to left, rgb(200 224 234) 60%, rgba(0, 0, 0, 0));
+  background-image: var(--conversation-hover-background-image);
   visibility: hidden;
   transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
   display: flex;
@@ -443,7 +443,7 @@ const checkScreenSize = () => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background-color: #d5eef9;
+  background-color: var(--conversation-list-background);
   z-index: 10;
 }
 </style>

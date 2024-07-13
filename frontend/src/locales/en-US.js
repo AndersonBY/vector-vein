@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-10 17:54:31
+ * @Last Modified time: 2024-07-13 11:59:00
  */
 export default {
   lang: 'English',
@@ -619,6 +619,7 @@ export default {
         'setting': 'Setting',
         'pin_window': 'Pin window',
         'unpin_window': 'Unpin window',
+        'theme_dark': 'Dark theme',
       },
       helpDropdown: {
         'help': 'Help',

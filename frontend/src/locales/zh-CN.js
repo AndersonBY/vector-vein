@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-10 17:55:03
+ * @Last Modified time: 2024-07-13 11:58:47
  */
 export default {
   lang: '中文',
@@ -619,6 +619,7 @@ export default {
         'setting': '设置',
         'pin_window': '窗口始终置顶',
         'unpin_window': '取消窗口置顶',
+        'theme_dark': '深色主题',
       },
       helpDropdown: {
         'help': '帮助',

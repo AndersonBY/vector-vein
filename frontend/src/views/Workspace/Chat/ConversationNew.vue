@@ -144,7 +144,7 @@ const handleDrop = (event) => {
       {{ t('workspace.chatSpace.drop_to_upload') }}
     </div>
     <div class="chat-header">
-      <a-typography-title :level="2" class="black-text" style="margin-bottom: 0;">
+      <a-typography-title :level="2" style="margin-bottom: 0;">
         {{ t('workspace.chatSpace.new_chat') }}
       </a-typography-title>
     </div>
@@ -153,7 +153,7 @@ const handleDrop = (event) => {
       <div class="chat-body-logo-container" v-if="messages.length == 0">
         <a-avatar :src="agentData?.avatar ? `${agentData.avatar}` : logoUrl" :size="64">
         </a-avatar>
-        <a-typography-title :level="2" class="black-text opening-dialog" style="text-align: center;">
+        <a-typography-title :level="2" class="opening-dialog" style="text-align: center;">
           {{ agentData.settings?.opening_dialog?.text || t('workspace.chatSpace.how_can_i_help_you_today') }}
         </a-typography-title>
       </div>
@@ -230,12 +230,12 @@ const handleDrop = (event) => {
 
 .main-container .chat-header {
   padding: 14px 20px;
-  border-bottom: 1px solid rgba(0, 0, 0, .1);
+  border-bottom: var(--border-color);
   position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #fff;
+  background-color: var(--component-background);
 }
 
 .main-container .chat-body .chat-body-logo-container {
@@ -275,9 +275,9 @@ const handleDrop = (event) => {
 }
 
 .opening-question {
-  background-color: #fff;
+  background-color: var(--component-background);
   border-radius: 10px;
-  border: 1px solid #33333322;
+  border: var(--border-color);
   padding: 20px;
   margin-bottom: 10px;
   flex-basis: calc(50% - 10px);
@@ -297,10 +297,9 @@ const handleDrop = (event) => {
 }
 
 .opening-question:hover {
-  background-color: rgb(247, 247, 248);
+  background-color: var(--more-hover-background);
 }
 
-/* 动画效果 */
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -320,7 +319,7 @@ const handleDrop = (event) => {
   padding: 20px 20px 40px;
   position: relative;
   overscroll-behavior: none;
-  background-color: #fff;
+  background-color: var(--component-background);
   display: flex;
   flex-direction: column;
   gap: 40px;
@@ -331,7 +330,7 @@ const handleDrop = (event) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: #fff;
+  background: var(--component-background);
 }
 
 .main-container .chat-footer-input {
@@ -339,11 +338,11 @@ const handleDrop = (event) => {
   width: 100%;
   padding: 10px 20px 20px;
   box-sizing: border-box;
-  border-top: 1px solid rgba(0, 0, 0, .1);
+  border-top: var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 10px;
-  background-color: #fff;
+  background-color: var(--component-background);
   border-bottom-right-radius: 20px;
 }
 

@@ -229,7 +229,7 @@ const modelChanged = async () => {
         <img :src="agentData?.avatar ? `${agentData.avatar}` : logoUrl" alt="avatar" class="avatar" />
         <a-flex vertical justify-content="space-between" gap="small">
           <a-space align="end">
-            <a-typography-title class="black-text" style="margin-bottom: 0;" :level="2">
+            <a-typography-title style="margin-bottom: 0;" :level="2">
               {{ agentData.name }}
             </a-typography-title>
             <a-tooltip :title="t('workspace.agentSpace.modify_agent')">
@@ -408,7 +408,6 @@ const modelChanged = async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  height: calc(100vh - 64px);
 }
 
 .header {
