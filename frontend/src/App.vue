@@ -107,6 +107,11 @@ Spin.setDefaultIndicator({
   --chat-box-shadow: 50px 50px 100px 10px rgba(128, 127, 127, 0.274);
 }
 
+.theme-dark .ant-menu.ant-menu-dark,
+.theme-dark .ant-layout .ant-layout-sider {
+  background-color: var(--component-background);
+}
+
 .vue-flow .add-field-button {
   display: flex;
   gap: 6px;
