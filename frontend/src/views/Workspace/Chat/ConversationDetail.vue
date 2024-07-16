@@ -35,7 +35,7 @@ const selectedWorkflows = reactive({
 const userChatsStore = useUserChatsStore()
 const { unsentChats } = storeToRefs(userChatsStore)
 
-const wsPort = ref(8765)
+const wsPort = ref(null)
 
 const fetchConversation = async (cid) => {
   const res = await conversationAPI('get', { cid: cid })
@@ -89,8 +89,6 @@ onBeforeMount(async () => {
     await sendMessage(unsentChats.value[0].content, true)
     userChatsStore.clearUnsentChats()
   }
-  const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
-  wsPort.value = res.data.port
 })
 
 onBeforeUnmount(() => {
@@ -145,10 +143,14 @@ const clearAiMessage = () => {
   aiMessage.content = { text: '', tool: {}, selected_workflow: {} }
 }
 
-const sendWebsocketMsg = (msg) => {
+const sendWebsocketMsg = async (msg) => {
   if (chatSocket === null) {
+    if (wsPort.value === null) {
+      const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
+      wsPort.value = res.data.port
+    }
     chatSocket = new ReconnectingWebSocket(
-      `ws://localhost:8765/ws/chat/${conversationId.value}/`,
+      `ws://localhost:${wsPort.value}/ws/chat/${conversationId.value}/`,
       null,
       { maxReconnectAttempts: 5 }
     )
