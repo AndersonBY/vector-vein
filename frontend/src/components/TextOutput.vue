@@ -1,6 +1,6 @@
 <script setup>
-import { ref, computed, onMounted, onUpdated, nextTick, onBeforeUnmount, h, render } from 'vue'
-import { Typography } from 'ant-design-vue'
+import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount, h, render } from 'vue'
+import { Copy } from '@icon-park/vue-next'
 import VueMarkdown from 'vue-markdown-render'
 import markdownItKatex from '@vscode/markdown-it-katex'
 import 'katex/dist/katex.min.css'
@@ -76,7 +76,7 @@ const markdownRef = ref(null)
 const highlightCodeBlocks = () => {
   if (markdownRef.value) {
     const blocks = markdownRef.value.$el.querySelectorAll('pre code')
-    blocks.forEach((block) => {
+    blocks.forEach((block, index) => {
       if (block.parentNode.classList.contains('code-block')) {
         return
       }
@@ -104,10 +104,29 @@ const highlightCodeBlocks = () => {
       block.parentNode.insertBefore(wrapper, block)
       wrapper.appendChild(block)
 
-      const copyButton = h(Typography.Paragraph, {
-        copyable: { text: block.textContent },
+      // Use custom copy icon to avoid memory leak
+      const createCopyIcon = () => h(Copy, {
+        theme: 'outline',
+        size: '18',
+        fill: '#fff',
+        class: 'copy-icon',
+        onClick: () => {
+          navigator.clipboard.writeText(block.textContent).then(() => {
+            render(h('span', { class: 'copied-text' }, 'Copied!'), copyContainer)
+            setTimeout(() => {
+              renderCopyIcon()
+            }, 1000)
+          }).catch(err => {
+            console.error('Failed to copy text: ', err)
+          })
+        }
       })
-      render(copyButton, copyContainer)
+
+      const renderCopyIcon = () => {
+        render(createCopyIcon(), copyContainer)
+      }
+
+      renderCopyIcon()
     })
   }
 }
@@ -116,15 +135,21 @@ onMounted(() => {
   nextTick(highlightCodeBlocks)
 })
 
-onUpdated(() => {
+watch(() => props.text, () => {
   nextTick(highlightCodeBlocks)
 })
 
 onBeforeUnmount(() => {
-  let blocks = document.querySelectorAll('.code-block')
-  blocks.forEach(block => {
-    block.remove()
-  })
+  if (markdownRef.value) {
+    const blocks = markdownRef.value.$el.querySelectorAll('.code-block')
+    blocks.forEach(block => {
+      const copyContainer = block.querySelector('.copy-container')
+      if (copyContainer) {
+        render(null, copyContainer)
+      }
+      block.remove()
+    })
+  }
 })
 </script>
 
@@ -141,3 +166,32 @@ onBeforeUnmount(() => {
     </a-typography-paragraph>
   </div>
 </template>
+
+<style>
+.code-block .header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 10px;
+  background-color: #f0f0f0;
+}
+
+.code-block .copy-container {
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+}
+
+.code-block .copy-icon {
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.code-block .copy-icon:hover {
+  opacity: 0.7;
+}
+
+.code-block .copied-text {
+  font-size: 12px;
+}
+</style>
