@@ -13,7 +13,7 @@
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/lang-sql": "^6.7.0",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.28.4",
+    "@codemirror/view": "^6.29.0",
     "@icon-park/vue-next": "^1.4.2",
     "@liripeng/vue-audio-player": "^2.0.4",
     "@vscode/markdown-it-katex": "^1.1.0",
@@ -38,11 +38,11 @@
     "markmap-view": "^0.17.0",
     "mermaid": "^10.9.1",
     "midi-player-js": "^2.0.16",
-    "pinia": "^2.1.7",
+    "pinia": "^2.2.0",
     "reconnecting-websocket": "^4.4.0",
     "smplr": "^0.13.4",
     "uuid": "^9.0.1",
-    "vue": "^3.4.31",
+    "vue": "^3.4.34",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "0.2.0-beta.2",
     "vue-echarts": "^6.7.3",
@@ -60,6 +60,6 @@
     "eslint-plugin-vue": "^9.27.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.3.3"
+    "vite": "^5.3.5"
   }
 }
