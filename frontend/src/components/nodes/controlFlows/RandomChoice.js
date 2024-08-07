@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2024-04-15 15:48:05
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-04-15 15:50:16
+ * @Last Modified time: 2024-08-07 17:55:08
  */
 export function createTemplateData() {
   return {
@@ -18,8 +18,8 @@ export function createTemplateData() {
         "name": "input",
         "display_name": "input",
         "type": "list",
-        "list": false,
-        "field_type": "select"
+        "list": true,
+        "field_type": "list",
       },
       "output": {
         "required": true,
