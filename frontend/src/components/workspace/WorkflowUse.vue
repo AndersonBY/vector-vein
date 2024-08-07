@@ -313,9 +313,10 @@ defineExpose({
               <TemperatureInput v-model="field.value" v-if="field.field_type == 'temperature'" />
               <a-select v-else-if="field.field_type == 'select'" v-model:value="field.value" :options="field.options" />
               <a-textarea v-model:value="field.value" :autoSize="{ minRows: 2, maxRows: 30 }" :showCount="true"
-                :placeholder="field.placeholder" v-else-if="field.field_type == 'textarea'" />
+                :placeholder="field.placeholder" :maxlength="field.max_length ?? null"
+                v-else-if="field.field_type == 'textarea'" />
               <a-input v-model:value="field.value" :placeholder="field.placeholder"
-                v-else-if="field.field_type == 'input'" />
+                :maxlength="field.max_length ?? null" v-else-if="field.field_type == 'input'" />
               <a-input-number v-model:value="field.value" :placeholder="field.placeholder"
                 v-else-if="field.field_type == 'number'" />
               <a-checkbox v-model:checked="field.value" v-else-if="field.field_type == 'checkbox'" />
