@@ -111,7 +111,8 @@ const highlightCodeBlocks = () => {
         fill: '#fff',
         class: 'copy-icon',
         onClick: () => {
-          navigator.clipboard.writeText(block.textContent).then(() => {
+          const textToCopy = block.textContent.replace(/\n$/, '');
+          navigator.clipboard.writeText(textToCopy).then(() => {
             render(h('span', { class: 'copied-text' }, 'Copied!'), copyContainer)
             setTimeout(() => {
               renderCopyIcon()
