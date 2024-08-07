@@ -110,9 +110,10 @@ const editField = () => {
           <a-select v-if="innerData.field_type == 'select'" v-model:value="innerData.value" :options="innerData.options"
             style="width: 100%;" />
           <a-textarea v-model:value="innerData.value" :autoSize="{ minRows: 2, maxRows: 30 }" :showCount="true"
-            :placeholder="innerData.placeholder" v-else-if="innerData.field_type == 'textarea'" />
+            :placeholder="innerData.placeholder" :maxlength="innerData.max_length ?? null"
+            v-else-if="innerData.field_type == 'textarea'" />
           <a-input v-model:value="innerData.value" :placeholder="innerData.placeholder"
-            v-else-if="innerData.field_type == 'input'" />
+            :maxlength="innerData.max_length ?? null" v-else-if="innerData.field_type == 'input'" />
           <a-input-number v-model:value="innerData.value" :placeholder="innerData.placeholder"
             v-else-if="innerData.field_type == 'number'" style="width: 100%;" />
           <a-radio-group option-type="button" v-model:value="innerData.value" :options="innerData.options"
