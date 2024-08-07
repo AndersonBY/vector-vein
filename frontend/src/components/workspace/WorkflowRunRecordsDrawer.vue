@@ -186,7 +186,7 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
       message.error(res.msg)
     }
   } else {
-    emit('open-record', { rid, wid: workflow })
+    emit('open-record', { rid, wid: workflow.wid })
     open.value = false
   }
   loading.value = false
