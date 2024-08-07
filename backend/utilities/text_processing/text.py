@@ -10,10 +10,16 @@ from langchain_text_splitters import (
     MarkdownTextSplitter,
 )
 
+from utilities.file_processing import static_file_server
+
+
 url_pattern = re.compile(r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+")
 email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")
 
 markdown_image_pattern = re.compile(r"!\[.*\]\(.*\)")
+markdown_image_url_pattern = re.compile(r"!\[.*?\]\((.*?)\)")
+
+local_image_re = re.compile(r"http://localhost:\d+/images/(.*)")
 
 
 def remove_url_and_email(text: str):
@@ -32,6 +38,33 @@ def remove_markdown_image(text: str, max_length: int = 300):
 
     # 使用sub函数的repl参数传入一个替换函数
     return markdown_image_pattern.sub(replace_func, text)
+
+
+def replace_local_image_url(url: str):
+    image_folder = static_file_server.static_folder_path / "images"
+    match = local_image_re.match(url)
+    if match:
+        image_path = image_folder / match.group(1)
+        if image_path.exists():
+            return str(image_path)
+        else:
+            return url
+    else:
+        return url
+
+
+def extract_image_url(text: str):
+    # 如果已经是正常的图片链接，则直接返回
+    if url_pattern.match(text):
+        return replace_local_image_url(text)
+    else:
+        # 否则匹配markdown图片链接，返回第一个匹配到的图片链接
+        match = markdown_image_url_pattern.search(text)
+        if match:
+            # 返回Markdown里的链接
+            return replace_local_image_url(match.group(1))
+        else:
+            return replace_local_image_url(text)
 
 
 def split_text(text: str, rules: dict, flat: bool = False):

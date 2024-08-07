@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-07-11 18:22:30
+ * @Last Modified time: 2024-08-07 18:00:26
  */
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -13,6 +13,7 @@ import {
   Robot,
   EditOne,
   Printer,
+  Effects,
   Picture,
   ClickTap,
   DocDetail,
@@ -401,6 +402,10 @@ export const nodeCategoryOptions = [
   {
     name: 'imageGeneration',
     icon: h(Picture),
+  },
+  {
+    name: 'mediaEditing',
+    icon: h(Effects),
   },
   {
     name: 'llms',

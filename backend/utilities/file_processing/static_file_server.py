@@ -2,7 +2,7 @@
 # @Author: Bi Ying
 # @Date:   2023-05-17 20:17:51
 # @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 21:35:13
+# @Last Modified time: 2024-08-07 19:32:57
 import uuid
 import shutil
 import hashlib
@@ -13,6 +13,7 @@ from http.server import SimpleHTTPRequestHandler, HTTPServer
 import httpx
 
 from utilities.config import config
+from utilities.general import mprint
 
 
 class StaticFileServer:
@@ -38,9 +39,11 @@ class StaticFileServer:
         return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{file_path}"
 
     def start(self):
+        mprint(f"Starting static file server at http://{StaticFileServer.host}:{StaticFileServer.port}")
         self.static_file_server.serve_forever()
 
     def shutdown(self):
+        mprint("Shutting down static file server")
         self.static_file_server.shutdown()
 
     def restart(self):
