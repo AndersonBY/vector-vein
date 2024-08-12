@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-08-07 18:01:37
+ * @Last Modified time: 2024-08-12 12:44:42
  */
 export default {
   lang: '中文',
@@ -835,9 +835,12 @@ export default {
           'output': '输出',
         },
         TextInOut: {
-          'title': '简易文本输入',
+          'title': '简易输入',
           'description': '将输入的文本原样输出。用于多个地方需要同样的文本时。',
           'text': '文本',
+          'input_type': '输入类型',
+          'input_type_text': '文本',
+          'input_type_number': '数字',
           'edit_name': '编辑显示名',
           'output': '输出',
         },

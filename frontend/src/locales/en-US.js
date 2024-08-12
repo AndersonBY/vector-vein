@@ -2,7 +2,7 @@
  * @Author: Bi Ying
  * @Date:   2022-05-24 13:48:55
  * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-08-07 18:01:57
+ * @Last Modified time: 2024-08-12 12:45:04
  */
 export default {
   lang: 'English',
@@ -835,9 +835,12 @@ export default {
           'output': 'Output',
         },
         TextInOut: {
-          'title': 'Text in/out',
+          'title': 'Simple Input',
           'description': 'Output the input text as it is. Used when the same text is needed in multiple places.',
           'text': 'Text',
+          'input_type': 'Input type',
+          'input_type_text': 'Text',
+          'input_type_number': 'Number',
           'edit_name': 'Edit display name',
           'output': 'Output',
         },
