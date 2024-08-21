@@ -35,8 +35,27 @@ const innerText = computed(() => {
     const escapedText = escapeBrackets(escapeDollarNumber(props.text))
     return escapedText
   } else {
+    let processedText = ''
+    if (Array.isArray(props.text)) {
+      processedText = props.text.map(item => {
+        if (typeof item !== 'string') {
+          try {
+            return JSON.stringify(item)
+          } catch (error) {
+            return ''
+          }
+        }
+        return item
+      }).join('\n\n')
+    } else {
+      try {
+        processedText = JSON.stringify(props.text)
+      } catch (error) {
+        processedText = ''
+      }
+    }
     try {
-      return escapeBrackets(escapeDollarNumber(JSON.stringify(props.text)))
+      return escapeBrackets(escapeDollarNumber(processedText))
     } catch (error) {
       return ''
     }
@@ -157,7 +176,7 @@ onBeforeUnmount(() => {
 <template>
   <div :class="wrapperClass">
     <template v-if="renderMarkdown">
-      <vue-markdown ref="markdownRef" :source="innerText" :options="{ html: true }" :plugins="plugins"
+      <vue-markdown ref="markdownRef" :source="innerText" :options="{ html: true, linkify: true }" :plugins="plugins"
         class="markdown-body custom-hljs custom-scrollbar" :class="markdownBodyClass" />
       <a-typography-paragraph v-if="showCopy" :copyable="{ text: innerText }">
       </a-typography-paragraph>
