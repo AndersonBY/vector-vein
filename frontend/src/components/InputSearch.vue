@@ -1,4 +1,5 @@
 <script setup>
+import { watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { CloseOne, Search } from '@icon-park/vue-next'
 
@@ -14,6 +15,12 @@ const clearSearch = () => {
   searchText.value = ''
   emit('clear-search')
 }
+
+watch(searchText, (newValue) => {
+  if (newValue === '') {
+    clearSearch()
+  }
+})
 </script>
 
 <template>
