@@ -132,6 +132,65 @@ onBeforeUnmount(() => {
 const currentWorkflow = ref({})
 const savedWorkflow = ref({}) // savedWorkflow保存的是编辑后的workflow数据，不受每次运行结果的影响
 
+
+const checkWorkflowRunningStatus = async () => {
+  const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
+  if (statusResponse.status == 200) {
+    message.success(t('workspace.workflowSpace.run_workflow_success'))
+    clearInterval(checkStatusTimer.value)
+    running.value = false
+    recordStatus.value = 'FINISHED'
+    currentWorkflow.value = statusResponse.data
+    currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || currentWorkflow.value.data?.ui_design
+    if (currentWorkflow.value.data?.ui_design) {
+      // currentWorkflow.value.data?.ui_design 里的是运行结果的ui_design
+      // currentWorkflow.value.ui_design 里的是原本工作流的ui_design
+      const uiDesign = currentWorkflow.value.data.ui_design
+      outputNodes.value = uiDesign.output_nodes
+      triggerNodes.value = uiDesign.trigger_nodes
+    } else {
+      const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+      const reactiveUIDesign = reactive(uiDesign)
+      inputFields.value = reactiveUIDesign.inputFields
+      outputNodes.value = reactiveUIDesign.outputNodes
+      triggerNodes.value = reactiveUIDesign.triggerNodes
+    }
+    showingRecord.value = true
+
+  } else if (statusResponse.status == 202) {
+    const finishedNodes = statusResponse.data.finished_nodes ?? []
+    outputNodes.value.forEach((node) => {
+      const finishedNode = finishedNodes.find((item) => {
+        return item.id == node.id
+      })
+      if (finishedNode) {
+        node.data = finishedNode.data
+        node.finished = true
+      }
+    })
+  } else if (statusResponse.status == 500) {
+    running.value = false
+    recordStatus.value = 'FAILED'
+    currentWorkflow.value = statusResponse.data
+    currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
+    if (currentWorkflow.value.data?.ui_design) {
+      const uiDesign = currentWorkflow.value.data.ui_design
+      outputNodes.value = uiDesign.output_nodes
+      triggerNodes.value = uiDesign.trigger_nodes
+    } else {
+      const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+      const reactiveUIDesign = reactive(uiDesign)
+      inputFields.value = reactiveUIDesign.inputFields
+      outputNodes.value = reactiveUIDesign.outputNodes
+      triggerNodes.value = reactiveUIDesign.triggerNodes
+    }
+    message.error(t('workspace.workflowSpace.run_workflow_failed'))
+    clearInterval(checkStatusTimer.value)
+    rawErrorTask.value = statusResponse.data?.data?.error_task
+    showingRecord.value = true
+  }
+}
+
 const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
@@ -174,63 +233,7 @@ const runWorkflow = async () => {
   if (response.status == 200) {
     message.success(t('workspace.workflowSpace.submit_workflow_success'))
     runRecordId.value = response.data.rid
-    checkStatusTimer.value = setInterval(async () => {
-      const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
-      if (statusResponse.status == 200) {
-        message.success(t('workspace.workflowSpace.run_workflow_success'))
-        clearInterval(checkStatusTimer.value)
-        running.value = false
-        recordStatus.value = 'FINISHED'
-        currentWorkflow.value = statusResponse.data
-        currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || currentWorkflow.value.data?.ui_design
-        if (currentWorkflow.value.data?.ui_design) {
-          // currentWorkflow.value.data?.ui_design 里的是运行结果的ui_design
-          // currentWorkflow.value.ui_design 里的是原本工作流的ui_design
-          const uiDesign = currentWorkflow.value.data.ui_design
-          outputNodes.value = uiDesign.output_nodes
-          triggerNodes.value = uiDesign.trigger_nodes
-        } else {
-          const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
-          const reactiveUIDesign = reactive(uiDesign)
-          inputFields.value = reactiveUIDesign.inputFields
-          outputNodes.value = reactiveUIDesign.outputNodes
-          triggerNodes.value = reactiveUIDesign.triggerNodes
-        }
-        showingRecord.value = true
-
-      } else if (statusResponse.status == 202) {
-        const finishedNodes = statusResponse.data.finished_nodes ?? []
-        outputNodes.value.forEach((node) => {
-          const finishedNode = finishedNodes.find((item) => {
-            return item.id == node.id
-          })
-          if (finishedNode) {
-            node.data = finishedNode.data
-            node.finished = true
-          }
-        })
-      } else if (statusResponse.status == 500) {
-        running.value = false
-        recordStatus.value = 'FAILED'
-        currentWorkflow.value = statusResponse.data
-        currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
-        if (currentWorkflow.value.data?.ui_design) {
-          const uiDesign = currentWorkflow.value.data.ui_design
-          outputNodes.value = uiDesign.output_nodes
-          triggerNodes.value = uiDesign.trigger_nodes
-        } else {
-          const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
-          const reactiveUIDesign = reactive(uiDesign)
-          inputFields.value = reactiveUIDesign.inputFields
-          outputNodes.value = reactiveUIDesign.outputNodes
-          triggerNodes.value = reactiveUIDesign.triggerNodes
-        }
-        message.error(t('workspace.workflowSpace.run_workflow_failed'))
-        clearInterval(checkStatusTimer.value)
-        rawErrorTask.value = statusResponse.data?.data?.error_task
-        showingRecord.value = true
-      }
-    }, 1000)
+    checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
   } else {
     message.error(t('workspace.workflowSpace.submit_workflow_failed'))
     running.value = false
@@ -244,6 +247,10 @@ const rawErrorTask = ref('')
 const setWorkflowRecord = (record) => {
   runRecordId.value = record.rid
   recordStatus.value = record.status
+  if (record.status == 'RUNNING') {
+    running.value = true
+    checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
+  }
   currentWorkflow.value.data = {
     ...record.data,
     ui: savedWorkflow.value.data?.ui || {}
