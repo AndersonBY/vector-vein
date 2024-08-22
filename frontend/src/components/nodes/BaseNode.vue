@@ -1,8 +1,7 @@
 <script setup>
-import { watch, ref, nextTick } from 'vue'
+import { watch, ref } from 'vue'
 import { Delete, Copy, CheckOne, Help } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
-import { useVueFlow } from '@vue-flow/core'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -80,12 +79,7 @@ if (props.width) {
   }
 }
 
-const { updateNodeInternals } = useVueFlow()
 const updateFields = () => {
-  // Manually call updateNodeInternals to update nodes for vue-flow 1.35.0 and above
-  nextTick(() => {
-    updateNodeInternals()
-  })
   const inputs = []
   const inputGroups = {}
   const outputs = []
@@ -93,17 +87,20 @@ const updateFields = () => {
     if (fieldsData.value[field].is_output) {
       if (fieldsData.value[field].condition) {
         const condition = fieldsData.value[field].condition
-        if (condition(fieldsData.value)) {
-          outputs.push(field)
+        if (!condition(fieldsData.value)) {
+          fieldsData.value[field].hide = true
+        } else {
+          fieldsData.value[field].hide = false
         }
-      } else {
-        outputs.push(field)
       }
+      outputs.push(field)
     } else {
       if (fieldsData.value[field].condition) {
         const condition = fieldsData.value[field].condition
         if (!condition(fieldsData.value)) {
-          return
+          fieldsData.value[field].hide = true
+        } else {
+          fieldsData.value[field].hide = false
         }
       }
       if (fieldsData.value[field].group) {
@@ -111,9 +108,8 @@ const updateFields = () => {
           inputGroups[fieldsData.value[field].group] = []
         }
         inputGroups[fieldsData.value[field].group].push(field)
-      } else {
-        inputs.push(field)
       }
+      inputs.push(field)
     }
   })
   return { inputs, inputGroups, outputs }
@@ -156,6 +152,9 @@ const collapseChanged = (data) => {
             <Help theme="filled" fill="#faad14" />
             {{ t('components.nodes.baseNode.no_run_record') }}
           </a-typography-text>
+          <a-typography-text>
+            {{ t('components.nodes.baseNode.used_credits', { credits: debug.credits }) }}
+          </a-typography-text>
         </a-flex>
       </div>
       <div class="title-container">
@@ -189,7 +188,7 @@ const collapseChanged = (data) => {
           <a-flex vertical gap="small">
             <template v-for="field in inputFields">
               <a-tooltip :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''"
-                placement="left">
+                placement="left" :class="{ 'hide-field': fieldsData[field].hide }">
                 <ListField v-if="fieldsData[field].field_type == 'list'" :name="t(`${translatePrefix}.${field}`)"
                   :required="fieldsData[field].required" type="target" v-model:data="fieldsData[field]">
                 </ListField>
@@ -204,7 +203,7 @@ const collapseChanged = (data) => {
                 @collapseChanged="collapseChanged">
                 <template v-for="field in fields">
                   <a-tooltip :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''"
-                    placement="left">
+                    placement="left" :class="{ 'hide-field': fieldsData[field].hide }">
                     <ListField v-if="fieldsData[field].field_type == 'list'" :name="t(`${translatePrefix}.${field}`)"
                       :required="fieldsData[field].required" type="target" v-model:data="fieldsData[field]">
                     </ListField>
@@ -226,7 +225,7 @@ const collapseChanged = (data) => {
             <a-tooltip v-for="field in outputFields"
               :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''" placement="right">
               <BaseField :name="t(`${translatePrefix}.${field}`)" v-model:data="fieldsData[field]" type="source"
-                nameOnly />
+                :class="{ 'hide-field': fieldsData[field].hide }" nameOnly />
             </a-tooltip>
           </a-flex>
         </template>
@@ -342,5 +341,9 @@ const collapseChanged = (data) => {
 .vue-flow .vue-flow__node .node .handle:hover {
   width: 20px;
   height: 20px;
+}
+
+.hide-field {
+  display: none !important;
 }
 </style>
