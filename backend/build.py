@@ -89,7 +89,9 @@ def build_frontend():
 
 
 parser = argparse.ArgumentParser(description="Build software.")
-parser.add_argument("-v", "--version", default="0.0.1", help="version number, default: 0.0.1")
+parser.add_argument(
+    "-v", "--version", default=os.getenv("VECTORVEIN_VERSION", "0.0.1"), help="version number, default: 0.0.1"
+)
 parser.add_argument(
     "-t", "--type", default="production", help="build type: development(d) or production(p) or frontend(f)"
 )

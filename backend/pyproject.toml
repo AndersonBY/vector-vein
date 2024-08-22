@@ -3,61 +3,62 @@ authors = [
   {name = "MakerBi", email = "biying@vectorvein.com"},
 ]
 dependencies = [
-    "pywebview>=4.1",
-    "httpx>=0.22.0",
-    "peewee>=3.16.2",
-    "pypdf>=3.8.1",
-    "mammoth>=1.5.1",
-    "openpyxl>=3.1.2",
-    "python-pptx>=0.6.21",
-    "openai>=1.0.0",
-    "python-docx>=0.8.11",
-    "pandas>=2.0.1",
-    "yagmail>=0.15.293",
-    "qdrant-client>=1.1.3",
-    "markdown2>=2.4.8",
-    "tiktoken>=0.4.0",
-    "pyinstaller>=5.11.0",
-    "readability-lxml>=0.8.1",
-    "markdownify>=0.11.6",
-    "yt-dlp>=2023.3.4",
-    "pycryptodome>=3.18.0",
-    "clr-loader>=0.2.6",
-    "pyecharts>=2.0.3",
-    "pathspec>=0.12.1",
-    "langchain-text-splitters>=0.0.1",
-    "sqlparse>=0.5.0",
-    "anthropic>=0.25.7",
-    "pydantic>=2.7.1",
-    "lxml[html_clean]>=5.2.1",
-    "PyMuPDF>=1.24.5",
-    "peewee-migrate>=1.12.2",
-    "websockets>=12.0",
-    "diskcache>=5.6.3",
-    "mss>=9.0.1",
-    "Pillow>=10.3.0",
-    "pyaudio>=0.2.14",
-    "pynput>=1.7.7",
-    "bilili>=1.4.15",
-    "pathvalidate>=3.2.0",
-    "deepgram-sdk>=3.3.1",
-    "deepgram-captions>=1.2.0",
+  "pywebview>=4.1",
+  "httpx>=0.22.0",
+  "peewee>=3.16.2",
+  "pypdf>=3.8.1",
+  "mammoth>=1.5.1",
+  "openpyxl>=3.1.2",
+  "python-pptx>=0.6.21",
+  "openai>=1.0.0",
+  "python-docx>=0.8.11",
+  "pandas>=2.0.1",
+  "yagmail>=0.15.293",
+  "qdrant-client>=1.1.3",
+  "markdown2>=2.4.8",
+  "tiktoken>=0.4.0",
+  "pyinstaller>=5.11.0",
+  "readability-lxml>=0.8.1",
+  "markdownify>=0.11.6",
+  "yt-dlp>=2023.3.4",
+  "pycryptodome>=3.18.0",
+  "clr-loader>=0.2.6",
+  "pyecharts>=2.0.3",
+  "pathspec>=0.12.1",
+  "langchain-text-splitters>=0.0.1",
+  "sqlparse>=0.5.0",
+  "anthropic>=0.25.7",
+  "pydantic>=2.7.1",
+  "lxml[html_clean]>=5.2.1",
+  "PyMuPDF>=1.24.5",
+  "peewee-migrate>=1.12.2",
+  "websockets>=12.0",
+  "diskcache>=5.6.3",
+  "mss>=9.0.1",
+  "Pillow>=10.3.0",
+  "pyaudio>=0.2.14",
+  "pynput>=1.7.7",
+  "bilili>=1.4.15",
+  "pathvalidate>=3.2.0",
+  "deepgram-sdk>=3.3.1",
+  "deepgram-captions>=1.2.0",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.10,<3.13"
-version = "0.2.7"
+version = "0.2.8"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
 
 [tool.pdm.scripts]
-build = "python build.py -v 0.2.7 -t p"
-build-debug.cmd = "python build.py -v 0.2.7 -t d"
-build-debug.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.7"}
+build-debug.cmd = "python build.py -t d"
+build-debug.env_file = ".env"
 build-front = "python build.py -t f"
+build.cmd = "python build.py -t p"
+build.env_file = ".env"
 dev.cmd = "python main.py"
-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.7"}
+dev.env_file = ".env"
 fullstack-dev.cmd = "python run_fullstack_dev.py"
-fullstack-dev.env = {VECTORVEIN_DEBUG = "1", VECTORVEIN_VERSION = "0.2.7", "VITE_LOCAL" = "http://localhost:5173/"}
+fullstack-dev.env_file = ".env"
