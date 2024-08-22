@@ -1,7 +1,8 @@
 <script setup>
-import { watch, ref } from 'vue'
+import { watch, ref, nextTick } from 'vue'
 import { Delete, Copy, CheckOne, Help } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
+import { useVueFlow } from '@vue-flow/core'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -79,7 +80,12 @@ if (props.width) {
   }
 }
 
+const { updateNodeInternals } = useVueFlow()
 const updateFields = () => {
+  // Manually call updateNodeInternals to update nodes for vue-flow 1.35.0 and above
+  nextTick(() => {
+    updateNodeInternals()
+  })
   const inputs = []
   const inputGroups = {}
   const outputs = []
@@ -140,9 +146,9 @@ const collapseChanged = (data) => {
 <template>
   <div class="node" :style="style">
     <div style="width: 100%;">
-      <div v-if="debug" :class="['debug-info', debug.run_time >= 0 ? 'executed-node' : 'not-executed-node']">
+      <div v-if="debug" :class="['debug-info', debug.run_time > 0 ? 'executed-node' : 'not-executed-node']">
         <a-flex justify="space-between">
-          <a-typography-text v-if="debug.run_time >= 0">
+          <a-typography-text v-if="debug.run_time > 0">
             <CheckOne theme="filled" fill="#52c41a" />
             {{ t('components.nodes.baseNode.run_time', { time: debug.run_time.toFixed(2) }) }}
           </a-typography-text>

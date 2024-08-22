@@ -99,37 +99,39 @@ const editField = () => {
         </template>
       </a-button>
     </div>
-    <Handle :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type"
+    <Handle v-if="nameOnly" :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type"
       :position="props.type == 'target' ? Position.Left : Position.Right" :connectable-start="props.type != 'target'"
-      :connectable-end="props.type == 'target'" v-if="nameOnly" />
+      :connectable-end="props.type == 'target'" />
     <div style="position: relative;">
       <div class="template-item-field-content">
         <slot>
         </slot>
         <template v-if="!$slots.default && !innerData.is_output">
-          <a-select v-if="innerData.field_type == 'select'" v-model:value="innerData.value" :options="innerData.options"
-            style="width: 100%;" />
-          <a-textarea v-model:value="innerData.value" :autoSize="{ minRows: 2, maxRows: 30 }" :showCount="true"
-            :placeholder="innerData.placeholder" :maxlength="innerData.max_length ?? null"
+          <a-select v-if="innerData.field_type == 'select'" v-model:value="innerData.value" class="nodrag"
+            :options="innerData.options" style="width: 100%;" />
+          <a-textarea v-model:value="innerData.value" class="nodrag" :autoSize="{ minRows: 2, maxRows: 30 }"
+            :showCount="true" :placeholder="innerData.placeholder" :maxlength="innerData.max_length ?? null"
             v-else-if="innerData.field_type == 'textarea'" />
-          <a-input v-model:value="innerData.value" :placeholder="innerData.placeholder"
+          <a-input v-model:value="innerData.value" class="nodrag" :placeholder="innerData.placeholder"
             :maxlength="innerData.max_length ?? null" v-else-if="innerData.field_type == 'input'" />
-          <a-input-number v-model:value="innerData.value" :placeholder="innerData.placeholder"
-            v-else-if="innerData.field_type == 'number'" style="width: 100%;" />
-          <a-radio-group option-type="button" v-model:value="innerData.value" :options="innerData.options"
-            v-else-if="innerData.field_type == 'radio'" />
-          <TemperatureInput v-else-if="innerData.field_type == 'temperature'" v-model="innerData.value" />
+          <a-input-number v-model:value="innerData.value" class="nodrag" :placeholder="innerData.placeholder"
+            :max="innerData.max ?? null" :min="innerData.min ?? null" v-else-if="innerData.field_type == 'number'"
+            style="width: 100%;" />
+          <a-radio-group class="nodrag" option-type="button" v-model:value="innerData.value"
+            :options="innerData.options" v-else-if="innerData.field_type == 'radio'" />
+          <TemperatureInput class="nodrag" v-else-if="innerData.field_type == 'temperature'"
+            v-model="innerData.value" />
         </template>
       </div>
       <template v-if="props.type == 'target'">
-        <Handle :class="['handle', 'target-handle']" :id="id" type="target" :position="Position.Left"
-          :connectable-start="false" :connectable-end="true" v-if="!nameOnly" />
-        <Handle :class="['handle', 'source-handle']" :id="id" type="source" :position="Position.Right"
-          :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
+        <Handle v-if="!nameOnly" :class="['handle', 'target-handle']" :id="id" type="target" :position="Position.Left"
+          :connectable-start="false" :connectable-end="true" />
+        <Handle v-if="!nameOnly" :class="['handle', 'source-handle']" :id="id" type="source" :position="Position.Right"
+          :connectable-start="true" :connectable-end="false" />
       </template>
       <template v-else>
-        <Handle :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type" :position="Position.Right"
-          :connectable-start="true" :connectable-end="false" v-if="!nameOnly" />
+        <Handle v-if="!nameOnly" :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type"
+          :position="Position.Right" :connectable-start="true" :connectable-end="false" />
       </template>
     </div>
   </div>
