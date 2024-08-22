@@ -15,8 +15,8 @@ importers:
         specifier: ^6.1.6
         version: 6.1.6(@codemirror/view@6.32.0)
       '@codemirror/lang-sql':
-        specifier: ^6.7.0
-        version: 6.7.0(@codemirror/view@6.32.0)
+        specifier: ^6.7.1
+        version: 6.7.1(@codemirror/view@6.32.0)
       '@codemirror/theme-one-dark':
         specifier: ^6.1.2
         version: 6.1.2
@@ -155,7 +155,7 @@ importers:
         version: 2.8.8
       unplugin-vue-components:
         specifier: ^0.22.12
-        version: 0.22.12(@babel/parser@7.25.3)(rollup@4.21.0)(vue@3.4.38)
+        version: 0.22.12(@babel/parser@7.25.4)(rollup@4.21.0)(vue@3.4.38)
       vite:
         specifier: ^5.4.2
         version: 5.4.2
@@ -189,17 +189,17 @@ packages:
     resolution: {integrity: sha512-rR+PBcQ1SMQDDyF6X0wxtG8QyLCgUB0eRAGguqRLfkCA87l7yAP7ehq8SNj96OOGTO8OBV70KhuFYcIkHXOg0w==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/parser@7.25.3':
-    resolution: {integrity: sha512-iLTJKDbJ4hMvFPgQwwsVoxtHyWpKKPBrxkANrSYewDPaPpT5py5yeVkgPIJ7XYXhndxJpaA3PyALSXQ7u8e/Dw==}
+  '@babel/parser@7.25.4':
+    resolution: {integrity: sha512-nq+eWrOgdtu3jG5Os4TQP3x3cLA8hR8TvJNjD8vnPa20WGycimcparWnLK4jJhElTK6SDyuJo1weMKO/5LpmLA==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
-  '@babel/runtime@7.25.0':
-    resolution: {integrity: sha512-7dRy4DwXwtzBrPbZflqxnvfxLF8kdZXPkhymtDeFoFqE6ldzjQFgYTtYIFARcLEYDrqfBfYcZt1WqFxRoyC9Rw==}
+  '@babel/runtime@7.25.4':
+    resolution: {integrity: sha512-DSgLeL/FNcpXuzav5wfYvHCGvynXkJbn3Zvc3823AEe9nPwW9IK4UoCSS5yGymmQzN0pCPvivtgS6/8U2kkm1w==}
     engines: {node: '>=6.9.0'}
 
-  '@babel/types@7.25.2':
-    resolution: {integrity: sha512-YTnYtra7W9e6/oAZEHj0bJehPRUlLH9/fbpT5LfB0NhQXyALCRkRs3zH9v07IYhkgpqX6Z78FnuccZr/l4Fs4Q==}
+  '@babel/types@7.25.4':
+    resolution: {integrity: sha512-zQ1ijeeCXVEh+aNL0RlmkPkG8HUiDcU2pzQQFjtbntgAczRASFzj4H+6+bV+dy1ntKR14I/DypeuRG1uma98iQ==}
     engines: {node: '>=6.9.0'}
 
   '@braintree/sanitize-url@6.0.4':
@@ -222,8 +222,8 @@ packages:
   '@codemirror/lang-python@6.1.6':
     resolution: {integrity: sha512-ai+01WfZhWqM92UqjnvorkxosZ2aq2u28kHvr+N3gu012XqY2CThD67JPMHnGceRfXPDBmn1HnyqowdpF57bNg==}
 
-  '@codemirror/lang-sql@6.7.0':
-    resolution: {integrity: sha512-KMXp6rtyPYz6RaElvkh/77ClEAoQoHRPZo0zutRRialeFs/B/X8YaUJBCnAV2zqyeJPLZ4hgo48mG8TKoNXfZA==}
+  '@codemirror/lang-sql@6.7.1':
+    resolution: {integrity: sha512-flQa7zemrLKk0TIrOJnpeyH/b29BcVybtsTeZMgAo40O6kGbrnUSCgwI3TF5iJY3O9VXJKKCA+i0CBVvDfr88w==}
 
   '@codemirror/language@6.10.2':
     resolution: {integrity: sha512-kgbTYTo0Au6dCSc/TFy7fK3fpJmgHDv1sG1KNQKJXVi+xBTEeBPY/M30YXiU6mMXeH+YIDLsbrT4ZwNRdtF+SA==}
@@ -1382,8 +1382,8 @@ packages:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
     engines: {node: '>=8'}
 
-  is-core-module@2.15.0:
-    resolution: {integrity: sha512-Dd+Lb2/zvk9SKy1TGCt1wFJFo/MWBPMX5x7KcvLajWTGuomczdQX61PvY5yK6SVACwpoexWo81IfFyoKY2QnTA==}
+  is-core-module@2.15.1:
+    resolution: {integrity: sha512-z0vtXSwucUJtANQWldhbtbt7BnL0vxiFjIdDLAatwhDYty2bad6s+rijD6Ri4YuYJubLzIJLUidCh09e1djEVQ==}
     engines: {node: '>= 0.4'}
 
   is-extglob@2.1.1:
@@ -1882,8 +1882,8 @@ packages:
   style-mod@4.1.2:
     resolution: {integrity: sha512-wnD1HyVqpJUI2+eKZ+eo1UwghftP6yuFheBqqe+bWCotBjC2K1YnteJILRMs3SM4V/0dLEW1SC27MWP5y+mwmw==}
 
-  stylis@4.3.2:
-    resolution: {integrity: sha512-bhtUjWd/z6ltJiQwg0dUfxEJ+W+jdqQd8TbWLWyeIJHlnsqmGLRFFd8e5mA0AZi/zx90smXRlN66YMTcaSFifg==}
+  stylis@4.3.3:
+    resolution: {integrity: sha512-VtF42zBHvdPi561i9mAcPlWOUonfbCtXa7qdGI+Ro4qMP8TEb+7GpbGWD1+v2TS4nohQ0m8g1FhTVmRdcIsxdQ==}
 
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
@@ -2146,15 +2146,15 @@ snapshots:
 
   '@babel/helper-validator-identifier@7.24.7': {}
 
-  '@babel/parser@7.25.3':
+  '@babel/parser@7.25.4':
     dependencies:
-      '@babel/types': 7.25.2
+      '@babel/types': 7.25.4
 
-  '@babel/runtime@7.25.0':
+  '@babel/runtime@7.25.4':
     dependencies:
       regenerator-runtime: 0.14.1
 
-  '@babel/types@7.25.2':
+  '@babel/types@7.25.4':
     dependencies:
       '@babel/helper-string-parser': 7.24.8
       '@babel/helper-validator-identifier': 7.24.7
@@ -2191,7 +2191,7 @@ snapshots:
     transitivePeerDependencies:
       - '@codemirror/view'
 
-  '@codemirror/lang-sql@6.7.0(@codemirror/view@6.32.0)':
+  '@codemirror/lang-sql@6.7.1(@codemirror/view@6.32.0)':
     dependencies:
       '@codemirror/autocomplete': 6.18.0(@codemirror/language@6.10.2)(@codemirror/state@6.4.1)(@codemirror/view@6.32.0)(@lezer/common@1.2.1)
       '@codemirror/language': 6.10.2
@@ -2340,7 +2340,7 @@ snapshots:
 
   '@gera2ld/jsx-dom@2.2.2':
     dependencies:
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
 
   '@humanwhocodes/config-array@0.11.14':
     dependencies:
@@ -2673,7 +2673,7 @@ snapshots:
 
   '@vue/compiler-core@3.4.38':
     dependencies:
-      '@babel/parser': 7.25.3
+      '@babel/parser': 7.25.4
       '@vue/shared': 3.4.38
       entities: 4.5.0
       estree-walker: 2.0.2
@@ -2686,7 +2686,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.4.38':
     dependencies:
-      '@babel/parser': 7.25.3
+      '@babel/parser': 7.25.4
       '@vue/compiler-core': 3.4.38
       '@vue/compiler-dom': 3.4.38
       '@vue/compiler-ssr': 3.4.38
@@ -2776,7 +2776,7 @@ snapshots:
     dependencies:
       '@ant-design/colors': 6.0.0
       '@ant-design/icons-vue': 6.1.0(vue@3.4.38)
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       '@ctrl/tinycolor': 3.6.1
       '@simonwep/pickr': 1.8.2
       array-tree-filter: 2.1.0
@@ -2797,7 +2797,7 @@ snapshots:
     dependencies:
       '@ant-design/colors': 6.0.0
       '@ant-design/icons-vue': 7.0.1(vue@3.4.38)
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       '@ctrl/tinycolor': 3.6.1
       '@emotion/hash': 0.9.2
       '@emotion/unitless': 0.8.1
@@ -2813,7 +2813,7 @@ snapshots:
       resize-observer-polyfill: 1.5.1
       scroll-into-view-if-needed: 2.2.31
       shallow-equal: 1.2.1
-      stylis: 4.3.2
+      stylis: 4.3.3
       throttle-debounce: 5.0.2
       vue: 3.4.38
       vue-types: 3.0.2(vue@3.4.38)
@@ -3459,7 +3459,7 @@ snapshots:
     dependencies:
       binary-extensions: 2.3.0
 
-  is-core-module@2.15.0:
+  is-core-module@2.15.1:
     dependencies:
       hasown: 2.0.2
 
@@ -3588,19 +3588,19 @@ snapshots:
 
   markmap-common@0.17.0:
     dependencies:
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       '@gera2ld/jsx-dom': 2.2.2
       npm2url: 0.2.4
 
   markmap-html-parser@0.17.0(markmap-common@0.17.0):
     dependencies:
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       cheerio: 1.0.0-rc.12
       markmap-common: 0.17.0
 
   markmap-lib@0.17.0(markmap-common@0.17.0):
     dependencies:
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       '@iktakahiro/markdown-it-katex': 4.0.1
       highlight.js: 11.10.0
       js-yaml: 4.1.0
@@ -3617,7 +3617,7 @@ snapshots:
 
   markmap-view@0.17.0(markmap-common@0.17.0):
     dependencies:
-      '@babel/runtime': 7.25.0
+      '@babel/runtime': 7.25.4
       '@gera2ld/jsx-dom': 2.2.2
       '@types/d3': 7.4.3
       d3: 7.9.0
@@ -3669,7 +3669,7 @@ snapshots:
       lodash-es: 4.17.21
       mdast-util-from-markdown: 1.3.1
       non-layered-tidy-tree-layout: 2.0.2
-      stylis: 4.3.2
+      stylis: 4.3.3
       ts-dedent: 2.2.0
       uuid: 9.0.1
       web-worker: 1.3.0
@@ -3963,7 +3963,7 @@ snapshots:
 
   resolve@1.22.8:
     dependencies:
-      is-core-module: 2.15.0
+      is-core-module: 2.15.1
       path-parse: 1.0.7
       supports-preserve-symlinks-flag: 1.0.0
 
@@ -4043,7 +4043,7 @@ snapshots:
 
   style-mod@4.1.2: {}
 
-  stylis@4.3.2: {}
+  stylis@4.3.3: {}
 
   supports-color@7.2.0:
     dependencies:
@@ -4079,7 +4079,7 @@ snapshots:
     dependencies:
       '@types/unist': 2.0.11
 
-  unplugin-vue-components@0.22.12(@babel/parser@7.25.3)(rollup@4.21.0)(vue@3.4.38):
+  unplugin-vue-components@0.22.12(@babel/parser@7.25.4)(rollup@4.21.0)(vue@3.4.38):
     dependencies:
       '@antfu/utils': 0.7.10
       '@rollup/pluginutils': 5.1.0(rollup@4.21.0)
@@ -4093,7 +4093,7 @@ snapshots:
       unplugin: 1.12.2
       vue: 3.4.38
     optionalDependencies:
-      '@babel/parser': 7.25.3
+      '@babel/parser': 7.25.4
     transitivePeerDependencies:
       - rollup
       - supports-color

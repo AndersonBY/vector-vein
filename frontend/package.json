@@ -11,7 +11,7 @@
   "dependencies": {
     "@codemirror/lang-json": "^6.0.1",
     "@codemirror/lang-python": "^6.1.6",
-    "@codemirror/lang-sql": "^6.7.0",
+    "@codemirror/lang-sql": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.32.0",
     "@icon-park/vue-next": "^1.4.2",
