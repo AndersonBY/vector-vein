@@ -14,6 +14,7 @@
     "@codemirror/lang-sql": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.2",
     "@codemirror/view": "^6.32.0",
+    "@dagrejs/dagre": "^1.1.4",
     "@icon-park/vue-next": "^1.4.2",
     "@liripeng/vue-audio-player": "^2.0.4",
     "@vscode/markdown-it-katex": "^1.1.0",

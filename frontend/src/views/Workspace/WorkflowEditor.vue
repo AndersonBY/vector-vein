@@ -1,9 +1,9 @@
 <script setup>
-import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed } from 'vue'
+import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code, Bug } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug, LayoutFive } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background } from '@vue-flow/background'
@@ -25,6 +25,7 @@ import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
 import { hashObject } from "@/utils/util"
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
+import { useLayout } from '@/utils/useLayout'
 import { workflowAPI, workflowTemplateAPI, workflowRunRecordAPI } from "@/api/workflow"
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
@@ -282,9 +283,11 @@ const {
   toObject,
   fromObject,
   findNode,
+  fitView,
   viewport,
   vueFlowRef,
-  edges
+  edges,
+  nodes,
 } = useVueFlow()
 onConnect((params) => {
   const hasConnectedEdge = edges.value.some((edge) => {
@@ -528,6 +531,20 @@ const testRunModal = reactive({
     testRunModal.open = true
   },
 })
+
+const { layout } = useLayout()
+async function layoutGraph(direction) {
+  const result = layout(nodes.value, edges.value, direction)
+  elements.value.forEach((element) => {
+    if (Object.keys(element).includes('handleBounds')) {
+      element.position = result.find(node => node.id === element.id).position
+    }
+  })
+
+  nextTick(() => {
+    fitView()
+  })
+}
 </script>
 
 <template>
@@ -691,7 +708,16 @@ const testRunModal = reactive({
               :maskColor="theme == 'default' ? 'rgb(240, 242, 243, 0.7)' : 'rgb(60, 60, 60, 0.7)'" />
             <Controls />
             <Background variant="dots" />
-            <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
+            <a-flex align="center" justify="center" class="vue-flow-toolbar">
+              <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
+              <a-tooltip :title="t('workspace.workflowEditor.layout_graph')">
+                <a-button type="text" @click="layoutGraph('LR')">
+                  <template #icon>
+                    <LayoutFive />
+                  </template>
+                </a-button>
+              </a-tooltip>
+            </a-flex>
           </VueFlow>
         </a-layout-content>
       </a-layout>
@@ -742,6 +768,13 @@ const testRunModal = reactive({
 
 .workflow-info-editor {
   height: calc(100vh - 60px);
+}
+
+.vue-flow-toolbar {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  z-index: 10;
 }
 </style>
 

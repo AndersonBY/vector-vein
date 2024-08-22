@@ -425,6 +425,7 @@ export default {
       'edge_already_connected_message': 'The handle has already connected an edge',
       'diagnosing_record': 'Diagnosing {record}',
       'cannot_save_when_diagnosing': 'Cannot save when diagnosing record',
+      'layout_graph': 'Auto layout',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',

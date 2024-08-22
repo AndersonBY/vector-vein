@@ -425,6 +425,7 @@ export default {
       'edge_already_connected_message': '该端口已有连线',
       'diagnosing_record': '正在诊断记录 {record}',
       'cannot_save_when_diagnosing': '诊断记录时无法保存',
+      'layout_graph': '自动布局',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
