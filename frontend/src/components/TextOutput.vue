@@ -1,8 +1,10 @@
 <script setup>
 import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount, h, render } from 'vue'
 import { Copy } from '@icon-park/vue-next'
+import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'
 import markdownItKatex from '@vscode/markdown-it-katex'
+import MarkdownItGitHubAlerts from 'markdown-it-github-alerts'
 import 'katex/dist/katex.min.css'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/monokai-sublime.css'
@@ -29,6 +31,8 @@ const props = defineProps({
     default: true,
   },
 })
+
+const { t } = useI18n()
 
 const innerText = computed(() => {
   if (typeof props.text === 'string') {
@@ -62,7 +66,21 @@ const innerText = computed(() => {
   }
 })
 
-const plugins = [markdownItKatex]
+const titles = {
+  tip: t('common.TIP'),
+  note: t('common.NOTE'),
+  important: t('common.IMPORTANT'),
+  warning: t('common.WARNING'),
+  caution: t('common.CAUTION'),
+}
+
+const markdownitGitHubAlertsPlugin = (vueMarkdownItInstance) => {
+  const md = vueMarkdownItInstance
+  md.use(MarkdownItGitHubAlerts, {
+    titles
+  })
+}
+const plugins = [markdownItKatex, markdownitGitHubAlertsPlugin]
 
 function escapeDollarNumber(text) {
   let escapedText = ''
@@ -123,7 +141,6 @@ const highlightCodeBlocks = () => {
       block.parentNode.insertBefore(wrapper, block)
       wrapper.appendChild(block)
 
-      // Use custom copy icon to avoid memory leak
       const createCopyIcon = () => h(Copy, {
         theme: 'outline',
         size: '18',

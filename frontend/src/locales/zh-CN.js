@@ -146,6 +146,11 @@ export default {
     'language': '语言',
     'model': '模型',
     'me': '我',
+    'TIP': '提示',
+    'NOTE': '注意',
+    'IMPORTANT': '重要',
+    'WARNING': '警告',
+    'CAUTION': '小心'
   },
   email: {
     verify: {

@@ -146,6 +146,11 @@ export default {
     'language': 'Language',
     'model': 'Model',
     'me': 'Me',
+    'TIP': 'Tip',
+    'NOTE': 'Note',
+    'IMPORTANT': 'Important',
+    'WARNING': 'Warning',
+    'CAUTION': 'Caution'
   },
   email: {
     verify: {
