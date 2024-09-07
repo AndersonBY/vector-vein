@@ -762,6 +762,10 @@ export default {
         'show_in_use_interface': 'Whether to display in the use interface',
         'show': 'Show',
         'hide': 'Hide',
+        'show_field_info': 'Show field info',
+        'field_info': 'Field info',
+        'data_type': 'Data type',
+        'field_value': 'Field value',
       },
       listField: {
         'add_item': 'Add item',

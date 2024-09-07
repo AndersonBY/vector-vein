@@ -762,6 +762,10 @@ export default {
         'show_in_use_interface': '是否在使用界面显示',
         'show': '显示',
         'hide': '隐藏',
+        'show_field_info': '查看字段信息',
+        'field_info': '字段信息',
+        'data_type': '数据类型',
+        'field_value': '字段值',
       },
       listField: {
         'add_item': '添加项',
