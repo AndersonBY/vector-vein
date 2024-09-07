@@ -1,6 +1,7 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { Setting } from '@icon-park/vue-next'
 
 const { t } = useI18n()
 const temperatureNumber = defineModel()
@@ -26,15 +27,28 @@ const temperatureInputValueChange = (value) => {
   }
 }
 
+const popoverVisible = ref(false)
+
 onBeforeMount(() => {
   temperatureInputValueChange(temperatureNumber.value)
 })
 </script>
 <template>
-  <div>
-    <a-segmented v-model:value="temperatureString" :options="temperaturePresets" block
-      @change="temperaturePresetsChange" />
-    <a-input-number style="width: 100%;" v-model:value="temperatureNumber" :step="0.1" :max="1" :min="0"
-      :controls="false" :keyboard="false" @change="temperatureInputValueChange" />
-  </div>
+  <a-flex align="center" justify="space-between" gap="small">
+    <div style="flex-grow: 1;">
+      <a-segmented style="width: 100%;" block v-model:value="temperatureString" :options="temperaturePresets"
+        @change="temperaturePresetsChange" />
+    </div>
+    <a-popover v-model:open="popoverVisible" trigger="hover" placement="topRight">
+      <template #content>
+        <a-input-number v-model:value="temperatureNumber" :step="0.1" :max="1" :min="0" :keyboard="false"
+          @change="temperatureInputValueChange" style="width: 100px" />
+      </template>
+      <a-button type="text">
+        <template #icon>
+          <Setting />
+        </template>
+      </a-button>
+    </a-popover>
+  </a-flex>
 </template>
