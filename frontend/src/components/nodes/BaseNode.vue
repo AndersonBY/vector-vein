@@ -56,6 +56,12 @@ watch(() => props.fieldsData, (newValue) => {
   fieldsData.value = newValue
 }, { deep: true })
 
+if (props.debug) {
+  Object.keys(fieldsData.value).forEach((field) => {
+    fieldsData.value[field].debug = true;
+  });
+}
+
 const useNodeMessages = useNodeMessagesStore()
 
 const pushMessage = (action, data) => {
@@ -151,9 +157,6 @@ const collapseChanged = (data) => {
           <a-typography-text v-else>
             <Help theme="filled" fill="#faad14" />
             {{ t('components.nodes.baseNode.no_run_record') }}
-          </a-typography-text>
-          <a-typography-text>
-            {{ t('components.nodes.baseNode.used_credits', { credits: debug.credits }) }}
           </a-typography-text>
         </a-flex>
       </div>

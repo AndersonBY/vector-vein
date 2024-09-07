@@ -2,7 +2,7 @@
 import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Handle, Position } from '@vue-flow/core'
-import { CloseOne, Edit, PreviewOpen, PreviewCloseOne } from '@icon-park/vue-next'
+import { CloseOne, Edit, PreviewOpen, PreviewCloseOne, Info } from '@icon-park/vue-next'
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 
 const props = defineProps({
@@ -47,6 +47,12 @@ const { t } = useI18n()
 const innerData = ref(props.data)
 const id = ref(innerData.value.id || innerData.value.name)
 
+const debug = innerData.value.debug
+const showDebugDetails = ref(false)
+const toggleDebugDetails = () => {
+  showDebugDetails.value = !showDebugDetails.value
+}
+
 const toggleShowValue = () => {
   innerData.value.show = !innerData.value.show
   emit('update:data', innerData.value)
@@ -68,6 +74,21 @@ const editField = () => {
   <div :class="['template-item-field', props.type == 'source' ? 'template-item-output-field' : '']"
     :style="props.style">
     <div class="template-item-field-text">
+      <a-tooltip v-if="debug" :title="t('components.nodes.baseField.show_field_info')">
+        <a-button type="text" size="small" @click="toggleDebugDetails">
+          <template #icon>
+            <Info :fill="showDebugDetails ? '#1890ff' : '#8c8c8c'" />
+          </template>
+        </a-button>
+        <a-modal v-model:open="showDebugDetails" :footer="null">
+          <a-descriptions :title="t('components.nodes.baseField.field_info')" :column="1">
+            <a-descriptions-item :label="t('components.nodes.baseField.data_type')">{{ typeof innerData.value
+              }}</a-descriptions-item>
+            <a-descriptions-item :label="t('components.nodes.baseField.field_value')">{{ innerData.value
+              }}</a-descriptions-item>
+          </a-descriptions>
+        </a-modal>
+      </a-tooltip>
       <a-typography-text class="field-name">
         {{ props.name }}
       </a-typography-text>
@@ -153,6 +174,7 @@ const editField = () => {
   padding: 0 10px;
   display: flex;
   justify-content: flex-end;
+  align-items: center;
   gap: 5px;
 }
 
