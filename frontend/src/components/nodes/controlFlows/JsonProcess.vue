@@ -1,10 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import { createTemplateData } from './JsonProcess'
+
 
 const props = defineProps({
   id: {
@@ -28,18 +29,44 @@ Object.entries(templateData.template).forEach(([key, value]) => {
   }
 })
 
+const showKeyDrawer = ref(false)
+const editKeyData = reactive({
+  index: -1,
+  value: ''
+})
+
 const removeKey = (index) => {
   fieldsData.value.keys.value.splice(index, 1)
 }
 
+const editKey = (index) => {
+  editKeyData.index = index
+  editKeyData.value = fieldsData.value.keys.value[index]
+  showKeyDrawer.value = true
+}
+
+const saveKey = () => {
+  if (editKeyData.index === -1) {
+    fieldsData.value.keys.value.push(editKeyData.value)
+  } else {
+    fieldsData.value.keys.value[editKeyData.index] = editKeyData.value
+  }
+  showKeyDrawer.value = false
+  editKeyData.index = -1
+  editKeyData.value = ''
+}
+
 const addKey = () => {
-  fieldsData.value.keys.value.push('Key')
+  editKeyData.index = -1
+  editKeyData.value = ''
+  showKeyDrawer.value = true
 }
 </script>
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.controlFlows.JsonProcess" documentPath="/help/docs/control-flows#h2-6">
+    translatePrefix="components.nodes.controlFlows.JsonProcess"
+    documentPath="/help/docs/control-flows#node-JsonProcess">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.common.input')" required type="target" v-model:data="fieldsData.input">
@@ -72,15 +99,25 @@ const addKey = () => {
             v-model:data="fieldsData.keys">
             <a-flex vertical gap="small">
               <a-space v-for="(key, index) in fieldsData.keys.value" :key="index">
-                <a-typography-text v-model:content="fieldsData.keys.value[index]" editable />
-                <ReduceOne class="clickable-icon" fill="#ff4d4f" @click="removeKey(index)" />
+                <a-typography-text>{{ key }}</a-typography-text>
+                <a-button type="text" @click="editKey(index)">
+                  <template #icon>
+                    <Edit class="clickable-icon" />
+                  </template>
+                </a-button>
+                <a-button type="text" @click="removeKey(index)">
+                  <template #icon>
+                    <ReduceOne class="clickable-icon" fill="#ff4d4f" />
+                  </template>
+                </a-button>
               </a-space>
+              <a-button block type="dashed" class="add-field-button" @click="addKey">
+                <template #icon>
+                  <AddOne />
+                </template>
+                {{ t('components.nodes.controlFlows.JsonProcess.add_key') }}
+              </a-button>
             </a-flex>
-
-            <a-button block type="dashed" class="add-field-button" @click="addKey">
-              <AddOne />
-              {{ t('components.nodes.controlFlows.JsonProcess.add_key') }}
-            </a-button>
           </BaseField>
 
           <BaseField :name="t('components.nodes.controlFlows.JsonProcess.default_value')" type="target"
@@ -104,4 +141,19 @@ const addKey = () => {
       </a-flex>
     </template>
   </BaseNode>
+
+  <a-drawer v-model:open="showKeyDrawer"
+    :title="t(`components.nodes.controlFlows.JsonProcess.${editKeyData.index === -1 ? 'add' : 'edit'}_key`)"
+    placement="right">
+    <template #extra>
+      <a-button type="primary" @click="saveKey">
+        {{ t(editKeyData.index === -1 ? 'common.add' : 'common.save') }}
+      </a-button>
+    </template>
+    <a-form>
+      <a-form-item :label="t('components.nodes.controlFlows.JsonProcess.key')">
+        <a-input v-model:value="editKeyData.value" />
+      </a-form-item>
+    </a-form>
+  </a-drawer>
 </template>

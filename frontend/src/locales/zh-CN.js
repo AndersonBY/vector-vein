@@ -1636,6 +1636,7 @@ export default {
           'key': 'Key',
           'keys': 'Keys',
           'add_key': '添加 Key',
+          'edit_key': '编辑 Key',
           'default_value': '默认值（当 Key 不存在时）',
           'output': '输出',
         },

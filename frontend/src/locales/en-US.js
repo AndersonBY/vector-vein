@@ -1636,6 +1636,7 @@ export default {
           'key': 'Key',
           'keys': 'Keys',
           'add_key': 'Add key',
+          'edit_key': 'Edit key',
           'default_value': 'Default value (when Key does not exist)',
           'output': 'Output',
         },
