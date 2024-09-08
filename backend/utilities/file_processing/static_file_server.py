@@ -22,6 +22,12 @@ class StaticFileServer:
 
     def __init__(self, static_folder_path: str | Path):
         class MyRequestHandler(SimpleHTTPRequestHandler):
+            def end_headers(self):
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Methods", "GET")
+                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+                return super(MyRequestHandler, self).end_headers()
+
             def translate_path(self, path):
                 path = unquote(path.split("?", 1)[0].split("#", 1)[0])
                 file_path = str(Path(static_folder_path, path.strip("/")))
