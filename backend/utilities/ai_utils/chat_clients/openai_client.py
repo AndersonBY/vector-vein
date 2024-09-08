@@ -63,6 +63,8 @@ def get_openai_client_and_model(
             setting_key = "gpt_4_deployment"
         elif model_id == "gpt-4o":
             setting_key = "gpt_4o_deployment"
+        elif model_id == "gpt-4o-mini":
+            setting_key = "gpt_4o_mini_deployment"
         elif model_id == "gpt-4v":
             setting_key = "gpt_4v_deployment"
         elif model_id == "tts-1":

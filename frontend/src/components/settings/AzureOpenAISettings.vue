@@ -88,6 +88,16 @@ const endpointChanged = (value, key) => {
       </a-flex>
     </a-col>
 
+    <a-col :span="8" style="text-align: end;">Azure gpt-4o-mini Deployment</a-col>
+    <a-col :span="16">
+      <a-flex vertical gap="small">
+        <a-input v-model:value="azureOpenAISettings.gpt_4o_mini_deployment.id" placeholder="Deployment ID" />
+        <a-select v-model:value="azureOpenAISettings.gpt_4o_mini_deployment.endpoint_id" :options="endpointOptions"
+          style="width: 100%;"
+          @change="endpointChanged(azureOpenAISettings.gpt_4o_mini_deployment.endpoint_id, 'gpt_4o_mini_deployment')" />
+      </a-flex>
+    </a-col>
+
     <a-col :span="8" style="text-align: end;">Azure gpt-4-vision Deployment</a-col>
     <a-col :span="16">
       <a-flex vertical gap="small">

@@ -113,4 +113,20 @@ class AzureOpenAITask(BaseLLMTask):
             max_tokens=128000,
             max_output_tokens=4096,
         ),
+        "gpt-4o-mini": ModelSetting(
+            id_settings_key="azure_openai.gpt_4o_mini_deployment.id",
+            endpoints=[
+                EndpointSetting(
+                    endpoint_settings_key="azure_openai.gpt_4o_mini_deployment.endpoint.api_base",
+                    api_key_settings_key="azure_openai.gpt_4o_mini_deployment.endpoint.api_key",
+                    rpm=20000,
+                    tpm=2000000,
+                    is_azure=True,
+                )
+            ],
+            function_call_available=True,
+            response_format_available=True,
+            max_tokens=128000,
+            max_output_tokens=4096,
+        ),
     }

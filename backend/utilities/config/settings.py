@@ -13,6 +13,7 @@ DEFAULT_SETTINGS = {
         "gpt_35_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
         "gpt_4_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
         "gpt_4o_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
+        "gpt_4o_mini_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
         "gpt_4v_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
         "whisper_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},
         "tts_deployment": {"id": "", "endpoint_id": "", "endpoint": {"api_base": "", "api_key": ""}},

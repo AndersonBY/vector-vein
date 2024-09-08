@@ -25,7 +25,7 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "gpt-3.5",
+        "value": "gpt-4o-mini",
         "options": [
           {
             "value": "gpt-3.5",
@@ -38,6 +38,10 @@ export function createTemplateData() {
           {
             "value": "gpt-4o",
             "label": "gpt-4o"
+          },
+          {
+            "value": "gpt-4o-mini",
+            "label": "gpt-4o-mini"
           },
         ],
         "name": "llm_model",
