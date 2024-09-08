@@ -125,7 +125,7 @@ const localLlmModelSave = () => {
           <a-input v-model:value="localLlmForm.api_base" />
         </a-form-item>
         <a-form-item :label="t('settings.model_family_api_key')">
-          <a-input v-model:value="localLlmForm.api_key" />
+          <a-input-password v-model:value="localLlmForm.api_key" />
         </a-form-item>
         <a-form-item :label="t('settings.models')">
           <a-flex vertical gap="small">
