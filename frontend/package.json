@@ -34,6 +34,7 @@
     "jszip": "^3.10.1",
     "katex": "^0.16.11",
     "lodash-es": "^4.17.21",
+    "markdown-it-attrs": "^4.2.0",
     "markdown-it-github-alerts": "^0.3.0",
     "markmap-common": "^0.17.0",
     "markmap-lib": "^0.17.0",
@@ -44,13 +45,13 @@
     "reconnecting-websocket": "^4.4.0",
     "smplr": "^0.13.4",
     "uuid": "^9.0.1",
-    "vue": "^3.5.3",
+    "vue": "^3.5.4",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "0.2.0-beta.2",
     "vue-echarts": "^6.7.3",
     "vue-i18n": "^9.14.0",
     "vue-markdown-render": "^2.2.1",
-    "vue-router": "^4.4.3",
+    "vue-router": "^4.4.4",
     "xmind-generator": "^1.0.1"
   },
   "devDependencies": {
@@ -62,6 +63,6 @@
     "eslint-plugin-vue": "^9.28.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.4.3"
+    "vite": "^5.4.4"
   }
 }
