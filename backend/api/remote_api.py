@@ -77,3 +77,7 @@ class OfficialSiteAPI:
     def list_tags(self, payload):
         path = "/api/v1/client-software/tag/list"
         return request("GET", path, payload)
+
+    def get_document(self, payload):
+        path = "/api/v1/client-software/document/get"
+        return request("GET", path, payload)
