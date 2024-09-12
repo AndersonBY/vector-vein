@@ -120,7 +120,7 @@ const workflowSelectModal = reactive({
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.tools.WorkflowInvoke"
-    :debug="props.data.debug" documentPath="/help/docs/tools#h2-12">
+    :debug="props.data.debug" documentPath="/help/docs/tools#node-WorkflowInvoke">
     <template #main>
       <a-flex vertical gap="small">
         <div style="padding: 5px 10px;">

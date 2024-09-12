@@ -27,5 +27,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
     translatePrefix="components.nodes.mediaEditing.ImageEditing"
-    documentPath="/help/docs/media-editing#h2-4" />
+    documentPath="/help/docs/media-editing#node-ImageEditing" />
 </template>

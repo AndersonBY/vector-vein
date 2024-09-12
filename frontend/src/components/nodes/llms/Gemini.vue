@@ -26,5 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.Gemini" documentPath="/help/docs/language-models#h2-28" />
+    translatePrefix="components.nodes.llms.Gemini" documentPath="/help/docs/language-models#node-Gemini" />
 </template>

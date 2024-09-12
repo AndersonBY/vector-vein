@@ -37,5 +37,6 @@ watch(() => fieldsData.value.image_or_text, () => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.mediaEditing.ImageWatermark" documentPath="/help/docs/media-editing#h2-8" />
+    translatePrefix="components.nodes.mediaEditing.ImageWatermark"
+    documentPath="/help/docs/media-editing#node-ImageWatermark" />
 </template>

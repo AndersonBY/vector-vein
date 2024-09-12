@@ -225,7 +225,7 @@ const editProperty = () => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.llms.OpenAI"
-    :debug="props.data.debug" documentPath="/help/docs/language-models#h2-0">
+    :debug="props.data.debug" documentPath="/help/docs/language-models#node-OpenAI">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.llms.common.prompt')" required type="target"

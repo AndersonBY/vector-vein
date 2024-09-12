@@ -25,6 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" documentPath="/help/docs/web-crawlers#h2-4" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.webCrawlers.TextCrawler" />
+  <BaseNode :nodeId="id" :debug="props.data.debug" documentPath="/help/docs/web-crawlers#node-TextCrawler"
+    :fieldsData="fieldsData" translatePrefix="components.nodes.webCrawlers.TextCrawler" />
 </template>

@@ -26,5 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.tools.ImageSearch"
-    :debug="props.data.debug" documentPath="/help/docs/tools#h2-0" />
+    :debug="props.data.debug" documentPath="/help/docs/tools#node-ImageSearch" />
 </template>

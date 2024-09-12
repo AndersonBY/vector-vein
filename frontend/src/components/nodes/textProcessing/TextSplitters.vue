@@ -26,5 +26,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.textProcessing.TextSplitters" documentPath="/help/docs/text-processing#h2-16" />
+    translatePrefix="components.nodes.textProcessing.TextSplitters"
+    documentPath="/help/docs/text-processing#node-TextSplitters" />
 </template>

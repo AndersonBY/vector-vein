@@ -75,7 +75,8 @@ const loadTables = async (rid) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.relationalDb.GetTableInfo" documentPath="/help/docs/relational-db#h2-4">
+    translatePrefix="components.nodes.relationalDb.GetTableInfo"
+    documentPath="/help/docs/relational-db#node-GetTableInfo">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.relationalDb.GetTableInfo.database')" required type="target"

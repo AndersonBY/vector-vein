@@ -32,7 +32,8 @@ const showEditField = ref(false)
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.fileProcessing.FileUpload" documentPath="/help/docs/file-processing#h2-4">
+    translatePrefix="components.nodes.fileProcessing.FileUpload"
+    documentPath="/help/docs/file-processing#node-FileUpload">
     <template #main>
       <BaseField :name="fieldsData.files.display_name" required editable @edit="showEditField = true" type="target"
         v-model:data="fieldsData.files">

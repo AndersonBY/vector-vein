@@ -40,5 +40,5 @@ fieldsData.value.database.options = userDatabases.value.filter((database) => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.vectorDb.Search"
-    :debug="props.data.debug" documentPath="/help/docs/vector-db#h2-8" />
+    :debug="props.data.debug" documentPath="/help/docs/vector-db#node-Search" />
 </template>

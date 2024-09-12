@@ -72,7 +72,8 @@ const editorModal = reactive({
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" :debug="props.data.debug"
-    translatePrefix="components.nodes.tools.ProgrammingFunction" documentPath="/help/docs/tools#h2-4">
+    translatePrefix="components.nodes.tools.ProgrammingFunction"
+    documentPath="/help/docs/tools#node-ProgrammingFunction">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="fieldsData.language.display_name" required type="target" @delete="removeField(field)"

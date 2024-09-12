@@ -84,7 +84,7 @@ const collapseChanged = (data) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.relationalDb.SmartQuery" documentPath="/help/docs/relational-db#h2-0">
+    translatePrefix="components.nodes.relationalDb.SmartQuery" documentPath="/help/docs/relational-db#node-SmartQuery">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.relationalDb.SmartQuery.query')" required type="target"

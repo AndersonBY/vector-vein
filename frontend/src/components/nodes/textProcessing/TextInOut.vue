@@ -40,7 +40,7 @@ watch(() => fieldsData.value.input_type.value, (value) => {
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.textProcessing.TextInOut"
-    :debug="props.data.debug" documentPath="/help/docs/text-processing#h2-12">
+    :debug="props.data.debug" documentPath="/help/docs/text-processing#node-TextInOut">
     <template #main>
       <BaseField :name="fieldsData.text.display_name" required editable @edit="showEditField = true" type="target"
         v-model:data="fieldsData.text">

@@ -39,5 +39,5 @@ fieldsData.value.database.options = userRelationalDatabases.value.filter((databa
 
 <template>
   <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.relationalDb.RunSql"
-    :debug="props.data.debug" documentPath="/help/docs/relational-db#h2-8" />
+    :debug="props.data.debug" documentPath="/help/docs/relational-db#node-RunSql" />
 </template>

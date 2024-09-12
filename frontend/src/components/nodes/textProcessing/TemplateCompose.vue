@@ -133,7 +133,8 @@ const openTemplateEditor = ref(false)
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :width="300" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.textProcessing.TemplateCompose" documentPath="/help/docs/text-processing#h2-8">
+    translatePrefix="components.nodes.textProcessing.TemplateCompose"
+    documentPath="/help/docs/text-processing#node-TemplateCompose">
     <template #main>
       <a-flex vertical gap="small">
         <template v-for="(field, fieldIndex) in fieldsOrder" :key="fieldIndex">

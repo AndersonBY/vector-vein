@@ -33,5 +33,5 @@ watch(() => fieldsData.value.size.value, (value) => {
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
     translatePrefix="components.nodes.imageGeneration.StableDiffusion"
-    documentPath="/help/docs/image-generation#h2-0" />
+    documentPath="/help/docs/image-generation#node-StableDiffusion" />
 </template>

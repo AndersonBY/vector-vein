@@ -26,5 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.outputs.PictureRender" documentPath="/help/docs/outputs#h2-17" />
+    translatePrefix="components.nodes.outputs.PictureRender" documentPath="/help/docs/outputs#node-PictureRender" />
 </template>

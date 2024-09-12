@@ -26,5 +26,5 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.Deepseek" documentPath="/help/docs/language-models#h2-44" />
+    translatePrefix="components.nodes.llms.Deepseek" documentPath="/help/docs/language-models#node-Deepseek" />
 </template>

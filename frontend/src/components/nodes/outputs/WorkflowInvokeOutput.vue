@@ -26,5 +26,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.outputs.WorkflowInvokeOutput" documentPath="/help/docs/outputs#h2-30" />
+    translatePrefix="components.nodes.outputs.WorkflowInvokeOutput"
+    documentPath="/help/docs/outputs#node-WorkflowInvokeOutput" />
 </template>

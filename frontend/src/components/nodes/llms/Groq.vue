@@ -25,6 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.Groq" documentPath="/help/docs/language-models#h2-44" />
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" translatePrefix="components.nodes.llms.Groq"
+    documentPath="/help/docs/language-models#node-Groq" />
 </template>
