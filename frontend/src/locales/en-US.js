@@ -757,6 +757,7 @@ export default {
         'delete_node': 'Delete node',
         'run_time': 'Run time {time}s',
         'no_run_record': 'No run record',
+        'view_node_help_document': 'Quickly view node help documents',
       },
       baseField: {
         'show_in_use_interface': 'Whether to display in the use interface',
@@ -1730,6 +1731,11 @@ export default {
     },
     inputSearch: {
       input_search_text: 'Search',
+    },
+    help: {
+      documentModal: {
+        'load_error': 'Load failed',
+      },
     },
   },
   layouts: {

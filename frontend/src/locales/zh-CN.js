@@ -757,6 +757,7 @@ export default {
         'delete_node': '删除节点',
         'run_time': '运行时间 {time}s',
         'no_run_record': '无运行记录',
+        'view_node_help_document': '快速查看节点帮助文档',
       },
       baseField: {
         'show_in_use_interface': '是否在使用界面显示',
@@ -1730,6 +1731,11 @@ export default {
     },
     inputSearch: {
       input_search_text: '搜索',
+    },
+    help: {
+      documentModal: {
+        'load_error': '加载失败',
+      },
     },
   },
   layouts: {
