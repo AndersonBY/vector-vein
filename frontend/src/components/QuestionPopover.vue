@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue"
-import { Help } from '@icon-park/vue-next'
+import { Help, Share } from '@icon-park/vue-next'
 
 const props = defineProps({
   contents: {
@@ -18,6 +18,10 @@ const props = defineProps({
     type: String,
     default: '#28c5e5',
   },
+  size: {
+    type: Number,
+    default: 14,
+  },
 })
 const overlayClassName = ref(['question-popover'])
 if (props.fixedWidth) overlayClassName.value.push('question-popover-fixed-width')
@@ -33,6 +37,7 @@ if (props.fixedWidth) overlayClassName.value.push('question-popover-fixed-width'
         <a-typography-paragraph v-else-if="content.type == 'link'">
           <a-typography-link :href="content.url" target="_blank">
             {{ content.text }}
+            <Share />
           </a-typography-link>
         </a-typography-paragraph>
         <div v-else>
@@ -41,7 +46,7 @@ if (props.fixedWidth) overlayClassName.value.push('question-popover-fixed-width'
       </template>
       <slot></slot>
     </template>
-    <Help style="margin: 0 2px;" :fill="color" />
+    <Help style="margin: 0 2px;" :size="size" :fill="color" />
   </a-popover>
 </template>
 
