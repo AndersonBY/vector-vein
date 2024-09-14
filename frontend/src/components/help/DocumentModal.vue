@@ -34,8 +34,8 @@ const loadDocumentData = async () => {
       slug: props.slug,
       node_type: props.nodeType
     })
-    if (response.data.status === 200) {
-      documentData.value = response.data.data
+    if (response.status === 200) {
+      documentData.value = response.data
     } else {
       throw new Error('获取文档数据失败')
     }
