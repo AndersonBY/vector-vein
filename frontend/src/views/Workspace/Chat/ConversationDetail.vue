@@ -89,12 +89,20 @@ onBeforeMount(async () => {
     await sendMessage(unsentChats.value[0].content, true)
     userChatsStore.clearUnsentChats()
   }
+  nextTick(() => {
+    if (chatBodyElementRef.value) {
+      chatBodyElementRef.value.addEventListener('scroll', handleScroll)
+    }
+  })
 })
 
 onBeforeUnmount(() => {
   if (chatSocket !== null) {
     chatSocket.close()
     chatSocket = null
+  }
+  if (chatBodyElementRef.value) {
+    chatBodyElementRef.value.removeEventListener('scroll', handleScroll)
   }
 
   window.removeEventListener('resize', updateWidth)
@@ -114,6 +122,8 @@ const conversation = ref({ settings: { agent_audio_reply: false } })
 const messages = ref([])
 const userInput = ref('')
 const attachments = ref([])
+
+const userScrolled = ref(false)
 
 const chatBodyElementRef = ref(null)
 
@@ -167,17 +177,21 @@ const sendWebsocketMsg = async (msg) => {
         aiMessage.workflow_invoke_step = 'generating_params'
         aiMessage.content_type = 'WKF'
         aiMessage.content.text += data.content ?? ''
-        nextTick(() => {
-          navigateToElementBottom(chatBodyElementRef.value)
-        })
+        if (!userScrolled.value) {
+          nextTick(() => {
+            navigateToElementBottom(chatBodyElementRef.value)
+          })
+        }
       } else if (data.workflow_invoke_step === 'wait_for_invoke') {
         aiMessage.workflow_invoke_step = 'wait_for_invoke'
         aiMessage.content_type = 'WKF'
         aiMessage.content.text += data.content ?? ''
         aiMessage.metadata.selected_workflow = data.selected_workflow
-        nextTick(() => {
-          navigateToElementBottom(chatBodyElementRef.value)
-        })
+        if (!userScrolled.value) {
+          nextTick(() => {
+            navigateToElementBottom(chatBodyElementRef.value)
+          })
+        }
       } else if (data.tool_calls?.length > 0) {
         aiMessage.content_type = 'WKF'
         aiMessage.content.tool = data.tool_calls[0].function.name
@@ -206,7 +220,9 @@ const sendWebsocketMsg = async (msg) => {
       messages.value[messages.value.length - 1][0] = JSON.parse(JSON.stringify(aiMessage))
       clearAiMessage()
     }
-    navigateToElementBottom(chatBodyElementRef.value)
+    if (!userScrolled.value) {
+      navigateToElementBottom(chatBodyElementRef.value)
+    }
   }
   chatSocket.onopen = () => {
     websocketStatus.value = 'success'
@@ -242,9 +258,11 @@ const sendMessage = async (content, needTitle = false) => {
     attachments: attachments.value,
   }
   messages.value.push([userMessage])
-  nextTick(() => {
-    navigateToElementBottom(chatBodyElementRef.value)
-  })
+  if (!userScrolled.value) {
+    nextTick(() => {
+      navigateToElementBottom(chatBodyElementRef.value)
+    })
+  }
   const res = await messageAPI('send', {
     need_title: needTitle,
     parent_mid: parentMid,
@@ -286,9 +304,11 @@ const onAppendAnswer = async (mid) => {
   aiMessage.create_time = new Date().getTime()
 
   messages.value.push([aiMessage])
-  nextTick(() => {
-    navigateToElementBottom(chatBodyElementRef.value)
-  })
+  if (!userScrolled.value) {
+    nextTick(() => {
+      navigateToElementBottom(chatBodyElementRef.value)
+    })
+  }
 
   sendWebsocketMsg(res.data)
 }
@@ -337,6 +357,15 @@ const handleDrop = (event) => {
         message.success(t('components.workspace.uploaderFieldUse.upload_success', { file: name }))
       })
     }
+  }
+}
+
+const handleScroll = () => {
+  const element = chatBodyElementRef.value
+  if (element) {
+    const { scrollTop, scrollHeight, clientHeight } = element
+    // 如果用户向上滚动超过100px,我们认为用户正在查看历史消息
+    userScrolled.value = scrollHeight - scrollTop - clientHeight > 100
   }
 }
 </script>
