@@ -22,7 +22,7 @@ import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
-import { ObjectHasher } from '@/utils/util'
+import { ObjectHasher, deepCopy } from '@/utils/util'
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'
@@ -60,7 +60,7 @@ const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
 const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
 
 const savedWorkflowHash = ref('')
-const hasher = new ObjectHasher(['data.viewport'])
+const hasher = new ObjectHasher(['data.viewport', 'data.related_workflows'])
 const currentWorkflow = ref({})
 const elements = ref([])
 const diagnosisRecord = ref(userWorkflowsStore.diagnosisRecord)
