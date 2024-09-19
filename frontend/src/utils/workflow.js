@@ -165,9 +165,13 @@ export const getUIDesignFromWorkflow = (workflowData) => {
   let triggerNodes = workflowData.data?.ui?.triggerNodes || []
   let unusedTriggerNodes = JSON.parse(JSON.stringify(triggerNodes))
   let workflowInvokeOutputNodes = []
+  let humanFeedbackNodes = []
+  let edges = []
 
   workflowData.data.nodes.forEach((node) => {
-    if (node.category == 'triggers') {
+    if (node.type == 'HumanFeedback') {
+      humanFeedbackNodes.push(node)
+    } else if (node.category == 'triggers') {
       triggerNodes.push(node)
       const nodeIndex = unusedTriggerNodes.findIndex((n) => n.id == node.id)
       unusedTriggerNodes.splice(nodeIndex, 1)
@@ -178,6 +182,10 @@ export const getUIDesignFromWorkflow = (workflowData) => {
         }
       } else if (node.type == 'Audio') {
         if (!node.data.template.show_player.value) {
+          return
+        }
+      } else if (node.type == 'Document') {
+        if (!node.data.template?.show_local_file?.value) {
           return
         }
       } else if (node.type == 'Mindmap') {
@@ -263,11 +271,22 @@ export const getUIDesignFromWorkflow = (workflowData) => {
     triggerNodes.splice(nodeIndex, 1)
   })
 
+  edges = (workflowData.data.edges || []).map((edge) => {
+    return {
+      source: edge.source,
+      target: edge.target,
+      sourceHandle: edge.sourceHandle,
+      targetHandle: edge.targetHandle,
+    }
+  })
+
   return {
     inputFields,
     outputNodes,
     triggerNodes,
     workflowInvokeOutputNodes,
+    humanFeedbackNodes,
+    edges,
   }
 }
 
@@ -318,8 +337,20 @@ export function extractModels(workflow) {
         models.add('ChatGLM')
       } else if (node.type == 'GptVision') {
         models.add('OpenAI')
+      } else if (node.type == 'QwenVision') {
+        models.add('AliyunQwen')
       }
     }
   })
   return models
+}
+
+export function getNodeConnectedNodes(sourceNodeId, handle, edges) {
+  let connectedNodes = []
+  edges.forEach((edge) => {
+    if (edge.source == sourceNodeId && edge.sourceHandle == handle) {
+      connectedNodes.push(edge.target)
+    }
+  })
+  return connectedNodes
 }
