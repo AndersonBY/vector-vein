@@ -25,31 +25,23 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku",
+        "value": "claude-3-haiku-20240307",
         "options": [
           {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
+            "value": "claude-3-5-sonnet-20240620",
+            "label": "claude-3-5-sonnet-20240620"
           },
           {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
+            "value": "claude-3-opus-20240229",
+            "label": "claude-3-opus-20240229"
           },
           {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
+            "value": "claude-3-sonnet-20240229",
+            "label": "claude-3-sonnet-20240229"
           },
           {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
-          },
-          {
-            "value": "claude-2.1",
-            "label": "claude-2.1"
-          },
-          {
-            "value": "claude-instant-1.2",
-            "label": "claude-instant-1.2"
+            "value": "claude-3-haiku-20240307",
+            "label": "claude-3-haiku-20240307"
           },
         ],
         "name": "llm_model",
