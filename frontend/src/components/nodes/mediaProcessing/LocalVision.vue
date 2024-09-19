@@ -36,17 +36,17 @@ watch(() => fieldsData.value.images_or_urls, () => {
 const userSettings = useUserSettingsStore()
 const { setting } = storeToRefs(userSettings)
 
-fieldsData.value.model_family.options = setting.value.data?.local_llms?.map((llm) => ({
-  value: llm.model_family,
-  text: llm.model_family,
+fieldsData.value.model_family.options = Object.keys(setting.value.data?.custom_llms)?.map((llm) => ({
+  value: llm,
+  text: llm,
 }))
 
 fieldsData.value.llm_model.options = computed(() => {
   const modelFamily = fieldsData.value.model_family.value
-  const llm = setting.value.data?.local_llms?.find((llm) => llm.model_family === modelFamily)
-  return llm ? llm.models.map((model) => ({
-    value: model.model_id,
-    text: model.model_label,
+  const models = setting.value.data?.custom_llms[modelFamily]
+  return models ? models.map((model) => ({
+    value: model,
+    text: model,
   })) : []
 })
 </script>
