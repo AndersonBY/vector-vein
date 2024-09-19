@@ -1,6 +1,6 @@
  [English](README_en.md) | [简体中文](README_zh.md) | 日本語
 
- [![ベクトル静脈](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
+ [![ベクトル静脈](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.com)
 
 # 🔀 ベクトル静脈 VectorVein
 
@@ -8,7 +8,7 @@ AIの力を利用して、個人の知識ベースと自動化ワークフロー
 
 プログラミング不要で、ドラッグ＆ドロップだけで強力なワークフローを作成し、すべてのタスクを自動化します。
 
- [![オンライン版ベクトル静脈](resources/images/demo-zh.gif)](https://github.com/AndersonBY/vector-vein)
+ [![オンライン版ベクトル静脈](resources/images/demo-en.gif)](https://github.com/AndersonBY/vector-vein)
 
 ベクトル静脈は、[LangChain](https://github.com/hwchase17/langchain) および [langflow](https://github.com/logspace-ai/langflow) に触発されて開発されたノーコードAIワークフローソフトウェアであり、大規模言語モデルの強力な能力を組み合わせ、ユーザーが簡単なドラッグ＆ドロップで日常のさまざまなワークフローをインテリジェントかつ自動化することを目的としています。
 
@@ -30,37 +30,51 @@ VectorVeinはpywebviewを使用して構築されており、webview2ランタ�
 
 ソフトウェアのほとんどのワークフローやエージェントはAI大規模言語モデルの使用を伴うため、少なくとも1つの大規模言語モデルの有効な設定を提供する必要があります。ワークフローでは、使用する大規模言語モデルをインターフェースで確認できます。以下の画像のように。
 
-![ワークフローで使用されるLLM](resources/images/workflow-llm-use-zh.jpg)
+![ワークフローで使用されるLLM](resources/images/workflow-llm-use-en.jpg)
 
-#### リモート大規模言語モデルインターフェースの設定
+#### APIエンドポイント設定
 
-ソフトウェアが正常に開いたら、設定ボタンをクリックし、「大規模言語モデル」タブでOpenAI/Moonshot/零一万勿/智谱AI/AnthropicのAPIキーを入力して、ローカル以外のAI機能を使用します。
+v0.2.10から、VectorPulseはAPIエンドポイントと大規模言語モデルの設定を分離し、同じ大規模言語モデルに対して複数のAPIエンドポイントを設定できるようになりました。
 
-![LLM設定](resources/images/settings1-zh.jpg)
+![APIエンドポイント設定](resources/images/endpoint-settings_en-US.jpg)
 
-#### ローカル大規模言語モデルインターフェースの設定
+ソフトウェアが正常に起動した後、設定を開くボタンをクリックすると、各APIエンドポイントの情報を必要に応じて設定したり、カスタムAPIエンドポイントを追加したりできます。現在、APIエンドポイントはOpenAI互換のインターフェースをサポートしており、LM-Studio、Ollama、vLLMなどのローカルで実行されるサービスに接続できます。
 
-ローカル大規模言語モデルを使用する場合は、「ローカル大規模言語モデル」タブでローカルモデルの設定情報を入力します。現在、OpenAI互換のインターフェース（LM-Studio、Ollama、vLLMなど）をサポートしています。
-
-![ローカルLLM設定](resources/images/settings2-zh.jpg)
-
-> LM-StudioのAPIベースは通常http://localhost:1234/v1/です。
+> LM-StudioのAPIベースは通常 http://localhost:1234/v1/ です。
 > 
-> OllamaのAPIベースは通常http://localhost:11434/v1/です。
->
-> 設定を完了したら、まず「モデルファミリーを保存」をクリックし、その後「設定を保存」をクリックします。
+> OllamaのAPIベースは通常 http://localhost:11434/v1/ です。
+
+#### リモート大規模言語モデルインターフェース設定
+
+各モデルの具体的な情報を `Remote LLMs` タブで設定してください。
+
+![LLM設定](resources/images/remote-llms-settings_en-US.jpg)
+
+任意のモデルをクリックして、その具体的な設定を行います。
+
+![LLM設定](resources/images/remote-llms-settings-2_en-US.jpg)
+
+`Model Key` は大規模モデルの標準名であり、通常は調整する必要はありません。`Model ID` は実際のデプロイ時に使用される名前で、通常は `Model Key` と一致します。ただし、Azure OpenAIのようなデプロイでは、`Model ID` はユーザー定義であり、実際の状況に応じて調整する必要があります。
+
+#### カスタム大規模言語モデルインターフェース設定
+
+カスタム大規模言語モデルを使用する場合、`Custom LLMs` タブでカスタムモデルの設定情報を入力してください。現在、OpenAI互換のインターフェース（LM-Studio、Ollama、vLLMなど）がサポートされています。
+
+![カスタムLLM設定](resources/images/custom-llms-settings_en-US.jpg)
+
+まず、カスタムモデルファミリーを追加し、次にカスタムモデルを追加します。`Save Settings` ボタンをクリックするのを忘れないでください。
 
 #### 音声認識の設定
 
 現在、OpenAI/Deepgramの音声認識サービスがサポートされています。OpenAIサービスの場合、大規模言語モデルと同じ設定を使用するか、OpenAI API互換の音声認識サービス（Groqなど）を設定できます。
 
-![音声認識設定](resources/images/asr-settings1-zh.jpg)
+![音声認識設定](resources/images/asr-settings1-en.jpg)
 
 ### 埋め込み設定
 
 ベクトルデータを使用してベクトル検索を実行する必要がある場合、OpenAIが提供する埋め込み（Embedding）サービスを使用するか、「埋め込みモデル」設定でローカルの埋め込みサービスを設定できます。現在、サポートされているローカル埋め込みサービスは、[text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference)を自分でセットアップする必要があります。
 
-![ローカル埋め込み設定](resources/images/embedding-settings1-zh.jpg)
+![ローカル埋め込み設定](resources/images/embedding-settings1-en.jpg)
 
 ### ショートカット設定
 
@@ -68,7 +82,7 @@ VectorVeinはpywebviewを使用して構築されており、webview2ランタ�
 
 **スクリーンショットを含む**とは、会話を開始すると同時に画面のスクリーンショットを撮り、会話に添付ファイルとしてアップロードすることを意味します。
 
-![ショートカット設定](resources/images/shortcut-settings1-zh.jpg)
+![ショートカット設定](resources/images/shortcut-settings1-en.jpg)
 
 #### ローカルのStable Diffusion APIについて
 
@@ -95,19 +109,19 @@ set COMMANDLINE_ARGS=--api
 
 各ワークフローには**ユーザーインターフェース**と**エディターインターフェース**があります。ユーザーインターフェースは日常のワークフロー操作に使用され、エディターインターフェースはワークフローの編集に使用されます。通常、ワークフローを設計した後は、ユーザーインターフェースで実行するだけで、エディターインターフェースで変更する必要はありません。
 
-![ユーザーインターフェース](resources/images/user-interface1-zh.jpg)
+![ユーザーインターフェース](resources/images/user-interface1-en.jpg)
 
 ユーザーインターフェースは上記のように表示され、入力、出力、およびトリガー（通常は実行ボタン）の3つの部分に分かれています。日常の使用では、直接内容を入力し、実行ボタンをクリックして結果を出力エリアで確認できます。
 
 実行されたワークフローを表示するには、**ワークフロー実行記録**をクリックします。以下の図のように表示されます。
 
-![ワークフロー実行記録](resources/images/workflow-record-zh.jpg)
+![ワークフロー実行記録](resources/images/workflow-record-en.jpg)
 
 ### ✏️ ワークフローの作成
 
 公式テンプレートを自分のワークフローに追加するか、新しいワークフローを作成できます。最初は公式テンプレートを使用してワークフローの使用方法に慣れることをお勧めします。
 
-![ワークフローエディターインターフェース](resources/images/editor-zh.jpg)
+![ワークフローエディターインターフェース](resources/images/editor-en.jpg)
 
 ワークフローエディターインターフェースは上記のように表示されます。上部で名前、タグ、および詳細な説明を編集できます。左側はワークフローのノードリスト、右側はワークフローのキャンバスです。左側から必要なノードをドラッグしてキャンバスに配置し、ノードを接続してワークフローを形成します。
 
@@ -164,6 +178,26 @@ pnpm install
 ```bash
 pdm run build-front
 ```
+
+### データベース構造の変更
+
+> [!WARNING]
+> データベース構造を変更する際は、まずデータベース（設定された data ディレクトリ内の `my_database.db`）をバックアップしてください。そうしないとデータが失われる可能性があります。
+
+`backend/models` ディレクトリ下的モデル構造を変更した場合、以下のコマンドを `backend` ディレクトリで実行してデータベース構造を変更する必要があります：
+
+まず Python 環境に入ります：
+
+```bash
+pdm run python
+```
+
+```python
+from models import create_migrations
+create_migrations("migration_name")  # 変更内容に基づいて名前を付けます
+```
+
+操作が完了すると、`backend/migrations` ディレクトリ下に新しい移行ファイルが生成されます。移行ファイルの名称は `xxx_migration_name.py` となります。まず移行ファイルの内容が正しいか確認することをお勧めします。その後、主プログラムを再実行し、主プログラムが自動的に移行を実行します。
 
 ### ソフトウェアのパッケージング
 

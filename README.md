@@ -32,23 +32,37 @@ Most workflows and agents in the software involve the use of AI large language m
 
 ![LLM used in workflow](resources/images/workflow-llm-use-en.jpg)
 
+#### API Endpoint Configuration
+
+Starting from v0.2.10, VectorPulse separates API endpoints and large language model configurations, allowing multiple API endpoints for the same large language model.
+
+![API Endpoint Configuration](resources/images/endpoint-settings_en-US.jpg)
+
+After the software opens normally, click the open settings button, and you can configure the information for each API endpoint as needed, or add custom API endpoints. Currently, the API endpoints support OpenAI-compatible interfaces, which can be connected to locally running services such as LM-Studio, Ollama, vLLM, etc.
+
+> The API Base for LM-Studio is typically http://localhost:1234/v1/
+> 
+> The API Base for Ollama is typically http://localhost:11434/v1/
+
 #### Remote Large Language Model Interface Configuration
 
-After the software opens normally, click the settings button, and enter the API Key for OpenAI/Moonshot/Zhipu AI/Anthropic in the "Large Language Models" tab to use non-local AI features.
+Please configure the specific information for each model in the `Remote LLMs` tab.
 
-![LLM Settings](resources/images/settings1-en.jpg)
+![LLM Settings](resources/images/remote-llms-settings_en-US.jpg)
 
-#### Local Large Language Model Interface Configuration
+Click on any model to set its specific configuration, as shown below.
 
-If using a local large language model, fill in the local model configuration information in the `Local Large Language Model` tab. Currently supports OpenAI-compatible interfaces, such as LM-Studio, Ollama, vLLM, etc.
+![LLM Settings](resources/images/remote-llms-settings-2_en-US.jpg)
 
-![Local LLM Settings](resources/images/settings2-en.jpg)
+The `Model Key` is the standard name of the large model and generally does not need to be adjusted. The `Model ID` is the name used during actual deployment, which usually matches the `Model Key`. However, in deployments like Azure OpenAI, the `Model ID` is user-defined and therefore needs to be adjusted according to the actual situation.
 
-> The API Base for LM-Studio is usually http://localhost:1234/v1/
-> 
-> The API Base for Ollama is usually http://localhost:11434/v1/
->
-> After completing the configuration, click `Save Model Family` first, and then click `Save Settings`.
+#### Custom Large Language Model Interface Configuration
+
+If using a custom large language model, fill in the custom model configuration information on the `Custom LLMs` tab. Currently, interfaces compatible with OpenAI are supported, such as LM-Studio, Ollama, vLLM, etc.
+
+![Custom LLM Settings](resources/images/custom-llms-settings_en-US.jpg)
+
+First, add a custom model family, then add a custom model. Don't forget to click the `Save Settings` button.
 
 #### Speech Recognition Configuration
 
@@ -166,6 +180,26 @@ After the frontend dependencies are installed, you need to compile the frontend 
 ```bash
 pdm run build-front
 ```
+
+### Database Structure Changes
+
+> [!WARNING]
+> Before making changes to the database structure, please back up your database (located at `my_database.db` in your configured `data` directory), otherwise you may lose data.
+
+If you have modified the model structure in `backend/models`, you need to run the following commands in the `backend` directory to update the database structure:
+
+First, enter the Python environment:
+
+```bash
+pdm run python
+```
+
+```python
+from models import create_migrations
+create_migrations("migration_name")  # Name according to the changes made
+```
+
+After the operation, a new migration file will be generated in the `backend/migrations` directory, with the filename format `xxx_migration_name.py`. It is recommended to check the content of the migration file first to ensure it is correct, and then restart the main program. The main program will automatically execute the migration.
 
 ### Software Packaging
 

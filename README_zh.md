@@ -32,23 +32,37 @@
 
 ![工作流使用的 LLM](resources/images/workflow-llm-use-zh.jpg)
 
-#### 远程大语言模型接口配置
+#### API 端点配置
 
-软件正常打开后点击打开设置按钮，请在 `大语言模型` 标签页填入 OpenAI/Moonshot/零一万勿/智谱 AI/Anthropic 等的 API Key 以使用非本地的 AI 功能。
+从 v0.2.10 开始，向量脉络将 API 端点和大语言模型配置分开，同一个大语言模型可以有多个 API 端点。
 
-![LLM 设置](resources/images/settings1-zh.jpg)
+![API 端点配置](resources/images/endpoint-settings_zh-CN.jpg)
 
-#### 本地大语言模型接口配置
-
-如果使用本地大语言模型在 `本地大语言模型` 标签页填入本地的模型配置信息。目前支持 OpenAI 兼容的接口，如 LM-Studio、Ollama、vLLM 等。
-
-![本地 LLM 设置](resources/images/settings2-zh.jpg)
+软件正常打开后点击打开设置按钮，您可以根据需要配置每个 API 端点的信息，也可以新增自定义的 API 端点。目前的 API 端点支持 OpenAI 兼容的接口，可接入本地运行的如 LM-Studio、Ollama、vLLM 等。
 
 > LM-Studio 的 API Base 通常为 http://localhost:1234/v1/
 > 
 > Ollama 的 API Base 通常为 http://localhost:11434/v1/
->
-> 注意填写完配置后先点 `保存模型系列` 然后再点 `保存设置`。
+
+#### 远程大语言模型接口配置
+
+请在 `远程大语言模型` 标签页配置每个模型的具体信息。
+
+![LLM 设置](resources/images/remote-llms-settings_zh-CN.jpg)
+
+单击任意模型后可以设置该模型的具体配置，如下图。
+
+![LLM 设置](resources/images/remote-llms-settings-2_zh-CN.jpg)
+
+其中 `模型 Key` 是大模型的标准名称，一般不需要调整。`模型 ID` 是实际部署时的名称，一般情况下与 `模型 Key` 一致，但是在 Azure OpenAI 等部署中 `模型 ID` 是由用户自定义的，因此需要根据实际情况调整。
+
+#### 自定义大语言模型接口配置
+
+如果使用自定义大语言模型在 `自定义大语言模型` 标签页填入自定义的模型配置信息。目前支持 OpenAI 兼容的接口，如 LM-Studio、Ollama、vLLM 等。
+
+![自定义 LLM 设置](resources/images/custom-llms-settings_zh-CN.jpg)
+
+首先增加自定义模型系列，然后增加自定义模型。不要忘记点击 `保存设置` 按钮。
 
 #### 语音识别配置
 
@@ -164,6 +178,26 @@ pnpm install
 ```bash
 pdm run build-front
 ```
+
+### 数据库结构变更
+
+> [!WARNING]
+> 进行数据库结构变更时，请先备份数据库（在您配置的 data 目录下的 `my_database.db`），否则可能会导致数据丢失。
+
+如果修改了 `backend/models` 下的模型结构，需要在 `backend` 目录下运行以下命令进行数据库结构变更：
+
+首先进入 Python 环境：
+
+```bash
+pdm run python
+```
+
+```python
+from models import create_migrations
+create_migrations("migration_name")  # 根据变更内容命名
+```
+
+操作完成后会在 `backend/migrations` 目录下生成一个新的迁移文件，迁移文件名称为 `xxx_migration_name.py`。建议先检查迁移文件内容是否正确，然后重新运行主程序，主程序会自动执行迁移。
 
 ### 软件打包
 
