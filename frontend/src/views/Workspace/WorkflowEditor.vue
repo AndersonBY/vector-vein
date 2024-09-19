@@ -22,7 +22,7 @@ import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
-import { hashObject } from "@/utils/util"
+import { ObjectHasher } from '@/utils/util'
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'
@@ -60,6 +60,7 @@ const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
 const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
 
 const savedWorkflowHash = ref('')
+const hasher = new ObjectHasher(['data.viewport'])
 const currentWorkflow = ref({})
 const elements = ref([])
 const diagnosisRecord = ref(userWorkflowsStore.diagnosisRecord)
@@ -165,10 +166,15 @@ onMounted(async () => {
     node.data.template = sortedTemplate
   })
   currentWorkflow.value.tags = currentWorkflow.value.tags.map(tag => tag.tid)
-  fromObject(currentWorkflow.value.data)
-  elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
-  savedWorkflowHash.value = hashObject(currentWorkflow.value)
   loading.value = false
+
+  nextTick(() => {
+    elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
+    savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
+    if (currentWorkflow.value.data.viewport) {
+      setViewport(currentWorkflow.value.data.viewport)
+    }
+  })
 })
 
 const updateWorkflowData = () => {
@@ -224,8 +230,13 @@ const saveWorkflow = async () => {
       ...currentWorkflow.value,
     })
     if (response.status == 200) {
-      message.success(t('workspace.workflowSpace.save_success'))
-      savedWorkflowHash.value = hashObject(currentWorkflow.value)
+      message.success({
+        content: () => t('workspace.workflowSpace.save_success'),
+        style: {
+          marginTop: '60px',
+        },
+      })
+      savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
     } else if (response.status == 400) {
       message.error(t('workspace.workflowSpace.workflow_cant_invoke_itself'))
     } else {
@@ -268,7 +279,7 @@ const exitConfirm = () => {
     ...workflowData,
     ui: uiDesign,
   }
-  if (savedWorkflowHash.value != hashObject(currentWorkflow.value)) {
+  if (savedWorkflowHash.value != hasher.hash(currentWorkflow.value)) {
     exitModalOpen.value = true
   } else {
     routerBack()
@@ -276,16 +287,18 @@ const exitConfirm = () => {
 }
 
 const {
+  removeNodes,
+  addNodes,
   addEdges,
   removeEdges,
   updateEdge,
   onConnect,
   toObject,
-  fromObject,
   findNode,
   fitView,
-  viewport,
+  setViewport,
   vueFlowRef,
+  viewport,
   edges,
   nodes,
 } = useVueFlow()
@@ -362,16 +375,7 @@ const nodeEvents = {
     }
   },
   delete: (data, nodeId) => {
-    elements.value = elements.value.filter((element) => element.id !== nodeId)
-    elements.value = elements.value.filter((element) => {
-      if (element.source && element.source === nodeId) {
-        return false
-      }
-      if (element.target && element.target === nodeId) {
-        return false
-      }
-      return true
-    })
+    removeNodes([nodeId])
   },
   clone: (data, nodeId) => {
     const node = findNode(nodeId)
@@ -381,7 +385,7 @@ const nodeEvents = {
     newNode.selected = true
     newNode.position.x += 50
     newNode.position.y -= 50
-    elements.value.push(newNode)
+    addNodes([newNode])
   },
 }
 watch(() => nodeMessagesCount.value, () => {
@@ -414,6 +418,42 @@ const onTouchMove = (event) => {
   }
 }
 
+const addNodeToCanvas = (nodeType, position, updateTemplateData = {}, extraData = {}) => {
+  const nodeTemplateData = nodeTemplateCreators[nodeType]()
+  nodeTemplateData.template = {
+    ...nodeTemplateData.template,
+    ...updateTemplateData,
+  }
+
+  // 翻译节点模板数据中的 display_name
+  Object.entries(nodeTemplateData.template).forEach(([key, value]) => {
+    const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}`
+    if (te(translationKey) && value.display_name) {
+      value.display_name = t(translationKey)
+    }
+    if (!value.options) return
+
+    value.options = value.options.map(item => {
+      const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}_${item.value}`
+      if (te(translationKey)) {
+        item.label = t(translationKey)
+      }
+      return item
+    })
+  })
+
+  const newNode = {
+    id: uuidv4(),
+    type: nodeType,
+    category: nodeCategoriesReverse[nodeType],
+    position,
+    data: nodeTemplateData,
+    ...extraData,
+  }
+
+  addNodes([newNode])
+}
+
 const onNewNodeDragEnd = (event) => {
   if (ghostMenuItem) {
     document.body.removeChild(ghostMenuItem)
@@ -437,37 +477,12 @@ const onNewNodeDragEnd = (event) => {
     dropZoneY = event.clientY - dropZoneRect.top
   }
 
-  const nodeTemplateData = nodeTemplateCreators[nodeType]()
-
-  // 翻译节点模板数据中的 display_name
-  Object.entries(nodeTemplateData.template).forEach(([key, value]) => {
-    const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}`
-    if (te(translationKey) && value.display_name) {
-      value.display_name = t(translationKey)
-    }
-    if (!value.options) return
-
-    value.options = value.options.map(item => {
-      const translationKey = `components.nodes.${nodeCategoriesReverse[nodeType]}.${nodeType}.${key}_${item.value}`
-      if (te(translationKey)) {
-        item.label = t(translationKey)
-      }
-      return item
-    })
-  })
-
-  const newNode = {
-    id: uuidv4(),
-    type: nodeType,
-    category: nodeCategoriesReverse[nodeType],
-    position: {
-      x: (dropZoneX - x) / zoom,
-      y: (dropZoneY - y) / zoom,
-    },
-    data: nodeTemplateData,
+  const position = {
+    x: (dropZoneX - x) / zoom,
+    y: (dropZoneY - y) / zoom,
   }
 
-  elements.value.push(newNode)
+  addNodeToCanvas(nodeType, position)
 }
 
 const nodeFiles = import.meta.glob('@/components/nodes/*/*.vue', { eager: true })
@@ -520,7 +535,7 @@ const codeEditorModal = reactive({
         })
       }
     })
-    savedWorkflowHash.value = hashObject(currentWorkflow.value)
+    savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
   },
 })
 
