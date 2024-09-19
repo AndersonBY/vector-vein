@@ -15,12 +15,13 @@ import {
   KeyboardOne,
   MenuUnfoldOne,
   Communication,
+  DatabaseNetworkPoint,
 } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
-import LocalLLMSettings from "@/components/settings/LocalLLMSettings.vue"
+import EndpointSettings from "@/components/settings/EndpointSettings.vue"
 import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
-import AzureOpenAISettings from "@/components/settings/AzureOpenAISettings.vue"
+import LLMStandardSettings from "@/components/settings/LLMStandardSettings.vue"
 import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
 import { settingAPI, hardwareAPI } from "@/api/user"
@@ -76,7 +77,7 @@ const selectFolder = async (settingsKey) => {
     if (!selectedFolder) {
       return
     }
-    settingForm.data[settingsKey] = selectedFolder[0]
+    settingForm.data[settingsKey] = selectedFolder
   } catch (error) {
     console.error(error)
   }
@@ -92,7 +93,7 @@ const saveSetting = async (updateShortcuts = false) => {
   chatModelOptions.value = getChatModelOptions()
 }
 
-const selectedKeys = ref(['llms'])
+const selectedKeys = ref(['endpoints'])
 const collapsed = ref(false)
 const sidebarHover = ref(false)
 const onCollapse = (switchToCollapsed) => {
@@ -117,17 +118,23 @@ const websiteDomainOptions = [
         @mouseleave="sidebarHover = false">
         <a-menu v-model:selectedKeys="selectedKeys" @click="menuClick" :theme="componentTheme" mode="inline"
           style="height: 100%; padding-bottom: 40px;">
+          <a-menu-item key="endpoints">
+            <template #icon>
+              <DatabaseNetworkPoint />
+            </template>
+            {{ t('settings.endpoints') }}
+          </a-menu-item>
           <a-menu-item key="llms">
             <template #icon>
               <Robot />
             </template>
             {{ t('settings.llms') }}
           </a-menu-item>
-          <a-menu-item key="local_llms">
+          <a-menu-item key="custom_llms">
             <template #icon>
               <Robot />
             </template>
-            {{ t('settings.local_llms') }}
+            {{ t('settings.custom_llms') }}
           </a-menu-item>
           <a-menu-item key="asr">
             <template #icon>
@@ -187,6 +194,11 @@ const websiteDomainOptions = [
       </a-layout-sider>
 
       <a-layout-content>
+        <a-card v-show="selectedKeys == 'endpoints'" :title="t('settings.endpoints')" :loading="loading">
+          <EndpointSettings v-if="settingForm.data?.llm_settings?.endpoints"
+            v-model="settingForm.data.llm_settings.endpoints" />
+        </a-card>
+
         <a-card v-show="selectedKeys == 'llms'" :title="t('settings.llms')" :loading="loading">
           <template #extra>
             <a-button type="primary" @click="saveSetting" :loading="saving">
@@ -196,150 +208,94 @@ const websiteDomainOptions = [
           <a-tabs tab-position="left">
             <a-tab-pane key="openai" tab="OpenAI">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="t('settings.openai_api_type')">
-                  <a-radio-group v-model:value="settingForm.data.openai_api_type">
-                    <a-radio-button value="open_ai">
-                      {{ t('settings.openai') }}
-                    </a-radio-button>
-                    <a-radio-button value="azure">
-                      {{ t('settings.azure') }}
-                    </a-radio-button>
-                  </a-radio-group>
-                </a-form-item>
-
-                <template v-if="settingForm.data.openai_api_type == 'azure'">
-                  <AzureOpenAISettings v-model="settingForm.data.azure_openai" />
-                </template>
-                <template v-else>
-                  <a-form-item :label="t('settings.openai_api_base')">
-                    <a-input v-model:value="settingForm.data.openai_api_base" />
-                  </a-form-item>
-                  <a-form-item :label="t('settings.openai_api_key')">
-                    <a-input-password v-model:value="settingForm.data.openai_api_key" />
-                  </a-form-item>
-                </template>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.openai"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="moonshot" tab="Moonshot">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="t('settings.moonshot_api_base')">
-                  <a-input v-model:value="settingForm.data.moonshot_api_base" />
-                </a-form-item>
-                <a-form-item :label="t('settings.moonshot_api_key')">
-                  <a-input-password v-model:value="settingForm.data.moonshot_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.moonshot"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="zhipuai" :tab="t('settings.zhipuai')">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="`${t('settings.zhipuai')} API Base`">
-                  <a-input v-model:value="settingForm.data.zhipuai_api_base" />
-                </a-form-item>
-                <a-form-item :label="`${t('settings.zhipuai')} API Key`">
-                  <a-input-password v-model:value="settingForm.data.zhipuai_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.zhipuai"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="anthropic" tab="Anthropic">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="t('settings.anthropic_api_base')">
-                  <a-input v-model:value="settingForm.data.anthropic_api_base" />
-                </a-form-item>
-                <a-form-item :label="t('settings.anthropic_api_key')">
-                  <a-input-password v-model:value="settingForm.data.anthropic_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.anthropic"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="minimax" tab="MiniMax">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="MiniMax API Base">
-                  <a-input v-model:value="settingForm.data.minimax_api_base" />
-                </a-form-item>
-                <a-form-item label="MiniMax API Key">
-                  <a-input-password v-model:value="settingForm.data.minimax_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.minimax"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="qwen" :tab="t('settings.qwen')">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="`${t('settings.qwen')} API Base`">
-                  <a-input v-model:value="settingForm.data.qwen_api_base" />
-                </a-form-item>
-                <a-form-item :label="`${t('settings.qwen')} API Key`">
-                  <a-input-password v-model:value="settingForm.data.qwen_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.qwen"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="mistral" tab="Mistral">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="Mistral API Base">
-                  <a-input v-model:value="settingForm.data.mistral_api_base" />
-                </a-form-item>
-                <a-form-item label="Mistral API Key">
-                  <a-input-password v-model:value="settingForm.data.mistral_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.mistral"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="deepseek" tab="DeepSeek">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="DeepSeek API Base">
-                  <a-input v-model:value="settingForm.data.deepseek_api_base" />
-                </a-form-item>
-                <a-form-item label="DeepSeek API Key">
-                  <a-input-password v-model:value="settingForm.data.deepseek_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.deepseek"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="lingyiwanwu" :tab="t('settings.lingyiwanwu')">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="`${t('settings.lingyiwanwu')} API Base`">
-                  <a-input v-model:value="settingForm.data.lingyiwanwu_api_base" />
-                </a-form-item>
-                <a-form-item :label="`${t('settings.lingyiwanwu')} API Key`">
-                  <a-input-password v-model:value="settingForm.data.lingyiwanwu_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.yi"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="gemini" tab="Gemini">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="Gemini API Base">
-                  <a-input v-model:value="settingForm.data.gemini_api_base" />
-                </a-form-item>
-                <a-form-item label="Gemini API Key">
-                  <a-input-password v-model:value="settingForm.data.gemini_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.gemini"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
             <a-tab-pane key="groq" tab="Groq">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item label="Groq API Base">
-                  <a-input v-model:value="settingForm.data.groq_api_base" />
-                </a-form-item>
-                <a-form-item label="Groq API Key">
-                  <a-input-password v-model:value="settingForm.data.groq_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.groq"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
-            <a-tab-pane key="baichuan" :tab="t('settings.baichuan')">
+            <a-tab-pane key="baichuan" tab="Baichuan">
               <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <a-form-item :label="`${t('settings.baichuan')} API Base`">
-                  <a-input v-model:value="settingForm.data.baichuan_api_base" />
-                </a-form-item>
-                <a-form-item :label="`${t('settings.baichuan')} API Key`">
-                  <a-input-password v-model:value="settingForm.data.baichuan_api_key" />
-                </a-form-item>
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.baichuan"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
               </a-form>
             </a-tab-pane>
           </a-tabs>
         </a-card>
 
-        <a-card v-show="selectedKeys == 'local_llms'" :title="t('settings.local_llms')" :loading="loading">
+        <a-card v-show="selectedKeys == 'custom_llms'" :title="t('settings.custom_llms')" :loading="loading">
           <template #extra>
             <a-button type="primary" @click="saveSetting" :loading="saving">
               {{ t('settings.save') }}
             </a-button>
           </template>
-          <LocalLLMSettings v-model="settingForm.data.local_llms" />
+          <a-tabs tab-position="left">
+            <a-tab-pane v-for="[family, models] in Object.entries(settingForm.data.custom_llms)" :key="family"
+              :tab="family">
+              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                <LLMStandardSettings v-model="settingForm.data.llm_settings.local" :filterModels="models"
+                  :endpoints="settingForm.data.llm_settings.endpoints" />
+              </a-form>
+            </a-tab-pane>
+          </a-tabs>
         </a-card>
 
         <a-card v-show="selectedKeys == 'embedding_models'" :title="t('settings.embedding_models')" :loading="loading">
