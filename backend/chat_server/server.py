@@ -8,13 +8,25 @@ import asyncio
 from threading import Thread
 
 import websockets
+from vectorvein.types.enums import BackendType
+from vectorvein.chat_clients import create_async_chat_client
+from vectorvein.settings import settings as vectorvein_settings
+from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messages
 
 from tts_server.server import tts_server
 from utilities.general import mprint
 from utilities.config import Settings, cache
-from utilities.ai_utils import create_async_chat_client, tool_use_re, format_messages
 from background_task.tasks import summarize_conversation_title
-from .utils import get_tool_call_data, get_tool_related_workflow, check_multimodal_available
+from .utils import get_tool_call_data, get_tool_related_workflow
+
+
+TOOL_CALL_INCREMENTAL_BACKENDS = (
+    BackendType.OpenAI,
+    BackendType.Moonshot,
+    BackendType.Anthropic,
+    BackendType.DeepSeek,
+    BackendType.MiniMax,
+)
 
 
 class WebSocketServer:
@@ -23,7 +35,7 @@ class WebSocketServer:
         self.port = self.find_available_port(start_port)
         self.server = None
         self.thread = None
-    
+
     def find_available_port(self, start_port):
         port = start_port
         while True:
@@ -49,6 +61,7 @@ class WebSocketServer:
 
     async def process_message(self, websocket, conversation_id, message):
         user_settings = Settings()
+        vectorvein_settings.load(user_settings.get("llm_settings"))
 
         request_data = json.loads(message)
         settings = request_data["conversation"]["settings"]
@@ -59,7 +72,8 @@ class WebSocketServer:
         model = request_data["conversation"]["model"].lower()
         mprint(f"Agent chat start: {backend} {model}")
 
-        native_multimodal = settings.get("native_multimodal", False) and check_multimodal_available(model, backend)
+        model_settings = vectorvein_settings.get_backend(backend=BackendType(backend))
+        native_multimodal = model_settings.models[model].native_multimodal
 
         system_message = {
             "role": "system",
@@ -71,19 +85,20 @@ class WebSocketServer:
         messages = [system_message, *user_messages]
 
         if need_title:
-            title_backend, title_model = user_settings.get("agent.auto_title_model", ["OpenAI", "gpt-35-turbo"])
-            summarize_conversation_title.delay(ai_message_mid, history_messages, title_backend, title_model)
+            title_backend, title_model = user_settings.get("agent.auto_title_model", ["openai", "gpt-4o-mini"])
+            summarize_conversation_title.delay(
+                ai_message_mid, history_messages, BackendType(title_backend.lower()), title_model
+            )
 
         client = create_async_chat_client(backend=backend, model=model)
 
         tool_call_data = request_data["conversation"]["tool_call_data"]
         if tool_call_data.get("workflows") or tool_call_data.get("templates"):
-            tools_params = {"tools": get_tool_call_data(tool_call_data, simple=False)}
+            tools_params = {"tools": get_tool_call_data(tool_call_data, simple=False), "tool_choice": "auto"}
         else:
             tools_params = {}
 
-        mprint("Agent chat tools_params", tools_params)
-        response = await client.create_completion(messages=messages, **tools_params)
+        response = await client.create_stream(messages=messages, **tools_params)
         mprint("Agent chat response created")
         full_content = ""
         tool_calls = {}
@@ -95,30 +110,30 @@ class WebSocketServer:
                 mprint("Agent chat chunk generate time use: ", time.time() - start_generate_time)
             start_generate_time = time.time()
 
-            full_content += chunk["content"] if chunk.get("content") is not None else ""
-            if chunk.get("tool_calls", []) and len(chunk.get("tool_calls", [])) > 0:
+            full_content += chunk.content if chunk.content is not None else ""
+            if chunk.tool_calls and len(chunk.tool_calls) > 0:
                 workflow_invoke_step = "generating_params"
-                piece = chunk["tool_calls"][0]
-                index = piece["index"]
+                piece = chunk.tool_calls[0]
+                index = piece.index
                 if index is None:
                     index = 0
                 tool_calls[index] = tool_calls.get(
                     index, {"id": None, "function": {"arguments": "", "name": ""}, "type": "function"}
                 )
-                if piece["id"]:
-                    tool_calls[index]["id"] = piece["id"]
-                if piece["function"]["name"]:
-                    tool_calls[index]["function"]["name"] = piece["function"]["name"]
-                if backend in ("openai", "moonshot", "anthropic"):
-                    # OpenAI/Moonshot/Anthropic is incremental and needs to be concatenated
-                    if piece["function"]["arguments"]:
-                        tool_calls[index]["function"]["arguments"] += piece["function"]["arguments"]
+                if piece.id:
+                    tool_calls[index]["id"] = piece.id
+                if piece.function.name:
+                    tool_calls[index]["function"]["name"] = piece.function.name
+                if backend in TOOL_CALL_INCREMENTAL_BACKENDS:
+                    # OpenAI/Moonshot/Anthropic/DeepSeek/Minimax is incremental and needs to be concatenated
+                    if piece.function.arguments:
+                        tool_calls[index]["function"]["arguments"] += piece.function.arguments
                 else:
-                    tool_calls[index]["function"]["arguments"] = piece["function"]["arguments"]
+                    tool_calls[index]["function"]["arguments"] = piece.function.arguments
 
             await websocket.send(
                 json.dumps(
-                    {**chunk, "workflow_invoke_step": workflow_invoke_step},
+                    {**chunk.model_dump(), "workflow_invoke_step": workflow_invoke_step},
                     ensure_ascii=False,
                 )
             )
@@ -147,7 +162,7 @@ class WebSocketServer:
                     ensure_ascii=False,
                 )
             )
-            full_content = re.sub(tool_use_re, "", full_content).strip()
+            full_content = ToolCallContentProcessor(full_content).non_tool_content
 
         conversation_title = cache.get(f"conversation-title:{ai_message_mid}", None)
 

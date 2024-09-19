@@ -13,7 +13,7 @@ from utilities.config import Settings
 from utilities.network import proxies
 from utilities.workflow import Workflow
 from utilities.file_processing import static_file_server
-from utilities.ai_utils import get_openai_client_and_model
+from utilities.ai_utils import get_openai_client_and_model_id
 
 
 SAMPLER_MAP = {
@@ -159,7 +159,7 @@ def dall_e(
     elif isinstance(input_prompt, list):
         prompts = input_prompt
 
-    client, model_id = get_openai_client_and_model(is_async=False, model_id=model)
+    client, model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
     image_folder = static_file_server.static_folder_path / "images"
     results = []
     for prompt in prompts:

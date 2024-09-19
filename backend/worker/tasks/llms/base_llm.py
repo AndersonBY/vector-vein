@@ -2,21 +2,61 @@
 # @Date:   2024-04-11 20:37:32
 import json
 import time
+from traceback import format_exc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
-from openai import AzureOpenAI, OpenAI
-from openai.types.chat import ChatCompletionMessage
+from vectorvein.types.enums import BackendType
+from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
+from vectorvein.chat_clients import create_chat_client
+from vectorvein.chat_clients.utils import get_token_counts
+from vectorvein.settings import settings as vectorvein_settings
 
 from utilities.general import mprint
 from utilities.network import proxies
+from utilities.config import Settings
 from utilities.workflow import Workflow
-from utilities.ai_utils import get_token_counts
-from .types.model import ModelSetting
+from utilities.general.ratelimit import is_request_allowed, add_request_record
+
 from .types.output import ModelOutput
 
 
+def model_available(model: ModelSetting, endpoint: EndpointSetting, add_record: bool = True) -> bool:
+    """
+    Check if the model is available under the current rate limits.
+
+    Args:
+        model_id (str): The ID of the model to check.
+        add_record (bool, optional): Whether to add a request record. Defaults to True.
+
+    Returns:
+        bool: True if the request is allowed, False otherwise.
+    """
+    product = f"{model.id}:{endpoint.id}:{endpoint.api_key}"
+    cycle = 60  # seconds
+    max_count = endpoint.rpm
+
+    return is_request_allowed(product, cycle, max_count, add_record)
+
+
+def add_model_request_record(model: ModelSetting, endpoint: EndpointSetting) -> bool:
+    """
+    Add a request record for the model.
+
+    Args:
+        model_id (str): The ID of the model.
+
+    Returns:
+        bool: True if the record is added successfully, False otherwise.
+    """
+    product = f"{model.id}:{endpoint.id}:{endpoint.api_key}"
+    cycle = 60
+
+    return add_request_record(product, cycle)
+
+
 class BaseLLMTask:
+    MODEL_TYPE: BackendType | None = None
     NAME: str = "BaseLLMTask"
     DEFAULT_MODEL = None
     MODEL_SETTINGS: dict[str, ModelSetting] = {}
@@ -28,14 +68,24 @@ class BaseLLMTask:
         self.model = self.workflow.get_node_field_value(node_id, "llm_model", self.DEFAULT_MODEL)
         self.input_prompt: str | list = self.workflow.get_node_field_value(node_id, "prompt")
         self.temperature: float = self.workflow.get_node_field_value(node_id, "temperature")
-        self.model = self.workflow.get_node_field_value(node_id, "llm_model")
         response_format = self.workflow.get_node_field_value(node_id, "response_format", "text")
         self.use_function_call: bool = self.workflow.get_node_field_value(node_id, "use_function_call", False)
         self.functions: list = self.workflow.get_node_field_value(node_id, "functions", [])
         self.function_call_mode: str = self.workflow.get_node_field_value(node_id, "function_call_mode", "auto")
 
-        self.model_settings = self.MODEL_SETTINGS[self.model]
-        self.model_settings.refresh()
+        user_settings = Settings()
+        vectorvein_settings.load(user_settings.llm_settings)
+        self.chat_client = create_chat_client(
+            backend=self.MODEL_TYPE,
+            model=self.model,
+            temperature=self.temperature,
+            http_client=httpx.Client(
+                proxies=proxies(),
+                transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+            ),
+        )
+
+        self.model_settings = self.chat_client.backend_settings.models[self.model]
 
         if isinstance(self.input_prompt, str):
             self.prompts = [self.input_prompt]
@@ -66,6 +116,38 @@ class BaseLLMTask:
         self.total_completion_tokens = 0
         mprint(f"Prompts count: {self.prompts_count}")
 
+    def endpoint_available(self, endpoint: EndpointSetting, add_record: bool = True) -> bool:
+        """
+        Check if the endpoint is available under the current rate limits.
+
+        Args:
+            endpoint (EndpointSetting): The endpoint to check.
+            add_record (bool, optional): Whether to add a request record. Defaults to True.
+
+        Returns:
+            bool: True if the request is allowed, False otherwise.
+        """
+        product = f"{self.model_settings.id}:{endpoint.id}:{endpoint.api_key}"
+        cycle = 60  # seconds
+        max_count = endpoint.rpm
+
+        return is_request_allowed(product, cycle, max_count, add_record)
+
+    def add_endpoint_request_record(self, endpoint: EndpointSetting) -> bool:
+        """
+        Add a request record for the endpoint.
+
+        Args:
+            endpoint (EndpointSetting): The endpoint to add a request record for.
+
+        Returns:
+            bool: True if the record is added successfully, False otherwise.
+        """
+        product = f"{self.model_settings.id}:{endpoint.id}:{endpoint.api_key}"
+        cycle = 60
+
+        return add_request_record(product, cycle)
+
     def process_prompt(
         self,
         prompt: str,
@@ -79,64 +161,51 @@ class BaseLLMTask:
             },
         ]
 
-        input_token_counts = get_token_counts(prompt, self.model_settings.id)
+        input_token_counts = get_token_counts(prompt, self.model)
         if self.model_settings.max_output_tokens is None:
-            max_tokens = self.model_settings.max_tokens - input_token_counts - 64
+            max_tokens = self.model_settings.context_length - input_token_counts - 64
         else:
             max_tokens = self.model_settings.max_output_tokens
+            max_tokens = min(max(max_tokens, 1), self.model_settings.max_output_tokens)
 
         request_success = False
         response = None
         start_time = time.time()
         while time.time() - start_time < self.SINGLE_PROCESS_TIMEOUT and not request_success:
-            # Check if any endpoint is available
-            has_available_endpoint = False
-            for endpoint in self.model_settings.endpoints:
-                if endpoint.model_available(self.model_settings.id):
-                    has_available_endpoint = True
-                    break
-            if not has_available_endpoint:
+            # 遍历所有端点，找到一个可用的
+            for endpoint_id in self.model_settings.endpoints:
+                endpoint = vectorvein_settings.get_endpoint(endpoint_id)
+                if self.endpoint_available(endpoint):
+                    self.chat_client.endpoint = endpoint
+                    try:
+                        response = self.chat_client.create_completion(
+                            model=self.model,
+                            messages=messages,
+                            temperature=self.temperature,
+                            max_tokens=max_tokens,
+                            timeout=60 * 3,
+                            **self.response_format,
+                            **self.function_call_parameters,
+                        )
+                        request_success = True
+                        self.add_endpoint_request_record(endpoint)
+                        break
+                    except Exception as e:
+                        mprint.error(f"Error with endpoint {endpoint.id}: {str(e)}")
+                        mprint.error(format_exc())
+
+            if not request_success:
                 time.sleep(1)
-                continue
 
-            if endpoint.is_azure:
-                client = AzureOpenAI(
-                    azure_endpoint=endpoint.endpoint,
-                    api_key=endpoint.api_key,
-                    api_version="2024-03-01-preview",
-                    http_client=httpx.Client(
-                        proxies=proxies(),
-                        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                    ),
-                )
-            else:
-                client = OpenAI(
-                    api_key=endpoint.api_key,
-                    base_url=endpoint.endpoint,
-                    http_client=httpx.Client(
-                        proxies=proxies(),
-                        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                    ),
-                )
+        if not request_success:
+            raise Exception("Failed to request the model")
 
-            response = client.chat.completions.create(
-                model=self.model_settings.id,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=max_tokens,
-                timeout=60 * 3,
-                **self.response_format,
-                **self.function_call_parameters,
-            )
-            request_success = True
-
-        message: ChatCompletionMessage = response.choices[0].message
-        content_output = message.content
+        content_output = response.content
         tool_calls = []
         function_call_arguments = {}
-        if message.tool_calls:
-            tool_calls = [tool_call.model_dump() for tool_call in message.tool_calls]
-            for tool_call in message.tool_calls:
+        if response.tool_calls:
+            tool_calls = [tool_call.model_dump() for tool_call in response.tool_calls]
+            for tool_call in response.tool_calls:
                 try:
                     function_call_arguments = json.loads(tool_call.function.arguments)
                 except json.decoder.JSONDecodeError:
@@ -145,9 +214,7 @@ class BaseLLMTask:
                 break
 
         if response.usage is None:
-            prompt_tokens = get_token_counts(
-                json.dumps(messages) + json.dumps(function_call_arguments), self.model_settings.id
-            )
+            prompt_tokens = get_token_counts(json.dumps(messages) + json.dumps(function_call_arguments), self.model)
             completion = content_output + json.dumps(function_call_arguments)
             completion_tokens = get_token_counts(completion)
         else:
@@ -165,7 +232,8 @@ class BaseLLMTask:
         return output
 
     def run(self):
-        with ThreadPoolExecutor(max_workers=self.model_settings.concurrent) as executor:
+        max_concurrent = self.get_max_concurrent_requests()
+        with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
             future_to_index = {
                 executor.submit(self.process_prompt, prompt, index): index for index, prompt in enumerate(self.prompts)
             }
@@ -201,3 +269,9 @@ class BaseLLMTask:
             )
 
         return self.workflow.data
+
+    def get_max_concurrent_requests(self):
+        return max(
+            vectorvein_settings.get_endpoint(endpoint).concurrent_requests
+            for endpoint in self.model_settings.endpoints
+        )

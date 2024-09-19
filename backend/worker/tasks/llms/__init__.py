@@ -4,10 +4,10 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-24 22:21:45
 from worker.tasks import task, timer
-from utilities.config import Settings
 from .groq import GroqTask
 from .gemini import GeminiTask
 from .claude import ClaudeTask
+from .open_ai import OpenAITask
 from .aliyun_qwen import QwenTask
 from .mini_max import MiniMaxTask
 from .chat_glm import ChatGLMTask
@@ -15,8 +15,7 @@ from .baichuan import BaiChuanTask
 from .moonshot import MoonshotTask
 from .deepseek import DeepSeekTask
 from .local_llm import LocalLLMTask
-from .ling_yi_wan_wu import LineYiWanWuTask
-from .open_ai import OpenAITask, AzureOpenAITask
+from .ling_yi_wan_wu import LingYiWanWuTask
 
 
 @task
@@ -52,11 +51,7 @@ def open_ai(
     workflow_data: dict,
     node_id: str,
 ):
-    settings = Settings()
-    if settings.openai_api_type == "azure":
-        return AzureOpenAITask(workflow_data, node_id).run()
-    else:
-        return OpenAITask(workflow_data, node_id).run()
+    return OpenAITask(workflow_data, node_id).run()
 
 
 @task
@@ -92,7 +87,7 @@ def ling_yi_wan_wu(
     workflow_data: dict,
     node_id: str,
 ):
-    return LineYiWanWuTask(workflow_data, node_id).run()
+    return LingYiWanWuTask(workflow_data, node_id).run()
 
 
 @task

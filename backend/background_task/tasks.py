@@ -14,6 +14,8 @@ from qdrant_client.http.models import (
     FilterSelector,
     FieldCondition,
 )
+from vectorvein.types.enums import BackendType
+from vectorvein.chat_clients.utils import format_messages
 
 from models import Workflow, WorkflowTemplate, UserObject
 from utilities.general import mprint
@@ -21,7 +23,6 @@ from utilities.config import config, cache
 from utilities.ai_utils import (
     ToolCallData,
     EmbeddingClient,
-    format_messages,
     conversation_title_generator,
 )
 
@@ -79,11 +80,11 @@ def update_workflow_tool_call_data(
 def summarize_conversation_title(
     message_id: str,
     messasges: list,
-    backend: str = "OpenAI",
-    model: str = "gpt-35-turbo",
+    backend: BackendType = BackendType.OpenAI,
+    model: str = "gpt-4o-mini",
 ):
     formatted_messages = format_messages(messages=messasges, backend=backend)
-    conversation_title = conversation_title_generator(formatted_messages, backend=backend, model=model)[:25]
+    conversation_title = conversation_title_generator(formatted_messages, backend=backend, model=model)[:40]
     cache.set(f"conversation-title:{message_id}", conversation_title, expire=60 * 60)
 
 

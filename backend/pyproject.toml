@@ -42,12 +42,13 @@ dependencies = [
   "pathvalidate>=3.2.0",
   "deepgram-sdk>=3.3.1",
   "deepgram-captions>=1.2.0",
+  "vectorvein>=0.1.18",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = ""
 requires-python = ">=3.10,<3.13"
-version = "0.2.9"
+version = "0.2.10"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]

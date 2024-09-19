@@ -6,13 +6,15 @@
 import time
 
 import httpx
+from vectorvein.types.enums import BackendType
+from vectorvein.chat_clients import create_chat_client
+from vectorvein.settings import settings as vectorvein_settings
 
+from worker.tasks import task, timer
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import mprint, Retry
-from utilities.ai_utils import create_chat_client
 from utilities.media_processing import ImageProcessor, SpeechRecognitionClient
-from worker.tasks import task, timer
 
 
 @task
@@ -51,8 +53,10 @@ def gpt_vision(
     prompts_count = len(prompts)
     mprint(f"Prompts count: {prompts_count}")
 
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
     model = workflow.get_node_field_value(node_id, "model")
-    client = create_chat_client("openai", model=model, stream=False)
+    client = create_chat_client(backend=BackendType.OpenAI, model=model, stream=False)
 
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
@@ -74,10 +78,9 @@ def gpt_vision(
         ]
 
         response = client.create_completion(messages=messages)
-        content_output = response["content"]
-        content_outputs.append(content_output)
-        total_prompt_tokens += response["usage"]["prompt_tokens"]
-        total_completion_tokens += response["usage"]["completion_tokens"]
+        content_outputs.append(response.content)
+        total_prompt_tokens += response.usage.prompt_tokens
+        total_completion_tokens += response.usage.completion_tokens
 
         if index < prompts_count - 1:
             time.sleep(1)
@@ -122,7 +125,10 @@ def glm_vision(
     prompts_count = len(prompts)
     mprint(f"Prompts count: {prompts_count}")
 
-    client = create_chat_client("zhipuai", model="glm-4v", stream=False)
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
+    model = workflow.get_node_field_value(node_id, "model", "glm-4v")
+    client = create_chat_client(backend=BackendType.ZhiPuAI, model=model, stream=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
         image_processor = ImageProcessor(image_source=images[index])
@@ -139,12 +145,10 @@ def glm_vision(
             }
         ]
 
-        response = client.create_completion(messages=messages, max_tokens=1024)
-
-        content_output = response["content"]
-        content_outputs.append(content_output)
-        total_prompt_tokens += response["usage"]["prompt_tokens"]
-        total_completion_tokens += response["usage"]["completion_tokens"]
+        response = client.create_completion(messages=messages)
+        content_outputs.append(response.content)
+        total_prompt_tokens += response.usage.prompt_tokens
+        total_completion_tokens += response.usage.completion_tokens
 
         if index < prompts_count - 1:
             time.sleep(1)
@@ -183,14 +187,15 @@ def local_vision(
     elif len(prompts) > len(images) and len(images) == 1:
         images = images * len(prompts)
 
-    model_family = "_local__" + workflow.get_node_field_value(node_id, "model_family")
     model_id = workflow.get_node_field_value(node_id, "llm_model")
 
     content_outputs = []
     prompts_count = len(prompts)
     mprint(f"Prompts count: {prompts_count}")
 
-    client = create_chat_client(model_family, model=model_id, stream=False)
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
+    client = create_chat_client(backend=BackendType.Local, model=model_id, stream=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
         image_processor = ImageProcessor(image_source=images[index])
@@ -207,8 +212,8 @@ def local_vision(
             }
         ]
 
-        response = client.create_completion(messages=messages, max_tokens=1024)
-        content_output = response["content"]
+        response = client.create_completion(messages=messages)
+        content_output = response.content
         content_outputs.append(content_output)
 
         if index < prompts_count - 1:
@@ -266,6 +271,8 @@ def claude_vision(
     else:
         raise Exception(f"Model {model} not supported")
 
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
     client = create_chat_client("anthropic", model=model, stream=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")

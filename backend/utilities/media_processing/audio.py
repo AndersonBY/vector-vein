@@ -13,12 +13,14 @@ from datetime import datetime
 import httpx
 import pyaudio
 import numpy as np
+from openai import OpenAI
 from openai._types import FileTypes
 from deepgram_captions import DeepgramConverter, srt
 from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
 
 from utilities.general import mprint
+from utilities.network import proxies
 from utilities.config import Settings, config
 
 
@@ -32,11 +34,11 @@ class TTSClient:
         self.provider = provider
 
         if self.provider == "openai":
-            from utilities.ai_utils import get_openai_client_and_model
+            from utilities.ai_utils import get_openai_client_and_model_id
 
             if model is None:
                 model = "tts-1"
-            self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
+            self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
         elif self.provider == "minimax":
             if model is None:
                 model = "speech-01-turbo"
@@ -71,7 +73,7 @@ class TTSClient:
             headers = {"authorization": f"Bearer {self.api_key}"}
             data = {
                 "voice_id": voice,
-                "text": "你好",
+                "text": text,
                 "model": "speech-02",
                 "speed": 1.0,
                 "vol": 1.0,
@@ -346,16 +348,18 @@ class SpeechRecognitionClient:
         self.language = language
 
         if self.provider == "openai":
-            from utilities.ai_utils import get_openai_client_and_model
+            from utilities.ai_utils import get_openai_client_and_model_id
 
             if settings.get("asr.openai.same_as_llm", False):
-                self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model)
+                self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
             else:
-                self.client, _ = get_openai_client_and_model(
-                    is_async=False,
-                    model_id=model,
-                    api_base=settings.get("asr.openai.api_base"),
+                self.client = OpenAI(
                     api_key=settings.get("asr.openai.api_key"),
+                    base_url=settings.get("asr.openai.api_base"),
+                    http_client=httpx.Client(
+                        proxies=proxies(),
+                        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
+                    ),
                 )
                 self.model_id = settings.get("asr.openai.model", "whisper-1")
         elif self.provider == "deepgram":
@@ -374,7 +378,7 @@ class SpeechRecognitionClient:
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model_id, file=file, response_format="text"
                 )
-                return transcription.text
+                return transcription
             elif output_type == "list":
                 transcription = self.client.audio.transcriptions.create(
                     model=self.model_id,

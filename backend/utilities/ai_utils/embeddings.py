@@ -7,7 +7,7 @@ import httpx
 
 from utilities.config import Settings
 from utilities.network import proxies
-from .chat_clients.openai_client import get_openai_client_and_model
+from .client import get_openai_client_and_model_id
 
 
 class EmbeddingClient:
@@ -18,7 +18,7 @@ class EmbeddingClient:
 
         setting = Settings()
         if provider == "openai":
-            self.client, self.model_id = get_openai_client_and_model(is_async=False, model_id=model_id)
+            self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model_id)
         elif provider == "text-embeddings-inference":
             # https://github.com/huggingface/text-embeddings-inference
             self.api_base = setting.get(

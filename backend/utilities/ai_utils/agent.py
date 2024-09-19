@@ -2,8 +2,12 @@
 # @Date:   2024-06-07 12:59:42
 import re
 
+from vectorvein.types.enums import BackendType
+from vectorvein.chat_clients import create_chat_client
+from vectorvein.settings import settings as vectorvein_settings
+
+from utilities.config import Settings
 from models import Workflow, WorkflowTemplate
-from .chat_clients import create_chat_client
 
 
 class ToolCallData:
@@ -22,6 +26,9 @@ class ToolCallData:
         self.field_translations = self.tool_call_data.get("field_translations", {})
         self.parameters = self.tool_call_data.get("parameters", {})
         self.parameter_sources = self.tool_call_data.get("parameter_sources", {})
+        user_settings = Settings()
+        vectorvein_settings.load(user_settings.get("llm_settings"))
+        self.chat_client = create_chat_client(backend=BackendType.OpenAI, model="gpt-4o-mini", stream=False)
 
     @staticmethod
     def _is_valid_string(s):
@@ -36,10 +43,9 @@ class ToolCallData:
     def _translate_field(self, field):
         if field in self.field_translations:
             return self.field_translations[field]
-        chat_client = create_chat_client("openai", stream=False)
         prompt = f"Generate an English parameter name for the following parameter, using only lowercase English letters, numbers, and underscores (_), not exceeding 20 characters. Directly output the result without explanation.\nParameter name: {field}\n"
         messages = [{"role": "user", "content": prompt}]
-        translated_field = chat_client.create_completion(messages)["content"]
+        translated_field = self.chat_client.create_completion(messages).content
         translated_field_options = re.findall(r"[a-z0-9_]{1,20}", translated_field)
         if translated_field_options:
             translated_field = max(translated_field_options, key=len)
@@ -51,11 +57,10 @@ class ToolCallData:
     def update_title(self, force: bool = False):
         if self.tool_call_data.get("name") and not force:
             return
-        chat_client = create_chat_client("openai", stream=False)
         workflow_title = self.workflow.title
         prompt = f"For the following workflow, generate an English function name, using only lowercase English letters, numbers, and underscores (_), not exceeding 40 characters. Directly output the English function name result without explanation.\nWorkflow Title: {workflow_title}\n"
         messages = [{"role": "user", "content": prompt}]
-        title = chat_client.create_completion(messages)["content"]
+        title = self.chat_client.create_completion(messages).content
         titles = re.findall(r"[a-z0-9_]{1,40}", title)
         if titles:
             title = max(titles, key=len)

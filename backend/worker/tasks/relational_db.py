@@ -5,15 +5,18 @@ import csv
 from io import StringIO
 
 import sqlparse
+from vectorvein.types.enums import BackendType
+from vectorvein.chat_clients import create_chat_client
+from vectorvein.settings import settings as vectorvein_settings
 
 from models import (
     UserRelationalTable,
     UserRelationalDatabase,
 )
 from worker.tasks import task, timer
+from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.database import UserDatabaseControl
-from utilities.ai_utils.chat_clients import create_chat_client
 
 
 sql_block_pattern = re.compile(r"```.*?\n(?P<code>.*?)\n```", re.DOTALL)
@@ -166,7 +169,7 @@ def smart_query(
 ):
     workflow = Workflow(workflow_data)
     original_query = workflow.get_node_field_value(node_id, "query")
-    model = workflow.get_node_field_value(node_id, "model")
+    model_data = workflow.get_node_field_value(node_id, "model")
     database = workflow.get_node_field_value(node_id, "database")
     tables = workflow.get_node_field_value(node_id, "tables")
     use_sample_data = workflow.get_node_field_value(node_id, "use_sample_data")
@@ -179,7 +182,7 @@ def smart_query(
     else:
         queries = original_query
 
-    backend, model = model.split("/")
+    backend, model = model_data.split("⋄")
 
     user_tables_qs = (
         UserRelationalTable.select().join(UserRelationalDatabase).where(UserRelationalDatabase.rid == database)
@@ -210,7 +213,9 @@ def smart_query(
             for index, result in enumerate(results)
         ]
 
-    client = create_chat_client(backend=backend.lower(), model=model.lower(), stream=False)
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
+    client = create_chat_client(backend=BackendType(backend.lower()), model=model.lower(), stream=False)
     system_message = {
         "role": "system",
         "content": "As an expert in SQLite, you are expected to utilize your knowledge to craft SQL queries that are in strict adherence with SQLite syntax standards when responding to inquiries.",
@@ -234,7 +239,7 @@ def smart_query(
 
         messages = [system_message, {"role": "user", "content": user_message}]
         response = client.create_completion(messages=messages, temperature=0.2)
-        content = response["content"]
+        content = response.content
         sql_block_search = sql_block_pattern.search(content)
         if sql_block_search:
             content = sql_block_search.group("code")
