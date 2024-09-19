@@ -61,14 +61,63 @@ export function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
-export function hashObject(obj) {
-  const str = JSON.stringify(obj);
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash &= hash; // Convert to 32bit integer
+export class ObjectHasher {
+  constructor(ignoreKeys = []) {
+    this.ignoreKeys = ignoreKeys;
   }
-  return hash;
+
+  processObject(obj, currentPath = '') {
+    if (Array.isArray(obj)) {
+      for (let i = 0; i < obj.length; i++) {
+        this.processObject(obj[i], `${currentPath}[]`);
+      }
+    } else if (typeof obj === 'object' && obj !== null) {
+      for (const key in obj) {
+        const newPath = currentPath ? `${currentPath}.${key}` : key;
+        if (this.shouldIgnore(newPath)) {
+          delete obj[key];
+        } else {
+          this.processObject(obj[key], newPath);
+        }
+      }
+    }
+  }
+
+  shouldIgnore(path) {
+    return this.ignoreKeys.some(ignoreKey => {
+      const ignoreKeyParts = ignoreKey.split('.');
+      const pathParts = path.split('.');
+
+      if (ignoreKeyParts.length !== pathParts.length) return false;
+
+      for (let i = 0; i < ignoreKeyParts.length; i++) {
+        if (ignoreKeyParts[i] === '[]' && pathParts[i].endsWith('[]')) {
+          continue;
+        }
+        if (ignoreKeyParts[i] !== pathParts[i] && ignoreKeyParts[i] !== '[]') {
+          return false;
+        }
+      }
+      return true;
+    });
+  }
+
+  hash(obj) {
+    const objCopy = JSON.parse(JSON.stringify(obj));
+    this.processObject(objCopy);
+    const str = JSON.stringify(objCopy);
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      hash = ((hash << 5) - hash) + str.charCodeAt(i);
+      hash &= hash;
+    }
+    return hash;
+  }
+}
+
+export function hashObject(obj, ignoreKeys = []) {
+  const hasher = new ObjectHasher(ignoreKeys);
+  return hasher.hash(obj);
 }
 
 export function deepCopy(obj) {
