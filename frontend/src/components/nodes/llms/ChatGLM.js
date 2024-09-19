@@ -25,11 +25,11 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "glm-3-turbo",
+        "value": "glm-4-air",
         "options": [
           {
-            "value": "glm-3-turbo",
-            "label": "glm-3-turbo"
+            "value": "glm-4-plus",
+            "label": "glm-4-plus",
           },
           {
             "value": "glm-4",
@@ -50,6 +50,10 @@ export function createTemplateData() {
           {
             "value": "glm-4-flash",
             "label": "glm-4-flash",
+          },
+          {
+            "value": "glm-4-long",
+            "label": "glm-4-long",
           },
         ],
         "name": "llm_model",
