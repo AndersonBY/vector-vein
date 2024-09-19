@@ -45,6 +45,10 @@ export const nonLocalChatModelOptions = [
         label: "gpt-4o",
         value: "gpt-4o",
       },
+      {
+        label: "gpt-4o-mini",
+        value: "gpt-4o-mini",
+      },
     ]
   },
   {
@@ -78,6 +82,10 @@ export const nonLocalChatModelOptions = [
         value: "glm-4",
       },
       {
+        label: "glm-4-plus",
+        value: "glm-4-plus",
+      },
+      {
         label: "glm-4-0520",
         value: "glm-4-0520",
       },
@@ -97,12 +105,28 @@ export const nonLocalChatModelOptions = [
         label: "glm-4v",
         value: "glm-4v",
       },
+      {
+        label: "glm-4-long",
+        value: "glm-4-long",
+      },
+      {
+        label: "glm-4v-plus",
+        value: "glm-4v-plus",
+      }
     ]
   },
   {
     label: "Qwen",
     value: "Qwen",
     children: [
+      {
+        label: "qwen1.5-0.5b-chat",
+        value: "qwen1.5-0.5b-chat",
+      },
+      {
+        label: "qwen1.5-1.8b-chat",
+        value: "qwen1.5-1.8b-chat",
+      },
       {
         label: "qwen1.5-7b-chat",
         value: "qwen1.5-7b-chat",
@@ -124,8 +148,40 @@ export const nonLocalChatModelOptions = [
         value: "qwen1.5-110b-chat",
       },
       {
+        label: "qwen2-0.5b-instruct",
+        value: "qwen2-0.5b-instruct",
+      },
+      {
+        label: "qwen2-1.5b-instruct",
+        value: "qwen2-1.5b-instruct",
+      },
+      {
+        label: "qwen2-7b-instruct",
+        value: "qwen2-7b-instruct",
+      },
+      {
+        label: "qwen2-57b-a14b-instruct",
+        value: "qwen2-57b-a14b-instruct",
+      },
+      {
         label: "qwen2-72b-instruct",
         value: "qwen2-72b-instruct",
+      },
+      {
+        label: "qwen-max",
+        value: "qwen-max",
+      },
+      {
+        label: "qwen-max-longcontext",
+        value: "qwen-max-longcontext",
+      },
+      {
+        label: "qwen-plus",
+        value: "qwen-plus",
+      },
+      {
+        label: "qwen-turbo",
+        value: "qwen-turbo",
       },
     ]
   },
@@ -174,20 +230,32 @@ export const nonLocalChatModelOptions = [
     value: "Mistral",
     children: [
       {
-        label: "mixtral-8x22b",
-        value: "mixtral-8x22b",
+        label: "mistral-large",
+        value: "mistral-large",
       },
       {
         label: "mistral-small",
         value: "mistral-small",
       },
       {
-        label: "mistral-medium",
-        value: "mistral-medium",
+        label: "codestral",
+        value: "codestral",
       },
       {
-        label: "mistral-large",
-        value: "mistral-large",
+        label: "mistral-embed",
+        value: "mistral-embed",
+      },
+      {
+        label: "pixtral",
+        value: "pixtral",
+      },
+      {
+        label: "mistral-nemo",
+        value: "mistral-nemo",
+      },
+      {
+        label: "codestral-mamba",
+        value: "codestral-mamba",
       },
     ]
   },
@@ -216,6 +284,10 @@ export const nonLocalChatModelOptions = [
       {
         label: "yi-large-turbo",
         value: "yi-large-turbo",
+      },
+      {
+        label: "yi-large-fc",
+        value: "yi-large-fc",
       },
       {
         label: "yi-medium",
@@ -255,6 +327,26 @@ export const nonLocalChatModelOptions = [
         label: "gemma-7b-it",
         value: "gemma-7b-it",
       },
+      {
+        label: "gemma2-9b-it",
+        value: "gemma2-9b-it",
+      },
+      {
+        label: "llama3-groq-70b-8192-tool-use-preview",
+        value: "llama3-groq-70b-8192-tool-use-preview",
+      },
+      {
+        label: "llama3-groq-8b-8192-tool-use-preview",
+        value: "llama3-groq-8b-8192-tool-use-preview",
+      },
+      {
+        label: "llama-3.1-70b-versatile",
+        value: "llama-3.1-70b-versatile",
+      },
+      {
+        label: "llama-3.1-8b-versatile",
+        value: "llama-3.1-8b-versatile",
+      },
     ]
   },
   {
@@ -273,26 +365,51 @@ export const nonLocalChatModelOptions = [
   },
 ]
 
+const flattenModelOptions = (options, showProvider = true, valueType = 'String') => {
+  const flattenedOptions = [];
+
+  options.forEach(option => {
+    if (option.children && option.children.length > 0) {
+      option.children.forEach(child => {
+        const optionLabelText = option.labelText ?? option.label
+        let valueWithProvider = `${option.value}⋄${child.value}`
+        if (valueType === 'Array') {
+          valueWithProvider = [option.value, child.value]
+        }
+        flattenedOptions.push({
+          label: showProvider ? `${optionLabelText}/${child.label}` : child.label,
+          value: showProvider ? valueWithProvider : child.value,
+        });
+      });
+    }
+  });
+
+  return flattenedOptions;
+}
+
 export const getChatModelOptions = (flat = false) => {
   const userSettings = useUserSettingsStore()
   const { setting } = storeToRefs(userSettings)
-  const chatModels = nonLocalChatModelOptions.concat(setting.value.data?.local_llms?.map((provider) => {
+  const customModels = Object.entries(setting.value.data?.custom_llms).map(([family, models]) => {
+    const children = models.map((model) => ({
+      value: model,
+      label: model,
+    }))
     return {
-      value: '_local__' + provider.model_family,
+      value: '_local__' + family,
       label: h(TypographyText, {}, () =>
         h(Flex, { gap: 'small', style: 'display: inline-flex;' }, () => [
-          provider.model_family,
+          family,
           h(Tag, { color: 'green', bordered: false }, () => 'Local')
         ])
       ),
-      children: provider.models.map((model) => ({
-        value: model.model_id,
-        label: model.model_label,
-      })),
+      labelText: family,
+      children: children,
     }
-  }))
+  })
+  const chatModels = nonLocalChatModelOptions.concat(customModels)
   if (flat) {
-    return chatModels.map((item) => item.children).flat()
+    return flattenModelOptions(chatModels, true)
   } else {
     return chatModels
   }
@@ -335,6 +452,7 @@ export const modelTagBackgroundColorMap = {
   'gpt-35-turbo': '#19c37d',
   'gpt-4': '#000',
   'gpt-4o': '#000',
+  'gpt-4o-mini': '#000',
   'abab5.5-chat': '#eb3368',
   'abab6-chat': '#eb3368',
   'glm-3-turbo': '#3875F6',
