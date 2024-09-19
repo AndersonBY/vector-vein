@@ -22,6 +22,10 @@ markdown_image_url_pattern = re.compile(r"!\[.*?\]\((.*?)\)")
 local_image_re = re.compile(r"http://localhost:\d+/images/(.*)")
 
 
+def contains_chinese(text):
+    return re.search("[\u4e00-\u9fff]", text) is not None
+
+
 def remove_url_and_email(text: str):
     text = url_pattern.sub("", text)
     return email_pattern.sub("", text)
