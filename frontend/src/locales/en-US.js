@@ -1862,6 +1862,10 @@ export default {
     'select_endpoint': 'Select endpoint',
     'api_base_empty': 'API Base cannot be empty',
     'max_output_tokens': 'Max output tokens',
+    'delete_model_family': 'Delete model family',
+    'delete_model_family_confirm': 'Are you sure you want to delete {modelFamily} model family?',
+    'edit_model_family_name': 'Edit model family name',
+    'model_family_name_repeat': 'Model family name already exists',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",

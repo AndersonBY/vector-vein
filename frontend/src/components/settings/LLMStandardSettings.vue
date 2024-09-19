@@ -11,10 +11,12 @@ const props = defineProps({
     default: () => []
   },
   filterModels: {
-    type: Array,
-    default: () => []
+    type: [Array, null],
+    default: null
   }
 })
+
+const emit = defineEmits(['addModel'])
 
 const { t } = useI18n()
 
@@ -58,6 +60,7 @@ const removeModel = (index) => {
 const saveModel = () => {
   if (modelFormStatus.value === 'add') {
     llmSettings.value.models[modelEditIndex.value] = deepCopy(toRaw(modelForm))
+    emit('addModel', modelEditIndex.value)
   } else {
     Object.assign(llmSettings.value.models[modelEditIndex.value], deepCopy(toRaw(modelForm)))
   }
@@ -81,7 +84,8 @@ const resetModelForm = () => {
 <template>
   <a-flex vertical gap="small">
     <template v-for="(model, index) in llmSettings.models" :key="index">
-      <a-flex v-if="filterModels.length === 0 || (filterModels.length > 0 && filterModels.includes(model.id))"
+      <a-flex
+        v-if="filterModels === null || (filterModels.length !== null && (filterModels.length > 0 && filterModels.includes(model.id)))"
         gap="small" align="center">
         <a-button type="text" block @click="editModel(model, index)">
           {{ index }}: {{ model.id }}

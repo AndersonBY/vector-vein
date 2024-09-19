@@ -1862,6 +1862,10 @@ export default {
     'select_endpoint': '选择端点',
     'api_base_empty': 'API Base 不能为空',
     'max_output_tokens': '最大输出 Token 数',
+    'delete_model_family': '删除模型系列',
+    'delete_model_family_confirm': '确定删除 {modelFamily} 模型系列？',
+    'edit_model_family_name': '编辑模型系列名称',
+    'model_family_name_repeat': '模型系列名称与已有名称重复',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "青涩青年音色",

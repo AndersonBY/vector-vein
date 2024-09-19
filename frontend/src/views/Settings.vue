@@ -26,6 +26,7 @@ import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
 import { settingAPI, hardwareAPI } from "@/api/user"
 import QuestionPopover from "@/components/QuestionPopover.vue"
+import CustomLLMSettings from "@/components/settings/CustomLLMSettings.vue"
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -287,15 +288,10 @@ const websiteDomainOptions = [
               {{ t('settings.save') }}
             </a-button>
           </template>
-          <a-tabs tab-position="left">
-            <a-tab-pane v-for="[family, models] in Object.entries(settingForm.data.custom_llms)" :key="family"
-              :tab="family">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.local" :filterModels="models"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-          </a-tabs>
+          <a-skeleton v-if="loading" active />
+          <CustomLLMSettings v-else v-model:localModels="settingForm.data.llm_settings.local"
+            v-model:modelFamilyMap="settingForm.data.custom_llms"
+            :endpoints="settingForm.data.llm_settings.endpoints" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'embedding_models'" :title="t('settings.embedding_models')" :loading="loading">
