@@ -17,10 +17,16 @@ import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TableRenderer from "@/components/workspace/TableRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
-import TextOutput from "@/components/TextOutput.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
-import { getUIDesignFromWorkflow, hasShowFields, nonFormItemsTypes, checkFieldsValid } from '@/utils/workflow'
-import { workflowAPI } from "@/api/workflow"
+import TextOutput from "@/components/TextOutput.vue"
+import {
+  hasShowFields,
+  checkFieldsValid,
+  nonFormItemsTypes,
+  getUIDesignFromWorkflow,
+} from '@/utils/workflow'
+import { deepCopy } from '@/utils/util'
+import { workflowAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 
 const props = defineProps({
@@ -48,38 +54,15 @@ const outputMaximized = ref(false)
 const inputFields = ref([])
 const outputNodes = ref([])
 const triggerNodes = ref([])
+const humanFeedbackNodes = ref([])
+const streamableNodes = ref([])
+const edges = ref([])
 
-onBeforeMount(async () => {
-  currentWorkflow.value = props.workflow
-  const hasVectorDbNode = currentWorkflow.value.data.nodes.some(node => node.category === 'vectorDb');
-  const hasRelationalDbNode = currentWorkflow.value.data.nodes.some(node => node.category === 'relationalDb');
+const currentWorkflow = ref({})
+const savedWorkflow = ref({}) // 
 
-  const requests = [];
-
-  if (hasVectorDbNode) {
-    requests.push(databaseAPI('list', {}));
-  }
-
-  if (hasRelationalDbNode) {
-    requests.push(relationalDatabaseAPI('list', {}));
-  }
-
-  const responses = await Promise.all(requests);
-
-  if (hasVectorDbNode) {
-    const listDatabasesResponse = responses.shift();
-    if (listDatabasesResponse.status === 200) {
-      userDatabasesStore.setUserDatabases(listDatabasesResponse.data);
-    }
-  }
-
-  if (hasRelationalDbNode) {
-    const listRelationalDatabasesResponse = responses.shift();
-    if (listRelationalDatabasesResponse.status === 200) {
-      userRelationalDatabasesStore.setUserRelationalDatabases(listRelationalDatabasesResponse.data);
-    }
-  }
-
+function setCurrentWorkflow(workflow) {
+  currentWorkflow.value = deepCopy(workflow)
   currentWorkflow.value.data.nodes.forEach(node => {
     if (node.category === 'vectorDb') {
       node.data.template.database.options = userDatabases.value
@@ -113,12 +96,16 @@ onBeforeMount(async () => {
     inputFields.value = currentWorkflow.value.ui_design.input_fields
     outputNodes.value = currentWorkflow.value.ui_design.output_nodes
     triggerNodes.value = currentWorkflow.value.ui_design.trigger_nodes
+    humanFeedbackNodes.value = currentWorkflow.value.ui_design.human_feedback_nodes
+    edges.value = currentWorkflow.value.ui_design?.edges || []
   } else {
     const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
     const reactiveUIDesign = reactive(uiDesign)
     inputFields.value = reactiveUIDesign.inputFields
     outputNodes.value = reactiveUIDesign.outputNodes
     triggerNodes.value = reactiveUIDesign.triggerNodes
+    humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
+    edges.value = currentWorkflow.value.data.edges || []
   }
 
   const nodeModelFamilies = ref({})
@@ -143,8 +130,44 @@ onBeforeMount(async () => {
       }
     }
   })
+}
 
-  savedWorkflow.value = currentWorkflow.value
+onBeforeMount(async () => {
+  currentWorkflow.value = props.workflow
+  const hasVectorDbNode = currentWorkflow.value.data.nodes.some(node => node.category === 'vectorDb');
+  const hasRelationalDbNode = currentWorkflow.value.data.nodes.some(node => node.category === 'relationalDb');
+
+  const requests = [];
+
+  if (hasVectorDbNode) {
+    requests.push(databaseAPI('list', {}));
+  }
+
+  if (hasRelationalDbNode) {
+    requests.push(relationalDatabaseAPI('list', {}));
+  }
+
+  const responses = await Promise.all(requests);
+
+  let listVectorDBResponse, listRelationalDBResponse;
+
+  if (hasVectorDbNode) {
+    listVectorDBResponse = responses.shift();
+    if (listVectorDBResponse.status === 200) {
+      userDatabasesStore.setUserDatabases(listVectorDBResponse.data);
+    }
+  }
+
+  if (hasRelationalDbNode) {
+    listRelationalDBResponse = responses.shift();
+    if (listRelationalDBResponse.status === 200) {
+      userRelationalDatabasesStore.setUserRelationalDatabases(listRelationalDBResponse.data);
+    }
+  }
+
+  setCurrentWorkflow(currentWorkflow.value)
+
+  savedWorkflow.value = deepCopy(currentWorkflow.value)
 
   loading.value = false
 })
@@ -152,13 +175,15 @@ onBeforeUnmount(() => {
   clearInterval(checkStatusTimer.value)
 })
 
-const currentWorkflow = ref({})
-const savedWorkflow = ref({}) // savedWorkflow保存的是编辑后的workflow数据，不受每次运行结果的影响
-
-
+const checkingStatus = ref(false)
 const checkWorkflowRunningStatus = async () => {
+  if (checkingStatus.value) {
+    return
+  }
+  checkingStatus.value = true
   const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
   if (statusResponse.status == 200) {
+    console.log(statusResponse.data)
     message.success(t('workspace.workflowSpace.run_workflow_success'))
     clearInterval(checkStatusTimer.value)
     running.value = false
@@ -171,12 +196,14 @@ const checkWorkflowRunningStatus = async () => {
       const uiDesign = currentWorkflow.value.data.ui_design
       outputNodes.value = uiDesign.output_nodes
       triggerNodes.value = uiDesign.trigger_nodes
+      humanFeedbackNodes.value = uiDesign.human_feedback_nodes
     } else {
       const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
       const reactiveUIDesign = reactive(uiDesign)
       inputFields.value = reactiveUIDesign.inputFields
       outputNodes.value = reactiveUIDesign.outputNodes
       triggerNodes.value = reactiveUIDesign.triggerNodes
+      humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
     }
     showingRecord.value = true
 
@@ -200,30 +227,55 @@ const checkWorkflowRunningStatus = async () => {
       const uiDesign = currentWorkflow.value.data.ui_design
       outputNodes.value = uiDesign.output_nodes
       triggerNodes.value = uiDesign.trigger_nodes
+      humanFeedbackNodes.value = uiDesign.human_feedback_nodes
     } else {
       const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
       const reactiveUIDesign = reactive(uiDesign)
       inputFields.value = reactiveUIDesign.inputFields
       outputNodes.value = reactiveUIDesign.outputNodes
       triggerNodes.value = reactiveUIDesign.triggerNodes
+      humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
     }
     message.error(t('workspace.workflowSpace.run_workflow_failed'))
     clearInterval(checkStatusTimer.value)
     rawErrorTask.value = statusResponse.data?.data?.error_task
     showingRecord.value = true
   }
+  checkingStatus.value = false
 }
+
+const runWorkflowVersionModal = ref(false)
 
 const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
-const runWorkflow = async () => {
+const runWorkflow = async (workflowVersion = null) => {
+  let workflowDataForRun = deepCopy(savedWorkflow.value)
+  if (savedWorkflow.value.version !== null && currentWorkflow.value.version !== null && savedWorkflow.value.version !== currentWorkflow.value.version) {
+    if (workflowVersion === null) {
+      runWorkflowVersionModal.value = true
+      return
+    } else {
+      runWorkflowVersionModal.value = false
+      switch (workflowVersion) {
+        case 'record':
+          workflowDataForRun = deepCopy(currentWorkflow.value)
+          break;
+        case 'latest':
+          workflowDataForRun = deepCopy(savedWorkflow.value)
+          break;
+        default:
+          return
+      }
+    }
+  }
+
   runRecordId.value = null
   showingRecord.value = false
+  streamableNodes.value = []
   if (!checkFieldsValid(inputFields.value)) {
     return
   }
-  let workflowDataForRun = JSON.parse(JSON.stringify(savedWorkflow.value))
   // Iterate all nodes from workflowDataForRun, update the value of fields that are shown from currentWorkflow
   // 这样做的目的是如果每次都直接提交currentWorkflow的话，由于currentWorkflow是会被运行结果更新的，如果一旦更新后再次提交
   // 有些字段的类型就直接发生改变了，运行会报错
@@ -232,9 +284,10 @@ const runWorkflow = async () => {
       if (node.data.has_inputs && hasShowFields(node) && !['triggers'].includes(node.category)) {
         Object.keys(node.data.template).forEach((field) => {
           if (node.data.template[field].show) {
-            node.data.template[field].value = currentWorkflow.value.data.nodes.find((item) => {
-              return item.id == node.id
-            }).data.template[field].value
+            const inputField = inputFields.value.find((item) => item.nodeId == node.id && item.fieldName == field)
+            if (inputField) {
+              node.data.template[field].value = inputField.value
+            }
           }
         })
       }
@@ -267,7 +320,7 @@ const showingRecord = ref(false)
 const recordStatus = ref('')
 const rawErrorTask = ref('')
 
-const setWorkflowRecord = (record) => {
+function setWorkflowRecord(record) {
   runRecordId.value = record.rid
   recordStatus.value = record.status
   if (record.status == 'RUNNING') {
@@ -281,20 +334,23 @@ const setWorkflowRecord = (record) => {
   currentWorkflow.value.shared = record.shared
   currentWorkflow.value.is_public = record.is_public
   currentWorkflow.value.public_shared_record = record.public_shared_record
+  currentWorkflow.value.version = record.workflow_version
   rawErrorTask.value = record.data.error_task
   if (currentWorkflow.value.data?.ui_design) {
-    // currentWorkflow.value.data?.ui_design 里的是运行结果的ui_design
-    //currentWorkflow.value.ui_design 里的是原本工作流的ui_design
+    // currentWorkflow.value.data?.ui_design 里的是运行结果的 ui_design
+    // currentWorkflow.value.ui_design 里的是原本工作流的 ui_design
     const uiDesign = currentWorkflow.value.data.ui_design
     inputFields.value = uiDesign.input_fields
     outputNodes.value = uiDesign.output_nodes
     triggerNodes.value = uiDesign.trigger_nodes
+    humanFeedbackNodes.value = uiDesign.human_feedback_nodes
   } else {
     const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
     const reactiveUIDesign = reactive(uiDesign)
     inputFields.value = reactiveUIDesign.inputFields
     outputNodes.value = reactiveUIDesign.outputNodes
     triggerNodes.value = reactiveUIDesign.triggerNodes
+    humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
   }
   showingRecord.value = true
 }
@@ -316,6 +372,10 @@ const diagnosisRecord = async () => {
 defineExpose({
   setWorkflowRecord,
 })
+
+function clearWorkflow() {
+  setCurrentWorkflow(savedWorkflow.value)
+}
 </script>
 
 <template>
@@ -324,8 +384,9 @@ defineExpose({
   </div>
   <a-row :gutter="[16, 16]" class="main-use-container" v-else>
     <a-col :span="24" v-if="showingRecord">
-      <WorkflowRecordStatusAlert :key="`${runRecordId}-${recordStatus}`" :status="recordStatus"
-        :rawErrorTask="rawErrorTask" />
+      <WorkflowRecordStatusAlert :key="`${runRecordId}-${recordStatus}`"
+        :recordWorkflowVersion="currentWorkflow.version" :status="recordStatus" :rawErrorTask="rawErrorTask"
+        @close="clearWorkflow" />
     </a-col>
 
     <a-col :xxl="6" :xl="8" :lg="10" :md="24" :sm="24" :xs="24" v-show="!outputMaximized" style="width: 100%;">
@@ -347,8 +408,8 @@ defineExpose({
                 v-else-if="field.field_type == 'textarea'" />
               <a-input v-model:value="field.value" :placeholder="field.placeholder"
                 :maxlength="field.max_length ?? null" v-else-if="field.field_type == 'input'" />
-              <a-input-number v-model:value="field.value" :placeholder="field.placeholder"
-                v-else-if="field.field_type == 'number'" />
+              <a-input-number v-model:value="field.value" :placeholder="field.placeholder" :max="field.max ?? null"
+                :min="field.min ?? null" v-else-if="field.field_type == 'number'" />
               <a-checkbox v-model:checked="field.value" v-else-if="field.field_type == 'checkbox'" />
               <UploaderFieldUse v-else-if="field.field_type == 'file'" v-model="field.value" :multiple="true"
                 :supportFileTypes="field.support_file_types || '.docx, .pptx, .xlsx, .pdf, .txt, .md, .html, .json, .csv, .srt, .zip'" />
@@ -366,7 +427,8 @@ defineExpose({
 
         <a-flex vertical gap="small">
           <template v-for="(node) in triggerNodes" :key="`node-${node.id}`">
-            <a-button type="primary" block @click="runWorkflow" :loading="running" v-if="node.type == 'ButtonTrigger'">
+            <a-button type="primary" block @click="runWorkflow(null)" :loading="running"
+              v-if="node.type == 'ButtonTrigger'">
               <template #icon>
                 <PlayOne />
               </template>
@@ -457,6 +519,20 @@ defineExpose({
         </a-spin>
       </a-flex>
     </a-col>
+
+    <a-modal v-model:open="runWorkflowVersionModal"
+      :title="t('workspace.workflowSpace.run_workflow_version_inconsistent')" :footer="false">
+      <a-typography-paragraph :content="t('workspace.workflowSpace.run_workflow_version_inconsistent_tip1')" />
+      <a-typography-paragraph :content="t('workspace.workflowSpace.run_workflow_version_inconsistent_tip2')" />
+      <a-flex justify="space-between" gap="large">
+        <a-button type="primary" block @click="runWorkflow('record')">
+          {{ t('workspace.workflowSpace.run_record_version') }}
+        </a-button>
+        <a-button type="primary" block @click="runWorkflow('latest')">
+          {{ t('workspace.workflowSpace.run_latest_version') }}
+        </a-button>
+      </a-flex>
+    </a-modal>
   </a-row>
 </template>
 
@@ -482,5 +558,11 @@ defineExpose({
 
 .text-output-title {
   color: #005b79;
+}
+
+.human-feedback-nodes-container {
+  border: 3px solid #28c5e5;
+  border-radius: 10px;
+  padding: 16px;
 }
 </style>
