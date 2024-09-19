@@ -83,12 +83,8 @@ export function createTemplateData() {
             "label": "gpt-4o"
           },
           {
-            "value": "gpt-4",
-            "label": "gpt-4"
-          },
-          {
-            "value": "gpt-4v",
-            "label": "gpt-4v"
+            "value": "gpt-4o-mini",
+            "label": "gpt-4o-mini"
           },
         ],
         "name": "model",
