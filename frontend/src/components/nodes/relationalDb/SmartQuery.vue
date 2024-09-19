@@ -61,10 +61,11 @@ const loadTables = async (rid) => {
     status: ['VA'],
     page_size: 100,
   })
-  if (response.data.status != 200) {
+  if (response.status != 200) {
+    loadingTables.value = false
     return
   }
-  fieldsData.value.tables.options = response.data.data.tables.map((item) => {
+  fieldsData.value.tables.options = response.data.tables.map((item) => {
     return {
       value: item.tid,
       label: item.name,

@@ -27,7 +27,7 @@ export function createTemplateData() {
         "required": true,
         "placeholder": "",
         "show": false,
-        "value": "OpenAI/gpt-35-turbo",
+        "value": "OpenAI⋄gpt-4o-mini",
         "options": getChatModelOptions(true),
         "name": "model",
         "display_name": "model",
