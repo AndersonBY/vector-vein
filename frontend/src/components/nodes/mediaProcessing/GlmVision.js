@@ -72,6 +72,28 @@ export function createTemplateData() {
           return fieldsData.images_or_urls.value == 'urls'
         },
       },
+      "model": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "glm-4v",
+        "options": [
+          {
+            "value": "glm-4v",
+            "label": "glm-4v"
+          },
+          {
+            "value": "glm-4v-plus",
+            "label": "glm-4v-plus"
+          },
+        ],
+        "name": "model",
+        "display_name": "model",
+        "type": "str",
+        "clear_after_run": false,
+        "list": true,
+        "field_type": "select"
+      },
       "output": {
         "required": true,
         "placeholder": "",
