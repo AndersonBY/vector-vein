@@ -23,7 +23,7 @@ a = Analysis(
         "tiktoken_ext.openai_public",
         "tiktoken_ext",
     ],
-    hookspath=[],
+    hookspath=["./hooks"],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[],
