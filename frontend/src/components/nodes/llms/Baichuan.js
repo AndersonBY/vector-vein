@@ -44,10 +44,6 @@ export function createTemplateData() {
             "label": "Baichuan2-Turbo"
           },
           {
-            "value": "Baichuan2-Turbo-192k",
-            "label": "Baichuan2-Turbo-192k"
-          },
-          {
             "value": "Baichuan2-53B",
             "label": "Baichuan2-53B"
           },
