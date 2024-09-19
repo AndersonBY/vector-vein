@@ -1,39 +1,5 @@
 # @Author: Bi Ying
 # @Date:   2024-06-07 00:04:13
-from utilities.config import Settings
-
-
-MULTIMOAL_MODELS = [
-    "gpt-4",
-    "gpt-4o",
-    "claude-3-opus-20240229",
-    "claude-3-sonnet-20240229",
-    "claude-3-haiku-20240307",
-    "yi-vision",
-    "glm-4v",
-    "gemini-1.5-pro",
-    "gemini-1.5-flash",
-]
-
-
-def check_multimodal_available(model: str, backend: str = None):
-    if model in MULTIMOAL_MODELS:
-        return True
-    if backend is not None and backend.startswith("_local__"):
-        backend = backend.removeprefix("_local__")
-        settings = Settings()
-        family_settings = next((item for item in settings.local_llms if item["model_family"].lower() == backend), None)
-        if family_settings is None:
-            return False
-        model_settings = next(
-            (item for item in family_settings["models"] if item["model_id"].lower() == model.lower()), None
-        )
-        if model_settings is None:
-            return False
-        return model_settings.get("native_multimodal", False)
-    return False
-
-
 def get_tool_call_data(tool_call_data: dict, simple: bool = False):
     tools = tool_call_data.get("workflows", []) + tool_call_data.get("templates", [])
     if simple:
