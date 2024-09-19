@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, ref, reactive } from "vue"
+import { onBeforeMount, onBeforeUnmount, ref, reactive, computed } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -96,15 +96,15 @@ onBeforeMount(async () => {
           label: item.name,
         }));
     } else if (node.type === 'LocalLlm') {
-      node.data.template.model_family.options = setting.value.data?.local_llms?.map(llm => ({
-        value: llm.model_family,
-        text: llm.model_family,
+      node.data.template.model_family.options = Object.keys(setting.value.data?.custom_llms)?.map((llm) => ({
+        value: llm,
+        text: llm,
       }))
-      const modelFamily = node.data.template.model_family.value
-      const llm = setting.value.data?.local_llms?.find((llm) => llm.model_family === modelFamily)
-      node.data.template.llm_model.options = llm ? llm.models.map((model) => ({
-        value: model.model_id,
-        text: model.model_label,
+
+      const models = setting.value.data?.custom_llms[node.data.template.model_family.value]
+      node.data.template.llm_model.options = models ? models.map((model) => ({
+        value: model,
+        text: model,
       })) : []
     }
   });
@@ -120,6 +120,29 @@ onBeforeMount(async () => {
     outputNodes.value = reactiveUIDesign.outputNodes
     triggerNodes.value = reactiveUIDesign.triggerNodes
   }
+
+  const nodeModelFamilies = ref({})
+
+  inputFields.value.forEach((field) => {
+    if (field.nodeType === 'LocalLlm' && field.fieldName === 'model_family') {
+      nodeModelFamilies.value[field.nodeId] = field
+    }
+  })
+
+  inputFields.value.forEach((field) => {
+    if (field.nodeType === 'LocalLlm' && field.fieldName === 'llm_model') {
+      if (nodeModelFamilies.value[field.nodeId]) {
+        field.options = computed(() => {
+          const modelFamily = nodeModelFamilies.value[field.nodeId].value
+          const models = setting.value.data?.custom_llms[modelFamily]
+          return models ? models.map((model) => ({
+            value: model,
+            text: model,
+          })) : []
+        })
+      }
+    }
+  })
 
   savedWorkflow.value = currentWorkflow.value
 
