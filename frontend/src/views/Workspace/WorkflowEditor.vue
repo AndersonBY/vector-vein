@@ -22,7 +22,7 @@ import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
-import { ObjectHasher, deepCopy } from '@/utils/util'
+import { ObjectHasher } from '@/utils/util'
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'

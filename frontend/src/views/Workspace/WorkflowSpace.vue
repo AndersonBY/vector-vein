@@ -26,8 +26,6 @@ const collapsed = ref(false)
 const setSelectedKeys = (route) => {
   if (route.name == 'WorkflowSpaceMain') {
     selectedKeys.value = ['my_index']
-  } else if (route.name == 'VAppMain') {
-    selectedKeys.value = ['v_app']
   } else if (route.name == 'WorkflowUse') {
     workflowId.value = route.params.workflowId
     selectedKeys.value = [route.params.workflowId]
