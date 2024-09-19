@@ -407,6 +407,13 @@ export default {
       'diagnosis_workflow_record_tip': 'You can now diagnose a specific workflow run record to view the running status, running time of each node.',
       'more_actions': 'More',
       'api_key_is_empty': 'The API Key of model {model} is not set!',
+      'version_tip': 'Workflow version',
+      'run_workflow_version_inconsistent': 'Workflow version inconsistent',
+      'run_workflow_version_inconsistent_tip1': 'The current workflow version is inconsistent with the run record version, please select one of the following options to continue running',
+      'run_workflow_version_inconsistent_tip2': 'If you choose to run the version from the run record, it will use the workflow structure corresponding to that record, rather than the current latest workflow structure. If you use the current latest version of the workflow structure, due to possible differences in fields, it may not be able to automatically fill and run successfully.',
+      'run_record_version': 'Run record version',
+      'run_latest_version': 'Run latest version',
+      'record_version': 'Workflow run record corresponding to workflow version',
     },
     workflowEditor: {
       'exit_not_saved_confirm': 'Workflow not saved, confirm exit?',
@@ -705,6 +712,7 @@ export default {
         'check_record': 'Check record',
         'check_record_and_error_task': 'Check record and error task',
         'workflow_title': 'Workflow title',
+        'version': 'Version',
       },
       vueFlowStyleSettings: {
         'title': 'Style Settings',

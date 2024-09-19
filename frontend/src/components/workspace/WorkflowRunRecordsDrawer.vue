@@ -3,11 +3,12 @@ import { ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
-  Time,
-  Control,
   Tag,
-  ListNumbers,
+  Time,
   Login,
+  Control,
+  Timeline,
+  ListNumbers,
   HourglassFull,
 } from '@icon-park/vue-next'
 import { formatTime } from "@/utils/util"
@@ -87,6 +88,14 @@ const columns = ref([
     dataIndex: 'status',
     filters: statusOptions,
     width: '100px',
+  },
+  {
+    title: t('components.workspace.workflowRunRecordsDrawer.version'),
+    key: 'version',
+    dataIndex: 'workflow_version',
+    sorter: true,
+    sortDirections: ['descend', 'ascend'],
+    width: '60px',
   },
   {
     title: t('common.action'),
@@ -228,6 +237,11 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
                   <Tag />
                 </a-tooltip>
               </template>
+              <template v-else-if="column.key === 'version'">
+                <a-tooltip :title="t('components.workspace.workflowRunRecordsDrawer.version')">
+                  <Timeline />
+                </a-tooltip>
+              </template>
               <template v-else-if="column.key === 'action'">
                 <Control />
                 {{ t('common.action') }}
@@ -240,6 +254,9 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
               </template>
               <template v-else-if="column.key === 'status'">
                 <WorkflowRecordsStatusTag :status="record.status" />
+              </template>
+              <template v-else-if="column.key === 'version'">
+                v{{ record.workflow_version }}
               </template>
               <template v-else-if="column.key === 'action'">
                 <a-flex gap="small" align="center" justify="center">

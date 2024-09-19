@@ -10,8 +10,14 @@ const props = defineProps({
   rawErrorTask: {
     type: String,
     default: '',
+  },
+  recordWorkflowVersion: {
+    type: [Number, null],
+    default: null,
   }
 })
+
+const emit = defineEmits(['close'])
 
 const getErrorTask = (rawErrorTask) => {
   let [category, node] = (rawErrorTask || '.').split('.')
@@ -56,22 +62,25 @@ const getAlertType = () => {
   }
 }
 const alertType = ref(getAlertType())
+const statusText = ref(t(`components.workspace.workflowRunRecordsDrawer.status_${props.status.toLowerCase()}`))
+const errorTaskText = ref('')
+if (props.status == 'FAILED') {
+  errorTaskText.value = t(`components.nodes.${errorTask.value}.title`)
+}
 </script>
 
 <template>
-  <a-alert :type="alertType" banner="" show-icon>
+  <a-alert :type="alertType" banner="" show-icon closable @close="emit('close')">
     <template #message>
+      <a-tooltip :title="t('workspace.workflowSpace.record_version')">
+        <a-tag v-if="recordWorkflowVersion">v{{ recordWorkflowVersion }}</a-tag>
+      </a-tooltip>
       <span>
-        {{ t('workspace.workflowSpace.record_status', {
-          status:
-            t(`components.workspace.workflowRunRecordsDrawer.status_${status.toLowerCase()}`)
-        }) }}
+        {{ t('workspace.workflowSpace.record_status', { status: statusText }) }}
       </span>
       <a-divider type="vertical" />
       <span v-if="status == 'FAILED' && errorTask != '.'">
-        {{ t('workspace.workflowSpace.record_error_task', {
-          task: t(`components.nodes.${errorTask}.title`)
-        }) }}
+        {{ t('workspace.workflowSpace.record_error_task', { task: errorTaskText }) }}
       </span>
     </template>
   </a-alert>

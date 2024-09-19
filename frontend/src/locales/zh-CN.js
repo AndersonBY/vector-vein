@@ -407,6 +407,13 @@ export default {
       'diagnosis_workflow_record_tip': '你现在可以针对具体某一条工作流记录进行诊断，查看各个节点的运行情况、运行时间等信息。',
       'more_actions': '更多操作',
       'api_key_is_empty': '模型 {model} 的 API Key 未设置！',
+      'version_tip': '工作流版本',
+      'run_workflow_version_inconsistent': '工作流版本不一致',
+      'run_workflow_version_inconsistent_tip1': '当前工作流版本与运行记录版本不一致，请选择以下任意一种方式继续运行',
+      'run_workflow_version_inconsistent_tip2': '如果选择运行记录当时的版本，则会以运行记录对应的工作流结构来运行，而非当前最新的工作流结构。如果采用当前最新版本的工作流结构，由于字段可能有差异，不一定可以自动填充并运行成功。',
+      'run_record_version': '运行记录版本',
+      'run_latest_version': '运行最新版本',
+      'record_version': '工作流运行记录对应工作流版本',
     },
     workflowEditor: {
       'exit_not_saved_confirm': '工作流尚未保存，确认退出？',
@@ -705,6 +712,7 @@ export default {
         'check_record': '查看记录',
         'check_record_and_error_task': '查看记录及错误任务',
         'workflow_title': '工作流标题',
+        'version': '版本',
       },
       vueFlowStyleSettings: {
         'title': '风格设置',

@@ -64,6 +64,7 @@ class WorkflowAPI:
             data=data,
             language=language,
             images=copy_images(images),
+            version="1",
         )
         tool_call_data["workflow_id"] = workflow.wid.hex
         workflow.tool_call_data = tool_call_data
@@ -118,6 +119,7 @@ class WorkflowAPI:
         workflow.images = copy_images(images)
         workflow.data = data
         workflow.update_time = datetime.now()
+        workflow.version = str(int(workflow.version or "1") + 1)
         workflow.save()
 
         update_workflow_tool_call_data.delay(workflow_wid=workflow.wid.hex, force=title_changed)
@@ -197,6 +199,7 @@ class WorkflowAPI:
             workflow_data=workflow_data,
             workflow=workflow,
             run_from=WorkflowRunRecord.RunFromTypes.WEB,
+            workflow_version=payload.get("version", workflow.version),
         )
 
         return JResponse(data={"rid": record_rid})
@@ -215,6 +218,7 @@ class WorkflowAPI:
         if record.status == "FINISHED":
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
+            workflow_serializer_data["version"] = record.workflow_version
             response = {"status": 200, "msg": record.status, "data": workflow_serializer_data}
         elif record.status in ("RUNNING", "QUEUED"):
             response = {"status": 202, "msg": record.status, "data": {}}

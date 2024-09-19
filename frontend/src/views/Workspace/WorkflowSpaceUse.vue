@@ -125,6 +125,11 @@ const openEditor = async () => {
         <a-flex wrap="wrap" gap="small">
           <a-typography-text type="secondary">
             {{ t('workspace.workflowSpace.update_time', { time: formatTime(currentWorkflow.update_time) }) }}
+            <a-tooltip :title="t('workspace.workflowSpace.version_tip')">
+              <a-tag :bordered="false">
+                v{{ currentWorkflow.version }}
+              </a-tag>
+            </a-tooltip>
           </a-typography-text>
           <a-divider type="vertical" />
           <a-typography-link @click="briefModalOpen = true">

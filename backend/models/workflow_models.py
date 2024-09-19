@@ -63,7 +63,7 @@ class Workflow(BaseModel):
     images = JSONField(default=list)
     language = CharField(max_length=16, null=True)
     tags = ManyToManyField(WorkflowTag, backref="workflows")
-    version = CharField(max_length=128, null=True)
+    version = IntegerField(default=1)
     is_fast_access = BooleanField(default=False)
 
     create_time = DateTimeField(default=datetime.now)
@@ -89,6 +89,7 @@ class WorkflowRunRecord(BaseModel):
     rid = UUIDField(primary_key=True, default=uuid.uuid4)
     user = ForeignKeyField(User, null=True, backref="workflow_run_records")
     workflow = ForeignKeyField(Workflow, null=True, backref="run_records")
+    workflow_version = IntegerField(default=1)
     STATUS_CHOICES = (
         ("NOT_STARTED", "未开始"),
         ("QUEUED", "排队中"),

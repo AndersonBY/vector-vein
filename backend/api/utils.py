@@ -108,6 +108,7 @@ def run_workflow_common(
     workflow: Workflow,
     message=None,
     run_from=WorkflowRunRecord.RunFromTypes.WEB,
+    workflow_version: int | None = None,
 ):
     workflow_data["wid"] = workflow.wid.hex
 
@@ -119,6 +120,7 @@ def run_workflow_common(
         status="RUNNING",
         run_from=run_from,
         source_message=source_message,
+        workflow_version=workflow_version or workflow.version,
     )
     workflow_data["rid"] = record.rid.hex
 
