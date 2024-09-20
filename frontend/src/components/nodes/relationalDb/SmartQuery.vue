@@ -90,19 +90,19 @@ const collapseChanged = (data) => {
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.relationalDb.SmartQuery.query')" required type="target"
           v-model:data="fieldsData.query">
-          <a-textarea class="field-content" v-model:value="fieldsData.query.value"
+          <a-textarea class="nodrag" v-model:value="fieldsData.query.value"
             :placeholder="fieldsData.query.placeholder" />
         </BaseField>
 
         <BaseField :name="t('components.nodes.relationalDb.SmartQuery.model')" required type="target"
           v-model:data="fieldsData.model">
-          <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.model.value"
+          <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.model.value"
             :options="fieldsData.model.options" />
         </BaseField>
 
         <BaseField :name="t('components.nodes.relationalDb.SmartQuery.database')" required type="target"
           v-model:data="fieldsData.database">
-          <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.database.value"
+          <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.database.value"
             :options="fieldsData.database.options" @change="databaseChanged" />
         </BaseField>
 
@@ -111,7 +111,7 @@ const collapseChanged = (data) => {
             v-model:data="fieldsData.tables">
             <a-spin :spinning="loadingTables">
               <a-flex gap="small" align="center">
-                <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.tables.value"
+                <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.tables.value"
                   :options="fieldsData.tables.options" mode="tags" />
                 <a-tooltip :title="t('components.nodes.relationalDb.SmartQuery.load_tables')">
                   <a-button type="text" @click="loadTables(fieldsData.database.value)">
@@ -152,13 +152,13 @@ const collapseChanged = (data) => {
 
           <BaseField :name="t('components.nodes.relationalDb.SmartQuery.max_count')" type="target"
             v-model:data="fieldsData.max_count">
-            <a-input-number style="width: 100%;" class="field-content" v-model:value="fieldsData.max_count.value"
+            <a-input-number style="width: 100%;" class="nodrag" v-model:value="fieldsData.max_count.value"
               :placeholder="fieldsData.max_count.placeholder" />
           </BaseField>
 
           <BaseField :name="t('components.nodes.relationalDb.SmartQuery.output_type')" type="target"
             v-model:data="fieldsData.output_type">
-            <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.output_type.value"
+            <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.output_type.value"
               :options="fieldsData.output_type.options" />
           </BaseField>
 

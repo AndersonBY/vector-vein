@@ -81,7 +81,7 @@ const loadTables = async (rid) => {
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.relationalDb.GetTableInfo.database')" required type="target"
           v-model:data="fieldsData.database">
-          <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.database.value"
+          <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.database.value"
             :options="fieldsData.database.options" @change="databaseChanged" />
         </BaseField>
         <a-tooltip placement="left" :title="t('components.nodes.relationalDb.GetTableInfo.select_all_if_empty')">
@@ -89,7 +89,7 @@ const loadTables = async (rid) => {
             v-model:data="fieldsData.tables">
             <a-spin :spinning="loadingTables">
               <a-flex gap="small" align="center">
-                <a-select style="width: 100%;" class="field-content" v-model:value="fieldsData.tables.value"
+                <a-select style="width: 100%;" class="nodrag" v-model:value="fieldsData.tables.value"
                   :options="fieldsData.tables.options" mode="tags" />
                 <a-tooltip :title="t('components.nodes.relationalDb.GetTableInfo.load_tables')">
                   <a-button type="text" @click="loadTables(fieldsData.database.value)">

@@ -44,10 +44,9 @@ watch(() => fieldsData.value.input_type.value, (value) => {
     <template #main>
       <BaseField :name="fieldsData.text.display_name" required editable @edit="showEditField = true" type="target"
         v-model:data="fieldsData.text">
-        <a-textarea v-if="fieldsData.input_type.value == 'text'" class="field-content"
-          v-model:value="fieldsData.text.value" :placeholder="fieldsData.text.placeholder"
-          :autoSize="{ minRows: 2, maxRows: 10 }" />
-        <a-input-number v-if="fieldsData.input_type.value == 'number'" class="field-content"
+        <a-textarea v-if="fieldsData.input_type.value == 'text'" class="nodrag" v-model:value="fieldsData.text.value"
+          :placeholder="fieldsData.text.placeholder" :autoSize="{ minRows: 2, maxRows: 10 }" />
+        <a-input-number v-if="fieldsData.input_type.value == 'number'" class="nodrag"
           v-model:value="fieldsData.text.value" style="width: 100%;" />
         <a-modal v-model:open="showEditField" :title="t('components.nodes.textProcessing.TextInOut.edit_name')"
           :footer="null">

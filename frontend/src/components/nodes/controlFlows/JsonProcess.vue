@@ -70,8 +70,8 @@ const addKey = () => {
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.common.input')" required type="target" v-model:data="fieldsData.input">
-          <a-textarea class="field-content" v-model:value="fieldsData.input.value"
-            :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData.input.placeholder" />
+          <a-textarea class="nodrag" v-model:value="fieldsData.input.value" :autoSize="{ minRows: 1, maxRows: 10 }"
+            :showCount="true" :placeholder="fieldsData.input.placeholder" />
         </BaseField>
 
         <BaseField :name="t('components.nodes.controlFlows.JsonProcess.process_mode')" required type="target"
@@ -83,13 +83,12 @@ const addKey = () => {
         <template v-if="fieldsData.process_mode.value == 'get_value'">
           <BaseField :name="t('components.nodes.controlFlows.JsonProcess.key')" required type="target"
             v-model:data="fieldsData.key">
-            <a-input class="field-content" v-model:value="fieldsData.key.value"
-              :placeholder="fieldsData.key.placeholder" />
+            <a-input class="nodrag" v-model:value="fieldsData.key.value" :placeholder="fieldsData.key.placeholder" />
           </BaseField>
 
           <BaseField :name="t('components.nodes.controlFlows.JsonProcess.default_value')" type="target"
             v-model:data="fieldsData.default_value">
-            <a-input class="field-content" v-model:value="fieldsData.default_value.value"
+            <a-input class="nodrag" v-model:value="fieldsData.default_value.value"
               :placeholder="fieldsData.default_value.placeholder" />
           </BaseField>
         </template>
@@ -122,7 +121,7 @@ const addKey = () => {
 
           <BaseField :name="t('components.nodes.controlFlows.JsonProcess.default_value')" type="target"
             v-model:data="fieldsData.default_value">
-            <a-input class="field-content" v-model:value="fieldsData.default_value.value"
+            <a-input class="nodrag" v-model:value="fieldsData.default_value.value"
               :placeholder="fieldsData.default_value.placeholder" />
           </BaseField>
         </template>

@@ -78,7 +78,7 @@ const editorModal = reactive({
       <a-flex vertical gap="small">
         <BaseField :name="fieldsData.language.display_name" required type="target" @delete="removeField(field)"
           v-model:data="fieldsData.language">
-          <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData.language.value"
+          <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData.language.value"
             :options="fieldsData.language.options" />
         </BaseField>
 
@@ -86,13 +86,13 @@ const editorModal = reactive({
           <BaseField v-if="!reservedFieldNames.includes(field)"
             :name="`${fieldsData[field].display_name}: ${fieldsData[field].type}`" required type="target" deletable
             @delete="removeField(field)" v-model:data="fieldsData[field]">
-            <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
+            <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData[field].value"
               :options="fieldsData[field].options" v-if="fieldsData[field].field_type == 'select'" />
-            <a-textarea class="field-content" v-model:value="fieldsData[field].value"
-              :autoSize="{ minRows: 1, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
+            <a-textarea class="nodrag" v-model:value="fieldsData[field].value" :autoSize="{ minRows: 1, maxRows: 10 }"
+              :showCount="true" :placeholder="fieldsData[field].placeholder"
               v-else-if="fieldsData[field].field_type == 'textarea'" />
-            <a-input class="field-content" v-model:value="fieldsData[field].value"
-              :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
+            <a-input class="nodrag" v-model:value="fieldsData[field].value" :placeholder="fieldsData[field].placeholder"
+              v-else-if="fieldsData[field].field_type == 'input'" />
           </BaseField>
         </template>
 

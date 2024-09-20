@@ -230,8 +230,8 @@ const editProperty = () => {
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.llms.common.prompt')" required type="target"
           v-model:data="fieldsData.prompt">
-          <a-textarea class="field-content" v-model:value="fieldsData.prompt.value"
-            :autoSize="{ minRows: 2, maxRows: 20 }" :showCount="true" :placeholder="fieldsData.prompt.placeholder" />
+          <a-textarea class="nodrag" v-model:value="fieldsData.prompt.value" :autoSize="{ minRows: 2, maxRows: 20 }"
+            :showCount="true" :placeholder="fieldsData.prompt.placeholder" />
         </BaseField>
 
         <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target"

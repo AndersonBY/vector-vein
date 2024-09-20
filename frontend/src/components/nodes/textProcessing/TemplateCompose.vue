@@ -141,14 +141,14 @@ const openTemplateEditor = ref(false)
           <BaseField v-if="!['template', 'output'].includes(field)" :name="fieldsData[field].display_name" required
             type="target" deletable editable @delete="removeField(field)" @edit="editField(field)"
             v-model:data="fieldsData[field]">
-            <a-select class="field-content" style="width: 100%;" v-model:value="fieldsData[field].value"
+            <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData[field].value"
               :options="fieldsData[field].options" :placeholder="fieldsData[field].placeholder"
               v-if="fieldsData[field].field_type == 'select'" />
-            <a-textarea class="field-content" v-model:value="fieldsData[field].value"
-              :autoSize="{ minRows: 2, maxRows: 10 }" :showCount="true" :placeholder="fieldsData[field].placeholder"
+            <a-textarea class="nodrag" v-model:value="fieldsData[field].value" :autoSize="{ minRows: 2, maxRows: 10 }"
+              :showCount="true" :placeholder="fieldsData[field].placeholder"
               v-else-if="fieldsData[field].field_type == 'textarea'" />
-            <a-input class="field-content" v-model:value="fieldsData[field].value"
-              :placeholder="fieldsData[field].placeholder" v-else-if="fieldsData[field].field_type == 'input'" />
+            <a-input class="nodrag" v-model:value="fieldsData[field].value" :placeholder="fieldsData[field].placeholder"
+              v-else-if="fieldsData[field].field_type == 'input'" />
           </BaseField>
         </template>
 
