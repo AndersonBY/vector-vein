@@ -30,6 +30,14 @@ def build_production(version):
     with open("./dist/vector-vein/version.txt", "w") as f:
         f.write(version)
 
+    # Copy migrations to dist/vector-vein/migrations
+    migrations_path = Path("./migrations")
+    if migrations_path.exists():
+        dist_migrations_path = Path("./dist/vector-vein/migrations")
+        if dist_migrations_path.exists():
+            shutil.rmtree(dist_migrations_path)
+        shutil.copytree(migrations_path, dist_migrations_path)
+
     system_name = platform.system().lower()
     if system_name == "darwin":
         platform_name = "mac"
@@ -60,6 +68,14 @@ def build_development(version):
         f.write(version)
     with open("./dist/vector-vein/DEBUG", "w") as f:
         f.write("1")
+
+    # Copy migrations to dist/vector-vein/migrations
+    migrations_path = Path("./migrations")
+    if migrations_path.exists():
+        dist_migrations_path = Path("./dist/vector-vein/migrations")
+        if dist_migrations_path.exists():
+            shutil.rmtree(dist_migrations_path)
+        shutil.copytree(migrations_path, dist_migrations_path)
 
 
 def build_frontend():
