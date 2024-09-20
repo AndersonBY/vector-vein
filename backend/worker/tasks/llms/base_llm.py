@@ -111,7 +111,6 @@ class BaseLLMTask:
         self.content_outputs = [""] * self.prompts_count
         self.function_call_outputs = [{}] * self.prompts_count
         self.function_call_arguments_batches = [{}] * self.prompts_count
-        self.total_credits = 0
         self.total_prompt_tokens = 0
         self.total_completion_tokens = 0
         mprint(f"Prompts count: {self.prompts_count}")
