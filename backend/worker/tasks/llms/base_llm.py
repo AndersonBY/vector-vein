@@ -9,8 +9,8 @@ import httpx
 from vectorvein.types.enums import BackendType
 from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
 from vectorvein.chat_clients import create_chat_client
-from vectorvein.chat_clients.utils import get_token_counts
 from vectorvein.settings import settings as vectorvein_settings
+from vectorvein.chat_clients.utils import get_token_counts, format_messages
 
 from utilities.general import mprint
 from utilities.network import proxies
@@ -179,10 +179,9 @@ class BaseLLMTask:
                     try:
                         response = self.chat_client.create_completion(
                             model=self.model,
-                            messages=messages,
+                            messages=format_messages(messages, backend=self.MODEL_TYPE),
                             temperature=self.temperature,
                             max_tokens=max_tokens,
-                            timeout=60 * 3,
                             **self.response_format,
                             **self.function_call_parameters,
                         )
