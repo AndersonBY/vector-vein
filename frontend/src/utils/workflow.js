@@ -169,6 +169,9 @@ export const getUIDesignFromWorkflow = (workflowData) => {
   let edges = []
 
   workflowData.data.nodes.forEach((node) => {
+    if (node.ignored) {
+      return
+    }
     if (node.type == 'HumanFeedback') {
       humanFeedbackNodes.push(node)
     } else if (node.category == 'triggers') {

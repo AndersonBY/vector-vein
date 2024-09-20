@@ -438,6 +438,7 @@ export default {
       'diagnosing_record': '正在诊断记录 {record}',
       'cannot_save_when_diagnosing': '诊断记录时无法保存',
       'layout_graph': '自动布局',
+      'resume_node_but_edge_already_connected_message': '连线另一端有其他连线，请先删除其他连线或忽略对应连线的节点。',
     },
     workflowSpaceMain: {
       'my_workflows': '我的工作流',
@@ -762,6 +763,9 @@ export default {
       baseNode: {
         'document_link': '文档链接',
         'clone_node': '克隆节点',
+        'ignore_node': '忽略节点',
+        'ignore_node_tip': '忽略节点后，该节点会保留在画布上，但不会对工作流运行产生任何影响。',
+        'remove_ignore': '移除忽略，恢复节点',
         'delete_node': '删除节点',
         'run_time': '运行时间 {time}s',
         'no_run_record': '无运行记录',

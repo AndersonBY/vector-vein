@@ -438,6 +438,7 @@ export default {
       'diagnosing_record': 'Diagnosing {record}',
       'cannot_save_when_diagnosing': 'Cannot save when diagnosing record',
       'layout_graph': 'Auto layout',
+      'resume_node_but_edge_already_connected_message': 'The other end of the line has other lines, please delete other lines or ignore the nodes corresponding to the lines.',
     },
     workflowSpaceMain: {
       'my_workflows': 'My workflows',
@@ -762,6 +763,9 @@ export default {
       baseNode: {
         'document_link': 'Document link',
         'clone_node': 'Clone node',
+        'ignore_node': 'Ignore node',
+        'ignore_node_tip': 'After ignoring the node, the node will remain on the canvas, but will not affect the workflow run.',
+        'remove_ignore': 'Remove ignore, restore node',
         'delete_node': 'Delete node',
         'run_time': 'Run time {time}s',
         'no_run_record': 'No run record',

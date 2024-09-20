@@ -79,14 +79,13 @@ class Node:
         self.field_map[field] = data
         self.__node_data["data"]["template"][field] = data
 
-    def get_status(self) -> int:
+    @property
+    def status(self) -> int:
         return self.__node_data["data"].get("status", 0)
 
-    def update_status(self, status: int):
+    @status.setter
+    def status(self, status: int):
         self.__node_data["data"]["status"] = status
-
-    def update_credits(self, credits: int):
-        self.__node_data["data"]["credits"] = credits
 
     @property
     def id(self) -> str:
@@ -121,7 +120,8 @@ class Workflow:
         else:
             self.original_workflow_data = workflow_data["original_workflow_data"]
         self.related_workflows = workflow_data.get("related_workflows", {})
-        self.edges = self.workflow_data["edges"]
+        self.edges = [edge for edge in self.workflow_data["edges"] if not edge.get("ignored", False)]
+        self.workflow_data["nodes"] = [node for node in self.workflow_data["nodes"] if not node.get("ignored", False)]
         self.__node_id_map = workflow_data.get("__node_id_map", {})
         self.nodes, self.workflow_invoke_nodes = self.parse_nodes()
         self.dag = self.create_dag()
@@ -415,7 +415,7 @@ class Workflow:
         status: int,
     ):
         node = self.get_node(node_id)
-        node.update_status(status)
+        node.status = status
         return True
 
     @property

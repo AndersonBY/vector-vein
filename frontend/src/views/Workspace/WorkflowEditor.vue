@@ -123,8 +123,7 @@ onMounted(async () => {
   currentWorkflow.value.data.nodes.forEach((node) => {
     if (diagnosisRecord.value) {
       node.data.debug = {
-        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1,
-        credits: node.data.credits || 0
+        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1
       }
     }
     if (node.category == "vectorDb") {
@@ -169,6 +168,9 @@ onMounted(async () => {
   loading.value = false
 
   nextTick(() => {
+    if (currentWorkflow.value.data.nodes.length == 0) {
+      addNodeToCanvas('ButtonTrigger', { x: 100, y: 100 })
+    }
     elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
     savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
     if (currentWorkflow.value.data.viewport) {
@@ -177,8 +179,25 @@ onMounted(async () => {
   })
 })
 
+function getCleanWorkflowData(noShadow = true, noIgnored = false) {
+  const { nodes, edges, viewport } = toObject()
+  return {
+    nodes: nodes.filter((node) => {
+      if (noShadow && node.shadow) return false;
+      if (noIgnored && node.ignored) return false;
+      return true;
+    }),
+    edges: edges.filter((edge) => {
+      if (noShadow && edge.shadow) return false;
+      if (noIgnored && edge.ignored) return false;
+      return true;
+    }),
+    viewport,
+  }
+}
+
 const updateWorkflowData = () => {
-  const workflowData = toObject()
+  const workflowData = getCleanWorkflowData()
   currentWorkflow.value.data = {
     ...workflowData,
     ui: currentWorkflow.value.data.ui || {},
@@ -199,7 +218,7 @@ const saveWorkflowCheck = () => {
     noCycle: false,
     noIsolatedNodes: false,
   }
-  const workflowDAGStatus = checkWorkflowDAG(currentWorkflow.value)
+  const workflowDAGStatus = checkWorkflowDAG({ data: getCleanWorkflowData(true, true) })
   workflowCheckList.value.noCycle = workflowDAGStatus.noCycle
   workflowCheckList.value.noIsolatedNodes = workflowDAGStatus.noIsolatedNodes
   const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
@@ -218,7 +237,7 @@ const saving = ref(false)
 const saveWorkflow = async () => {
   saving.value = true
   const uiDesign = currentWorkflow.value.data.ui || {}
-  const workflowData = toObject()
+  const workflowData = getCleanWorkflowData()
   currentWorkflow.value.data = {
     ...workflowData,
     ui: uiDesign,
@@ -274,7 +293,7 @@ const exitConfirm = () => {
     routerBack()
   }
   const uiDesign = currentWorkflow.value.data.ui || {}
-  const workflowData = toObject()
+  const workflowData = getCleanWorkflowData()
   currentWorkflow.value.data = {
     ...workflowData,
     ui: uiDesign,
@@ -304,7 +323,7 @@ const {
 } = useVueFlow()
 onConnect((params) => {
   const hasConnectedEdge = edges.value.some((edge) => {
-    return edge.target === params.target && edge.targetHandle === params.targetHandle
+    return !edge.ignored && edge.target === params.target && edge.targetHandle === params.targetHandle
   })
   if (hasConnectedEdge) {
     message.error(t('workspace.workflowEditor.edge_already_connected_message'))
@@ -314,6 +333,15 @@ onConnect((params) => {
   params.type = vueFlowStyleSettings.value.edge?.type || 'default'
   params.animated = vueFlowStyleSettings.value.edge?.animated || true
   params.style = vueFlowStyleSettings.value.edge?.style || { strokeWidth: 3, stroke: '#28c5e5' }
+
+  // 如果连线任意一端是 ignored 的节点，则节点也要设置为 ignored
+  const sourceNode = findNode(params.source)
+  const targetNode = findNode(params.target)
+  if (sourceNode.ignored || targetNode.ignored) {
+    params.ignored = true
+    params.class = 'ignored-edge'
+  }
+
   addEdges([params])
 })
 const onEdgeUpdate = ({ edge, connection }) => {
@@ -386,6 +414,67 @@ const nodeEvents = {
     newNode.position.x += 50
     newNode.position.y -= 50
     addNodes([newNode])
+  },
+  ignore: (ignored, nodeId) => {
+    const node = findNode(nodeId)
+
+    // 检查是否可以忽略该节点，主要判断 target 类端口在该节点恢复后不能有多个连线
+    const resumable = { pass: true, errors: new Set() }
+    if (!ignored) {
+      edges.value.forEach(edge => {
+        if (edge.source === nodeId || edge.target === nodeId) {
+          // 首先检查该 edge 的 target 端口是否存在除了该 edge 之外的连线
+          // 检查该 edge 的 target 端口是否存在除了该 edge 之外的连线
+          const hasOtherConnections = edges.value.some(e => {
+            return !e.ignored && e.target === edge.target && e.targetHandle === edge.targetHandle
+          });
+
+          if (hasOtherConnections) {
+            resumable.pass = false
+            resumable.errors.add('has_other_connections')
+            const originalStyle = edge.originalStyle || edge.style
+            edge.originalStyle = originalStyle
+            edge.style = {
+              stroke: '#f5222d',
+              strokeWidth: 8,
+            }
+            setTimeout(() => {
+              edge.style = originalStyle
+              delete edge.originalStyle
+            }, 3000)
+            return
+          }
+        }
+      })
+    }
+
+    if (!resumable.pass) {
+      resumable.errors.forEach(error => {
+        if (error == 'has_other_connections') {
+          message.error(t('workspace.workflowEditor.resume_node_but_edge_already_connected_message'))
+        }
+      })
+      return
+    }
+
+    // 需要把所有连线都调整 ignore 状态
+    edges.value.forEach(edge => {
+      if (edge.source === nodeId || edge.target === nodeId) {
+        if (ignored) {
+          edge.ignored = true
+          edge.class = 'ignored-edge'
+        } else {
+          const otherNodeId = edge.source === nodeId ? edge.target : edge.source
+          const otherNode = findNode(otherNodeId)
+          if (otherNode.ignored) return
+          delete edge.ignored
+          if (edge.class) {
+            edge.class = edge.class.replace('ignored-edge', '').trim()
+          }
+        }
+      }
+    })
+    node.ignored = ignored
   },
 }
 watch(() => nodeMessagesCount.value, () => {
@@ -511,7 +600,7 @@ const codeEditorModal = reactive({
   open: false,
   code: '',
   openEditor: async () => {
-    let editorData = toObject()
+    let editorData = getCleanWorkflowData()
     editorData.ui = currentWorkflow.value.data.ui || {}
     codeEditorModal.code = JSON.stringify(editorData, null, 2)
     codeEditorModal.open = true
@@ -797,5 +886,10 @@ async function layoutGraph(direction) {
 .vue-flow .vue-flow__edge.selected path {
   stroke: #28c5e5 !important;
   stroke-width: 6 !important;
+}
+
+.vue-flow .shadow-edge,
+.vue-flow .ignored-edge {
+  opacity: 0.5;
 }
 </style>

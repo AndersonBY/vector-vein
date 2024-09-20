@@ -1,6 +1,6 @@
 <script setup>
 import { watch, ref } from 'vue'
-import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen } from '@icon-park/vue-next'
+import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen, LinkInterrupt, LinkFour } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { useVueFlow } from '@vue-flow/core'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
@@ -181,6 +181,25 @@ const collapseChanged = (data) => {
         </a-tooltip>
       </a-flex>
       <a-flex gap="small" align="center">
+        <a-tooltip>
+          <template #title>
+            <a-flex gap="small" align="center">
+              <template v-if="!node.ignored">
+                {{ t('components.nodes.baseNode.ignore_node') }}
+                <QuestionPopover :size="18" :contents="[t('components.nodes.baseNode.ignore_node_tip')]" />
+              </template>
+              <template v-else>
+                {{ t('components.nodes.baseNode.remove_ignore') }}
+              </template>
+            </a-flex>
+          </template>
+          <a-button type="text" size="large" @click="pushMessage('ignore', !node.ignored)">
+            <template #icon>
+              <LinkInterrupt v-if="!node.ignored" fill="#28c5e5" />
+              <LinkFour v-else fill="#28c5e5" />
+            </template>
+          </a-button>
+        </a-tooltip>
         <a-tooltip color="blue" :title="t('components.nodes.baseNode.clone_node')">
           <a-button type="text" size="large" @click="pushMessage('clone')">
             <template #icon>
@@ -197,7 +216,7 @@ const collapseChanged = (data) => {
         </a-tooltip>
       </a-flex>
     </a-flex>
-    <div class="node" :style="style" :class="{ 'shadow-node': node.shadow }">
+    <div class="node" :style="style" :class="{ 'shadow-node': node.shadow, 'ignored-node': node.ignored }">
       <a-flex v-if="node.shadow" align="center" justify="center" vertical class="shadow-node-overlay">
         <div class="confirm-shadow-node-container shadow-node-action-area" @click="pushMessage('confirmShadowNode')">
           <CheckOne theme="filled" size="48" fill="#52c41a" class="check-icon" />
@@ -447,6 +466,10 @@ const collapseChanged = (data) => {
 
 .node.shadow-node {
   position: relative;
+  opacity: 0.5;
+}
+
+.node.ignored-node {
   opacity: 0.5;
 }
 
