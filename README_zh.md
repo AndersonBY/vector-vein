@@ -26,6 +26,9 @@
 
 软件采用了 pywebview 搭建，基于 webview2 内核，因此需要安装 webview2 运行时，如果出现软件无法打开，可能需要手动下载 webview2 运行时，下载地址： [https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/](https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/)
 
+> [!IMPORTANT]
+> 如果解压缩后无法运行，请检查下载下来的压缩包 .zip 文件是否被锁定，可以通过右键点击压缩包选择“解除锁定”来解决。
+
 ### 配置
 
 软件的大部分工作流、Agent 都会涉及 AI 大语言模型的使用，因此您应该至少提供一个大语言模型的可用配置。对于工作流您可以在使用界面看到其使用了哪些大语言模型，如下图。

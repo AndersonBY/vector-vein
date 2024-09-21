@@ -26,6 +26,9 @@ After downloading VectorVein from [Release](https://github.com/AndersonBY/vector
 
 VectorVein is built using pywebview, based on the webview2 kernel, so you need to install the webview2 runtime. If the software cannot be opened, you may need to download the webview2 runtime manually from [https://developer.microsoft.com/en-us/microsoft-edge/webview2/](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 
+> [!IMPORTANT]
+> If the software cannot be opened after decompression, please check if the downloaded compressed package .zip file is locked. You can solve this problem by right-clicking the compressed package and selecting "Unblock".
+
 ### Configuration
 
 Most workflows and agents in the software involve the use of AI large language models, so you should at least provide a usable configuration for a large language model. For workflows, you can see which large language models are being used in the interface, as shown in the image below.
