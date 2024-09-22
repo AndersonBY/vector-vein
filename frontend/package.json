@@ -36,6 +36,7 @@
     "lodash-es": "^4.17.21",
     "markdown-it-attrs": "^4.2.0",
     "markdown-it-github-alerts": "^0.3.0",
+    "markdown-it-link-attributes": "^4.0.1",
     "markmap-common": "^0.17.0",
     "markmap-lib": "^0.17.0",
     "markmap-view": "^0.17.0",
@@ -45,7 +46,7 @@
     "reconnecting-websocket": "^4.4.0",
     "smplr": "^0.13.4",
     "uuid": "^9.0.1",
-    "vue": "^3.5.6",
+    "vue": "^3.5.8",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "0.2.0-beta.2",
     "vue-echarts": "^6.7.3",
@@ -59,10 +60,10 @@
     "@vitejs/plugin-vue": "^4.6.2",
     "@vue-flow/core": "^1.41.2",
     "@vue/eslint-config-prettier": "^7.1.0",
-    "eslint": "^9.10.0",
+    "eslint": "^9.11.0",
     "eslint-plugin-vue": "^9.28.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.4.6"
+    "vite": "^5.4.7"
   }
 }
