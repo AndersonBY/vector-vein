@@ -81,11 +81,17 @@ const availableModelsState = reactive({
   listing: false,
   list: async () => {
     availableModelsState.listing = true
-    const response = await settingAPI('list_models', { api_key: endpointForm.api_key, base_url: endpointForm.api_base })
-    availableModelsState.availableModels = (response?.data?.models?.data || []).map(item => ({ key: item.id, ...item }))
-    availableModelsState.total = response?.data?.models?.data?.length || 0
-    availableModelsState.listing = false
-    availableModelsState.modalOpen = true
+    try {
+      const response = await settingAPI('list_models', { api_key: endpointForm.api_key, base_url: endpointForm.api_base })
+      availableModelsState.availableModels = (response?.data?.models?.data || []).map(item => ({ key: item.id, ...item }))
+      availableModelsState.total = response?.data?.models?.data?.length || 0
+      availableModelsState.modalOpen = true
+    } catch (error) {
+      message.error(t('settings.list_models_failed') + ': ' + error.message)
+      availableModelsState.modalOpen = false
+    } finally {
+      availableModelsState.listing = false
+    }
   },
   availableModels: [],
   selectedModel: [],
