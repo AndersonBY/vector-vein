@@ -151,6 +151,7 @@ def main():
     else:
         url = "web/index.html"
     webview.settings["ALLOW_DOWNLOADS"] = True
+    webview.settings["ALLOW_DOPEN_EXTERNAL_LINKS_IN_BROWSEROWNLOADS"] = True
     window = webview.create_window(
         f"VectorVein v{VERSION}",
         url=url,
@@ -203,7 +204,7 @@ def main():
     mprint(f"Debug: {DEBUG}")
     mprint(f"Version: {VERSION}")
 
-    webview.start(bind, window, debug=DEBUG, http_server=True)
+    webview.start(bind, [window], debug=DEBUG, http_server=True)
 
 
 if __name__ == "__main__":
