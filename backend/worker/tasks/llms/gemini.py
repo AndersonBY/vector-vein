@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class GeminiTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Gemini
+    MODEL_TYPE: BackendType = BackendType.Gemini

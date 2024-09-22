@@ -3,6 +3,7 @@
 # config.py
 import json
 import threading
+from typing import Any
 from pathlib import Path
 from threading import Lock
 from collections.abc import Mapping
@@ -42,7 +43,7 @@ class Config(Mapping):
         with open(self.config_path, "r") as config_file:
             self.config.update(json.load(config_file))
 
-    def get(self, key, default=None):
+    def get(self, key, default=None) -> Any:
         keys = key.split(".")
         value = self.config
         for key in keys:

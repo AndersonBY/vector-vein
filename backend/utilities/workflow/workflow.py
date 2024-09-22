@@ -5,8 +5,8 @@
 # @Last Modified time: 2024-06-15 18:44:21
 import uuid
 from copy import deepcopy
-from typing import List, Dict
 from datetime import datetime
+from typing import List, Dict, Any
 from functools import cached_property
 
 from models import WorkflowRunRecord, Message
@@ -119,7 +119,7 @@ class Workflow:
             self.workflow_data["original_workflow_data"] = self.original_workflow_data
         else:
             self.original_workflow_data = workflow_data["original_workflow_data"]
-        self.related_workflows = workflow_data.get("related_workflows", {})
+        self.related_workflows: dict[str, dict] = workflow_data.get("related_workflows", {})
         self.edges = [edge for edge in self.workflow_data["edges"] if not edge.get("ignored", False)]
         self.workflow_data["nodes"] = [node for node in self.workflow_data["nodes"] if not node.get("ignored", False)]
         self.__node_id_map = workflow_data.get("__node_id_map", {})
@@ -132,7 +132,7 @@ class Workflow:
         # 在没有【工作流调用】节点的情况下，所有节点就是原始数据中的nodes
         nodes_list: list[dict] = self.workflow_data["nodes"]
         nodes: dict[str, Node] = {}
-        workflow_invoke_nodes: dict[Node] = {}
+        workflow_invoke_nodes: dict[str, Node] = {}
         while len(nodes_list) > 0:
             node = nodes_list.pop(0)
             node_obj = Node(node)
@@ -161,7 +161,11 @@ class Workflow:
         """
         related_subnodes = self.get_related_subnodes(node_obj)
         subworkflow_id = node_obj.get_field("workflow_id").get("value")
+        if subworkflow_id is None:
+            return []
         subworkflow = self.related_workflows.get(subworkflow_id)
+        if subworkflow is None:
+            return []
         return self.add_subnodes_and_subedges(subworkflow, related_subnodes, node_obj)
 
     def get_related_subnodes(self, node_obj: Node) -> List[str]:
@@ -246,6 +250,8 @@ class Workflow:
         dag = DAG()
         for edge in self.edges:
             edge = self.update_edge_nodes(edge)
+            if edge is None:
+                continue
             dag.add_edge(edge["source"], edge["target"])
         self.add_isolated_nodes_to_dag(dag)
         return dag
@@ -260,11 +266,15 @@ class Workflow:
                 "output_field_key", original_source_node_field.get("fieldName")
             )
             source = self.get_original_node(source, edge["sourceHandle"])
+            if source is None:
+                return None
             edge["source"] = self.__node_id_map[source + workflow_invoke_node.id]
             edge["sourceHandle"] = original_output_field_key
         if target in self.workflow_invoke_nodes:
             workflow_invoke_node = self.workflow_invoke_nodes[target]
             target = self.get_original_node(target, edge["targetHandle"])
+            if target is None:
+                return None
             edge["target"] = self.__node_id_map[target + workflow_invoke_node.id]
         return edge
 
@@ -275,6 +285,8 @@ class Workflow:
         all_nodes = dag.get_all_nodes()
         for node_id in self.nodes:
             node = self.get_node(node_id)
+            if node is None:
+                continue
             if node_id not in all_nodes and node.category not in ["triggers", "assistedNodes"]:
                 dag.add_node(node_id)
 
@@ -283,6 +295,8 @@ class Workflow:
         tasks = []
         for node_id in nodes_order:
             node = self.get_node(node_id)
+            if node is None:
+                continue
             task_name = node.task_name
             tasks.append(
                 {
@@ -296,12 +310,20 @@ class Workflow:
         if node.type != "WorkflowInvoke":
             return node
         subworkflow_id = node.get_field("workflow_id").get("value")
+        if subworkflow_id is None:
+            return node
         subworkflow = self.related_workflows.get(subworkflow_id)
-        field_source_node_id = node.get_field(field_data.get("field_key")).get("node")
+        if subworkflow is None:
+            return node
+        field_key = field_data.get("field_key")
+        if field_key is None:
+            return node
+        field_source_node_id = node.get_field(field_key).get("node")
         for subnode in subworkflow.get("nodes", []):
             subnode_obj = Node(subnode)
             if subnode_obj.id == field_source_node_id:
                 return self.get_field_actual_node(subnode_obj, field_data)
+        return node
 
     def update_original_workflow_data(self):
         """
@@ -334,10 +356,10 @@ class Workflow:
         self.workflow_data.pop("related_workflows", None)
         self.workflow_data.pop("__node_id_map", None)
 
-    def get_node(self, node_id: str) -> Node:
+    def get_node(self, node_id: str) -> Node | None:
         return self.nodes.get(node_id)
 
-    def get_node_field_value(self, node_id: str, field: str, default: str = None):
+    def get_node_field_value(self, node_id: str, field: str, default: Any | None = None) -> Any:
         """
         如果节点有连接的边，则以边的另一端节点作为输入值，忽略节点自身的value。
         同时将获取到的值更新到节点的value中。
@@ -351,6 +373,8 @@ class Workflow:
         source_node = source_handle = ""
         for edge in self.edges:
             source_node = self.get_node(edge["source"])
+            if source_node is None:
+                continue
             if source_node.type in ("Empty", "ButtonTrigger"):
                 continue
             if edge["target"] == node_id and edge["targetHandle"] == field:
@@ -361,18 +385,24 @@ class Workflow:
             return node.get_field(field).get("value", default)
 
         source_node = self.get_node(source_node)
+        if source_node is None:
+            return default
         input_data = source_node.get_field(source_handle).get("value", default)
         self.update_node_field_value(node_id, field, input_data)
         return input_data
 
     def update_node_field_value(self, node_id: str, field: str, value):
         node = self.get_node(node_id)
+        if node is None:
+            return
         field_data = node.get_field(field)
         field_data.update({"value": value})
         node.update_field(field, field_data)
 
     def get_node_fields(self, node_id: str):
         node = self.get_node(node_id)
+        if node is None:
+            return []
         return node.data["data"]["template"].keys()
 
     def report_workflow_status(self, status: int, error_task: str = ""):
@@ -415,6 +445,8 @@ class Workflow:
         status: int,
     ):
         node = self.get_node(node_id)
+        if node is None:
+            return False
         node.status = status
         return True
 
