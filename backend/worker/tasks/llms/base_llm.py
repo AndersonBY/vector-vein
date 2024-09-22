@@ -7,9 +7,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import httpx
 from vectorvein.types.enums import BackendType
-from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
+from vectorvein.types.exception import APIStatusError
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
+from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
 from vectorvein.chat_clients.utils import get_token_counts, format_messages
 
 from utilities.general import mprint
@@ -56,22 +57,20 @@ def add_model_request_record(model: ModelSetting, endpoint: EndpointSetting) -> 
 
 
 class BaseLLMTask:
-    MODEL_TYPE: BackendType | None = None
+    MODEL_TYPE: BackendType
     NAME: str = "BaseLLMTask"
-    DEFAULT_MODEL = None
-    MODEL_SETTINGS: dict[str, ModelSetting] = {}
     SINGLE_PROCESS_TIMEOUT = 180
 
     def __init__(self, workflow_data: dict, node_id: str):
         self.workflow = Workflow(workflow_data)
         self.node_id = node_id
-        self.model = self.workflow.get_node_field_value(node_id, "llm_model", self.DEFAULT_MODEL)
+        self.model = self.workflow.get_node_field_value(node_id, "llm_model")
         self.input_prompt: str | list = self.workflow.get_node_field_value(node_id, "prompt")
         self.temperature: float = self.workflow.get_node_field_value(node_id, "temperature")
         response_format = self.workflow.get_node_field_value(node_id, "response_format", "text")
         self.use_function_call: bool = self.workflow.get_node_field_value(node_id, "use_function_call", False)
         self.functions: list = self.workflow.get_node_field_value(node_id, "functions", [])
-        self.function_call_mode: str = self.workflow.get_node_field_value(node_id, "function_call_mode", "auto")
+        self.function_call_mode: str | dict = self.workflow.get_node_field_value(node_id, "function_call_mode", "auto")
 
         user_settings = Settings()
         vectorvein_settings.load(user_settings.llm_settings)
@@ -102,15 +101,15 @@ class BaseLLMTask:
         else:
             self.function_call_parameters = {}
 
-        if self.model_settings.response_format_available:
+        if response_format == "json_object" and self.model_settings.response_format_available:
             self.response_format = {"response_format": {"type": response_format}}
         else:
             self.response_format = {}
 
         self.prompts_count = len(self.prompts)
         self.content_outputs = [""] * self.prompts_count
-        self.function_call_outputs = [{}] * self.prompts_count
-        self.function_call_arguments_batches = [{}] * self.prompts_count
+        self.function_call_outputs = [list()] * self.prompts_count
+        self.function_call_arguments_batches = [dict()] * self.prompts_count
         self.total_prompt_tokens = 0
         self.total_completion_tokens = 0
         mprint(f"Prompts count: {self.prompts_count}")
@@ -180,6 +179,7 @@ class BaseLLMTask:
                         response = self.chat_client.create_completion(
                             model=self.model,
                             messages=format_messages(messages, backend=self.MODEL_TYPE),
+                            stream=False,
                             temperature=self.temperature,
                             max_tokens=max_tokens,
                             **self.response_format,
@@ -188,6 +188,12 @@ class BaseLLMTask:
                         request_success = True
                         self.add_endpoint_request_record(endpoint)
                         break
+                    except APIStatusError as e:
+                        if e.status_code == 429:
+                            mprint.error(f"Rate limit exceeded with endpoint {endpoint.id}: {e}")
+                            time.sleep(5)
+                        else:
+                            raise e
                     except Exception as e:
                         mprint.error(f"Error with endpoint {endpoint.id}: {str(e)}")
                         mprint.error(format_exc())
@@ -197,6 +203,9 @@ class BaseLLMTask:
 
         if not request_success:
             raise Exception("Failed to request the model")
+
+        if response is None:
+            raise Exception("Failed to get the model response")
 
         content_output = response.content
         tool_calls = []
@@ -213,7 +222,7 @@ class BaseLLMTask:
 
         if response.usage is None:
             prompt_tokens = get_token_counts(json.dumps(messages) + json.dumps(function_call_arguments), self.model)
-            completion = content_output + json.dumps(function_call_arguments)
+            completion = content_output or "" + json.dumps(function_call_arguments)
             completion_tokens = get_token_counts(completion)
         else:
             prompt_tokens = response.usage.prompt_tokens
@@ -240,9 +249,9 @@ class BaseLLMTask:
                 index = future_to_index[future]
                 try:
                     result = future.result()
-                    self.content_outputs[index] = result.content_output
-                    self.function_call_outputs[index] = result.tool_calls
-                    self.function_call_arguments_batches[index] = result.function_call_arguments
+                    self.content_outputs[index] = result.content_output or ""
+                    self.function_call_outputs[index] = result.tool_calls or []
+                    self.function_call_arguments_batches[index] = result.function_call_arguments or {}
                     self.total_prompt_tokens += result.prompt_tokens
                     self.total_completion_tokens += result.completion_tokens
                 except Exception as exc:
