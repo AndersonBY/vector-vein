@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, toRaw, onBeforeMount, computed } from "vue"
+import { ref, reactive, toRaw, onBeforeMount, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -24,6 +24,7 @@ import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
 import LLMStandardSettings from "@/components/settings/LLMStandardSettings.vue"
 import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
+import { hashObject } from "@/utils/util"
 import { settingAPI, hardwareAPI } from "@/api/user"
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import CustomLLMSettings from "@/components/settings/CustomLLMSettings.vue"
@@ -54,6 +55,8 @@ const refreshMics = async () => {
   refreshingMics.value = false
 }
 
+const savedSettingsHash = ref('')
+
 onBeforeMount(async () => {
   const defaultSettingsResp = await settingAPI('get_default_settings')
   settingForm.data = defaultSettingsResp.data
@@ -66,6 +69,8 @@ onBeforeMount(async () => {
   settingForm.data = { ...defaultSettingsResp.data, ...userData }
 
   await refreshMics()
+
+  savedSettingsHash.value = hashObject(settingForm.data)
 
   loading.value = false
 })
@@ -92,6 +97,7 @@ const saveSetting = async (updateShortcuts = false) => {
   message.success(t('settings.save_success'))
   saving.value = false
   chatModelOptions.value = getChatModelOptions()
+  savedSettingsHash.value = hashObject(settingForm.data)
 }
 
 const selectedKeys = ref(['endpoints'])
@@ -108,6 +114,13 @@ const websiteDomainOptions = [
   { label: 'vectorvein.ai', value: 'vectorvein.ai' },
   { label: 'vectorvein.com', value: 'vectorvein.com' },
 ]
+
+watch(selectedKeys, () => {
+  const currentHash = hashObject(settingForm.data)
+  if (currentHash != savedSettingsHash.value) {
+    message.warning(t('settings.settings_changed'))
+  }
+})
 </script>
 
 <template>
@@ -196,8 +209,15 @@ const websiteDomainOptions = [
 
       <a-layout-content>
         <a-card v-show="selectedKeys == 'endpoints'" :title="t('settings.endpoints')" :loading="loading">
-          <EndpointSettings v-if="settingForm.data?.llm_settings?.endpoints"
-            v-model="settingForm.data.llm_settings.endpoints" />
+          <template #extra>
+            <a-button type="primary" @click="saveSetting" :loading="saving">
+              {{ t('settings.save') }}
+            </a-button>
+          </template>
+          <EndpointSettings v-if="settingForm.data?.llm_settings?.endpoints && settingForm.data.llm_settings?.local"
+            v-model:endpoints="settingForm.data.llm_settings.endpoints"
+            v-model:localModels="settingForm.data.llm_settings.local"
+            v-model:modelFamilyMap="settingForm.data.custom_llms" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'llms'" :title="t('settings.llms')" :loading="loading">

@@ -7,6 +7,7 @@ import json
 import time
 
 import webview
+from openai import OpenAI
 
 from .utils import JResponse
 from models import Setting, Conversation, Agent, model_serializer
@@ -36,7 +37,7 @@ def start_chat(agent_id: str, continue_chat: bool = False, with_screenshot: bool
     has_start_recording = cache.get("has_start_recording")
     if not has_start_recording and with_screenshot:
         settings = Settings()
-        monitor_number = settings.get("agent.screenshot_monitor_device", 0)
+        monitor_number = int(settings.get("agent.screenshot_monitor_device", 0))
         screen_shot_path = [get_screenshot(output_type="file_path", monitor_number=monitor_number)]
         cache.set(f"screen_shot_path_{agent_id}", screen_shot_path, expire=600)
     else:
@@ -152,6 +153,11 @@ class SettingAPI:
         port_name = payload.get("port_name")
         port = cache.get(port_name)
         return JResponse(data={"port": port})
+
+    def list_models(self, payload):
+        client = OpenAI(api_key=payload.get("api_key"), base_url=payload.get("base_url"))
+        models = client.models.list()
+        return JResponse(data={"models": models.model_dump()})
 
 
 class HardwareAPI:
