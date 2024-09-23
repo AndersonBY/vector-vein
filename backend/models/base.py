@@ -7,12 +7,14 @@ import json
 import uuid
 from pathlib import Path
 from datetime import date, datetime
+from typing import overload, List, Dict, Union, Optional
 
 from playhouse.shortcuts import model_to_dict
 from peewee_migrate import Router
 from peewee import (
     Model,
     TextField,
+    ModelSelect,
     SqliteDatabase,
 )
 
@@ -42,8 +44,10 @@ class BaseModel(Model):
 
 
 def json_serializer(obj):
-    if isinstance(obj, (datetime, date)):
+    if isinstance(obj, datetime):
         return int(obj.timestamp() * 1000)
+    elif isinstance(obj, date):
+        return int(datetime.combine(obj, datetime.min.time()).timestamp() * 1000)
     elif isinstance(obj, uuid.UUID):
         return obj.hex
     raise TypeError(f"Type {type(obj)} not serializable")
@@ -53,7 +57,27 @@ def get_model_fields(model, field_names):
     return [getattr(model, field_name) for field_name in field_names if hasattr(model, field_name)]
 
 
-def model_serializer(obj, many: bool = False, manytomany: bool = False, fields: list | None = None):
+@overload
+def model_serializer(
+    obj: BaseModel, many: bool = False, manytomany: bool = False, fields: Optional[List[str]] = None
+) -> Dict: ...
+
+
+@overload
+def model_serializer(
+    obj: Union[List[BaseModel], ModelSelect],
+    many: bool = True,
+    manytomany: bool = False,
+    fields: Optional[List[str]] = None,
+) -> List[Dict]: ...
+
+
+def model_serializer(
+    obj: Union[BaseModel, List[BaseModel], ModelSelect],
+    many: bool = False,
+    manytomany: bool = False,
+    fields: Optional[List[str]] = None,
+) -> Union[Dict, List[Dict]]:
     if fields:
         if many and obj:
             model_class = obj[0].__class__
