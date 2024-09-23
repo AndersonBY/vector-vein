@@ -1890,6 +1890,7 @@ export default {
     'select_all': 'Select all',
     'clear': 'Clear',
     'list_models_failed': 'Failed to get model list',
+    'agent_tool_call_data_generate_model': 'Agent tool call data generation model',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",

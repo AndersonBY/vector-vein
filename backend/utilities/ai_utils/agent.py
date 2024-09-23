@@ -28,7 +28,12 @@ class ToolCallData:
         self.parameter_sources = self.tool_call_data.get("parameter_sources", {})
         user_settings = Settings()
         vectorvein_settings.load(user_settings.get("llm_settings"))
-        self.chat_client = create_chat_client(backend=BackendType.OpenAI, model="gpt-4o-mini", stream=False)
+        backend, model = user_settings.get("agent.tool_call_data_generate_model")
+        if backend.lower().startswith("_local__"):
+            backend = BackendType.Local
+        else:
+            backend = BackendType(backend.lower())
+        self.chat_client = create_chat_client(backend=backend, model=model, stream=False)
 
     @staticmethod
     def _is_valid_string(s):

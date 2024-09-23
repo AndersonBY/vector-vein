@@ -591,6 +591,10 @@ watch(selectedKeys, () => {
               </template>
               <a-input-number v-model:value="settingForm.data.agent.screenshot_monitor_device" />
             </a-form-item>
+            <a-form-item :label="t('settings.agent_tool_call_data_generate_model')">
+              <a-cascader style="width: 100%;" v-model:value="settingForm.data.agent.tool_call_data_generate_model"
+                :options="chatModelOptions" />
+            </a-form-item>
           </a-form>
         </a-card>
       </a-layout-content>

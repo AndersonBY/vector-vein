@@ -19,7 +19,12 @@ DEFAULT_SETTINGS = {
     "stability_key": "",
     "use_system_proxy": True,
     "website_domain": "vectorvein.ai",
-    "agent": {"auto_title": True, "auto_title_model": ["OpenAI", "gpt-4o-mini"], "screenshot_monitor_device": 0},
+    "agent": {
+        "auto_title": True,
+        "auto_title_model": ["OpenAI", "gpt-4o-mini"],
+        "screenshot_monitor_device": 0,
+        "tool_call_data_generate_model": ["OpenAI", "gpt-4o-mini"],
+    },
     "microphone_device": 0,
     "shortcuts": {},
     "embedding_models": {"text_embeddings_inference": {"api_base": "http://localhost:8080/embed"}},
