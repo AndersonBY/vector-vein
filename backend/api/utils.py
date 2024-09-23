@@ -4,6 +4,7 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-07-01 18:34:20
 from pathlib import Path
+from typing import TypeVar, Type, Tuple, Union, Dict, Any
 
 from diskcache import Deque
 
@@ -13,15 +14,19 @@ from models import (
     model_serializer,
     WorkflowRunRecord,
 )
+from models.base import BaseModel
 from utilities.config import config
 
 
-def get_user_object_general(ObjectClass, **kwargs):
+T = TypeVar("T", bound=BaseModel)
+
+
+def get_user_object_general(ObjectClass: Type[T], **kwargs) -> Tuple[int, str, Union[T, Dict[str, Any]]]:
     if len(kwargs) == 0:
         return 500, "wrong args", {}
     try:
         object = ObjectClass.get(*[getattr(ObjectClass, key) == value for key, value in kwargs.items()])
-    except ObjectClass.DoesNotExist:
+    except ObjectClass.DoesNotExist:  # type: ignore
         return 404, "not exist", {}
     return 200, "", object
 

@@ -44,8 +44,9 @@ class WorkflowAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(workflow, Workflow):
             return JResponse(status=status, msg=msg)
+
         workflow = model_serializer(workflow, manytomany=True)
         return JResponse(msg="success", data=workflow)
 
@@ -89,7 +90,7 @@ class WorkflowAPI:
             Workflow,
             wid=wid,
         )
-        if status != 200:
+        if status != 200 or not isinstance(workflow, Workflow):
             return JResponse(status=status, msg=msg)
 
         data = payload.get("data", {})
@@ -131,8 +132,9 @@ class WorkflowAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(workflow, Workflow):
             return JResponse(status=status, msg=msg)
+
         workflow.delete_instance()
         return JResponse()
 
@@ -147,7 +149,7 @@ class WorkflowAPI:
         workflow_related = payload.get("workflow_related", "")
         if workflow_related:
             status, msg, workflow = get_user_object_general(Workflow, wid=workflow_related)
-            if status != 200:
+            if status != 200 or not isinstance(workflow, Workflow):
                 return JResponse(status=status, msg=msg)
             related_workflow_ids = list(WorkflowData(workflow.data).related_workflows.keys())
             workflows = Workflow.select().where(Workflow.wid.in_(related_workflow_ids))
@@ -190,8 +192,8 @@ class WorkflowAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
 
         workflow_data = payload.get("data", {})
 
@@ -233,8 +235,8 @@ class WorkflowAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
 
         workflow.is_fast_access = True
         workflow.save()
@@ -245,8 +247,8 @@ class WorkflowAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
 
         workflow.is_fast_access = False
         workflow.save()
@@ -255,8 +257,9 @@ class WorkflowAPI:
     def update_tool_call_data(self, payload):
         wid = payload.get("wid", None)
         status, msg, workflow = get_user_object_general(Workflow, wid=wid)
-        if status != 200:
+        if status != 200 or not isinstance(workflow, Workflow):
             return JResponse(status=status, msg=msg)
+
         tool_call_data = payload.get("tool_call_data", {})
         workflow.tool_call_data = tool_call_data
         workflow.save()
@@ -271,8 +274,9 @@ class WorkflowTemplateAPI:
             WorkflowTemplate,
             tid=payload.get("tid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow_template, WorkflowTemplate):
+            return JResponse(status=status, msg=msg)
+
         workflow_template = model_serializer(workflow_template, manytomany=True)
         return JResponse(data=workflow_template)
 
@@ -281,11 +285,12 @@ class WorkflowTemplateAPI:
             WorkflowTemplate,
             tid=payload.get("tid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow_template, WorkflowTemplate):
+            return JResponse(status=status, msg=msg)
+
         workflow_template.used_count += 1
         workflow_template.save()
-        workflow = Workflow.objects.create(
+        workflow = Workflow.create(
             title=workflow_template.title,
             brief=workflow_template.brief,
             language=workflow_template.language,
@@ -325,14 +330,15 @@ class WorkflowRunRecordAPI:
     name = "workflow_run_record"
 
     def get(self, payload):
-        status, msg, workflow = get_user_object_general(
+        status, msg, record = get_user_object_general(
             WorkflowRunRecord,
             rid=payload.get("rid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
-        workflow = model_serializer(workflow, manytomany=True)
-        return JResponse(data=workflow)
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+
+        record = model_serializer(record, manytomany=True)
+        return JResponse(data=record)
 
     def list(self, payload):
         page_num = payload.get("page", 1)
@@ -382,8 +388,9 @@ class WorkflowTagAPI:
             WorkflowTag,
             tid=payload.get("tid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow_tag, WorkflowTag):
+            return JResponse(status=status, msg=msg)
+
         workflow_tag = model_serializer(workflow_tag)
         return JResponse(data=workflow_tag)
 
@@ -400,8 +407,9 @@ class WorkflowRunScheduleAPI:
             Workflow,
             wid=payload.get("wid", None),
         )
-        if status != 200:
-            JResponse(status=status, msg=msg)
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
+
         workflow_data = payload.get("data", {})
         workflow.data = workflow_data
         workflow.save()
@@ -425,13 +433,13 @@ class WorkflowRunScheduleAPI:
         # TODO: Add to scheduler
         return JResponse()
 
-    def delete(request):
+    def delete(self, payload):
         status, msg, workflow = get_user_object_general(
             Workflow,
-            wid=request.data.get("wid", None),
+            wid=payload.data.get("wid", None),
         )
         if status != 200:
-            JResponse(status=status, msg=msg)
+            return JResponse(status=status, msg=msg)
 
         run_schedule_qs = WorkflowRunSchedule.select().join(Workflow).where(Workflow.id == workflow.id)
         if not run_schedule_qs.exists():
