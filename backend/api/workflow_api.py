@@ -395,7 +395,59 @@ class WorkflowTagAPI:
         return JResponse(data=workflow_tag)
 
     def list(self, payload):
-        return JResponse(data=model_serializer(WorkflowTag.select(), many=True))
+        public_only = payload.get("public_only", False)
+        user_only = payload.get("user_only", False)
+        public_tags = WorkflowTag.select().where(WorkflowTag.is_public)
+
+        if public_only:
+            all_tags = public_tags
+        else:
+            personal_tags = WorkflowTag.select().where(WorkflowTag.user == payload.get("user"))
+            if user_only:
+                all_tags = personal_tags
+            else:
+                all_tags = public_tags.union(personal_tags).order_by(WorkflowTag.title)
+
+        return JResponse(data=model_serializer(all_tags, many=True))
+
+    def create(self, payload):
+        title = payload.get("title", "")
+        user = payload.get("user")
+        tag, created = WorkflowTag.get_or_create(title=title, user=user)
+        return JResponse(data={"tid": tag.tid.hex})
+
+    def delete(self, payload):
+        status, msg, tag = get_user_object_general(
+            WorkflowTag,
+            tid=payload.get("tid"),
+        )
+        if status != 200 or not isinstance(tag, WorkflowTag):
+            return JResponse(status=status, msg=msg)
+        tag.delete_instance()
+        return JResponse()
+
+    def update(self, payload):
+        tags = payload.get("data", [])
+        for tag_data in tags:
+            tid = tag_data.get("tid")
+            tag_qs = WorkflowTag.select().where(WorkflowTag.tid == tid, WorkflowTag.user == payload.get("user"))
+            if not tag_qs.exists():
+                continue
+            tag = tag_qs.first()
+            if not isinstance(tag, WorkflowTag):
+                continue
+            tag.title = tag_data.get("title", tag.title)
+            tag.color = tag_data.get("color", tag.color)
+            tag.save()
+        return JResponse()
+
+    def search(self, payload):
+        title = payload.get("title", "")
+        user = payload.get("user")
+        public_tags = WorkflowTag.select().where(WorkflowTag.is_public, WorkflowTag.title.contains(title))
+        personal_tags = WorkflowTag.select().where(WorkflowTag.user == user, WorkflowTag.title.contains(title))
+        all_tags = public_tags.union(personal_tags)
+        return JResponse(data=model_serializer(all_tags, many=True))
 
 
 # TODO: Implement this
