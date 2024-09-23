@@ -59,13 +59,12 @@ const savedSettingsHash = ref('')
 
 onBeforeMount(async () => {
   const defaultSettingsResp = await settingAPI('get_default_settings')
-  settingForm.data = defaultSettingsResp.data
-
   const res = await settingAPI('get', {})
+
   userSettings.setSetting(res.data)
-  settingForm.id = res.data.id
 
   const userData = res.data.data || {}
+  settingForm.id = res.data.id
   settingForm.data = { ...defaultSettingsResp.data, ...userData }
 
   await refreshMics()
