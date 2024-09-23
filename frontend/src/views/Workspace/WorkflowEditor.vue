@@ -21,6 +21,7 @@ import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
+import TagManage from '@/components/workspace/TagManage.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
 import { ObjectHasher } from '@/utils/util'
 import { nodeCategoryOptions } from "@/utils/common"
@@ -38,11 +39,20 @@ const loading = ref(true)
 const route = useRoute()
 const router = useRouter()
 const workflowId = ref('')
-const activeTab = ref(t('workspace.workflowEditor.workflow_canvas'))
+const activeTab = ref('canvas')
 const tabs = reactive([
-  t('workspace.workflowEditor.workflow_info'),
-  t('workspace.workflowEditor.workflow_canvas'),
-  t('workspace.workflowEditor.workflow_ui_design'),
+  {
+    label: t('workspace.workflowEditor.workflow_info'),
+    value: 'info',
+  },
+  {
+    label: t('workspace.workflowEditor.workflow_canvas'),
+    value: 'canvas',
+  },
+  {
+    label: t('workspace.workflowEditor.workflow_ui_design'),
+    value: 'ui_design',
+  },
 ])
 let workflowOrTemplate = 'workflow'
 let workflowOrTemplateAPI = null
@@ -574,8 +584,8 @@ const onNewNodeDragEnd = (event) => {
   addNodeToCanvas(nodeType, position)
 }
 
-const nodeFiles = import.meta.glob('@/components/nodes/*/*.vue', { eager: true })
-const nodeTemplateFiles = import.meta.glob('@/components/nodes/*/*.js', { eager: true })
+const nodeFiles = import.meta.glob('@/components/nodes/*/[!_]*.vue', { eager: true })
+const nodeTemplateFiles = import.meta.glob('@/components/nodes/*/[!_]*.js', { eager: true })
 const nodeTypes = {}
 const nodeCategories = {}
 const nodeTemplateCreators = {}
@@ -755,11 +765,12 @@ async function layoutGraph(direction) {
       </a-row>
     </div>
 
-    <div v-show="activeTab == t('workspace.workflowEditor.workflow_info')" class="workflow-info-editor">
+    <div v-show="activeTab == 'info'" class="workflow-info-editor">
       <a-row justify="center">
         <a-col :lg="10" :md="12" :sm="18" :xs="24">
           <a-divider>
             {{ t('workspace.workflowEditor.tags') }}
+            <TagManage />
           </a-divider>
           <TagInput v-model="currentWorkflow.tags" />
           <a-divider>
@@ -776,7 +787,7 @@ async function layoutGraph(direction) {
       </a-row>
     </div>
 
-    <a-layout has-sider style="height: 100%;" v-show="activeTab == t('workspace.workflowEditor.workflow_canvas')">
+    <a-layout v-show="activeTab == 'canvas'" has-sider style="height: 100%;">
       <a-layout-sider :style="{ overflow: 'auto' }" class="custom-scrollbar" :theme="componentTheme">
         <a-menu :theme="componentTheme" mode="inline">
           <a-sub-menu v-for="category in nodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
@@ -827,7 +838,7 @@ async function layoutGraph(direction) {
       </a-layout>
     </a-layout>
 
-    <UIDesign v-model="currentWorkflow" v-if="activeTab == t('workspace.workflowEditor.workflow_ui_design')" />
+    <UIDesign v-if="activeTab == 'ui_design'" v-model="currentWorkflow" />
   </div>
 </template>
 
