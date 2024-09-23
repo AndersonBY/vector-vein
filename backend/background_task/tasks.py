@@ -39,7 +39,7 @@ class DelayableFunction(Protocol[P, R]):
     def delay(self, *args: P.args, **kwargs: P.kwargs) -> str: ...
 
 
-tasks_registry: Dict[str, DelayableFunction] = {}
+tasks_registry: Dict[str, Callable[..., Any]] = {}
 
 tasks_queue: Deque = Deque(directory=Path(config.data_path) / "cache" / "background_task")
 qdrant_tasks_queue: Deque = Deque(directory=Path(config.data_path) / "cache" / "qdrant_task")
@@ -59,7 +59,7 @@ def background_task(func: Callable[..., Any]) -> DelayableFunction:
     wrapped: DelayableFunction = wrapper  # type: ignore
     wrapped.__name__ = func.__name__
     wrapped.delay = wrapper
-    tasks_registry[func.__name__] = wrapped
+    tasks_registry[func.__name__] = func
     return wrapped
 
 
