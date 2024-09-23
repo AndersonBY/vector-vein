@@ -2,6 +2,8 @@
 # @Date:   2024-06-06 16:04:26
 import uuid
 from pathlib import Path
+from typing_extensions import ParamSpec
+from typing import Callable, Any, TypeVar, Protocol, Dict
 
 from diskcache import Deque
 from qdrant_client import QdrantClient
@@ -26,16 +28,25 @@ from utilities.ai_utils import (
     conversation_title_generator,
 )
 
-tasks_registry = {}
-
-tasks_queue = Deque(directory=Path(config.data_path) / "cache" / "background_task")
-qdrant_tasks_queue = Deque(directory=Path(config.data_path) / "cache" / "qdrant_task")
+P = ParamSpec("P")
+R = TypeVar("R", covariant=True)
 
 
-def background_task(func):
-    tasks_registry[func.__name__] = func
+class DelayableFunction(Protocol[P, R]):
+    __name__: str
 
-    def wrapper(*args, **kwargs):
+    def __call__(self, *args: P.args, **kwargs: P.kwargs) -> R: ...
+    def delay(self, *args: P.args, **kwargs: P.kwargs) -> str: ...
+
+
+tasks_registry: Dict[str, DelayableFunction] = {}
+
+tasks_queue: Deque = Deque(directory=Path(config.data_path) / "cache" / "background_task")
+qdrant_tasks_queue: Deque = Deque(directory=Path(config.data_path) / "cache" / "qdrant_task")
+
+
+def background_task(func: Callable[..., Any]) -> DelayableFunction:
+    def wrapper(*args: Any, **kwargs: Any) -> str:
         task_id = uuid.uuid4().hex
         task = {"task_name": func.__name__, "task_id": task_id, "args": args, "kwargs": kwargs}
         if is_qdrant_task(func.__name__):
@@ -45,8 +56,11 @@ def background_task(func):
         mprint(f"Task {task_id} {func.__name__} added to queue.")
         return task["task_id"]
 
-    wrapper.delay = wrapper  # Alias for .delay()
-    return wrapper
+    wrapped: DelayableFunction = wrapper  # type: ignore
+    wrapped.__name__ = func.__name__
+    wrapped.delay = wrapper
+    tasks_registry[func.__name__] = wrapped
+    return wrapped
 
 
 def get_task(task_name):
@@ -84,7 +98,9 @@ def summarize_conversation_title(
     model: str = "gpt-4o-mini",
 ):
     formatted_messages = format_messages(messages=messasges, backend=backend)
-    conversation_title = conversation_title_generator(formatted_messages, backend=backend, model=model)[:40]
+    conversation_title = conversation_title_generator(formatted_messages, backend=backend, model=model)
+    if conversation_title:
+        conversation_title = conversation_title[:40]
     cache.set(f"conversation-title:{message_id}", conversation_title, expire=60 * 60)
 
 
@@ -126,17 +142,18 @@ def q_add_point(client: QdrantClient, vid: str, point: dict):
                         "embedding_type": point.get("embedding_type"),
                         "extra_data": point.get("extra_data"),
                     },
-                    vector=point.get("embedding"),
+                    vector=point.get("embedding") or [],
                 ),
             ],
         )
-        if point.get("chunk_index") == point.get("chunk_count") - 1:
+        chunk_count = point.get("chunk_count") or 0
+        if point.get("chunk_index") == chunk_count - 1:
             user_object: UserObject = UserObject.get(UserObject.oid == point.get("object_id"))
             user_object.status = "VA"
             user_object.save()
         cache.set(
             f"qdrant-point-progress:{vid}:{point.get('object_id')}",
-            {"chunk_index": point.get("chunk_index"), "chunk_count": point.get("chunk_count")},
+            {"chunk_index": point.get("chunk_index"), "chunk_count": chunk_count},
             expire=60 * 60,
         )
         return True
