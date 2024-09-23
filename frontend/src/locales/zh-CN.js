@@ -645,6 +645,7 @@ export default {
         'new_version': '新版本 {version} {releaseDatetime}',
         'about_vectorvein': '关于向量脉络',
         'about_vectorvein_description': '### 利用 AI 的力量构建您的自动化工作流程\n#### 无需编程，只需拖拽即可创建强大的工作流，自动化所有任务。\n\n向量脉络（VectorVein）开源版由 Maker毕 开发，可用于个人使用，不可用于商业使用。',
+        'view_logs': '查看日志',
       },
     },
     markdownEditor: {
@@ -1748,6 +1749,11 @@ export default {
     help: {
       documentModal: {
         'load_error': '加载失败',
+      },
+      logModal: {
+        'load_error': '加载失败',
+        'auto_refresh': '自动刷新',
+        'stop_refresh': '停止刷新',
       },
     },
   },

@@ -645,6 +645,7 @@ export default {
         'new_version': 'New version {version} {releaseDatetime}',
         'about_vectorvein': 'About VectorVein',
         'about_vectorvein_description': '### Build Your Automated Workflow with the Power of AI\n#### Create powerful workflows with drag-and-drop functionality, no programming required.\n\nThe open-source version of VectorVein, developed by MakerBi, is available for personal use only and cannot be used for commercial purposes.',
+        'view_logs': 'View logs',
       },
     },
     markdownEditor: {
@@ -1748,6 +1749,11 @@ export default {
     help: {
       documentModal: {
         'load_error': 'Load failed',
+      },
+      logModal: {
+        'load_error': 'Load failed',
+        'auto_refresh': 'Auto refresh',
+        'stop_refresh': 'Stop refresh',
       },
     },
   },
