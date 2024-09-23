@@ -22,7 +22,7 @@ class ToolCallData:
 
     def __init__(self, workflow: Workflow | WorkflowTemplate):
         self.workflow = workflow
-        self.tool_call_data = workflow.tool_call_data
+        self.tool_call_data: dict = workflow.tool_call_data
         self.field_translations = self.tool_call_data.get("field_translations", {})
         self.parameters = self.tool_call_data.get("parameters", {})
         self.parameter_sources = self.tool_call_data.get("parameter_sources", {})
@@ -46,6 +46,8 @@ class ToolCallData:
         prompt = f"Generate an English parameter name for the following parameter, using only lowercase English letters, numbers, and underscores (_), not exceeding 20 characters. Directly output the result without explanation.\nParameter name: {field}\n"
         messages = [{"role": "user", "content": prompt}]
         translated_field = self.chat_client.create_completion(messages).content
+        if translated_field is None:
+            return field
         translated_field_options = re.findall(r"[a-z0-9_]{1,20}", translated_field)
         if translated_field_options:
             translated_field = max(translated_field_options, key=len)
@@ -61,6 +63,8 @@ class ToolCallData:
         prompt = f"For the following workflow, generate an English function name, using only lowercase English letters, numbers, and underscores (_), not exceeding 40 characters. Directly output the English function name result without explanation.\nWorkflow Title: {workflow_title}\n"
         messages = [{"role": "user", "content": prompt}]
         title = self.chat_client.create_completion(messages).content
+        if title is None:
+            return
         titles = re.findall(r"[a-z0-9_]{1,40}", title)
         if titles:
             title = max(titles, key=len)
