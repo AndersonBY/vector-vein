@@ -7,17 +7,21 @@
 import baseAPI from './base'
 
 export async function userInfoAPI(action, parameter) {
-    return await baseAPI(`user_info__${action}`, parameter)
+  return await baseAPI(`user_info__${action}`, parameter)
 }
 
 export async function settingAPI(action, parameter) {
-    return await baseAPI(`setting__${action}`, parameter)
+  return await baseAPI(`setting__${action}`, parameter)
 }
 
 export async function hardwareAPI(action, parameter) {
-    return await baseAPI(`hardware__${action}`, parameter)
+  return await baseAPI(`hardware__${action}`, parameter)
 }
 
 export async function shortcutAPI(action, parameter) {
-    return await baseAPI(`shortcut__${action}`, parameter)
+  return await baseAPI(`shortcut__${action}`, parameter)
+}
+
+export async function logAPI(action, parameter) {
+  return await baseAPI(`log__${action}`, parameter)
 }

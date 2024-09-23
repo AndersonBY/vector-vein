@@ -4,6 +4,7 @@ import { Help } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import TextOutput from "@/components/TextOutput.vue"
+import LogModal from "@/components/help/LogModal.vue"
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { websiteBase } from '@/utils/common'
 import { officialSiteAPI } from '@/api/remote'
@@ -31,6 +32,7 @@ onBeforeMount(async () => {
 
 const openAboutVectorVein = ref(false)
 const openUpdateInfo = ref(false)
+const openLogModal = ref(false)
 </script>
 
 <template>
@@ -66,6 +68,11 @@ const openUpdateInfo = ref(false)
         <TextOutput :text="updateInfo.release_notes[language]" :showCopy="false" />
       </a-modal>
     </a-menu-item>
+
+    <a-menu-item key="/log" @click="openLogModal = true">
+      {{ t('components.layout.helpDropdown.view_logs') }}
+    </a-menu-item>
+
     <a-menu-item key="/about" @click="openAboutVectorVein = true">
       {{ t('components.layout.helpDropdown.about_vectorvein') }}
       <a-modal :title="t('components.layout.helpDropdown.about_vectorvein')" :open="openAboutVectorVein" :footer="null"
@@ -73,5 +80,8 @@ const openUpdateInfo = ref(false)
         <TextOutput :text="t('components.layout.helpDropdown.about_vectorvein_description')" :showCopy="false" />
       </a-modal>
     </a-menu-item>
+
+    <LogModal v-model:open="openLogModal" :title="t('components.layout.helpDropdown.view_logs')"
+      @close="openLogModal = false" />
   </a-sub-menu>
 </template>

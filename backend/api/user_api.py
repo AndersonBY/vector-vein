@@ -11,6 +11,7 @@ from openai import OpenAI
 
 from .utils import JResponse
 from models import Setting, Conversation, Agent, model_serializer
+from utilities.general import LogServer
 from tts_server.server import tts_server
 from utilities.media_processing import Microphone
 from utilities.shortcuts import shortcuts_listener
@@ -83,9 +84,11 @@ def register_shortcuts(shortcuts: dict | None = None):
     """
     if shortcuts is None:
         settings = Settings()
-        shortcuts = settings.get("shortcuts", {})
+        _shortcuts: dict = settings.get("shortcuts", {})
+    else:
+        _shortcuts = shortcuts
     shortcuts_listener.clear_hotkeys()
-    for agent_id, shortcut in shortcuts.items():
+    for agent_id, shortcut in _shortcuts.items():
         if shortcut["new_chat_with_agent"]:
             shortcuts_listener.register_hotkeys(shortcut["new_chat_with_agent"], lambda: start_chat(agent_id))
         if shortcut["new_chat_with_agent_with_screenshot"]:
@@ -220,3 +223,12 @@ class ShortcutAPI:
             return JResponse(data=result)
         else:
             return JResponse(status=404)
+
+
+class LogAPI:
+    name = "log"
+
+    def get_log_content(self, payload):
+        log_id = payload.get("log_id", "default")
+        log_content = LogServer.get_log_content_by_id(log_id)
+        return JResponse(data={"content": log_content})
