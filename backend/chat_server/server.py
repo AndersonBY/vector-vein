@@ -69,10 +69,15 @@ class WebSocketServer:
         history_messages = request_data["history_messages"]
         need_title = request_data["need_title"] and user_settings.get("agent.auto_title", False)
         backend = request_data["conversation"]["model_provider"].lower()
-        model = request_data["conversation"]["model"].lower()
+        model = request_data["conversation"]["model"]
         mprint(f"Agent chat start: {backend} {model}")
 
-        model_settings = vectorvein_settings.get_backend(backend=BackendType(backend))
+        if backend.startswith("_local__"):
+            backend = BackendType.Local
+        else:
+            backend = BackendType(backend)
+
+        model_settings = vectorvein_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
 
         system_message = {
@@ -86,9 +91,11 @@ class WebSocketServer:
 
         if need_title:
             title_backend, title_model = user_settings.get("agent.auto_title_model", ["openai", "gpt-4o-mini"])
-            summarize_conversation_title.delay(
-                ai_message_mid, history_messages, BackendType(title_backend.lower()), title_model
-            )
+            if title_backend.startswith("_local__"):
+                title_backend = BackendType.Local
+            else:
+                title_backend = BackendType(title_backend.lower())
+            summarize_conversation_title.delay(ai_message_mid, history_messages, title_backend, title_model)
 
         client = create_async_chat_client(backend=backend, model=model)
 
@@ -122,14 +129,15 @@ class WebSocketServer:
                 )
                 if piece.id:
                     tool_calls[index]["id"] = piece.id
-                if piece.function.name:
-                    tool_calls[index]["function"]["name"] = piece.function.name
-                if backend in TOOL_CALL_INCREMENTAL_BACKENDS:
-                    # OpenAI/Moonshot/Anthropic/DeepSeek/Minimax is incremental and needs to be concatenated
-                    if piece.function.arguments:
-                        tool_calls[index]["function"]["arguments"] += piece.function.arguments
-                else:
-                    tool_calls[index]["function"]["arguments"] = piece.function.arguments
+                if piece.function:
+                    if piece.function.name:
+                        tool_calls[index]["function"]["name"] = piece.function.name
+                    if backend in TOOL_CALL_INCREMENTAL_BACKENDS:
+                        # OpenAI/Moonshot/Anthropic/DeepSeek/Minimax is incremental and needs to be concatenated
+                        if piece.function.arguments:
+                            tool_calls[index]["function"]["arguments"] += piece.function.arguments
+                    else:
+                        tool_calls[index]["function"]["arguments"] = piece.function.arguments
 
             await websocket.send(
                 json.dumps(
@@ -147,12 +155,13 @@ class WebSocketServer:
                 tool_call_data,
                 function_name,
             )
-            selected_workflow["params"] = json.loads(tool_calls[0]["function"]["arguments"])
-            if isinstance(selected_workflow["params"], str):
-                # 有时候loads一次还不够？
-                selected_workflow["params"] = json.loads(selected_workflow["params"])
-            selected_workflow["tool_call_id"] = tool_calls[0]["id"]
-            selected_workflow["function_name"] = function_name
+            if selected_workflow:
+                selected_workflow["params"] = json.loads(tool_calls[0]["function"]["arguments"])
+                if isinstance(selected_workflow["params"], str):
+                    # 有时候loads一次还不够？
+                    selected_workflow["params"] = json.loads(selected_workflow["params"])
+                selected_workflow["tool_call_id"] = tool_calls[0]["id"]
+                selected_workflow["function_name"] = function_name
             await websocket.send(
                 json.dumps(
                     {
