@@ -743,6 +743,11 @@ export default {
       avatarUpload: {
         'uploader_text': '上传头像',
       },
+      tagManage: {
+        'title': '标签管理',
+        'color': '颜色',
+        'delete_tag_confirm': '确认删除该标签？',
+      },
     },
     codeEditorModal: {
       'title': '代码编辑器',

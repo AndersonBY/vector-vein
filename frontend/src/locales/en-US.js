@@ -743,6 +743,11 @@ export default {
       avatarUpload: {
         'uploader_text': 'Upload avatar',
       },
+      tagManage: {
+        'title': 'Tag management',
+        'color': 'Color',
+        'delete_tag_confirm': 'Confirm to delete the tag?',
+      },
     },
     codeEditorModal: {
       'title': 'Code editor',
