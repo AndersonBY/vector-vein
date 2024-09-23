@@ -138,7 +138,7 @@ const availableModelsState = reactive({
           "response_format_available": false,
           "native_multimodal": false,
           "context_length": 32768,
-          "max_output_tokens": null
+          "max_output_tokens": 4096
         }
       })
       modelFamilyMap.value[endpointId] = availableModelsState.selectedModel
