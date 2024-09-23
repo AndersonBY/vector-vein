@@ -1,6 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
 import json
+from typing import Any
 from collections.abc import Mapping
 
 from vectorvein.settings import settings as vectorvein_settings
@@ -36,14 +37,6 @@ DEFAULT_SETTINGS = {
     "llm_settings": {
         "endpoints": [
             {
-                "id": "moonshot-default",
-                "api_base": "https://api.moonshot.cn/v1",
-                "api_key": "",
-                "rpm": 30,
-                "tpm": 3000000,
-                "concurrent_requests": 30,
-            },
-            {
                 "id": "openai-default",
                 "api_base": "https://api.openai.com/v1",
                 "api_key": "",
@@ -61,11 +54,24 @@ DEFAULT_SETTINGS = {
                 "is_azure": True,
             },
             {
+                "id": "anthropic-default",
+                "api_base": "https://api.anthropic.com/v1",
+                "api_key": "",
+            },
+            {
                 "id": "vertex-anthropic",
                 "region": "europe-west1",
                 "api_base": "",
                 "credentials": {},
                 "is_vertex": True,
+            },
+            {
+                "id": "moonshot-default",
+                "api_base": "https://api.moonshot.cn/v1",
+                "api_key": "",
+                "rpm": 30,
+                "tpm": 3000000,
+                "concurrent_requests": 30,
             },
             {
                 "id": "minimax-default",
@@ -74,7 +80,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "gemini-default",
-                "api_base": "",
+                "api_base": "https://generativelanguage.googleapis.com/v1beta",
                 "api_key": "",
             },
             {
@@ -84,7 +90,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "groq-default",
-                "api_base": "",
+                "api_base": "https://api.groq.com/openai/v1",
                 "api_key": "",
             },
             {
@@ -448,7 +454,7 @@ DEFAULT_SETTINGS = {
             "models": {},
         },
     },
-    "custom_llms": [],
+    "custom_llms": {},
 }
 
 
@@ -642,14 +648,14 @@ class Settings:
             setting.save()
         self.data = model_serializer(setting)["data"]
 
-    def __getattribute__(self, name: str):
+    def __getattribute__(self, name: str) -> Any:
         if name == "data":
             return super().__getattribute__(name)
         if name in super().__getattribute__("data"):
             return super().__getattribute__("data")[name]
         return super().__getattribute__(name)
 
-    def get(self, name: str, default=None):
+    def get(self, name: str, default: Any = None) -> Any:
         """
         Retrieve a value from the settings data using a dot-separated key.
 
