@@ -33,6 +33,7 @@ from api.agent_api import (
     ConversationAPI,
 )
 from api.user_api import (
+    LogAPI,
     SettingAPI,
     HardwareAPI,
     ShortcutAPI,
@@ -112,6 +113,7 @@ def main():
         ConversationAPI,
         HardwareAPI,
         ShortcutAPI,
+        LogAPI,
     ]
     for api_class in api_class_list:
         api.add_apis(api_class)
