@@ -50,3 +50,5 @@ class EmbeddingClient:
                 return result[0]
             else:
                 return result
+        else:
+            raise ValueError(f"Invalid provider: {self.provider}")

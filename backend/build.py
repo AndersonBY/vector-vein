@@ -17,8 +17,10 @@ def run_cmd(cmd: str, split=False):
     Run command in shell
     """
     if split:
-        cmd = shlex.split(cmd)
-    return subprocess.run(cmd, shell=True)
+        _cmd = shlex.split(cmd)
+    else:
+        _cmd = cmd
+    return subprocess.run(_cmd, shell=True)
 
 
 def build_production(version):
@@ -52,7 +54,7 @@ def build_production(version):
 
     # Compress the directory
     shutil.make_archive(
-        base_name=zip_filepath.with_suffix(""), format="zip", root_dir="./dist", base_dir="vector-vein"
+        base_name=str(zip_filepath.with_suffix("")), format="zip", root_dir="./dist", base_dir="vector-vein"
     )
 
     print(f"Created {zip_filename} at {zip_filepath}")

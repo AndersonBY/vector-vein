@@ -40,6 +40,8 @@ vite_port = None
 vite_port_pattern = re.compile(r"VITE_PORT=(\d+)")
 
 while True:
+    if frontend_proc.stdout is None:
+        break
     line = frontend_proc.stdout.readline()
     if line == "" and frontend_proc.poll() is not None:
         break

@@ -134,7 +134,10 @@ class StaticFileServer:
         """
         if isinstance(file, str) and file.startswith("http"):
             file_path = self.copy_online_file(file, self.static_folder_path / static_subdir)
-            return self.get_file_url(file_path.relative_to(self.static_folder_path).as_posix())
+            if file_path:
+                return self.get_file_url(file_path.relative_to(self.static_folder_path).as_posix())
+            else:
+                return None
 
         found_file = self.find_file_in_static_dir(file, static_subdir)
         if found_file:

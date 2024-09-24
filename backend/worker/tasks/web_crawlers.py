@@ -62,6 +62,8 @@ def text_crawler(
         urls = [input_url]
     elif isinstance(input_url, list):
         urls = input_url
+    else:
+        raise Exception("url is not a string or list")
 
     output_type = workflow.get_node_field_value(node_id, "output_type")
     output_data = {
@@ -131,7 +133,7 @@ def bilibili_crawler(
         resp = httpx.get(
             f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies()
         )
-        title: str = resp.json()["data"]["title"]
+        title = resp.json()["data"]["title"]
         subtitle_list = get_acg_video_subtitle(bvid=bvid, cid=cid)
         if len(subtitle_list) == 0:
             subtitle_data = [] if output_type == "list" else ""
@@ -153,6 +155,9 @@ def bilibili_crawler(
             for path in output_folder.iterdir():
                 if path.is_file() and path.suffix == ".mp4":
                     video = str(path.absolute())
+                    break
+            else:
+                video = ""
         else:
             video = ""
 
@@ -206,12 +211,19 @@ def youtube_crawler(
         ydl_opts = {"writeautomaticsub": True, "getcomments": get_comments}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+            if info is None:
+                title_results.append("")
+                text_results.append("")
+                if get_comments:
+                    comments_results.append([])
+                continue
             title = info["title"]
             comments = info.get("comments", [])
             if comments_type == "text_only":
                 comments = [comment["text"] for comment in comments]
 
         # TODO: 这里直接选择列表第一个作为字幕了，对于多语言字幕未来要考虑让用户选择语言？
+        subtitle_url = None
         if len(info["subtitles"]) > 0:
             subtitle_key = list(info["subtitles"].keys())[0]
             subtitle_file_list = info["subtitles"][subtitle_key]
@@ -237,6 +249,14 @@ def youtube_crawler(
                 comments_results.append(comments)
             continue
 
+        title_results.append(title)
+        if get_comments:
+            comments_results.append(comments)
+
+        if subtitle_url is None:
+            mprint.error("No subtitle found")
+            text_results.append("")
+            continue
         subtitle_resp = httpx.get(subtitle_url, proxies=proxies(), headers=headers)
         subtitle_data_list = subtitle_resp.json()["events"]
         formated_subtitle = []
@@ -250,9 +270,6 @@ def youtube_crawler(
         subtitle_data = "\n".join(formated_subtitle) if output_type == "str" else formated_subtitle
 
         text_results.append(subtitle_data)
-        title_results.append(title)
-        if get_comments:
-            comments_results.append(comments)
 
     title_value = title_results if isinstance(url_or_video_id, list) else title_results[0]
     workflow.update_node_field_value(node_id, "output_title", title_value)
