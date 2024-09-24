@@ -12,6 +12,8 @@ import mimetypes
 import webview
 from webview.dom import DOMEventHandler
 
+os.environ["TIKTOKEN_CACHE_DIR"] = (Path(__file__).parent / Path("./assets/tiktoken_cache")).absolute().as_posix()
+
 from api import API
 from api.workflow_api import (
     WorkflowAPI,
@@ -74,7 +76,7 @@ def main():
         VERSION = Path("./version.txt").read_text()
     else:
         VERSION = os.environ.get("VECTORVEIN_VERSION", "0.0.1")
-    os.environ["TIKTOKEN_CACHE_DIR"] = Path("./assets/tiktoken_cache").as_posix()
+
     mprint(f"TIKTOKEN_CACHE_DIR: {os.environ['TIKTOKEN_CACHE_DIR']}")
 
     def open_file_dialog(self, multiple=False):
