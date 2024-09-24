@@ -183,7 +183,6 @@ const checkWorkflowRunningStatus = async () => {
   checkingStatus.value = true
   const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
   if (statusResponse.status == 200) {
-    console.log(statusResponse.data)
     message.success(t('workspace.workflowSpace.run_workflow_success'))
     clearInterval(checkStatusTimer.value)
     running.value = false
