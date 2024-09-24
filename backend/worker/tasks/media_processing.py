@@ -5,7 +5,6 @@
 # @Last Modified time: 2024-07-10 17:57:12
 import time
 
-import httpx
 from vectorvein.types.enums import BackendType
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
@@ -14,6 +13,7 @@ from worker.tasks import task, timer
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import mprint, Retry
+from utilities.network import new_httpx_client
 from utilities.media_processing import ImageProcessor, SpeechRecognitionClient
 
 
@@ -41,6 +41,8 @@ def gpt_vision(
         prompts = [text_prompt]
     elif isinstance(text_prompt, list):
         prompts = text_prompt
+    else:
+        raise Exception("Invalid text_prompt")
 
     if len(prompts) < len(images) and len(prompts) == 1:
         prompts = prompts * len(images)
@@ -79,8 +81,9 @@ def gpt_vision(
 
         response = client.create_completion(messages=messages)
         content_outputs.append(response.content)
-        total_prompt_tokens += response.usage.prompt_tokens
-        total_completion_tokens += response.usage.completion_tokens
+        if response.usage:
+            total_prompt_tokens += response.usage.prompt_tokens
+            total_completion_tokens += response.usage.completion_tokens
 
         if index < prompts_count - 1:
             time.sleep(1)
@@ -113,6 +116,8 @@ def glm_vision(
         prompts = [text_prompt]
     elif isinstance(text_prompt, list):
         prompts = text_prompt
+    else:
+        raise Exception("Invalid text_prompt")
 
     if len(prompts) < len(images) and len(prompts) == 1:
         prompts = prompts * len(images)
@@ -147,8 +152,9 @@ def glm_vision(
 
         response = client.create_completion(messages=messages)
         content_outputs.append(response.content)
-        total_prompt_tokens += response.usage.prompt_tokens
-        total_completion_tokens += response.usage.completion_tokens
+        if response.usage:
+            total_prompt_tokens += response.usage.prompt_tokens
+            total_completion_tokens += response.usage.completion_tokens
 
         if index < prompts_count - 1:
             time.sleep(1)
@@ -181,6 +187,8 @@ def local_vision(
         prompts = [text_prompt]
     elif isinstance(text_prompt, list):
         prompts = text_prompt
+    else:
+        raise Exception("Invalid text_prompt")
 
     if len(prompts) < len(images) and len(prompts) == 1:
         prompts = prompts * len(images)
@@ -247,6 +255,8 @@ def claude_vision(
         prompts = [text_prompt]
     elif isinstance(text_prompt, list):
         prompts = text_prompt
+    else:
+        raise Exception("Invalid text_prompt")
 
     if len(prompts) < len(images) and len(prompts) == 1:
         prompts = prompts * len(images)
@@ -273,7 +283,7 @@ def claude_vision(
 
     user_settings = Settings()
     vectorvein_settings.load(user_settings.get("llm_settings"))
-    client = create_chat_client("anthropic", model=model, stream=False)
+    client = create_chat_client(backend=BackendType.Anthropic, model=model, stream=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
         image_processor = ImageProcessor(image_source=images[index])
@@ -296,10 +306,11 @@ def claude_vision(
 
         response = client.create_completion(messages=messages, max_tokens=1024)
 
-        content_output = response["content"]
+        content_output = response.content
         content_outputs.append(content_output)
-        total_prompt_tokens += response["usage"]["prompt_tokens"]
-        total_completion_tokens += response["usage"]["completion_tokens"]
+        if response.usage:
+            total_prompt_tokens += response.usage.prompt_tokens
+            total_completion_tokens += response.usage.completion_tokens
 
         if index < prompts_count - 1:
             time.sleep(1)
@@ -332,6 +343,8 @@ def gemini_vision(
         prompts = [text_prompt]
     elif isinstance(text_prompt, list):
         prompts = text_prompt
+    else:
+        raise Exception("Invalid text_prompt")
 
     if len(prompts) < len(images) and len(prompts) == 1:
         prompts = prompts * len(images)
@@ -349,6 +362,7 @@ def gemini_vision(
     url = f"{settings.gemini_api_base}/models/{model}:generateContent"
     headers = {"Content-Type": "application/json"}
     params = {"key": settings.gemini_api_key}
+    http_client = new_httpx_client(is_async=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
         image_processor = ImageProcessor(image_source=images[index])
@@ -369,7 +383,7 @@ def gemini_vision(
         }
 
         gemini_request_success, response = (
-            Retry(httpx.post)
+            Retry(http_client.post)
             .args(
                 url=url,
                 json=request_body,
@@ -424,7 +438,10 @@ def speech_recognition(
             urls = [urls]
         elif isinstance(urls, list):
             urls = urls
-        files_data = [httpx.get(url).content for url in urls]
+        http_client = new_httpx_client(is_async=False)
+        files_data = [http_client.get(url).content for url in urls]
+    else:
+        raise Exception("Invalid files_or_urls")
 
     engine = workflow.get_node_field_value(node_id, "engine", "openai")
     client = SpeechRecognitionClient(provider=engine)

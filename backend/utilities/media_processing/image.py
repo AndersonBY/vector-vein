@@ -8,12 +8,12 @@ from datetime import datetime
 from functools import cached_property
 
 import mss
-import httpx
 import mss.tools
 from PIL.ImageFile import ImageFile
 from PIL import Image, ImageDraw, ImageFont
 
 from utilities.config import config
+from utilities.network import new_httpx_client
 
 
 class ImageProcessor:
@@ -39,7 +39,8 @@ class ImageProcessor:
         if not self.is_local:
             image_url = self.image_source
             print(f"Downloading image from {image_url}")
-            response = httpx.get(image_url, timeout=30)
+            http_client = new_httpx_client(is_async=False)
+            response = http_client.get(image_url, timeout=30)
             return Image.open(BytesIO(response.content))
         else:
             return Image.open(self.image_source)
@@ -159,7 +160,7 @@ class ImageProcessor:
         if method == "proportional_scale":
             new_width = int(img.width * ratio)
             new_height = int(img.height * ratio)
-            self._image = img.resize((new_width, new_height), Image.LANCZOS)
+            self._image = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
         elif method == "fixed_width_height":
             if width == 0:
                 # If width is 0, then scale the image to the height
@@ -167,7 +168,7 @@ class ImageProcessor:
             elif height == 0:
                 # If height is 0, then scale the image to the width
                 height = int(img.height * width / img.width)
-            self._image = img.resize((width, height), Image.LANCZOS)
+            self._image = img.resize((width, height), Image.Resampling.LANCZOS)
         else:
             raise ValueError("Invalid scale_method")
 
@@ -484,7 +485,7 @@ def get_screenshot(
 
             image = Image.frombytes("RGB", sct_img.size, sct_img.bgra, "raw", "BGRX")
             image.format = "PNG"
-            image = image.resize((width, height), Image.LANCZOS)
+            image = image.resize((width, height), Image.Resampling.LANCZOS)
             image.save(output, format="PNG", compress_level=compression_level)
 
             return str(output.absolute())

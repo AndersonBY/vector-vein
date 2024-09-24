@@ -10,7 +10,6 @@ import subprocess
 from pathlib import Path
 from datetime import datetime
 
-import httpx
 import pyaudio
 import numpy as np
 from openai import OpenAI
@@ -86,13 +85,14 @@ class TTSClient:
                 "audio_sample_rate": self.audio_sample_rate,
                 "bitrate": 128000,
             }
-            response = httpx.post(url, headers=headers, json=data)
+            http_client = new_httpx_client(is_async=False)
+            response = http_client.post(url, headers=headers, json=data)
             if response.status_code != 200:
                 mprint.error("Minimax TTS failed", response.status_code, response.text)
                 return None
             result = response.json()
             audio_url = result["audio_file"]
-            response = httpx.get(audio_url)
+            response = http_client.get(audio_url)
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
         elif self.provider == "reecho":
@@ -110,9 +110,10 @@ class TTSClient:
                 "stream": False,
             }
             headers = {"Authorization": f"Bearer {self.api_key}"}
-            response = httpx.post(url, headers=headers, json=payload, timeout=None)
+            http_client = new_httpx_client(is_async=False)
+            response = http_client.post(url, headers=headers, json=payload, timeout=None)
             audio_url = response.json()["data"]["audio"]
-            response = httpx.get(audio_url, headers=headers, timeout=None)
+            response = http_client.get(audio_url, headers=headers, timeout=None)
             with open(output_file_path, "wb") as f:
                 f.write(response.content)
         elif self.provider == "azure":
@@ -132,7 +133,8 @@ class TTSClient:
 
             url = f"https://{self.service_region}.tts.speech.microsoft.com/cognitiveservices/v1"
 
-            response = httpx.post(url, headers=headers, content=ssml)
+            http_client = new_httpx_client(is_async=False)
+            response = http_client.post(url, headers=headers, content=ssml)
 
             if response.status_code == 200:
                 output_file_path = Path(output_file_path)
@@ -183,7 +185,8 @@ class TTSClient:
                 },
                 "stream": True,
             }
-            with httpx.stream("POST", url, headers=headers, json=body) as response:
+            http_client = new_httpx_client(is_async=False)
+            with http_client.stream("POST", url, headers=headers, json=body) as response:
                 for chunk in response.iter_lines():
                     if self._stop_flag:
                         break
@@ -198,7 +201,8 @@ class TTSClient:
         elif self.provider == "piper":
             stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             headers = {"content-type": "text/plain"}
-            with httpx.stream("POST", self.api_base, headers=headers, data=text) as response:
+            http_client = new_httpx_client(is_async=False)
+            with http_client.stream("POST", self.api_base, headers=headers, data=text) as response:
                 for chunk in response.iter_bytes():
                     if self._stop_flag:
                         break
@@ -218,7 +222,8 @@ class TTSClient:
                 "stream": True,
             }
             headers = {"Authorization": f"Bearer {self.api_key}"}
-            response = httpx.post(url, headers=headers, json=payload, timeout=None)
+            http_client = new_httpx_client(is_async=False)
+            response = http_client.post(url, headers=headers, json=payload, timeout=None)
             stream_url = response.json()["data"]["streamUrl"]
 
             CHUNK = 1024
@@ -290,7 +295,8 @@ class TTSClient:
             stream = p.open(format=pyaudio.paInt16, channels=1, rate=self.audio_sample_rate, output=True)
 
             try:
-                with httpx.stream("POST", url, headers=headers, content=ssml) as response:
+                http_client = new_httpx_client(is_async=False)
+                with http_client.stream("POST", url, headers=headers, content=ssml) as response:
                     if response.status_code == 200:
                         for chunk in response.iter_bytes():
                             if self._stop_flag:

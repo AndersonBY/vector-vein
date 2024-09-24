@@ -3,10 +3,8 @@
 # @Date:   2023-05-16 18:15:11
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-24 15:32:02
-import httpx
-
 from utilities.config import Settings
-from utilities.network import proxies
+from utilities.network import new_httpx_client
 from .client import get_openai_client_and_model_id
 
 
@@ -42,8 +40,8 @@ class EmbeddingClient:
                 headers = {"Authorization": f"Bearer {self.api_key}"}
             else:
                 headers = None
-            response = httpx.post(
-                self.api_base, headers=headers, json={"inputs": input}, proxies=proxies(), timeout=60 * 60
+            response = new_httpx_client(is_async=False).post(
+                self.api_base, headers=headers, json={"inputs": input}, timeout=60 * 60
             )
             result = response.json()
             if isinstance(input, str):

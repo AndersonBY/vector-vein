@@ -6,7 +6,6 @@
 from pathlib import Path
 from urllib.parse import urlparse, parse_qs
 
-import httpx
 import yt_dlp
 from pathvalidate import sanitize_filename
 from bilili.api.acg_video import get_acg_video_subtitle
@@ -14,7 +13,7 @@ from bilili.api.acg_video import get_acg_video_subtitle
 from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
-from utilities.network import crawl_text_from_url, proxies
+from utilities.network import crawl_text_from_url, new_httpx_client
 from worker.tasks import task, timer
 
 
@@ -41,7 +40,8 @@ def get_aid_cid(bvid, part_number):
         aid = bvid
 
     url = f"https://api.bilibili.com/x/player/pagelist?bvid={bvid}&jsonp=jsonp"
-    resp = httpx.get(url, headers=headers, proxies=proxies())
+    http_client = new_httpx_client(is_async=False)
+    resp = http_client.get(url, headers=headers)
     info = resp.json()
     cid = info["data"][part_number - 1]["cid"]
 
@@ -105,16 +105,18 @@ def bilibili_crawler(
     else:
         urls = [url_or_bvid]
 
+    http_client = new_httpx_client(is_async=False)
+
     subtitles = []
     titles = []
     videos = []
     for url in urls:
         if "b23.tv" in url:
-            resp = httpx.get(url, headers=headers, follow_redirects=True)
+            resp = http_client.get(url, headers=headers, follow_redirects=True)
             url = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
         elif len(url) < 10:
             # 猜测是 https://b23.tv/TPsdmV5 这样的格式被 AI 识别为 TPsdmV5 输入了
-            resp = httpx.get(f"https://b23.tv/{url}", headers=headers, follow_redirects=True)
+            resp = http_client.get(f"https://b23.tv/{url}", headers=headers, follow_redirects=True)
             url = f"{resp.url.scheme}://{resp.url.host}{resp.url.path}"
 
         if "bilibili.com" in url:
@@ -130,9 +132,7 @@ def bilibili_crawler(
             part_number = 1
 
         aid, cid = get_aid_cid(bvid, part_number=part_number)
-        resp = httpx.get(
-            f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers, proxies=proxies()
-        )
+        resp = http_client.get(f"https://api.bilibili.com/x/web-interface/view?bvid={bvid}", headers=headers)
         title = resp.json()["data"]["title"]
         subtitle_list = get_acg_video_subtitle(bvid=bvid, cid=cid)
         if len(subtitle_list) == 0:
@@ -204,6 +204,8 @@ def youtube_crawler(
             url = "https://www.youtube.com/watch?v=" + url
         formatted_urls.append(url)
 
+    http_client = new_httpx_client(is_async=False)
+
     text_results = []
     title_results = []
     comments_results = []
@@ -257,7 +259,7 @@ def youtube_crawler(
             mprint.error("No subtitle found")
             text_results.append("")
             continue
-        subtitle_resp = httpx.get(subtitle_url, proxies=proxies(), headers=headers)
+        subtitle_resp = http_client.get(subtitle_url, headers=headers)
         subtitle_data_list = subtitle_resp.json()["events"]
         formated_subtitle = []
         for item in subtitle_data_list:

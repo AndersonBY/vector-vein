@@ -10,10 +10,9 @@ from pathlib import Path
 from urllib.parse import unquote, urlparse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
-import httpx
-
 from utilities.config import config
 from utilities.general import mprint
+from utilities.network import new_httpx_client
 
 
 class StaticFileServer:
@@ -68,7 +67,7 @@ class StaticFileServer:
 
     @staticmethod
     def copy_online_file(file_url: str, folder: str | Path):
-        response = httpx.get(file_url, timeout=30)
+        response = new_httpx_client(is_async=False).get(file_url, timeout=30)
         if response.status_code == 200:
             file_type = response.headers.get("Content-Type", "").split("/")[-1]
             file_name = urlparse(file_url).path.split("/")[-1]

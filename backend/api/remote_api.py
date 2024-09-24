@@ -3,11 +3,9 @@
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-25 15:22:18
-import httpx
-
 from utilities.general import mprint
-from utilities.network import proxies
 from utilities.config import Settings, cache
+from utilities.network import new_httpx_client
 from .utils import JResponse
 
 
@@ -16,16 +14,16 @@ headers = {"user-agent": "vector-vein client"}
 
 def request(method: str, path: str, payload=None):
     settings = Settings()
+    client = new_httpx_client(is_async=False)
     url = f"https://{settings.website_domain}{path}"
     try_times = 0
     while try_times < 3:
         try:
             payload_params = {"json": payload} if method == "POST" and payload else {"params": payload}
-            response = httpx.request(
+            response = client.request(
                 method,
                 url,
                 headers=headers,
-                proxies=proxies(),
                 timeout=15,
                 **payload_params,
             )

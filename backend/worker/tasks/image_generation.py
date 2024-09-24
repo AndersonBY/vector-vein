@@ -6,12 +6,10 @@
 import uuid
 import base64
 
-import httpx
-
 from worker.tasks import task, timer
 from utilities.config import Settings
-from utilities.network import proxies
 from utilities.workflow import Workflow
+from utilities.network import new_httpx_client
 from utilities.file_processing import static_file_server
 from utilities.ai_utils import get_openai_client_and_model_id
 
@@ -59,11 +57,15 @@ def stable_diffusion(
         prompts = [input_prompt]
     elif isinstance(input_prompt, list):
         prompts = input_prompt
+    else:
+        raise Exception("Invalid input_prompt")
 
     if isinstance(input_negative_prompt, str):
         negative_prompts = [input_negative_prompt]
     elif isinstance(input_negative_prompt, list):
         negative_prompts = input_negative_prompt
+    else:
+        raise Exception("Invalid input_negative_prompt")
 
     if len(prompts) < len(negative_prompts) and len(prompts) == 1:
         prompts = prompts * len(negative_prompts)
@@ -74,6 +76,7 @@ def stable_diffusion(
     image_folder = static_file_server.static_folder_path / "images"
     settings = Settings()
     STABILITY_KEY = settings.stability_key
+    http_client = new_httpx_client(is_async=False)
     for index, prompt in enumerate(prompts):
         if provider == "self-host":
             stable_diffusion_base_url = settings.stable_diffusion_base_url.rstrip("/")
@@ -87,7 +90,7 @@ def stable_diffusion(
                 "height": height,
                 "cfg_scale": cfg_scale,
             }
-            response = httpx.post(url, json=data, proxies=proxies(), timeout=None)
+            response = http_client.post(url, json=data, timeout=None)
             image_base64 = response.json()["images"][0]
             image_name = f"{uuid.uuid4().hex}.jpg"
             local_file = image_folder / image_name
@@ -103,13 +106,15 @@ def stable_diffusion(
             elif model == "sd-ultra":
                 url = "https://api.stability.ai/v2beta/stable-image/generate/ultra"
                 model_params = {}
+            else:
+                raise Exception(f"Invalid model: {model}")
 
             if model == "sd3-large-turbo":
                 negative_prompt_params = {}
             else:
                 negative_prompt_params = {"negative_prompt": negative_prompts[index]}
 
-            response = httpx.post(
+            response = http_client.post(
                 url,
                 headers={"authorization": f"Bearer {STABILITY_KEY}", "accept": "image/*"},
                 files={"none": ""},
@@ -126,6 +131,8 @@ def stable_diffusion(
             local_file = image_folder / image_name
             with open(local_file, "wb") as file:
                 file.write(response.content)
+        else:
+            raise Exception(f"Invalid provider: {provider}")
 
         image_url = static_file_server.get_file_url(f"images/{image_name}")
         if output_type == "only_link":
@@ -158,6 +165,8 @@ def dall_e(
         prompts = [input_prompt]
     elif isinstance(input_prompt, list):
         prompts = input_prompt
+    else:
+        raise Exception("Invalid input_prompt")
 
     client, model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
     image_folder = static_file_server.static_folder_path / "images"
@@ -174,6 +183,8 @@ def dall_e(
         )
 
         image_base64 = response.data[0].b64_json
+        if image_base64 is None:
+            raise Exception("Failed to generate image")
         image_bytes = base64.decodebytes(bytes(image_base64, "utf-8"))
         image_name = f"{uuid.uuid4().hex}.png"
         local_file = image_folder / image_name

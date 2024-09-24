@@ -12,14 +12,13 @@ import traceback
 from pathlib import Path
 from urllib.parse import quote
 
-import httpx
 from bs4 import BeautifulSoup
 
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import Retry, mprint
-from utilities.network import proxies, headers
 from utilities.media_processing import get_screenshot
+from utilities.network import headers, new_httpx_client
 from worker.tasks import task, timer
 
 
@@ -179,12 +178,15 @@ def image_search(
     count = workflow.get_node_field_value(node_id, "count")
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
+    http_client = new_httpx_client(is_async=False)
+
     results = []
     if search_engine == "bing":
         if isinstance(search_text, list):
             search_texts = search_text
         else:
             search_texts = [search_text]
+
         for text in search_texts:
             params = {
                 "q": text,
@@ -199,11 +201,10 @@ def image_search(
                 "mmasync": 1,
             }
             images = []
-            response = httpx.get(
+            response = http_client.get(
                 "https://cn.bing.com/images/async",
                 params=params,
                 headers=headers,
-                proxies=proxies(),
             )
             soup = BeautifulSoup(response.text, "lxml")
             images_elements = soup.select(".imgpt>a")
@@ -228,11 +229,10 @@ def image_search(
                 "per_page": 30,
             }
             images = []
-            response = httpx.get(
+            response = http_client.get(
                 "https://api.pexels.com/v1/search",
                 params=params,
                 headers={"Authorization": pexels_api_key},
-                proxies=proxies(),
             )
             data = response.json()
             for image_data in data["photos"][:count]:
@@ -275,6 +275,8 @@ def text_search(
     workflow_data: dict,
     node_id: str,
 ):
+    http_client = new_httpx_client(is_async=False)
+
     def format_output(text: str, text_type: str, output_type: str):
         if output_type == "text":
             return text
@@ -294,10 +296,9 @@ def text_search(
             headers["Authorization"] = f"Bearer {settings.get('web_search.jinaai.api_key')}"
 
         try:
-            response = httpx.get(
+            response = http_client.get(
                 f"https://s.jina.ai/{quote(query)}",
                 headers=headers,
-                proxies=proxies(),
                 timeout=30,
             )
             result = response.json()
@@ -380,12 +381,11 @@ def text_search(
         for text in search_texts:
             params = {"q": text, "count": count}
             request_success, response = (
-                Retry(httpx.get)
+                Retry(http_client.get)
                 .args(
                     url=search_url,
                     headers=headers,
                     params=params,
-                    proxies=proxies(),
                     timeout=20,
                 )
                 .retry_times(3)
