@@ -10,7 +10,6 @@ from datetime import date, datetime
 from typing import overload, List, Dict, Union, Optional
 
 from playhouse.shortcuts import model_to_dict
-from peewee_migrate import Router
 from peewee import (
     Model,
     TextField,
@@ -99,10 +98,14 @@ def model_serializer(
 
 
 def run_migrations(fake: bool = False):
+    from peewee_migrate import Router
+
     router = Router(database, migrate_dir="./migrations")
     router.run(fake=fake)
 
 
 def create_migrations(name: str = "auto"):
+    from peewee_migrate import Router
+
     router = Router(database, migrate_dir="./migrations")
     router.create(name, auto=True)
