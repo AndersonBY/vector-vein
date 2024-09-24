@@ -74,6 +74,8 @@ def main():
         VERSION = Path("./version.txt").read_text()
     else:
         VERSION = os.environ.get("VECTORVEIN_VERSION", "0.0.1")
+    os.environ["TIKTOKEN_CACHE_DIR"] = Path("./assets/tiktoken_cache").as_posix()
+    mprint(f"TIKTOKEN_CACHE_DIR: {os.environ['TIKTOKEN_CACHE_DIR']}")
 
     def open_file_dialog(self, multiple=False):
         result = window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=multiple)
@@ -122,6 +124,7 @@ def main():
     setattr(API, "get_drop_file_path", get_drop_file_path)
 
     _proxies_for_requests = proxies_for_requests()
+    mprint("Proxies", _proxies_for_requests)
 
     if "http" in _proxies_for_requests:
         os.environ["http_proxy"] = _proxies_for_requests["http"]
