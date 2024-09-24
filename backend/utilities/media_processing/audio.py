@@ -20,12 +20,12 @@ from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
 
 from utilities.general import mprint
-from utilities.network import proxies
 from utilities.config import Settings, config
+from utilities.network import new_httpx_client
 
 
 class TTSClient:
-    def __init__(self, provider: str = "openai", model: str | None = None):
+    def __init__(self, provider: str = "openai", model: str = ""):
         self.audio_sample_rate = 24_000
         self.streaming = False
         self._stop_flag = False
@@ -36,11 +36,11 @@ class TTSClient:
         if self.provider == "openai":
             from utilities.ai_utils import get_openai_client_and_model_id
 
-            if model is None:
+            if len(model) == 0:
                 model = "tts-1"
             self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
         elif self.provider == "minimax":
-            if model is None:
+            if len(model) == 0:
                 model = "speech-01-turbo"
             self.api_key = settings.minimax_api_key
             self.model_id = model
@@ -55,8 +55,10 @@ class TTSClient:
             self.service_region = settings.get("tts.azure.service_region")
             self.model_id = model
             self.audio_sample_rate = 16_000
+        else:
+            raise ValueError(f"Unsupported TTS provider: {self.provider}")
 
-    def create(self, text: str, voice: str | None = None, output_folder: str | None = None):
+    def create(self, text: str, voice: str = "", output_folder: str | None = None):
         datetime_string = datetime.now().strftime("%Y%m%d%H%M%S")
         if output_folder is None:
             audio_path = Path(config.data_path) / "audio"
@@ -66,6 +68,8 @@ class TTSClient:
             output_file_path = Path(output_folder) / f"{datetime_string}.mp3"
 
         if self.provider == "openai":
+            if len(voice) == 0 or voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
+                voice = "alloy"
             response = self.client.audio.speech.create(model=self.model_id, voice=voice, input=text)
             response.write_to_file(output_file_path)
         elif self.provider == "minimax":
@@ -140,11 +144,13 @@ class TTSClient:
 
         return output_file_path
 
-    def _stream_audio(self, text: str, voice: str | None):
+    def _stream_audio(self, text: str, voice: str = ""):
         self.streaming = True
         self._stop_flag = False
         p = pyaudio.PyAudio()
         if self.provider == "openai":
+            if len(voice) == 0 or voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
+                voice = "alloy"
             stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             with self.client.audio.speech.with_streaming_response.create(
                 model=self.model_id, voice=voice, input=text, response_format="pcm"
@@ -304,7 +310,7 @@ class TTSClient:
         p.terminate()
         self.streaming = False
 
-    def stream(self, text: str, voice: str | None = None, non_block: bool = False, skip_code_block: bool = False):
+    def stream(self, text: str, voice: str = "", non_block: bool = False, skip_code_block: bool = False):
         if skip_code_block:
             text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
 
@@ -334,37 +340,44 @@ class SpeechRecognitionClient:
 
         if model is None:
             if provider == "openai":
-                model = "whisper-1"
+                _model = "whisper-1"
             elif provider == "deepgram":
-                model = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
+                _model: str = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
+            else:
+                raise ValueError(f"Unsupported ASR provider: {provider}")
+        else:
+            _model = model
 
         if language is None:
             if provider == "openai":
-                language = "en"
+                _language = "en"
             elif provider == "deepgram":
-                language = settings.get("asr.deepgram.speech_to_text.language", "en")
+                _language = settings.get("asr.deepgram.speech_to_text.language", "en")
+            else:
+                raise ValueError(f"Unsupported ASR provider: {provider}")
+        else:
+            _language = language
 
         self.provider = provider
-        self.language = language
+        self.language = _language
 
         if self.provider == "openai":
             from utilities.ai_utils import get_openai_client_and_model_id
 
             if settings.get("asr.openai.same_as_llm", False):
-                self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model)
+                self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=_model)
             else:
                 self.client = OpenAI(
                     api_key=settings.get("asr.openai.api_key"),
                     base_url=settings.get("asr.openai.api_base"),
-                    http_client=httpx.Client(
-                        proxies=proxies(),
-                        transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-                    ),
+                    http_client=new_httpx_client(is_async=False),
                 )
                 self.model_id = settings.get("asr.openai.model", "whisper-1")
         elif self.provider == "deepgram":
             self.client = DeepgramClient(settings.get("asr.deepgram.api_key"))
-            self.model_id = model
+            self.model_id = _model
+        else:
+            raise ValueError(f"Unsupported ASR provider: {self.provider}")
 
     def batch_transcribe(self, files: list, output_type: str = "text"):
         outputs = []

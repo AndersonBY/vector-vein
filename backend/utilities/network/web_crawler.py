@@ -9,6 +9,7 @@ import time
 import base64
 import urllib.request
 from Crypto.Cipher import AES
+from typing import overload, Literal
 from Crypto.Util.Padding import unpad
 
 import httpx
@@ -59,6 +60,21 @@ def proxies_for_requests():
         return proxies_for_requests
 
 
+@overload
+def new_httpx_client(is_async: Literal[False] = False) -> httpx.Client: ...
+
+
+@overload
+def new_httpx_client(is_async: Literal[True] = True) -> httpx.AsyncClient: ...
+
+
+def new_httpx_client(is_async: bool = False) -> httpx.Client | httpx.AsyncClient:
+    if is_async:
+        return httpx.AsyncClient(proxies=proxies())
+    else:
+        return httpx.Client(proxies=proxies())
+
+
 def decrypt_aes_ecb_base64(ciphertext_base64, key):
     cipher = AES.new(key, AES.MODE_ECB)
     ciphertext = base64.b64decode(ciphertext_base64)
@@ -96,6 +112,7 @@ def crawl_text_from_url(url: str):
 
     try_times = 0
     crawl_success = False
+    response = None
     while try_times < 5:
         try:
             response = httpx.get(url, headers=headers, proxies=proxies(), follow_redirects=True)
@@ -109,45 +126,41 @@ def crawl_text_from_url(url: str):
     if not crawl_success:
         raise Exception("Crawl failed")
 
+    if response is None:
+        raise Exception("Response is None")
+
     if "https://mp.weixin.qq.com/" in url:
         soup = BeautifulSoup(response.content, "lxml")
         content = str(soup.select_one("#js_content"))
         content = clean_markdown(markdownify(content))
-        result = {
-            "title": soup.select_one("#activity-name").text.strip(),
-            "text": content,
-            "url": url,
-        }
+        title_element = soup.select_one("#activity-name")
+        title = title_element.text.strip() if title_element else ""
+        result = {"title": title, "text": content, "url": url}
     elif url.startswith("https://zhuanlan.zhihu.com"):
         soup = BeautifulSoup(response.text, "lxml")
         content = str(soup.select_one(".Post-RichText"))
         content = clean_markdown(markdownify(content))
-        result = {
-            "title": soup.select_one(".Post-Title").text.strip(),
-            "text": content,
-            "url": url,
-        }
+        title_element = soup.select_one(".Post-Title")
+        title = title_element.text.strip() if title_element else ""
+        result = {"title": title, "text": content, "url": url}
     elif url.startswith("https://www.zhihu.com/question/"):
         soup = BeautifulSoup(response.text, "lxml")
+        title_element = soup.select_one(".QuestionHeader-title")
+        title = title_element.text.strip() if title_element else ""
         content = soup.select_one(".RichContent-inner")
-        for style in content.select("style"):
-            style.decompose()
+        if content is not None:
+            for style in content.select("style"):
+                style.decompose()
         content = str(content)
         content = clean_markdown(markdownify(content))
-        result = {
-            "title": soup.select_one(".QuestionHeader-title").text.strip(),
-            "text": content,
-            "url": url,
-        }
+        result = {"title": title, "text": content, "url": url}
     elif "substack.com" in url:
         soup = BeautifulSoup(response.text, "lxml")
+        title_element = soup.select_one(".post-title")
+        title = title_element.text.strip() if title_element else ""
         content = str(soup.select_one(".available-content"))
         content = clean_markdown(markdownify(content))
-        result = {
-            "title": soup.select_one(".post-title").text.strip(),
-            "text": content,
-            "url": url,
-        }
+        result = {"title": title, "text": content, "url": url}
     elif "36kr.com" in url:
         script_content = re.findall(r"<script>window.initialState=(.*?)</script>", response.text)[0]
         encrypted_data = json.loads(script_content)
@@ -171,11 +184,9 @@ def crawl_text_from_url(url: str):
         else:
             content = response.text
         content = clean_markdown(markdownify(content))
-        result = {
-            "title": soup.select_one("head title").text.strip(),
-            "text": content,
-            "url": url,
-        }
+        title_element = soup.select_one("head title")
+        title = title_element.text.strip() if title_element else ""
+        result = {"title": title, "text": content, "url": url}
     else:
         doc = Document(response.content)
         result = {

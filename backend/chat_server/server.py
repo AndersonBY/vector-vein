@@ -16,6 +16,7 @@ from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messa
 from tts_server.server import tts_server
 from utilities.general import mprint
 from utilities.config import Settings, cache
+from utilities.network import new_httpx_client
 from background_task.tasks import summarize_conversation_title
 from .utils import get_tool_call_data, get_tool_related_workflow
 
@@ -97,7 +98,7 @@ class WebSocketServer:
                 title_backend = BackendType(title_backend.lower())
             summarize_conversation_title.delay(ai_message_mid, history_messages, title_backend, title_model)
 
-        client = create_async_chat_client(backend=backend, model=model)
+        client = create_async_chat_client(backend=backend, model=model, http_client=new_httpx_client(is_async=True))
 
         tool_call_data = request_data["conversation"]["tool_call_data"]
         if tool_call_data.get("workflows") or tool_call_data.get("templates"):
