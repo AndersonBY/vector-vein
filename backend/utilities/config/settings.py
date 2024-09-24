@@ -4,8 +4,6 @@ import json
 from typing import Any
 from collections.abc import Mapping
 
-from vectorvein.settings import settings as vectorvein_settings
-
 
 DEFAULT_SETTINGS = {
     "initial_setup": False,
@@ -477,6 +475,8 @@ def deep_merge(default, custom):
 
 
 def update_llm_settings_to_v2(data: dict):
+    from vectorvein.settings import settings as vectorvein_settings
+
     if data.get("settings_version", 1) == 2:
         return data
 
@@ -640,6 +640,7 @@ class Settings:
     def load_setting(self):
         from models import model_serializer
         from models import Setting as SettingModel
+        from vectorvein.settings import settings as vectorvein_settings
 
         if SettingModel.select().count() == 0:
             setting = SettingModel.create(data=DEFAULT_SETTINGS)
