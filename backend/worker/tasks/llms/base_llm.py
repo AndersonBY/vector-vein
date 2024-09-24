@@ -5,7 +5,6 @@ import time
 from traceback import format_exc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-import httpx
 from vectorvein.types.enums import BackendType
 from vectorvein.types.exception import APIStatusError
 from vectorvein.chat_clients import create_chat_client
@@ -14,9 +13,9 @@ from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
 from vectorvein.chat_clients.utils import get_token_counts, format_messages
 
 from utilities.general import mprint
-from utilities.network import proxies
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.network import new_httpx_client
 from utilities.general.ratelimit import is_request_allowed, add_request_record
 
 from .types.output import ModelOutput
@@ -78,10 +77,7 @@ class BaseLLMTask:
             backend=self.MODEL_TYPE,
             model=self.model,
             temperature=self.temperature,
-            http_client=httpx.Client(
-                proxies=proxies(),
-                transport=httpx.HTTPTransport(local_address="0.0.0.0"),
-            ),
+            http_client=new_httpx_client(is_async=False),
         )
 
         self.model_settings = self.chat_client.backend_settings.models[self.model]
