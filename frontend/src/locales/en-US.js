@@ -1891,6 +1891,7 @@ export default {
     'clear': 'Clear',
     'list_models_failed': 'Failed to get model list',
     'agent_tool_call_data_generate_model': 'Agent tool call data generation model',
+    'skip_ssl_verification': 'Skip SSL verification',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",

@@ -69,10 +69,12 @@ def new_httpx_client(is_async: Literal[True] = True) -> httpx.AsyncClient: ...
 
 
 def new_httpx_client(is_async: bool = False) -> httpx.Client | httpx.AsyncClient:
+    settings = Settings()
+    ssl_verification = not settings.get("skip_ssl_verification", False)
     if is_async:
-        return httpx.AsyncClient(proxies=proxies())
+        return httpx.AsyncClient(proxies=proxies(), verify=ssl_verification)
     else:
-        return httpx.Client(proxies=proxies())
+        return httpx.Client(proxies=proxies(), verify=ssl_verification)
 
 
 def decrypt_aes_ecb_base64(ciphertext_base64, key):
@@ -110,12 +112,14 @@ def crawl_text_from_url(url: str):
     if not url.startswith("http"):
         url = f"http://{url}"
 
+    http_client = new_httpx_client(is_async=False)
+
     try_times = 0
     crawl_success = False
     response = None
     while try_times < 5:
         try:
-            response = httpx.get(url, headers=headers, proxies=proxies(), follow_redirects=True)
+            response = http_client.get(url, headers=headers, follow_redirects=True)
             crawl_success = True
             break
         except Exception as e:

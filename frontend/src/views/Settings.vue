@@ -535,6 +535,10 @@ watch(selectedKeys, () => {
               <a-checkbox v-model:checked="settingForm.data.use_system_proxy" />
             </a-form-item>
 
+            <a-form-item :label="t('settings.skip_ssl_verification')">
+              <a-checkbox v-model:checked="settingForm.data.skip_ssl_verification" />
+            </a-form-item>
+
             <a-form-item :label="t('settings.output_folder')">
               <a-flex vertical gap="small">
                 <a-typography-text>

@@ -1891,6 +1891,7 @@ export default {
     'clear': '清除',
     'list_models_failed': '获取模型列表失败',
     'agent_tool_call_data_generate_model': 'Agent 工具调用数据生成模型',
+    'skip_ssl_verification': '跳过 SSL 验证',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "青涩青年音色",

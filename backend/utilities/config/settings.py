@@ -16,6 +16,7 @@ DEFAULT_SETTINGS = {
     "stable_diffusion_base_url": "http://127.0.0.1:7860",
     "stability_key": "",
     "use_system_proxy": True,
+    "skip_ssl_verification": False,
     "website_domain": "vectorvein.ai",
     "agent": {
         "auto_title": True,
