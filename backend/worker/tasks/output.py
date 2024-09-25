@@ -12,8 +12,8 @@ import yagmail
 import openpyxl
 import markdown2
 import pandas as pd
+import docx_ea_font
 from docx import Document
-from docx.oxml.ns import qn
 
 from worker.tasks import task, timer
 from utilities.general import mprint
@@ -59,6 +59,8 @@ def table(
         result = df.to_json(orient="records")
     elif content_type == "json":
         result = content
+    else:
+        raise ValueError(f"Unsupported content type: {content_type}")
 
     workflow.update_node_field_value(node_id, "output", result)
     return workflow.data
@@ -115,16 +117,16 @@ def document(
         new_parser.add_html_to_document(html_content, document)
         for paragraph in document.paragraphs:
             for run in paragraph.runs:
-                run.font.name = "微软雅黑"
-                r = run._element.rPr.rFonts
-                r.set(qn("w:eastAsia"), "微软雅黑")
+                docx_ea_font.set_font(run, "微软雅黑")
 
-        document.save(local_file)
+        document.save(local_file.as_posix())
     elif export_type.endswith(".xlsx"):
         content_str = "\n".join(contents)
         lines = content_str.split("\n")
         wb = openpyxl.Workbook()
         ws = wb.active
+        if ws is None:
+            ws = wb.create_sheet()
         for line in lines:
             ws.append(line.split(","))
         wb.save(local_file)
@@ -159,7 +161,7 @@ def audio(
             tts_client.stream(text=content, voice=tts_voice)
         else:
             output_folder = Path(Settings().output_folder)
-            output_file_path = tts_client.create(text=content, voice=tts_voice, output_folder=output_folder)
+            output_file_path = tts_client.create(text=content, voice=tts_voice, output_folder=output_folder.as_posix())
             output_file_path = static_file_server.get_file_url(output_file_path)
     elif audio_type == "play_audio":
         output_file_path = file_link
@@ -240,6 +242,8 @@ def picture_render(
         contents = [input_content]
     elif isinstance(input_content, list):
         contents = input_content
+    else:
+        raise ValueError(f"Unsupported content type: {type(input_content)}")
 
     static_path = static_file_server.static_folder_path
     image_path = static_path / "images" / "pdf_render" / uuid.uuid4().hex
