@@ -30,7 +30,7 @@ class ConversationAPI:
         offset = int(payload.get("offset", 0))
         aid = payload.get("aid")
         status, msg, agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or not isinstance(agent, Agent):
             return JResponse(status=status, msg=msg)
         conversations = Conversation.select().where(Conversation.agent == agent)
         total = conversations.count()
@@ -49,7 +49,7 @@ class ConversationAPI:
     def get(self, payload):
         cid = payload.get("cid")
         status, msg, conversation = get_user_object_general(Conversation, cid=cid)
-        if status != 200:
+        if status != 200 or not isinstance(conversation, Conversation):
             return JResponse(status=status, msg=msg)
 
         if conversation.agent_version != conversation.agent.version:
