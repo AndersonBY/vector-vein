@@ -399,6 +399,12 @@ class Workflow:
         field_data.update({"value": value})
         node.update_field(field, field_data)
 
+    def get_node_field_value_by_key(self, node_id: str, field_key: str, default: Any | None = None) -> Any:
+        node = self.get_node(node_id)
+        if node is None:
+            return default
+        return node.get_field(field_key).get("value", default)
+
     def get_node_fields(self, node_id: str):
         node = self.get_node(node_id)
         if node is None:
