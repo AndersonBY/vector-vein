@@ -2,7 +2,8 @@
 # @Date:   2024-06-05 23:22:25
 from pathlib import Path
 
-import fitz
+import pymupdf
+from pymupdf.utils import get_pixmap
 
 
 def calculate_zoom(page, min_dimension=1920):
@@ -17,12 +18,12 @@ def pdf_to_images(pdf_path, output_folder):
         Path(output_folder).mkdir(parents=True, exist_ok=True)
 
     images = []
-    pdf_document = fitz.open(pdf_path)
+    pdf_document = pymupdf.open(pdf_path)
     for page_num in range(len(pdf_document)):
         page = pdf_document.load_page(page_num)
         zoom_x, zoom_y = calculate_zoom(page, 1920)
-        mat = fitz.Matrix(zoom_x, zoom_y)
-        pix = page.get_pixmap(matrix=mat)
+        mat = pymupdf.Matrix(zoom_x, zoom_y)
+        pix = get_pixmap(page, matrix=mat)
         image_path = Path(output_folder) / Path(f"page_{page_num + 1}.png")
         pix.save(str(image_path.absolute()))
         images.append(str(image_path.absolute()))
@@ -34,3 +35,5 @@ def process_pdf(input_data, action: str, output_folder: str | Path):
     if action == "render_images":
         images = pdf_to_images(input_data, output_folder)
         return images
+    else:
+        raise ValueError(f"Unsupported action: {action}")
