@@ -13,7 +13,7 @@
     "@codemirror/lang-python": "^6.1.6",
     "@codemirror/lang-sql": "^6.7.1",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.33.0",
+    "@codemirror/view": "^6.34.0",
     "@dagrejs/dagre": "^1.1.4",
     "@icon-park/vue-next": "^1.4.2",
     "@liripeng/vue-audio-player": "^2.0.4",
@@ -34,12 +34,11 @@
     "jszip": "^3.10.1",
     "katex": "^0.16.11",
     "lodash-es": "^4.17.21",
-    "markdown-it-attrs": "^4.2.0",
     "markdown-it-github-alerts": "^0.3.0",
     "markdown-it-link-attributes": "^4.0.1",
-    "markmap-common": "^0.17.0",
-    "markmap-lib": "^0.17.0",
-    "markmap-view": "^0.17.0",
+    "markmap-common": "^0.17.1",
+    "markmap-lib": "^0.17.1",
+    "markmap-view": "^0.17.1",
     "mermaid": "^10.9.1",
     "midi-player-js": "^2.0.16",
     "pinia": "^2.2.2",
@@ -60,10 +59,10 @@
     "@vitejs/plugin-vue": "^4.6.2",
     "@vue-flow/core": "^1.41.2",
     "@vue/eslint-config-prettier": "^7.1.0",
-    "eslint": "^9.11.0",
+    "eslint": "^9.11.1",
     "eslint-plugin-vue": "^9.28.0",
     "prettier": "^2.8.8",
     "unplugin-vue-components": "^0.22.12",
-    "vite": "^5.4.7"
+    "vite": "^5.4.8"
   }
 }

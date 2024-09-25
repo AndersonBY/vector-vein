@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'
 import markdownItKatex from '@vscode/markdown-it-katex'
 import MarkdownItGitHubAlerts from 'markdown-it-github-alerts'
-import MarkdownItAttrs from 'markdown-it-attrs'
 import MarkdownItLinkAttributes from 'markdown-it-link-attributes'
 import 'katex/dist/katex.min.css'
 import hljs from 'highlight.js'
@@ -92,7 +91,7 @@ const markdownItLinkAttributesPlugin = (vueMarkdownItInstance) => {
   })
 }
 
-const plugins = [markdownItKatex, markdownitGitHubAlertsPlugin, MarkdownItAttrs, markdownItLinkAttributesPlugin]
+const plugins = [markdownItKatex, markdownitGitHubAlertsPlugin, markdownItLinkAttributesPlugin]
 
 function escapeDollarNumber(text) {
   let escapedText = ''
