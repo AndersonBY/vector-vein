@@ -148,7 +148,9 @@ def run_sql(
     database = UserRelationalDatabase.get(UserRelationalDatabase.rid == database)
 
     user_db_ctl = UserDatabaseControl(database)
-    results = user_db_ctl.run_sql(split_statements, read_only, include_column_names, max_count)
+    results = []
+    for sql in split_statements:
+        results.append(user_db_ctl.run_sql(sql, read_only, include_column_names, max_count))
 
     if output_type == "list":
         output = results[0] if isinstance(original_sqls, str) else results
@@ -239,7 +241,7 @@ def smart_query(
 
         messages = [system_message, {"role": "user", "content": user_message}]
         response = client.create_completion(messages=messages, temperature=0.2)
-        content = response.content
+        content = response.content or ""
         sql_block_search = sql_block_pattern.search(content)
         if sql_block_search:
             content = sql_block_search.group("code")
