@@ -10,6 +10,12 @@ from utilities.general import mprint
 from utilities.workflow import Workflow
 
 
+class TaskError(Exception):
+    def __init__(self, message, task_name):
+        super().__init__(message)
+        self.task_name = task_name
+
+
 class Task:
     def __init__(self, func):
         self.func = func
@@ -35,8 +41,7 @@ class Chain:
             try:
                 result = task(result, *args, **kwargs)
             except Exception as e:
-                e.task_name = task.func.__name__
-                raise e
+                raise TaskError(str(e), task.func.__name__) from e
         return result
 
 

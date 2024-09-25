@@ -14,7 +14,7 @@ from diskcache import Deque
 from utilities.config import config
 from utilities.general import mprint
 from utilities.workflow import Workflow
-from worker.tasks import chain, on_finish
+from worker.tasks import chain, on_finish, TaskError
 from worker.tasks import (
     llms,
     tools,
@@ -87,14 +87,20 @@ class WorkflowServer:
     def run(workflow_tasks_queue_directory: str | Path | None = None):
         workflow_tasks_queue = Deque(directory=workflow_tasks_queue_directory)
         sleep_time = 1
+        workflow = None
 
         mprint("Workflow task server started.")
         while True:
             try:
                 if len(workflow_tasks_queue) > 0:
                     task_data = workflow_tasks_queue.pop()
+                    if task_data is None or not isinstance(task_data, dict):
+                        continue
                     mprint("Worker received workflow request.")
-                    data: dict = task_data.get("data")
+                    data: dict = task_data.get("data", {})
+                    if not isinstance(data, dict):
+                        mprint.error(f"Invalid task data: {data}")
+                        continue
                     workflow = Workflow(data)
                     sorted_tasks = workflow.get_sorted_task_order()
                     func_list = []
@@ -106,7 +112,7 @@ class WorkflowServer:
                     sleep_time = 0.01
                 else:
                     sleep_time = 1
-            except Exception as e:
+            except TaskError as e:
                 mprint.error(traceback.format_exc())
                 mprint.error(f"workflow worker error: {e}")
                 mprint.error(f"error_task: {e.task_name}")
@@ -114,6 +120,10 @@ class WorkflowServer:
                     if e.task_name in functions:
                         mprint.error(f"error_module: {module_name}")
                         break
-                workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
+                else:
+                    module_name = "unknown"
+                    mprint.error(f"unknown error: {e.task_name}")
+                if workflow:
+                    workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
 
             time.sleep(sleep_time)
