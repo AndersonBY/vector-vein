@@ -62,6 +62,8 @@ class TTSServer:
         self.playing = True
 
         def _stream():
+            if not isinstance(self.tts_client, TTSClient):
+                return
             self.tts_client.stream(text=text, voice=voice, non_block=False, skip_code_block=skip_code_block)
             self.playing = False
 

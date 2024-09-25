@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class GroqTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Groq
+    MODEL_TYPE: BackendType = BackendType.Groq

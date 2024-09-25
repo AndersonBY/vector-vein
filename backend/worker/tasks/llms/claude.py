@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class ClaudeTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Anthropic
+    MODEL_TYPE: BackendType = BackendType.Anthropic

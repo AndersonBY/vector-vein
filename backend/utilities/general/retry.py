@@ -1,12 +1,13 @@
 # @Author: Bi Ying
 # @Date:   2024-06-07 16:16:49
 import time
+from typing import Any, Callable
 
 from .ratelimit import is_request_allowed, add_request_record
 
 
 class Retry:
-    def __init__(self, function):
+    def __init__(self, function: Callable):
         self.function = function
         self.__retry_times = 3
         self.__sleep_time = 1
@@ -32,7 +33,7 @@ class Retry:
         self.__rate_limit_args = (product, cycle, max_count)
         return self
 
-    def run(self) -> tuple[bool, any]:
+    def run(self) -> tuple[bool, Any]:
         try_times = 0
         start_time = time.time()
 

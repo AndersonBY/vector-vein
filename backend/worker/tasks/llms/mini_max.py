@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class MiniMaxTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.MiniMax
+    MODEL_TYPE: BackendType = BackendType.MiniMax

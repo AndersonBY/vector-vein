@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class LingYiWanWuTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Yi
+    MODEL_TYPE: BackendType = BackendType.Yi

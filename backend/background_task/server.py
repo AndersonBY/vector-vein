@@ -58,6 +58,8 @@ class BackgroundTaskServer:
             try:
                 if len(task_queue) > 0:
                     task = task_queue.pop()
+                    if not isinstance(task, dict):
+                        continue
                     task_name, task_id, args, kwargs = task["task_name"], task["task_id"], task["args"], task["kwargs"]
                     task_func = get_task(task_name)
                     if not task_func:
@@ -79,15 +81,18 @@ class BackgroundTaskServer:
         from background_task.tasks import get_task
 
         qdrant_path = Path(config.data_path) / "qdrant_db"
-        qdrant_client = QdrantClient(path=qdrant_path.absolute())
+        qdrant_client = QdrantClient(path=qdrant_path.absolute().as_posix())
         qdrant_tasks_queue = Deque(directory=qdrant_tasks_queue_directory)
         sleep_time = 1
+        task_name = ""
 
         mprint("Qdrant task server started.")
         while True:
             try:
                 if len(qdrant_tasks_queue) > 0:
                     task = qdrant_tasks_queue.pop()
+                    if not isinstance(task, dict):
+                        continue
                     task_name, task_id, args, kwargs = task["task_name"], task["task_id"], task["args"], task["kwargs"]
                     task_func = get_task(task_name)
                     if not task_func:

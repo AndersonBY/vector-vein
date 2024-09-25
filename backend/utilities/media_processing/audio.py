@@ -7,13 +7,18 @@ import wave
 import platform
 import threading
 import subprocess
+from io import IOBase
+from os import PathLike
 from pathlib import Path
 from datetime import datetime
+from typing import Literal, cast
+from abc import ABC, abstractmethod
 
 import pyaudio
 import numpy as np
 from openai import OpenAI
 from openai._types import FileTypes
+from deepgram.clients.common import FileSource
 from deepgram_captions import DeepgramConverter, srt
 from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
@@ -21,6 +26,9 @@ from deepgram.clients.prerecorded import PrerecordedResponse
 from utilities.general import mprint
 from utilities.config import Settings, config
 from utilities.network import new_httpx_client
+
+
+OpenAIVoiceType = Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
 
 
 class TTSClient:
@@ -67,9 +75,10 @@ class TTSClient:
             output_file_path = Path(output_folder) / f"{datetime_string}.mp3"
 
         if self.provider == "openai":
-            if len(voice) == 0 or voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
+            if voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
                 voice = "alloy"
-            response = self.client.audio.speech.create(model=self.model_id, voice=voice, input=text)
+            typed_voice = cast(OpenAIVoiceType, voice)
+            response = self.client.audio.speech.create(model=self.model_id, voice=typed_voice, input=text)
             response.write_to_file(output_file_path)
         elif self.provider == "minimax":
             url = "https://api.minimax.chat/v1/t2a_pro"
@@ -151,7 +160,7 @@ class TTSClient:
         self._stop_flag = False
         p = pyaudio.PyAudio()
         if self.provider == "openai":
-            if len(voice) == 0 or voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
+            if voice not in ["alloy", "echo", "fable", "onyx", "nova", "shimmer"]:
                 voice = "alloy"
             stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             with self.client.audio.speech.with_streaming_response.create(
@@ -266,6 +275,8 @@ class TTSClient:
 
                 # Read decoded PCM audio data from ffmpeg's stdout and play it
                 while True:
+                    if ffmpeg_process.stdout is None:
+                        break
                     data = ffmpeg_process.stdout.read(CHUNK)
                     if len(data) == 0 or self._stop_flag:
                         break
@@ -310,6 +321,8 @@ class TTSClient:
                 stream.stop_stream()
                 stream.close()
                 p.terminate()
+        else:
+            raise ValueError(f"Unsupported TTS provider: {self.provider}")
 
         stream.stop_stream()
         stream.close()
@@ -332,10 +345,91 @@ class TTSClient:
         self._stop_flag = True
 
 
+class ASRProvider(ABC):
+    def __init__(self, model_id: str, language: str):
+        self.model_id = model_id
+        self.language = language
+
+    @abstractmethod
+    def transcribe(self, file: FileTypes, output_type: str) -> str | list[str]:
+        pass
+
+
+class OpenAIProvider(ASRProvider):
+    def __init__(self, client: OpenAI, model_id: str, language: str):
+        super().__init__(model_id, language)
+        self.client = client
+
+    def transcribe(self, file: FileTypes, output_type: str):
+        if output_type == "text":
+            transcription = self.client.audio.transcriptions.create(
+                model=self.model_id, file=file, response_format="text"
+            )
+            return transcription
+        elif output_type == "list":
+            transcription = self.client.audio.transcriptions.create(
+                model=self.model_id,
+                file=file,
+                response_format="verbose_json",
+                # timestamp_granularities=["segment"],
+            )
+            return [segment["text"] for segment in transcription.segments]
+        elif output_type == "srt":
+            transcription = self.client.audio.transcriptions.create(
+                model=self.model_id, file=file, response_format="srt"
+            )
+            return transcription
+        else:
+            raise ValueError(f"Unsupported ASR output type: {output_type}")
+
+
+class DeepgramProvider(ASRProvider):
+    def __init__(self, client: DeepgramClient, model_id: str, language: str):
+        super().__init__(model_id, language)
+        self.client = client
+
+    def transcribe(self, file: FileTypes, output_type: str):
+        if isinstance(file, IOBase):
+            payload: FileSource = {"buffer": file.read()}
+        elif isinstance(file, bytes):
+            payload: FileSource = {"buffer": file}
+        elif isinstance(file, (str, PathLike)):
+            payload: FileSource = {"text": str(file)}
+        else:
+            raise TypeError("Unsupported source type")
+        options = PrerecordedOptions(
+            punctuate=True,
+            model=self.model_id,
+            language=self.language,
+            smart_format=True,
+            paragraphs=True,
+        )
+        response: PrerecordedResponse = self.client.listen.rest.v("1").transcribe_file(source=payload, options=options)
+        if (
+            response.results is None
+            or response.results.channels is None
+            or response.results.channels[0].alternatives is None
+        ):
+            return ""
+
+        if output_type == "text":
+            return response.results.channels[0].alternatives[0].transcript
+        elif output_type == "list":
+            words = []
+            for word in response.results.channels[0].alternatives[0].words:
+                words.append(word.to_dict())
+            return words
+        elif output_type == "srt":
+            transcription = DeepgramConverter(response)
+            return srt(transcription)
+        else:
+            raise ValueError(f"Unsupported ASR output type: {output_type}")
+
+
 class SpeechRecognitionClient:
     def __init__(
         self,
-        provider: str | None = None,
+        provider: Literal["openai", "deepgram"] | None = None,
         model: str | None = None,
         language: str | None = None,
     ):
@@ -348,7 +442,7 @@ class SpeechRecognitionClient:
             if provider == "openai":
                 _model = "whisper-1"
             elif provider == "deepgram":
-                _model: str = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
+                _model = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
             else:
                 raise ValueError(f"Unsupported ASR provider: {provider}")
         else:
@@ -364,26 +458,24 @@ class SpeechRecognitionClient:
         else:
             _language = language
 
-        self.provider = provider
-        self.language = _language
-
-        if self.provider == "openai":
+        if provider == "openai":
             from utilities.ai_utils import get_openai_client_and_model_id
 
             if settings.get("asr.openai.same_as_llm", False):
-                self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=_model)
+                client, model_id = get_openai_client_and_model_id(is_async=False, model_id=_model)
             else:
-                self.client = OpenAI(
+                client = OpenAI(
                     api_key=settings.get("asr.openai.api_key"),
                     base_url=settings.get("asr.openai.api_base"),
                     http_client=new_httpx_client(is_async=False),
                 )
-                self.model_id = settings.get("asr.openai.model", "whisper-1")
-        elif self.provider == "deepgram":
-            self.client = DeepgramClient(settings.get("asr.deepgram.api_key"))
-            self.model_id = _model
+                model_id = settings.get("asr.openai.model", "whisper-1")
+            self.provider = OpenAIProvider(client, model_id, _language)
+        elif provider == "deepgram":
+            client = DeepgramClient(settings.get("asr.deepgram.api_key"))
+            self.provider = DeepgramProvider(client, _model, _language)
         else:
-            raise ValueError(f"Unsupported ASR provider: {self.provider}")
+            raise ValueError(f"Unsupported ASR provider: {provider}")
 
     def batch_transcribe(self, files: list, output_type: str = "text"):
         outputs = []
@@ -392,41 +484,7 @@ class SpeechRecognitionClient:
         return outputs
 
     def transcribe(self, file: FileTypes, output_type: str = "text"):
-        if self.provider == "openai":
-            if output_type == "text":
-                transcription = self.client.audio.transcriptions.create(
-                    model=self.model_id, file=file, response_format="text"
-                )
-                return transcription
-            elif output_type == "list":
-                transcription = self.client.audio.transcriptions.create(
-                    model=self.model_id,
-                    file=file,
-                    response_format="verbose_json",
-                    timestamp_granularities=["segment"],
-                )
-                return [segment["text"] for segment in transcription.segments]
-            elif output_type == "srt":
-                transcription = self.client.audio.transcriptions.create(
-                    model=self.model_id, file=file, response_format="srt"
-                )
-                return transcription
-        elif self.provider == "deepgram":
-            payload = {"buffer": file}
-            options = PrerecordedOptions(
-                punctuate=True, model=self.model_id, language=self.language, smart_format=True
-            )
-            response: PrerecordedResponse = self.client.listen.prerecorded.v("1").transcribe_file(payload, options)
-            if output_type == "text":
-                return response.results.channels[0].alternatives[0].transcript
-            elif output_type == "list":
-                sentences = []
-                for paragraph in response.results.channels[0].alternatives[0].paragraphs.paragraphs:
-                    sentences.extend([sentence.text for sentence in paragraph.sentences])
-                return sentences
-            elif output_type == "srt":
-                transcription = DeepgramConverter(response)
-                return srt(transcription)
+        return self.provider.transcribe(file, output_type)
 
 
 class Microphone:
@@ -479,18 +537,22 @@ class Microphone:
         if self.is_recording:
             self.is_recording = False
             self._stop_signal.set()
-            self.thread.join()
+            if self.thread is not None:
+                self.thread.join()
             self._sound_player.play("recording-end.wav")
             return self._stop_stream()
 
     def _stop_stream(self):
-        self.stream.stop_stream()
-        self.stream.close()
+        if self.stream is not None:
+            self.stream.stop_stream()
+            self.stream.close()
         self.latest_saved_file = self._save_to_file()
         return self.latest_saved_file
 
     def _record(self):
         while self.is_recording and not self._stop_signal.is_set():
+            if self.stream is None:
+                break
             data = self.stream.read(self.chunk)
             self.frames.append(data)
 
@@ -535,10 +597,16 @@ class Microphone:
 
     def list_devices(self):
         device_count = self.p.get_host_api_info_by_index(0).get("deviceCount")
+        if device_count is None:
+            return []
+        device_count = int(device_count)
         devices = []
         for i in range(device_count):
             info = self.p.get_device_info_by_host_api_device_index(0, i)
-            if info.get("maxInputChannels") > 0:
+            max_input_channels = info.get("maxInputChannels")
+            if max_input_channels is None:
+                continue
+            if int(max_input_channels) > 0:
                 devices.append(
                     {
                         "index": info.get("index"),

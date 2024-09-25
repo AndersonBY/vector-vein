@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class DeepSeekTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.DeepSeek
+    MODEL_TYPE: BackendType = BackendType.DeepSeek

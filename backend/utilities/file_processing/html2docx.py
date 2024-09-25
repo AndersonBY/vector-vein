@@ -15,23 +15,29 @@ the idea is that there is a method that converts html files into docx
 but also have api methods that let user have more control e.g. so they
 can nest calls to something like 'convert_chunk' in loops
 
-user can pass existing document object as arg 
+user can pass existing document object as arg
 (if they want to manage rest of document themselves)
 
 How to deal with block level style applied over table elements? e.g. text align
 """
-import re, argparse
-import io, os
+
+import io
+import os
+import re
+import argparse
 import urllib.request
+from urllib.error import URLError
 from urllib.parse import urlparse
 from html.parser import HTMLParser
 
-import docx, docx.table
 from docx import Document
-from docx.shared import RGBColor, Pt, Inches
-from docx.enum.text import WD_COLOR, WD_ALIGN_PARAGRAPH
-from docx.oxml.parser import OxmlElement
 from docx.oxml.ns import qn
+from docx.oxml.parser import OxmlElement
+from docx.shared import RGBColor, Inches
+from docx.table import _Cell as CellObject
+from docx.opc.constants import RELATIONSHIP_TYPE
+from docx.document import Document as DocumentObject
+from docx.enum.text import WD_COLOR, WD_ALIGN_PARAGRAPH
 
 from bs4 import BeautifulSoup
 
@@ -68,7 +74,7 @@ def fetch_image(url):
         with urllib.request.urlopen(url) as response:
             # security flaw?
             return io.BytesIO(response.read())
-    except urllib.error.URLError:
+    except URLError:
         return None
 
 
@@ -185,7 +191,7 @@ class HtmlToDocx(HTMLParser):
         self.table_style = DEFAULT_TABLE_STYLE
 
     def set_initial_attrs(self, document=None):
-        self.tags = {
+        self.tags: dict[str, list[dict] | dict] = {
             "span": [],
             "list": [],
         }
@@ -214,6 +220,8 @@ class HtmlToDocx(HTMLParser):
         return " ".join([str(i) for i in soup.contents])
 
     def add_styles_to_paragraph(self, style):
+        if self.paragraph is None:
+            return
         if "text-align" in style:
             align = style["text-align"]
             if align == "center":
@@ -296,14 +304,14 @@ class HtmlToDocx(HTMLParser):
         if src_is_url:
             try:
                 image = fetch_image(src)
-            except urllib.error.URLError:
+            except URLError:
                 image = None
         else:
             image = src
         # add image to doc
         if image:
             try:
-                if isinstance(self.doc, docx.document.Document):
+                if isinstance(self.doc, DocumentObject):
                     self.doc.add_picture(image)
                 else:
                     self.add_image_to_cell(self.doc, image)
@@ -358,30 +366,32 @@ class HtmlToDocx(HTMLParser):
         self.table = None
 
     def handle_link(self, href, text):
+        if self.paragraph is None:
+            return
         # Link requires a relationship
-        is_external = href.startswith("http")
+        # is_external = href.startswith("http")
         rel_id = self.paragraph.part.relate_to(
             href,
-            docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK,
+            RELATIONSHIP_TYPE.HYPERLINK,
             is_external=True,  # don't support anchor links for this library yet
         )
 
         # Create the w:hyperlink tag and add needed values
-        hyperlink = docx.oxml.shared.OxmlElement("w:hyperlink")
-        hyperlink.set(docx.oxml.shared.qn("r:id"), rel_id)
+        hyperlink = OxmlElement("w:hyperlink")
+        hyperlink.set(qn("r:id"), rel_id)
 
         # Create sub-run
         subrun = self.paragraph.add_run()
-        rPr = docx.oxml.shared.OxmlElement("w:rPr")
+        rPr = OxmlElement("w:rPr")
 
         # add default color
-        c = docx.oxml.shared.OxmlElement("w:color")
-        c.set(docx.oxml.shared.qn("w:val"), "0000EE")
+        c = OxmlElement("w:color")
+        c.set(qn("w:val"), "0000EE")
         rPr.append(c)
 
         # add underline
-        u = docx.oxml.shared.OxmlElement("w:u")
-        u.set(docx.oxml.shared.qn("w:val"), "single")
+        u = OxmlElement("w:u")
+        u.set(qn("w:val"), "single")
         rPr.append(u)
 
         subrun._r.append(rPr)
@@ -468,7 +478,7 @@ class HtmlToDocx(HTMLParser):
             pBdr.append(bottom)
 
         elif re.match("h[1-9]", tag):
-            if isinstance(self.doc, docx.document.Document):
+            if isinstance(self.doc, DocumentObject):
                 h_size = int(tag[1])
                 self.paragraph = self.doc.add_heading(level=min(h_size, 9))
             else:
@@ -484,6 +494,8 @@ class HtmlToDocx(HTMLParser):
 
         # set new run reference point in case of leading line breaks
         if tag in ["p", "li", "pre"]:
+            if self.paragraph is None:
+                return
             self.run = self.paragraph.add_run()
 
         # add style
@@ -539,8 +551,11 @@ class HtmlToDocx(HTMLParser):
         # You cannot have interactive content in an A tag, this includes links
         # https://html.spec.whatwg.org/#interactive-content
         link = self.tags.get("a")
-        if link:
+        if isinstance(link, dict):
             self.handle_link(link["href"], data)
+        elif isinstance(link, list):
+            for item in link:
+                self.handle_link(item["href"], data)
         else:
             # If there's a link, dont put the data directly in the run
             self.run = self.paragraph.add_run(data)
@@ -614,14 +629,14 @@ class HtmlToDocx(HTMLParser):
     def add_html_to_document(self, html, document):
         if not isinstance(html, str):
             raise ValueError("First argument needs to be a %s" % str)
-        elif not isinstance(document, docx.document.Document) and not isinstance(document, docx.table._Cell):
-            raise ValueError("Second argument needs to be a %s" % docx.document.Document)
+        elif not isinstance(document, DocumentObject) and not isinstance(document, CellObject):
+            raise ValueError("Second argument needs to be a %s" % DocumentObject)
         self.set_initial_attrs(document)
         self.run_process(html)
 
     def add_html_to_cell(self, html, cell):
-        if not isinstance(cell, docx.table._Cell):
-            raise ValueError("Second argument needs to be a %s" % docx.table._Cell)
+        if not isinstance(cell, CellObject):
+            raise ValueError("Second argument needs to be a %s" % CellObject)
         unwanted_paragraph = cell.paragraphs[0]
         delete_paragraph(unwanted_paragraph)
         self.set_initial_attrs(cell)

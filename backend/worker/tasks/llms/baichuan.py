@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class BaiChuanTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Baichuan
+    MODEL_TYPE: BackendType = BackendType.Baichuan

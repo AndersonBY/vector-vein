@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class ChatGLMTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.ZhiPuAI
+    MODEL_TYPE: BackendType = BackendType.ZhiPuAI

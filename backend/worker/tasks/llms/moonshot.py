@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class MoonshotTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Moonshot
+    MODEL_TYPE: BackendType = BackendType.Moonshot

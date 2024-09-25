@@ -3,9 +3,9 @@
 import base64
 from io import BytesIO
 from pathlib import Path
-from typing import Literal
 from datetime import datetime
 from functools import cached_property
+from typing import Literal, Union, TypeGuard
 
 import mss
 import mss.tools
@@ -19,68 +19,74 @@ from utilities.network import new_httpx_client
 class ImageProcessor:
     def __init__(
         self,
-        image_source: Image.Image | str | Path,
+        image_source: Union[Image.Image, str, Path],
         max_size: int | None = 5 * 1024 * 1024,
         max_width: int | None = None,
         max_height: int | None = None,
     ):
         self.image_source = image_source
-        if isinstance(image_source, (Image.Image, Path)):
-            self.is_local = True
-        else:
-            self.is_local = not image_source.startswith("http")
+        self.is_local = self._is_local_source(image_source)
         self.max_size = max_size
         self.max_width = max_width
         self.max_height = max_height
         self._image = self._load_image()
         self._image_format = self._image.format or "JPEG"
 
+    @staticmethod
+    def _is_local_source(source: Union[Image.Image, str, Path]) -> TypeGuard[Union[Image.Image, Path]]:
+        return isinstance(source, (Image.Image, Path)) or (isinstance(source, str) and not source.startswith("http"))
+
     def _load_image(self):
         if not self.is_local:
+            assert isinstance(self.image_source, str), "Non-local image source must be a string URL"
             image_url = self.image_source
             print(f"Downloading image from {image_url}")
             http_client = new_httpx_client(is_async=False)
             response = http_client.get(image_url, timeout=30)
             return Image.open(BytesIO(response.content))
         else:
-            return Image.open(self.image_source)
+            if isinstance(self.image_source, (str, Path)):
+                return Image.open(self.image_source)
+            else:
+                return self.image_source
 
     def _resize_image(
         self,
-        img: ImageFile,
+        img: ImageFile | Image.Image,
         max_size: int | None = None,
         max_width: int | None = None,
         max_height: int | None = None,
     ):
         img_bytes = BytesIO()
         image_format = img.format or "JPEG"
-        img.save(img_bytes, format=image_format, optimize=True)
+        _img = img.copy()
+        _img.save(img_bytes, format=image_format, optimize=True)
 
-        if max_width is not None and img.width > max_width:
-            new_size = (max_width, int(max_width * img.height / img.width))
-            img = img.resize(new_size, Image.Resampling.LANCZOS)
+        if max_width is not None and _img.width > max_width:
+            new_size = (max_width, int(max_width * _img.height / _img.width))
+            _img = _img.resize(new_size, Image.Resampling.LANCZOS)
 
-        if max_height is not None and img.height > max_height:
-            new_size = (int(max_height * img.width / img.height), max_height)
-            img = img.resize(new_size, Image.Resampling.LANCZOS)
+        if max_height is not None and _img.height > max_height:
+            new_size = (int(max_height * _img.width / _img.height), max_height)
+            _img = _img.resize(new_size, Image.Resampling.LANCZOS)
 
         img_bytes = BytesIO()
-        img.save(img_bytes, format=image_format, optimize=True)
+        _img.save(img_bytes, format=image_format, optimize=True)
 
-        if img_bytes.getbuffer().nbytes <= max_size:
+        if max_size is not None and img_bytes.getbuffer().nbytes <= max_size:
             return img_bytes
 
-        original_size = img.size
+        original_size = _img.size
         scale_factor = 0.9
 
         while True:
             new_size = (int(original_size[0] * scale_factor), int(original_size[1] * scale_factor))
-            img_resized = img.resize(new_size, Image.Resampling.LANCZOS)
+            img_resized = _img.resize(new_size, Image.Resampling.LANCZOS)
 
             img_bytes_resized = BytesIO()
             img_resized.save(img_bytes_resized, format=image_format, optimize=True)
 
-            if img_bytes_resized.getbuffer().nbytes <= max_size:
+            if max_size is not None and img_bytes_resized.getbuffer().nbytes <= max_size:
                 return img_bytes_resized
 
             scale_factor -= 0.1
@@ -106,8 +112,8 @@ class ImageProcessor:
         ] = "center",
         x: int = 1,
         y: int = 1,
-        width: int = 300,
-        height: int = 300,
+        width: int | float = 300,
+        height: int | float = 300,
     ):
         img = self._image
         self._image_format = img.format or "JPEG"
@@ -411,6 +417,8 @@ class ImageProcessor:
             elif isinstance(self._image, BytesIO):
                 return self._image.getvalue()
             elif isinstance(self._image, ImageFile):
+                if self._image.fp is None:
+                    raise ValueError("Image file is not open")
                 return self._image.fp.read()
             return self._image.getvalue()
 

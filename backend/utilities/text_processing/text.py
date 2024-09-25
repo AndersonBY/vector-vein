@@ -3,6 +3,7 @@
 import re
 import io
 import csv
+from typing import List, Union, overload, Literal, TypedDict
 
 from markdownify import MarkdownConverter, chomp
 from langchain_text_splitters import (
@@ -71,7 +72,25 @@ def extract_image_url(text: str):
             return replace_local_image_url(text)
 
 
-def split_text(text: str, rules: dict, flat: bool = False):
+class ParagraphInfo(TypedDict):
+    index: int
+    text: str
+    word_counts: int
+
+
+@overload
+def split_text(text: str, rules: dict, flat: Literal[False] = False) -> List[ParagraphInfo]: ...
+
+
+@overload
+def split_text(text: str, rules: dict, flat: Literal[True]) -> List[str]: ...
+
+
+@overload
+def split_text(text: str, rules: dict, flat: bool = False) -> Union[List[ParagraphInfo], List[str]]: ...
+
+
+def split_text(text: str, rules: dict, flat: bool = False) -> Union[List[ParagraphInfo], List[str]]:
     split_method = rules.get("split_method", "general")
     chunk_length = rules.get("chunk_length", 1000)
     chunk_overlap = rules.get("chunk_overlap", 30)

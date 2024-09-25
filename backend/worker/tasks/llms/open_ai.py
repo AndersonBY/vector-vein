@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class OpenAITask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.OpenAI
+    MODEL_TYPE: BackendType = BackendType.OpenAI

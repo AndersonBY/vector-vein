@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class QwenTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Qwen
+    MODEL_TYPE: BackendType = BackendType.Qwen

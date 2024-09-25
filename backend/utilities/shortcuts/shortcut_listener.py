@@ -2,7 +2,7 @@
 # @Date:   2024-06-11 14:39:59
 import string
 import platform
-
+from typing import Callable
 from pynput import keyboard
 
 from utilities.general import mprint
@@ -69,7 +69,7 @@ class ShortcutsListener:
         self.keyboard_listener = None
         self.hotkeys_listener = None
 
-    def set_setting_mode(self, callback):
+    def set_setting_mode(self, callback: Callable):
         self.stop()
         self.waiting_for_setting = True
         self.finish_setting_mode_callback = callback
@@ -109,6 +109,8 @@ class ShortcutsListener:
         self.start()
 
     def _get_canonical_key(self, key):
+        if self.keyboard_listener is None:
+            return key
         canonical_key = self.keyboard_listener.canonical(key)
         if hasattr(canonical_key, "vk"):
             canonical_key = special_key_values.get(canonical_key.vk, canonical_key)
@@ -119,10 +121,13 @@ class ShortcutsListener:
         # Handle setting mode
         if self.waiting_for_setting:
             if is_combination_key(self.current_keys):
-                self.finish_setting_mode_callback(frozenset(self.current_keys))
+                if self.finish_setting_mode_callback is not None:
+                    self.finish_setting_mode_callback(frozenset(self.current_keys))
                 self.waiting_for_setting = False
                 self.current_keys.clear()
-                self.keyboard_listener.stop()
+                if self.keyboard_listener is not None:
+                    self.keyboard_listener.stop()
+                    self.keyboard_listener = None
                 self.start()
 
     def on_release(self, key):

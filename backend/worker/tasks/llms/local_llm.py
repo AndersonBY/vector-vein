@@ -5,4 +5,4 @@ from .base_llm import BaseLLMTask
 
 
 class LocalLLMTask(BaseLLMTask):
-    MODEL_TYPE: str = BackendType.Local
+    MODEL_TYPE: BackendType = BackendType.Local

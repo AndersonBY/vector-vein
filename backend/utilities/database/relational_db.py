@@ -188,8 +188,8 @@ def create_relational_database_table(
 ):
     database = table.database
 
-    table_name = None
-    columns_info = None
+    table_name = ""
+    columns_info = []
 
     if add_method == "table_file" and file is not None:
         table_name = table.name
@@ -369,10 +369,6 @@ class UserDatabaseControl:
 
         table_max_rows = self.get_table_max_rows(table_name)
 
-        if table_max_rows + len(records) > self.max_row_quota:
-            mprint.error(f"database {self.db.rid.hex} is too large")
-            return -1
-
         try:
             connection = sqlite3.connect(self.db.database_path)
             cursor = connection.cursor()
@@ -404,6 +400,8 @@ class UserDatabaseControl:
             elif Path(file).suffix == ".json":
                 with open(file, "r", encoding="utf8") as f:
                     records = json.load(f)
+            else:
+                raise ValueError(f"Unsupported file type: {file}")
 
             return self.add(table_name, records)
         except Exception as e:
