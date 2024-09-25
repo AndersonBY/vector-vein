@@ -42,7 +42,7 @@ class MPrint:
 
 
 class LogServer:
-    _instances = {}
+    _instances: dict[str, "LogServer"] = {}
 
     def __init__(self, log_path: Path | None = None):
         if log_path is None:
@@ -111,34 +111,48 @@ class LogServer:
         self.listener_thread.join()
 
     @classmethod
-    def get(cls, log_id: str):
+    def get(cls, log_id: str) -> "LogServer | None":
         """
         通过 log_id 获取对应的 LogServer 实例
         Get the corresponding LogServer instance by log_id
         """
         return cls._instances.get(log_id)
 
-    def get_log_content(self):
+    def get_log_content(self, tail: int = 1000):
         """
         获取当前日志文件的内容
         Get the content of the current log file
         """
         log_file = self.log_path / "vector-vein.log"
         if log_file.exists():
-            with open(log_file, "r", encoding="utf-8") as f:
-                return f.read()
-        return "Log file does not exist"
+            with open(log_file, "rb") as f:
+                f.seek(0, 2)
+                file_size = f.tell()
+                lines = []
+                bytes_read = 0
+                while len(lines) < tail and bytes_read < file_size:
+                    bytes_to_read = min(1024, file_size - bytes_read)
+                    f.seek(-bytes_to_read - bytes_read, 2)
+                    chunk = f.read(bytes_to_read)
+                    lines.extend(chunk.decode("utf-8", errors="ignore").splitlines())
+                    bytes_read += bytes_to_read
+                return lines[-tail:][::-1]
+        else:
+            mprint.error(f"Log file does not exist: {log_file}")
+            return []
 
     @classmethod
-    def get_log_content_by_id(cls, log_id: str):
+    def get_log_content_by_id(cls, log_id: str, tail: int = 1000) -> list[str]:
         """
         通过 log_id 获取对应的日志内容
         Get the content of the log file by log_id
         """
         instance = cls.get(log_id)
         if instance:
-            return instance.get_log_content()
-        return f"No log server instance found with ID {log_id}"
+            return instance.get_log_content(tail)
+        else:
+            mprint.error(f"No log server instance found with ID {log_id}")
+            return []
 
 
 log_queue = Deque(directory=Path(config.data_path) / "cache" / "log_queue")

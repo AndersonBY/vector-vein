@@ -231,4 +231,4 @@ class LogAPI:
     def get_log_content(self, payload):
         log_id = payload.get("log_id", "default")
         log_content = LogServer.get_log_content_by_id(log_id)
-        return JResponse(data={"content": log_content})
+        return JResponse(data={"content": "\n".join(log_content)})

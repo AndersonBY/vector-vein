@@ -18,7 +18,7 @@ const props = defineProps({
 const open = defineModel('open', { default: false })
 
 const { t } = useI18n()
-const loading = ref(false)
+const loading = ref(true)
 const error = ref(null)
 const logContent = ref('')
 const isAutoRefreshing = ref(false)
@@ -37,6 +37,8 @@ const loadLogContent = async () => {
     }
   } catch (err) {
     error.value = err.message
+  } finally {
+    loading.value = false
   }
 }
 
@@ -49,8 +51,15 @@ const toggleAutoRefresh = () => {
   }
 }
 
+const resetLogContent = () => {
+  logContent.value = ''
+  loading.value = true
+  error.value = null
+}
+
 watch(() => open.value, async (newValue) => {
-  if (newValue && !logContent.value) {
+  if (newValue) {
+    resetLogContent()
     await loadLogContent()
     setTimeout(() => {
       const logContainer = document.querySelector('.log-modal-content');
@@ -58,11 +67,14 @@ watch(() => open.value, async (newValue) => {
         logContainer.scrollTop = logContainer.scrollHeight;
       }
     }, 100);
+  } else {
+    resetLogContent()
   }
 })
 
 function handleClose() {
   open.value = false
+  resetLogContent()
   if (refreshInterval) {
     clearInterval(refreshInterval)
   }
