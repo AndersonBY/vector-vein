@@ -5,6 +5,7 @@
 # @Last Modified time: 2024-06-15 18:43:54
 import re
 import json
+import uuid
 import shutil
 import zipfile
 from pathlib import Path
@@ -17,6 +18,7 @@ import pandas as pd
 from pptx import Presentation
 
 from utilities.general import mprint
+from utilities.config import Settings
 
 
 CODEC_TEST_LIST = [
@@ -80,7 +82,7 @@ def rename_path(path: str | Path):
                 rename_path(new_path)
 
 
-def read_gitignore(folder_path, extra_ignore_patterns=None):
+def read_gitignore(folder_path: Path, extra_ignore_patterns: list | None = None) -> pathspec.PathSpec:
     gitignore_path = folder_path / ".gitignore"
     ignore_lines = []
 
@@ -95,18 +97,18 @@ def read_gitignore(folder_path, extra_ignore_patterns=None):
     return spec
 
 
-def is_ignored(path, spec, folder_path):
+def is_ignored(path: Path, spec: pathspec.PathSpec, folder_path: Path) -> bool:
     relative_path = path.relative_to(folder_path)
     # Use pathspec to check if the file should be ignored
     return spec.match_file(relative_path.as_posix())
 
 
-def read_folder(folder_path, ignore_list):
+def read_folder(folder_path: Path, ignore_spec: pathspec.PathSpec) -> list[str]:
     contents = []
     for path in sorted(folder_path.rglob("*")):
-        if path.is_file() and not is_ignored(path, ignore_list, folder_path):
+        if path.is_file() and not is_ignored(path, ignore_spec, folder_path):
             try:
-                file_content = read_file_content(filename=path.name, local_file=path, read_zip=False)
+                file_content = read_file_content(local_file=path, read_zip=False)
                 rel_path = path.relative_to(folder_path)
                 contents.append(f"# {rel_path}\n```\n{file_content}\n```\n")
             except Exception as e:
@@ -114,9 +116,12 @@ def read_folder(folder_path, ignore_list):
     return contents
 
 
-def read_zip_contents(zip_file_path: str | Path, extract_path: str | Path = "/tmp") -> Path:
+def read_zip_contents(zip_file_path: str | Path, extract_path: str | Path | None = None) -> str:
     if not zipfile.is_zipfile(zip_file_path):
         raise FileNotFoundError(f"The file at {zip_file_path} is not a valid zip file.")
+
+    if extract_path is None:
+        extract_path = Path(Settings().output_folder) / "zip_extract" / uuid.uuid4().hex
 
     zip_path = Path(zip_file_path)
     extract_to_path = Path(extract_path) / zip_path.stem
@@ -130,9 +135,9 @@ def read_zip_contents(zip_file_path: str | Path, extract_path: str | Path = "/tm
 
     folder_path = Path(extract_to_path)
     extra_ignore_list = [".git", ".gitignore", ".gitattributes"]
-    ignore_list = read_gitignore(folder_path, extra_ignore_list)
+    ignore_spec = read_gitignore(folder_path, extra_ignore_list)
 
-    contents = read_folder(folder_path, ignore_list)
+    contents = read_folder(folder_path, ignore_spec)
     return "\n".join(contents)
 
 
@@ -149,12 +154,13 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
             pdf_contents = [page.extract_text() for page in pdf_reader.pages]
             return "\n\n".join(pdf_contents)
     elif filename.endswith(".pptx"):
-        ppt = Presentation(local_file)
+        ppt = Presentation(str(local_file))
         ppt_contents = []
         for slide in ppt.slides:
             for shape in slide.shapes:
-                if hasattr(shape, "text") and shape.text:
-                    ppt_contents.append(shape.text.strip())
+                text = getattr(shape, "text", "")
+                if text:
+                    ppt_contents.append(text.strip())
         return "\n\n".join(ppt_contents)
     elif filename.endswith(".xlsx"):
         try:
@@ -164,6 +170,8 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
             mprint.error(e)
             wb = openpyxl.load_workbook(local_file, data_only=True)
             ws = wb.active
+            if ws is None:
+                return ""
             csv_contents = []
             for row in ws.rows:
                 csv_contents.append(",".join([str(cell.value) if cell.value else "" for cell in row]))
@@ -192,7 +200,7 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
                 mprint.error(e)
         else:
             mprint.error("Failed to decode file")
-            return txt_contents
+            return ""
 
 
 def get_files_contents(files: list):
