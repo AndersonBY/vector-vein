@@ -46,25 +46,25 @@ def conditional(
     elif operator == "not_equal":
         result = left_field != right_field
     elif operator == "greater_than":
-        result = left_field > right_field
+        result = float(left_field) > float(right_field)
     elif operator == "less_than":
-        result = left_field < right_field
+        result = float(left_field) < float(right_field)
     elif operator == "greater_than_or_equal":
-        result = left_field >= right_field
+        result = float(left_field) >= float(right_field)
     elif operator == "less_than_or_equal":
-        result = left_field <= right_field
+        result = float(left_field) <= float(right_field)
     elif operator == "include":
-        result = right_field in left_field
+        result = str(right_field) in str(left_field)
     elif operator == "not_include":
-        result = right_field not in left_field
+        result = str(right_field) not in str(left_field)
     elif operator == "is_empty":
         result = left_field == ""
     elif operator == "is_not_empty":
         result = left_field != ""
     elif operator == "starts_with":
-        result = left_field.startswith(right_field)
+        result = str(left_field).startswith(str(right_field))
     elif operator == "ends_with":
-        result = left_field.endswith(right_field)
+        result = str(left_field).endswith(str(right_field))
     else:
         result = False
 

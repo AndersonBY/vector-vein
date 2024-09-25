@@ -168,6 +168,8 @@ def search_data(
         search_texts = [search_text]
     elif isinstance(search_text, list):
         search_texts = search_text
+    else:
+        raise ValueError(f"Unsupported search_text type: {type(search_text)}")
 
     embedding_client = EmbeddingClient(
         provider=vector_database.embedding_provider, model_id=vector_database.embedding_model

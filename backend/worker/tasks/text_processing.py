@@ -167,6 +167,8 @@ def list_render(
         output_text = separator.join(list)
     elif output_type == "list":
         output_text = list
+    else:
+        raise ValueError(f"Unsupported output type: {output_type}")
     workflow.update_node_field_value(node_id, "output", output_text)
     return workflow.data
 

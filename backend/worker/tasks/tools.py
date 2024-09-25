@@ -11,6 +11,7 @@ import shutil
 import traceback
 from pathlib import Path
 from urllib.parse import quote
+from typing import Any, Callable, Dict
 
 from bs4 import BeautifulSoup
 
@@ -32,6 +33,8 @@ SKIPPING_FIELDS = [
     "console_msg",
     "files",
 ]
+
+MainFunctionType = Callable[..., Any]
 
 
 def convert_parameter_value(value, parameter_type):
@@ -65,7 +68,7 @@ def programming_function(
         if field in SKIPPING_FIELDS:
             continue
         parameter = workflow.get_node_field_value(node_id, field)
-        parameter_type = workflow.get_node(node_id).get_field(field).get("type")
+        parameter_type = workflow.get_node_field_value_by_key(node_id, field, "type")
         if list_input:
             parameters_batch = parameters_batch or [dict() for _ in range(len(parameter))]
             for batch, parameter_value in zip(parameters_batch, parameter):
@@ -109,10 +112,24 @@ def programming_function(
     for parameters in parameters_batch:
         if language == "python":
             try:
-                exec(pure_code, globals())
-                result = main(**parameters)
-                output_batch.append(result)
-                error_msg_batch.append("")
+                # 使用独立的命名空间执行用户代码
+                exec_namespace: Dict[str, Any] = {}
+                exec(pure_code, exec_namespace)
+
+                # 提取 main 函数并进行类型提示
+                main_func: MainFunctionType | None = exec_namespace.get("main")
+
+                if callable(main_func):
+                    result = main_func(**parameters)
+                    output_batch.append(result)
+                    error_msg_batch.append("")
+                else:
+                    # 如果 main 未定义，则尝试直接执行代码块
+                    result = None
+                    exec(pure_code, exec_namespace)
+                    output_batch.append(result)
+                    error_msg_batch.append("")
+
                 console_msg_batch.append(console_output.getvalue())
             except Exception as e:
                 if "name 'main' is not defined" in str(e):
