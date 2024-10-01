@@ -34,6 +34,12 @@ class MPrint:
         except Exception:
             pass
 
+    def warning(self, *args):
+        try:
+            self.queue.append(("warning", " ".join([str(arg) for arg in args])))
+        except Exception:
+            pass
+
     def error(self, *args):
         try:
             self.queue.append(("error", " ".join([str(arg) for arg in args])))
