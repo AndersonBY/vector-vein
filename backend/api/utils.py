@@ -114,7 +114,7 @@ def run_workflow_common(
     message=None,
     run_from=WorkflowRunRecord.RunFromTypes.WEB,
     workflow_version: int | None = None,
-):
+) -> str:
     workflow_data["wid"] = workflow.wid.hex
 
     source_message = message.mid.hex if message else message
@@ -130,7 +130,7 @@ def run_workflow_common(
     workflow_data["rid"] = record.rid.hex
 
     worker_queue = Deque(directory=Path(config.data_path) / "cache" / "workflow_task")
-    worker_queue.appendleft({"data": workflow_data})
+    worker_queue.appendleft(workflow_data)
 
     return record.rid.hex
 

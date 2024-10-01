@@ -395,7 +395,7 @@ def gemini_vision(
             .sleep_time(5)
             .run()
         )
-        if not gemini_request_success:
+        if not gemini_request_success or response is None:
             mprint.error(f"Gemini request failed: {response}")
             content_outputs.append("")
             continue
