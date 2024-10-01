@@ -61,6 +61,19 @@ const insertVariable = (field) => {
     }, 0);
   }
 }
+
+const formatTemplate = () => {
+  const formattedFields = Object.keys(props.fields)
+    .filter(field => !['template', 'output'].includes(field))
+    .map(field => `<${field}>\n{{${field}}}\n</${field}>`)
+    .join('\n\n');
+
+  if (typeof innerTemplate.value === 'string') {
+    innerTemplate.value = formattedFields;
+  } else if (Array.isArray(innerTemplate.value) && innerTemplate.value.length > 0) {
+    innerTemplate.value[0] = formattedFields;
+  }
+}
 </script>
 
 <template>
@@ -91,6 +104,13 @@ const insertVariable = (field) => {
       </a-col>
       <a-col :span="18">
         <a-card :title="t('components.templateEditorModal.template')">
+          <template #extra>
+            <a-tooltip :title="t('components.templateEditorModal.format_fields_tip')">
+              <a-button @click="formatTemplate">
+                {{ t('components.templateEditorModal.format_fields') }}
+              </a-button>
+            </a-tooltip>
+          </template>
           <template v-if="typeof props.template === 'string'">
             <a-textarea ref="textareaRef" class="template-textarea" v-model:value="innerTemplate" :rows="20"
               showCount />
