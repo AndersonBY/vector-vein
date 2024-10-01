@@ -11,10 +11,12 @@ import shutil
 import traceback
 from pathlib import Path
 from urllib.parse import quote
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 
 from bs4 import BeautifulSoup
 
+from api.utils import run_workflow_common
+from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import Retry, mprint
@@ -226,7 +228,10 @@ def image_search(
             soup = BeautifulSoup(response.text, "lxml")
             images_elements = soup.select(".imgpt>a")
             for image_element in images_elements[:count]:
-                image_data = json.loads(image_element["m"])
+                m = image_element["m"]
+                if isinstance(m, list):
+                    m = m[0]
+                image_data = json.loads(m)
                 title = image_data["t"]
                 url = image_data["murl"]
                 if output_type == "text":
@@ -409,6 +414,8 @@ def text_search(
                 .sleep_time(10)
                 .run()
             )
+            if not request_success or response is None:
+                continue
 
             search_results = response.json()
             handle_bing_results(search_results)
@@ -431,5 +438,119 @@ def text_search(
         workflow.update_node_field_value(node_id, "output_page_title", results["output_page_title"][0])
         workflow.update_node_field_value(node_id, "output_page_url", results["output_page_url"][0])
         workflow.update_node_field_value(node_id, "output_page_snippet", results["output_page_snippet"][0])
+
+    return workflow.data
+
+
+@task
+@timer
+def workflow_invoke(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    sleep_interval = 1
+
+    if workflow.get_async_task(node_id) is None:
+        workflow_id = workflow.get_node_field_value(node_id, "workflow_id")
+        if workflow.workflow_id == workflow_id:
+            raise Exception("Can't invoke self!")
+        list_input = workflow.get_node_field_value(node_id, "list_input")
+        fields = workflow.get_node_fields(node_id)
+
+        # 每个batch相当于一次工作流调用的参数
+        input_fields_batches: List[Dict[str, Dict[str, Any]]] = []
+        output_fields_batches = {}
+        for field in fields:
+            if field in ("workflow_id", "list_input"):
+                continue
+
+            if workflow.get_node_field_value_by_key(node_id, field, "is_output"):
+                output_fields_batches[field] = {
+                    "node_id": workflow.get_node_field_value_by_key(node_id, field, "node"),
+                    "output_field_key": workflow.get_node_field_value_by_key(node_id, field, "output_field_key"),
+                    "values": [],
+                }
+                continue
+
+            field_original_node_id = workflow.get_node_field_value_by_key(node_id, field, "nodeId")
+            field_value = workflow.get_node_field_value(node_id, field)
+            field_values = field_value if list_input else [field_value]
+            if len(input_fields_batches) == 0:
+                input_fields_batches = [dict() for _ in range(len(field_values))]
+            for batch, field_value in zip(input_fields_batches, field_values):
+                batch.setdefault(field_original_node_id, {})[field] = field_value
+
+        record_ids = []
+        workflow_model = WorkflowModel.get(WorkflowModel.wid == workflow_id)
+        for input_fields in input_fields_batches:
+            _workflow_data = workflow_model.data
+            data = {"input_fields": input_fields}
+            for _node_id, node_fields in data["input_fields"].items():
+                for original_node in _workflow_data["nodes"]:
+                    if original_node["id"] == _node_id:
+                        break
+                else:
+                    raise Exception("node not found")
+                for field_name, field_value in node_fields.items():
+                    original_node["data"]["template"][field_name]["value"] = field_value
+
+            record_rid = run_workflow_common(
+                workflow_data=_workflow_data,
+                workflow=workflow_model,
+                run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+            )
+            record_ids.append(record_rid)
+
+        workflow.add_async_task(
+            node_id,
+            {"record_ids": record_ids, "finished_record_ids": [], "output_fields_batches": output_fields_batches},
+        )
+        workflow_invoke.retry(workflow.data, node_id, retry_delay=1)
+    else:
+        async_task_data = workflow.get_async_task(node_id)
+        if async_task_data is None:
+            raise Exception("Async task not found!")
+        record_ids = async_task_data["record_ids"]
+        finished_record_ids = async_task_data["finished_record_ids"]
+        output_fields_batches = async_task_data["output_fields_batches"]
+        for record_id in record_ids:
+            if record_id in finished_record_ids:
+                continue
+            record = WorkflowRunRecord.select().join(WorkflowModel).where(WorkflowRunRecord.rid == record_id).first()
+            if record.status in ("RUNNING", "QUEUED"):
+                continue
+            elif record.status != "FINISHED":
+                raise Exception("Run workflow failed!")
+
+            finished_record_ids.append(record_id)
+
+            nodes = record.data["nodes"]
+            for node in nodes:
+                for output_field_data in output_fields_batches.values():
+                    if node["id"] != output_field_data["node_id"]:
+                        continue
+                    output_field_data["values"].append(
+                        node["data"]["template"][output_field_data["output_field_key"]]["value"]
+                    )
+
+        if len(finished_record_ids) != len(record_ids):
+            mprint(f"Recheck in {sleep_interval} seconds")
+            workflow.update_async_task(
+                node_id,
+                {
+                    "record_ids": record_ids,
+                    "finished_record_ids": finished_record_ids,
+                    "output_fields_batches": output_fields_batches,
+                },
+            )
+            workflow_invoke.retry(workflow.data, node_id, retry_delay=1)
+
+    for output_field, output_field_data in output_fields_batches.items():
+        # output_values = output_field_data["values"] if list_input else output_field_data["values"][0]
+        output_values = (
+            output_field_data["values"] if len(output_field_data["values"]) > 1 else output_field_data["values"][0]
+        )
+        workflow.update_node_field_value(node_id, output_field, output_values)
 
     return workflow.data
