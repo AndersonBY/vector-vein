@@ -30,11 +30,11 @@ def text(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    text: str = workflow.get_node_field_value(node_id, "text")
+    _text: str = workflow.get_node_field_value(node_id, "text")
     workflow.get_node_field_value(node_id, "output_title")
     workflow.get_node_field_value(node_id, "render_markdown")
-    workflow.update_node_field_value(node_id, "text", text)
-    workflow.update_node_field_value(node_id, "output", text)
+    workflow.update_node_field_value(node_id, "text", _text)
+    workflow.update_node_field_value(node_id, "output", _text)
     return workflow.data
 
 
