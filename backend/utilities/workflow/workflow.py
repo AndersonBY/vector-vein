@@ -4,14 +4,21 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-15 18:44:21
 import uuid
+import time
 from copy import deepcopy
 from datetime import datetime
-from typing import List, Dict, Any
+from typing import List, Any, Union
 from functools import cached_property
 
 from models import WorkflowRunRecord, Message
 from models import Workflow as WorkflowModel
 from utilities.general import mprint
+
+
+ASYNC_TASKS = [
+    "control_flows.workflow_loop",
+    "tools.workflow_invoke",
+]
 
 
 class DAG:
@@ -65,6 +72,45 @@ class DAG:
             raise ValueError("The graph contains cycles")
 
         return result
+
+    def topological_sort_layered(self):
+        in_degree = {node: 0 for node in self.nodes}
+        for start, ends in self.edges.items():
+            for end in ends:
+                in_degree[end] += 1
+
+        # Initialize the queue with nodes that have no incoming edges
+        queue = [node for node, degree in in_degree.items() if degree == 0]
+
+        layered_result = []
+        while queue:
+            # Process all nodes at the current level
+            current_layer = []
+            for node in queue:
+                current_layer.append(node)
+
+            # Prepare the next level
+            next_queue = []
+            for node in current_layer:
+                for child in self.edges[node]:
+                    in_degree[child] -= 1
+                    if in_degree[child] == 0:
+                        next_queue.append(child)
+
+            # Add the current layer to the result and update the queue
+            layered_result.append(current_layer)
+            queue = next_queue
+
+        # Flatten the result if there's only one node in a layer
+        for i in range(len(layered_result)):
+            if len(layered_result[i]) == 1:
+                layered_result[i] = layered_result[i][0]
+
+        # Check for cycles in the graph
+        if sum(len(layer) if isinstance(layer, list) else 1 for layer in layered_result) != len(self.nodes):
+            raise ValueError("The graph contains cycles")
+
+        return layered_result
 
 
 class Node:
@@ -123,50 +169,25 @@ class Workflow:
         self.edges = [edge for edge in self.workflow_data["edges"] if not edge.get("ignored", False)]
         self.workflow_data["nodes"] = [node for node in self.workflow_data["nodes"] if not node.get("ignored", False)]
         self.__node_id_map = workflow_data.get("__node_id_map", {})
-        self.nodes, self.workflow_invoke_nodes = self.parse_nodes()
+        self.nodes = self.parse_nodes()
         self.dag = self.create_dag()
-        self.workflow_id = workflow_data.get("wid")
-        self.record_id = workflow_data.get("rid")
+        self.workflow_id: str = workflow_data.get("wid", "")
+        self.record_id: str = workflow_data.get("rid", "")
 
     def parse_nodes(self):
-        # 在没有【工作流调用】节点的情况下，所有节点就是原始数据中的nodes
         nodes_list: list[dict] = self.workflow_data["nodes"]
         nodes: dict[str, Node] = {}
-        workflow_invoke_nodes: dict[str, Node] = {}
         while len(nodes_list) > 0:
             node = nodes_list.pop(0)
-            node_obj = Node(node)
-            if node_obj.type != "WorkflowInvoke":
-                nodes[node["id"]] = node_obj
+            if node.get("ignored", False):
                 continue
-
-            # 对于【工作流调用】节点，需要将子工作流的节点和边添加到当前工作流中
-            new_nodes = deepcopy(self.handle_workflow_invoke(node_obj))
-            nodes_list.extend(new_nodes)
-            workflow_invoke_nodes[node_obj.id] = node_obj
+            node_obj = Node(node)
+            nodes[node["id"]] = node_obj
+            continue
 
         # 更新原始数据中的nodes
         self.workflow_data["nodes"] = [node.data for node in nodes.values()]
-        return nodes, workflow_invoke_nodes
-
-    def handle_workflow_invoke(self, node_obj: Node) -> List[Dict]:
-        """
-        对【工作流调用】节点进行处理，将被调用的子工作流的节点和边添加到当前工作流中
-
-        Args:
-            node_obj (Node): 【工作流调用】节点
-
-        Returns:
-            list[dict]: 子工作流的节点列表
-        """
-        related_subnodes = self.get_related_subnodes(node_obj)
-        subworkflow_id = node_obj.get_field("workflow_id").get("value")
-        if subworkflow_id is None:
-            return []
-        subworkflow = self.related_workflows.get(subworkflow_id)
-        if subworkflow is None:
-            return []
-        return self.add_subnodes_and_subedges(subworkflow, related_subnodes, node_obj)
+        return nodes
 
     def get_related_subnodes(self, node_obj: Node) -> List[str]:
         """
@@ -249,37 +270,9 @@ class Workflow:
     def create_dag(self):
         dag = DAG()
         for edge in self.edges:
-            edge = self.update_edge_nodes(edge)
-            if edge is None:
-                continue
             dag.add_edge(edge["source"], edge["target"])
         self.add_isolated_nodes_to_dag(dag)
         return dag
-
-    def update_edge_nodes(self, edge: dict):
-        source = edge["source"]
-        target = edge["target"]
-        if source in self.workflow_invoke_nodes:
-            workflow_invoke_node = self.workflow_invoke_nodes[source]
-            original_source_node_field = workflow_invoke_node.get_field(edge["sourceHandle"])
-            original_output_field_key = original_source_node_field.get(
-                "output_field_key", original_source_node_field.get("fieldName")
-            )
-            source = self.get_original_node(source, edge["sourceHandle"])
-            if source is None:
-                return None
-            edge["source"] = self.__node_id_map[source + workflow_invoke_node.id]
-            edge["sourceHandle"] = original_output_field_key
-        if target in self.workflow_invoke_nodes:
-            workflow_invoke_node = self.workflow_invoke_nodes[target]
-            target = self.get_original_node(target, edge["targetHandle"])
-            if target is None:
-                return None
-            edge["target"] = self.__node_id_map[target + workflow_invoke_node.id]
-        return edge
-
-    def get_original_node(self, node: str, handle: str):
-        return self.workflow_invoke_nodes[node].get_field(handle).get("node")
 
     def add_isolated_nodes_to_dag(self, dag):
         all_nodes = dag.get_all_nodes()
@@ -306,6 +299,48 @@ class Workflow:
             )
         return tasks
 
+    def get_layer_sorted_task_order(self) -> list[Union[dict[str, str], list[dict[str, str]]]]:
+        nodes_order = self.dag.topological_sort_layered()
+        tasks: list[dict[str, str] | list[dict[str, str]]] = []
+        for item in nodes_order:
+            if isinstance(item, str):
+                node = self.get_node(item)
+                if node is None:
+                    continue
+                task_name = node.task_name
+                tasks.append(
+                    {
+                        "node_id": item,
+                        "task_name": task_name,
+                    }
+                )
+            elif isinstance(item, list):
+                batch_tasks = []
+                async_tasks = []
+                for node_id in item:
+                    node = self.get_node(node_id)
+                    if node is None:
+                        continue
+                    task_name = node.task_name
+                    if task_name in ASYNC_TASKS:
+                        async_tasks.append(
+                            {
+                                "node_id": node_id,
+                                "task_name": task_name,
+                            }
+                        )
+                    else:
+                        batch_tasks.append(
+                            {
+                                "node_id": node_id,
+                                "task_name": task_name,
+                            }
+                        )
+                tasks.append(batch_tasks)
+                # 异步任务要一个个单独执行
+                tasks.extend(async_tasks)
+        return tasks
+
     def get_field_actual_node(self, node: Node, field_data: dict):
         if node.type != "WorkflowInvoke":
             return node
@@ -325,36 +360,11 @@ class Workflow:
                 return self.get_field_actual_node(subnode_obj, field_data)
         return node
 
-    def update_original_workflow_data(self):
-        """
-        当存在【工作流调用】节点时，我们是将子工作流的节点和边添加到当前工作流中的。
-        但最终返回给用户时不需要展开的工作流节点和边，因此需要替换为原始的节点并更新节点数据。
-        """
-        updated_nodes = []
-        for node_data in self.original_workflow_data["nodes"]:
-            original_node = Node(node_data)
-            used_node = self.get_node(original_node.id)
-            if used_node is not None:
-                updated_nodes.append(used_node.data)
-                continue
-            for field, field_data in original_node.field_map.items():
-                if field in ("workflow_id",):
-                    continue
-                actual_node = self.get_field_actual_node(original_node, {"field_key": field, **field_data})
-                actual_field_data = actual_node.get_field(field)
-                if len(actual_field_data) == 0:
-                    actual_field_data = actual_node.get_field(field_data.get("output_field_key"))
-                field_data["value"] = actual_field_data.get("value")
-                original_node.update_field(field, field_data)
-            updated_nodes.append(original_node.data)
-
-        self.workflow_data["nodes"] = updated_nodes
-        self.workflow_data["edges"] = self.original_workflow_data["edges"]
-
     def clean_workflow_data(self):
         self.workflow_data.pop("original_workflow_data", None)
         self.workflow_data.pop("related_workflows", None)
         self.workflow_data.pop("__node_id_map", None)
+        self.workflow_data.pop("async_tasks", None)
 
     def get_node(self, node_id: str) -> Node | None:
         return self.nodes.get(node_id)
@@ -370,7 +380,8 @@ class Workflow:
         node = self.get_node(node_id)
         if node is None:
             return default
-        source_node = source_handle = ""
+
+        source_node_id = source_handle_id = ""
         for edge in self.edges:
             source_node = self.get_node(edge["source"])
             if source_node is None:
@@ -378,16 +389,16 @@ class Workflow:
             if source_node.type in ("Empty", "ButtonTrigger"):
                 continue
             if edge["target"] == node_id and edge["targetHandle"] == field:
-                source_node = edge["source"]
-                source_handle = edge["sourceHandle"]
+                source_node_id = edge["source"]
+                source_handle_id = edge["sourceHandle"]
                 break
         else:
             return node.get_field(field).get("value", default)
 
-        source_node = self.get_node(source_node)
+        source_node = self.get_node(source_node_id)
         if source_node is None:
             return default
-        input_data = source_node.get_field(source_handle).get("value", default)
+        input_data = source_node.get_field(source_handle_id).get("value", default)
         self.update_node_field_value(node_id, field, input_data)
         return input_data
 
@@ -399,17 +410,23 @@ class Workflow:
         field_data.update({"value": value})
         node.update_field(field, field_data)
 
-    def get_node_field_value_by_key(self, node_id: str, field_key: str, default: Any | None = None) -> Any:
+    def get_node_field_value_by_key(self, node_id: str, field: str, key: str, default: Any | None = None) -> Any:
         node = self.get_node(node_id)
         if node is None:
             return default
-        return node.get_field(field_key).get("value", default)
+        return node.get_field(field).get(key, default)
 
     def get_node_fields(self, node_id: str):
         node = self.get_node(node_id)
         if node is None:
             return []
-        return node.data["data"]["template"].keys()
+        return list(node.data["data"]["template"].keys())
+
+    def is_node_field_output(self, node_id: str, field: str):
+        node = self.get_node(node_id)
+        if node is None:
+            return False
+        return node.get_field(field).get("is_output", False)
 
     def report_workflow_status(self, status: int, error_task: str = ""):
         try:
@@ -456,6 +473,36 @@ class Workflow:
         node.status = status
         return True
 
+    def add_async_task(self, node_id: str, task_data: dict, timeout: int = 60 * 60):
+        if "async_tasks" not in self.workflow_data:
+            self.workflow_data["async_tasks"] = {}
+        self.workflow_data["async_tasks"][node_id] = {
+            "data": task_data,
+            "start_time": time.time(),
+            "expire_time": time.time() + timeout,
+        }
+        return True
+
+    def update_async_task(self, node_id: str, task_data: dict):
+        if "async_tasks" not in self.workflow_data:
+            return False
+        if node_id not in self.workflow_data["async_tasks"]:
+            return False
+        self.workflow_data["async_tasks"][node_id]["data"] = task_data
+        return True
+
+    def get_async_task(self, node_id: str) -> dict | None:
+        async_task: dict = self.workflow_data.get("async_tasks", {}).get(node_id, {})
+        return async_task.get("data", None)
+
+    @property
+    def has_async_task_timeout(self):
+        async_tasks = self.workflow_data.get("async_tasks", {})
+        for node_id, task_data in async_tasks.items():
+            if time.time() > task_data["expire_time"]:
+                return True
+        return False
+
     @property
     def data(self):
         return self.workflow_data
@@ -478,16 +525,6 @@ class WorkflowData:
                 related_workflows[workflow_id] = workflow.data
 
         return related_workflows
-
-    def replace_workflow_invoke_nodes_ids(self, id_map: dict):
-        for node in self.workflow_data["nodes"]:
-            if node["type"] != "WorkflowInvoke":
-                continue
-            workflow_id = node["data"]["template"]["workflow_id"]["value"]
-            if workflow_id not in id_map:
-                continue
-            node["data"]["template"]["workflow_id"]["value"] = id_map[workflow_id]
-        return self.workflow_data
 
     @cached_property
     def ui_design(self):
