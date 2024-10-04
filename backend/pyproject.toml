@@ -1,7 +1,5 @@
 [project]
-authors = [
-  {name = "MakerBi", email = "biying@vectorvein.com"},
-]
+authors = [{ name = "MakerBi", email = "biying@vectorvein.com" }]
 dependencies = [
   "pywebview>=4.1",
   "httpx>=0.22.0",
@@ -46,10 +44,10 @@ dependencies = [
   "docx-ea-font>=0.0.1",
 ]
 description = ""
-license = {text = "CC BY-NC-SA"}
+license = { text = "CC BY-NC-SA" }
 name = ""
 requires-python = ">=3.10,<3.13"
-version = "0.3.0"
+version = "0.3.1"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
