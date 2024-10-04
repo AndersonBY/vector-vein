@@ -124,8 +124,8 @@ def batch_tasks(workflow_data: dict, tasks: list):
             has_failed_task = True
             with result_lock:
                 error_tasks.append(task)
-            mprint.error(f"Error in task {task['task_name']} -> {task['node_id']}: {e}")
-            mprint.error(traceback.format_exc())
+            mprint.error(f"[Workflow Task Server] Error in task {task['task_name']} -> {task['node_id']}: {e}")
+            mprint.error("[Workflow Task Server]", traceback.format_exc())
             workflow = Workflow(workflow_data)
             workflow.report_workflow_status(500, task["task_name"])
 
@@ -151,8 +151,8 @@ def batch_tasks(workflow_data: dict, tasks: list):
         time.sleep(0.1)
 
     if has_failed_task:
-        mprint.error(error_tasks)
-        raise Exception("Some tasks failed")
+        mprint.error("[Workflow Task Server]", error_tasks)
+        raise Exception("[Workflow Task Server] Some tasks failed")
 
     sorted_task_results = [results[task["node_id"]] for task in tasks]
     merged_result = merge_results(sorted_task_results, [task["node_id"] for task in tasks])
@@ -190,7 +190,7 @@ class WorkflowServer:
         self.threads.append(scheduler_thread)
 
     def stop(self):
-        mprint("Stopping workflow task server...")
+        mprint("[Workflow Task Server] Stopping...")
         self.shutdown_event = True
         for thread in self.threads:
             if thread and thread.is_alive():
@@ -198,7 +198,7 @@ class WorkflowServer:
         self.threads = []
 
     def scheduler(self):
-        mprint("Scheduler thread started.")
+        mprint("[Workflow Task Server] Scheduler thread started.")
         while not self.shutdown_event:
             try:
                 current_time = time.time()
@@ -221,7 +221,7 @@ class WorkflowServer:
             except Exception:
                 mprint.error(f"Scheduler error: {traceback.format_exc()}")
                 time.sleep(1)
-        mprint("Scheduler thread stopped.")
+        mprint("[Workflow Task Server] Scheduler thread stopped.")
 
     def schedule_retry(self, task_data: dict, retry_delay: int):
         scheduled_time = time.time() + retry_delay
@@ -230,18 +230,11 @@ class WorkflowServer:
         with self.delayed_tasks_lock:
             self.delayed_tasks_cache[key] = task_data
         mprint(
-            f"Scheduled task {task_id} to retry at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(scheduled_time))}."
+            f"[Workflow Task Server] Scheduled task {task_id} to retry at {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(scheduled_time))}."
         )
 
     def run_task(self, task_data: dict):
         workflow = Workflow(task_data)
-        # sorted_tasks = workflow.get_sorted_task_order()
-        # func_list = []
-        # for task in sorted_tasks:
-        #     module, function = task["task_name"].split(".")
-        #     func_list.append(task_functions[module][function].s(task["node_id"]))
-        # task_chain = chain(*func_list, on_finish.s())
-        # task_chain(workflow.data)
 
         tasks = workflow.get_layer_sorted_task_order()
         func_list = []
@@ -257,7 +250,7 @@ class WorkflowServer:
         task_chain(workflow.data)
 
     def run(self, worker_index: int):
-        mprint(f"Workflow task server {worker_index} started.")
+        mprint(f"[Workflow Task Server] Worker {worker_index} started.")
         task_data = dict()
         while not self.shutdown_event:
             try:
@@ -265,28 +258,28 @@ class WorkflowServer:
                     task_data = self.main_queue.pop()
                     if not isinstance(task_data, dict):
                         continue
-                    mprint(f"Worker {worker_index} received workflow request.")
+                    mprint(f"[Workflow Task Server] Worker {worker_index} received workflow request.")
                     self.run_task(task_data)
-                    mprint(f"Worker {worker_index} finished workflow request.")
+                    mprint(f"[Workflow Task Server] Worker {worker_index} finished workflow request.")
                 else:
                     time.sleep(1)
             except TaskRetry as e:
-                mprint.error(f"Scheduling retry for task function: {e.func_name}")
+                mprint.error(f"[Workflow Task Server] Scheduling retry for task function: {e.func_name}")
                 self.schedule_retry(e.task, e.retry_delay)
             except TaskError as e:
-                mprint.error(traceback.format_exc())
-                mprint.error(f"workflow worker error: {e}")
+                mprint.error("[Workflow Task Server]", traceback.format_exc())
+                mprint.error(f"[Workflow Task Server] workflow worker error: {e}")
                 for module_name, functions in task_functions.items():
                     if e.task_name in functions:
-                        mprint.error(f"error_module: {module_name}")
+                        mprint.error(f"[Workflow Task Server] error_module: {module_name}")
                         break
                 else:
                     module_name = "unknown"
-                    mprint.error(f"unknown error: {e.task_name}")
+                    mprint.error(f"[Workflow Task Server] Unknown error: {e.task_name}")
                 assert isinstance(task_data, dict)
                 if workflow := Workflow(task_data):
                     workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
             except Exception:
-                mprint.error(f"Unexpected error: {traceback.format_exc()}")
+                mprint.error("[Workflow Task Server] Unexpected error: {traceback.format_exc()}")
                 time.sleep(1)
-        mprint("Workflow task server stopped.")
+        mprint("[Workflow Task Server] Stopped.")
