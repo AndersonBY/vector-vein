@@ -1,13 +1,12 @@
 # @Author: Bi Ying
 # @Date:   2024-06-06 23:52:55
-import re
 import time
 import json
 import socket
 import asyncio
 from threading import Thread
 
-import websockets
+from websockets.asyncio.server import serve, ServerConnection
 from vectorvein.types.enums import BackendType
 from vectorvein.chat_clients import create_async_chat_client
 from vectorvein.settings import settings as vectorvein_settings
@@ -47,20 +46,11 @@ class WebSocketServer:
                 except OSError:
                     port += 1
 
-    async def handler(self, websocket, path):
-        conversation_id = re.match(r"^/ws/chat/(.+)/$", path)
-        if not conversation_id:
-            mprint("Invalid conversation ID")
-            await websocket.close()
-            return
-
-        conversation_id = conversation_id.group(1)
-        mprint(f"Connected to conversation: {conversation_id}")
-
+    async def handler(self, websocket: ServerConnection):
         async for message in websocket:
-            await self.process_message(websocket, conversation_id, message)
+            await self.process_message(websocket, message)
 
-    async def process_message(self, websocket, conversation_id, message):
+    async def process_message(self, websocket: ServerConnection, message: str | bytes):
         user_settings = Settings()
         vectorvein_settings.load(user_settings.get("llm_settings"))
 
@@ -71,7 +61,7 @@ class WebSocketServer:
         need_title = request_data["need_title"] and user_settings.get("agent.auto_title", False)
         backend = request_data["conversation"]["model_provider"].lower()
         model = request_data["conversation"]["model"]
-        mprint(f"Agent chat start: {backend} {model}")
+        mprint(f"[WebSocket Server] Agent chat start: {backend} {model}")
 
         if backend.startswith("_local__"):
             backend = BackendType.Local
@@ -107,7 +97,7 @@ class WebSocketServer:
             tools_params = {}
 
         response = await client.create_stream(messages=messages, **tools_params)
-        mprint("Agent chat response created")
+        mprint("[WebSocket Server] Agent chat response created")
         full_content = ""
         tool_calls = {}
         selected_workflow = {}
@@ -115,7 +105,7 @@ class WebSocketServer:
         start_generate_time = time.time()
         async for chunk in response:
             if time.time() - start_generate_time > 1:
-                mprint("Agent chat chunk generate time use: ", time.time() - start_generate_time)
+                mprint("[WebSocket Server] Agent chat chunk generate time use: ", time.time() - start_generate_time)
             start_generate_time = time.time()
 
             full_content += chunk.content if chunk.content is not None else ""
@@ -148,9 +138,9 @@ class WebSocketServer:
             )
 
         if tool_calls:
-            mprint("Agent chat tool_calls", tool_calls)
+            mprint("[WebSocket Server] Agent chat tool_calls", tool_calls)
             function_name = tool_calls[0]["function"]["name"]
-            mprint("Agent chat function_name", function_name)
+            mprint("[WebSocket Server] Agent chat function_name", function_name)
             selected_workflow = get_tool_related_workflow(
                 request_data["conversation"],
                 tool_call_data,
@@ -212,19 +202,23 @@ class WebSocketServer:
         )
 
     def start(self):
-        self.thread = Thread(target=self.run, daemon=True)
+        self.thread = Thread(target=self._run_server, daemon=True)
         self.thread.start()
 
-    def run(self):
-        mprint(f"WebSocket server started at ws://{self.host}:{self.port}")
+    def _run_server(self):
+        mprint(f"[WebSocket Server] Started at ws://{self.host}:{self.port}")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
-        self.server = websockets.serve(self.handler, self.host, self.port)
-        loop.run_until_complete(self.server)
+        loop.run_until_complete(self._serve())
         loop.run_forever()
 
+    async def _serve(self):
+        async with serve(self.handler, self.host, self.port) as server:
+            await server.serve_forever()
+
     def stop(self):
+        mprint("[WebSocket Server] Stopping...")
         if self.thread:
-            mprint("Stopping WebSocket server")
             self.thread.join()
             self.thread = None
+        mprint("[WebSocket Server] Stopped.")
