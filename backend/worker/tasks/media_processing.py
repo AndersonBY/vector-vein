@@ -7,12 +7,13 @@ import time
 
 from vectorvein.types.enums import BackendType
 from vectorvein.chat_clients import create_chat_client
+from vectorvein.chat_clients.utils import format_messages
 from vectorvein.settings import settings as vectorvein_settings
 
 from worker.tasks import task, timer
+from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
-from utilities.general import mprint, Retry
 from utilities.network import new_httpx_client
 from utilities.media_processing import ImageProcessor, SpeechRecognitionClient
 
@@ -270,13 +271,13 @@ def claude_vision(
     mprint(f"Prompts count: {prompts_count}")
 
     model = workflow.get_node_field_value(node_id, "llm_model")
-    if model == "claude-3-opus":
+    if model.startswith("claude-3-opus"):
         model = "claude-3-opus-20240229"
-    elif model == "claude-3-sonnet":
+    elif model.startswith("claude-3-sonnet"):
         model = "claude-3-sonnet-20240229"
-    elif model == "claude-3-haiku":
+    elif model.startswith("claude-3-haiku"):
         model = "claude-3-haiku-20240307"
-    elif model == "claude-3-5-sonnet":
+    elif model.startswith("claude-3-5-sonnet"):
         model = "claude-3-5-sonnet-20240620"
     else:
         raise Exception(f"Model {model} not supported")
@@ -304,7 +305,7 @@ def claude_vision(
             }
         ]
 
-        response = client.create_completion(messages=messages, max_tokens=1024)
+        response = client.create_completion(messages=messages)
 
         content_output = response.content
         content_outputs.append(content_output)
@@ -358,54 +359,23 @@ def gemini_vision(
     prompts_count = len(prompts)
     mprint(f"Prompts count: {prompts_count}")
 
-    settings = Settings()
-    url = f"{settings.gemini_api_base}/models/{model}:generateContent"
-    headers = {"Content-Type": "application/json"}
-    params = {"key": settings.gemini_api_key}
-    http_client = new_httpx_client(is_async=False)
+    user_settings = Settings()
+    vectorvein_settings.load(user_settings.get("llm_settings"))
+    client = create_chat_client(backend=BackendType.Gemini, model=model, stream=False)
     for index, prompt in enumerate(prompts):
         mprint(f"Processing prompt {index + 1}/{prompts_count}")
-        image_processor = ImageProcessor(image_source=images[index])
-        request_body = {
-            "contents": [
-                {
-                    "parts": [
-                        {"text": prompt},
-                        {
-                            "inline_data": {
-                                "mimeType": image_processor.mime_type,
-                                "data": image_processor.base64_image,
-                            }
-                        },
-                    ]
-                }
-            ]
-        }
+        vectorvein_messages = [
+            {
+                "author_type": "U",
+                "content_type": "TXT",
+                "content": {"text": prompt},
+                "attachments": [images[index]],
+            }
+        ]
+        messages = format_messages(vectorvein_messages, backend=BackendType.Gemini, native_multimodal=True)
 
-        gemini_request_success, response = (
-            Retry(http_client.post)
-            .args(
-                url=url,
-                json=request_body,
-                headers=headers,
-                params=params,
-                timeout=None,
-            )
-            .retry_times(5)
-            .sleep_time(5)
-            .run()
-        )
-        if not gemini_request_success or response is None:
-            mprint.error(f"Gemini request failed: {response}")
-            content_outputs.append("")
-            continue
-
-        response = response.json()
-        if "candidates" not in response:
-            mprint.error(response)
-            raise Exception("Invalid response from Gemini")
-
-        content_output = response["candidates"][0]["content"]["parts"][0]["text"]
+        response = client.create_completion(messages=messages)
+        content_output = response.content or ""
         content_outputs.append(content_output)
         total_tokens += int(len(prompt + content_output) / 1.5) + 258
         mprint(f"Tokens :{total_tokens}")
