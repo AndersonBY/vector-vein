@@ -101,8 +101,10 @@ class ShortcutsListener:
         self.hotkeys_listener.start()
 
     def stop(self):
+        mprint("[Shortcuts Listener] Stopping...")
         if self.hotkeys_listener:
             self.hotkeys_listener.stop()
+        mprint("[Shortcuts Listener] Stopped.")
 
     def restart(self):
         self.stop()

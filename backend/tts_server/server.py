@@ -16,30 +16,30 @@ class TTSServer:
 
     def start(self):
         if self.thread is not None:
-            mprint("TTSServer is already running")
+            mprint("[TTS Server] Already running")
             return
 
         self.thread = Thread(target=self.run, daemon=True)
         self.thread.start()
 
     def run(self):
-        mprint("TTSServer is running")
+        mprint("[TTS Server] Running")
         while not self.terminate_requested:
             time.sleep(0.1)  # Keep the thread alive
 
     def stop(self):
         if self.tts_client is not None and self.playing:
-            mprint("Stopping current TTS playback")
+            mprint("[TTS Server] Stopping current TTS playback...")
             self.tts_client.stop()
             self.playing = False
             self.tts_client = None
 
     def terminate(self):
         if self.thread is None:
-            mprint("TTSServer is not running")
+            mprint("[TTS Server] Not running")
             return
 
-        mprint("Terminating TTSServer")
+        mprint("[TTS Server] Terminating...")
         self.terminate_requested = True
         self.stop()
         self.thread.join()
@@ -54,7 +54,7 @@ class TTSServer:
         skip_code_block: bool = True,
     ):
         if self.thread is None:
-            raise RuntimeError("TTSServer is not running")
+            raise RuntimeError("[TTS Server] Not running")
 
         self.stop()  # Ensure any previous TTS is stopped before starting a new one
 

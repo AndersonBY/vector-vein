@@ -6,6 +6,7 @@
 import uuid
 import shutil
 import hashlib
+import threading
 from pathlib import Path
 from urllib.parse import unquote, urlparse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
@@ -38,18 +39,27 @@ class StaticFileServer:
 
         self.static_folder_path = Path(static_folder_path)
         self.static_file_server = HTTPServer((StaticFileServer.host, StaticFileServer.port), MyRequestHandler)
+        self.static_file_server_thread = None
 
     @staticmethod
     def get_file_url(file_path):
         return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{file_path}"
 
-    def start(self):
-        mprint(f"Starting static file server at http://{StaticFileServer.host}:{StaticFileServer.port}")
-        self.static_file_server.serve_forever()
+    def start(self, block: bool = False):
+        mprint(f"[Static File Server] Starting at http://{StaticFileServer.host}:{StaticFileServer.port}")
+        if block:
+            self.static_file_server.serve_forever()
+        else:
+            self.static_file_server_thread = threading.Thread(
+                target=self.static_file_server.serve_forever, daemon=True
+            )
+            self.static_file_server_thread.start()
 
     def shutdown(self):
-        mprint("Shutting down static file server")
+        mprint("[Static File Server] Shutting down...")
         self.static_file_server.shutdown()
+        if self.static_file_server_thread:
+            self.static_file_server_thread.join()
 
     def restart(self):
         self.shutdown()

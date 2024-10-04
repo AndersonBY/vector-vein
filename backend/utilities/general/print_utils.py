@@ -7,8 +7,8 @@ import time
 import logging
 import logging.handlers
 from pathlib import Path
-from threading import Thread
 from datetime import datetime
+from threading import Thread, Event
 
 from diskcache import Deque
 
@@ -94,8 +94,10 @@ class LogServer:
         self.log_id = str(log_path) if log_path else "default"
         LogServer._instances[self.log_id] = self
 
+        self.stop_event = Event()
+
     def log_listener(self):
-        while True:
+        while not self.stop_event.is_set():
             if len(self.log_queue) > 0:
                 pop_result = self.log_queue.popleft()
                 if pop_result is None:
@@ -114,7 +116,8 @@ class LogServer:
         self.listener_thread.start()
 
     def stop(self):
-        self.listener_thread.join()
+        self.stop_event.set()
+        self.listener_thread.join(timeout=5)
 
     @classmethod
     def get(cls, log_id: str) -> "LogServer | None":
