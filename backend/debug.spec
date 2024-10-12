@@ -21,6 +21,7 @@ a = Analysis(
         "worker",
         "tiktoken_ext.openai_public",
         "tiktoken_ext",
+        "pyecharts",
     ],
     hookspath=["./hooks"],
     hooksconfig={},
