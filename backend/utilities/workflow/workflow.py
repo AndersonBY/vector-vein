@@ -12,7 +12,10 @@ from functools import cached_property
 
 from models import WorkflowRunRecord, Message
 from models import Workflow as WorkflowModel
-from utilities.general import mprint
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Workflow")
 
 
 ASYNC_TASKS = [
@@ -336,9 +339,11 @@ class Workflow:
                                 "task_name": task_name,
                             }
                         )
-                tasks.append(batch_tasks)
+                if batch_tasks:
+                    tasks.append(batch_tasks)
                 # 异步任务要一个个单独执行
-                tasks.extend(async_tasks)
+                if async_tasks:
+                    tasks.extend(async_tasks)
         return tasks
 
     def get_field_actual_node(self, node: Node, field_data: dict):
