@@ -439,7 +439,7 @@ class Workflow:
 
             workflow_record.status = "FINISHED" if status == 200 else "FAILED"
             workflow_record.data = self.workflow_data
-            workflow_record.data["error_task"] = error_task
+            workflow_record.data["error_task"] = error_task if not error_task.endswith("batch_tasks") else ""
             workflow_record.end_time = datetime.now()
 
             if workflow_record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
