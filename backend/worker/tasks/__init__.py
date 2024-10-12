@@ -7,8 +7,11 @@ import time
 from functools import wraps
 from typing import Callable, TypeVar, Optional, overload, Any, Union
 
-from utilities.general import mprint
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Workflow Task Server")
 
 
 F = TypeVar("F", bound=Callable[..., Any])

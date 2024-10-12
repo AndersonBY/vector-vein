@@ -12,8 +12,11 @@ from urllib.parse import unquote, urlparse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 from utilities.config import config
-from utilities.general import mprint
+from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
+
+
+mprint = mprint_with_name(name="Static File Server")
 
 
 class StaticFileServer:
@@ -46,7 +49,7 @@ class StaticFileServer:
         return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{file_path}"
 
     def start(self, block: bool = False):
-        mprint(f"[Static File Server] Starting at http://{StaticFileServer.host}:{StaticFileServer.port}")
+        mprint(f"Starting at http://{StaticFileServer.host}:{StaticFileServer.port}")
         if block:
             self.static_file_server.serve_forever()
         else:
@@ -56,7 +59,7 @@ class StaticFileServer:
             self.static_file_server_thread.start()
 
     def shutdown(self):
-        mprint("[Static File Server] Shutting down...")
+        mprint("Shutting down...")
         self.static_file_server.shutdown()
         if self.static_file_server_thread:
             self.static_file_server_thread.join()

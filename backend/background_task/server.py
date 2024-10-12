@@ -9,8 +9,12 @@ from threading import Thread, Event
 from diskcache import Deque
 from qdrant_client import QdrantClient
 
-from utilities.general import mprint
 from utilities.config import config, cache
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Background Task Server")
+qdrant_mprint = mprint_with_name(name="Qdrant Task Server")
 
 
 class BackgroundTaskServer:
@@ -42,13 +46,13 @@ class BackgroundTaskServer:
         self.threads.append(qdrant_thread)
 
     def stop(self):
-        mprint("[Background Task Server] Stopping...")
+        mprint("Stopping...")
         self.stop_event.set()
         for thread in self.threads:
             if thread:
                 thread.join(timeout=5)
         self.threads = []
-        mprint("[Background Task Server] Stopped.")
+        mprint("Stopped.")
 
     @staticmethod
     def run(stop_event: Event, task_queue_directory: str | Path | None = None, worker_num: int = 0):
@@ -58,7 +62,7 @@ class BackgroundTaskServer:
         sleep_time = 1
         task_name = ""
 
-        mprint(f"[Background Task Server] Worker {worker_num} started.")
+        mprint(f"Worker {worker_num} started.")
         while not stop_event.is_set():
             try:
                 if len(task_queue) > 0:
@@ -71,13 +75,13 @@ class BackgroundTaskServer:
                         continue
                     task_result = task_func(*args, **kwargs)
                     cache.set(f"task_result_{task_id}", task_result, expire=60 * 10)
-                    mprint(f"[Background Task Server] Task {task_id} {task_name} completed in worker {worker_num}.")
+                    mprint(f"Task {task_id} {task_name} completed in worker {worker_num}.")
                     sleep_time = 0.01
                 else:
                     sleep_time = 1
             except Exception as e:
                 mprint.error(traceback.format_exc())
-                mprint.error(f"[Background Task Server] Error running task {task_name} in worker {worker_num}: {e}")
+                mprint.error(f"Error running task {task_name} in worker {worker_num}: {e}")
 
             time.sleep(sleep_time)
 
@@ -91,7 +95,7 @@ class BackgroundTaskServer:
         sleep_time = 1
         task_name = ""
 
-        mprint("[Qdrant Task Server] Started.")
+        qdrant_mprint("Started.")
         while not stop_event.is_set():
             try:
                 if len(qdrant_tasks_queue) > 0:
@@ -104,12 +108,12 @@ class BackgroundTaskServer:
                         continue
                     task_result = task_func(qdrant_client, *args, **kwargs)
                     cache.set(f"task_result_{task_id}", task_result, expire=60 * 10)
-                    mprint(f"[Qdrant Task Server] Task {task_id} {task_name} completed.")
+                    qdrant_mprint(f"Task {task_id} {task_name} completed.")
                     sleep_time = 0.01
                 else:
                     sleep_time = 1
             except Exception as e:
-                mprint.error(traceback.format_exc())
-                mprint.error(f"[Qdrant Task Server] Error running task {task_name}: {e}")
+                qdrant_mprint.error(traceback.format_exc())
+                qdrant_mprint.error(f"Error running task {task_name}: {e}")
 
             time.sleep(sleep_time)

@@ -5,7 +5,10 @@ import platform
 from typing import Callable
 from pynput import keyboard
 
-from utilities.general import mprint
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Shortcut Listener")
 
 
 modifier_keys = {
@@ -101,10 +104,10 @@ class ShortcutsListener:
         self.hotkeys_listener.start()
 
     def stop(self):
-        mprint("[Shortcuts Listener] Stopping...")
+        mprint("Stopping...")
         if self.hotkeys_listener:
             self.hotkeys_listener.stop()
-        mprint("[Shortcuts Listener] Stopped.")
+        mprint("Stopped.")
 
     def restart(self):
         self.stop()

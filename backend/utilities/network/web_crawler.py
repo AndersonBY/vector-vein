@@ -17,9 +17,11 @@ from bs4 import BeautifulSoup
 from readability import Document
 from markdownify import MarkdownConverter, chomp
 
-from utilities.general import mprint
 from utilities.config import Settings
+from utilities.general import mprint_with_name
 
+
+mprint = mprint_with_name(name="Web Crawler")
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"

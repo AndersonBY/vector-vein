@@ -17,9 +17,11 @@ import pathspec
 import pandas as pd
 from pptx import Presentation
 
-from utilities.general import mprint
 from utilities.config import Settings
+from utilities.general import mprint_with_name
 
+
+mprint = mprint_with_name(name="File Processing")
 
 CODEC_TEST_LIST = [
     "utf-8-sig",

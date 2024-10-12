@@ -13,7 +13,10 @@ from pathlib import Path
 from PIL import Image
 
 from utilities.config import config
-from utilities.general import mprint
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="API")
 
 
 class API:

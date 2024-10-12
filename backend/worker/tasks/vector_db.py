@@ -7,8 +7,8 @@ import time
 
 from worker.tasks import task, timer
 from utilities.config import cache
-from utilities.general import mprint
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
 from utilities.ai_utils import EmbeddingClient
 from utilities.text_processing import split_text, remove_markdown_image
 from background_task.tasks import (
@@ -17,6 +17,9 @@ from background_task.tasks import (
     q_search_point,
 )
 from models import UserObject, UserVectorDatabase
+
+
+mprint = mprint_with_name(name="Vector Database Tasks")
 
 
 @task

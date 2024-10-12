@@ -20,13 +20,15 @@ from vectorvein.types.enums import BackendType
 from vectorvein.chat_clients.utils import format_messages
 
 from models import Workflow, WorkflowTemplate, UserObject
-from utilities.general import mprint
+from utilities.general import mprint_with_name
 from utilities.config import config, cache
 from utilities.ai_utils import (
     ToolCallData,
     EmbeddingClient,
     conversation_title_generator,
 )
+
+mprint = mprint_with_name(name="Background Task")
 
 P = ParamSpec("P")
 R = TypeVar("R", covariant=True)

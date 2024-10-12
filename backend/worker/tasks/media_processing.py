@@ -11,11 +11,14 @@ from vectorvein.chat_clients.utils import format_messages
 from vectorvein.settings import settings as vectorvein_settings
 
 from worker.tasks import task, timer
-from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
 from utilities.media_processing import ImageProcessor, SpeechRecognitionClient
+
+
+mprint = mprint_with_name(name="Media Processing Tasks")
 
 
 @task

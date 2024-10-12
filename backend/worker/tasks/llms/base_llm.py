@@ -12,13 +12,16 @@ from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.types.llm_parameters import EndpointSetting, ModelSetting
 from vectorvein.chat_clients.utils import get_token_counts, format_messages
 
-from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
 from utilities.general.ratelimit import is_request_allowed, add_request_record
 
 from .types.output import ModelOutput
+
+
+mprint = mprint_with_name(name="LLM Tasks")
 
 
 def model_available(model: ModelSetting, endpoint: EndpointSetting, add_record: bool = True) -> bool:

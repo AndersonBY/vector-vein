@@ -16,11 +16,14 @@ import docx_ea_font
 from docx import Document
 
 from worker.tasks import task, timer
-from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
 from utilities.media_processing import TTSClient
 from utilities.file_processing import HtmlToDocx, process_pdf, static_file_server
+
+
+mprint = mprint_with_name(name="Output Tasks")
 
 
 @task

@@ -23,13 +23,14 @@ from deepgram_captions import DeepgramConverter, srt
 from deepgram import DeepgramClient, PrerecordedOptions
 from deepgram.clients.prerecorded import PrerecordedResponse
 
-from utilities.general import mprint
 from utilities.config import Settings, config
+from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
 
 
 OpenAIVoiceType = Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
 
+mprint = mprint_with_name(name="Audio Processing")
 
 class TTSClient:
     def __init__(self, provider: str = "openai", model: str = ""):

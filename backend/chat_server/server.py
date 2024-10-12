@@ -13,8 +13,8 @@ from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messages
 
 from tts_server.server import tts_server
-from utilities.general import mprint
 from utilities.config import Settings, cache
+from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
 from background_task.tasks import summarize_conversation_title
 from .utils import get_tool_call_data, get_tool_related_workflow
@@ -27,6 +27,8 @@ TOOL_CALL_INCREMENTAL_BACKENDS = (
     BackendType.DeepSeek,
     BackendType.MiniMax,
 )
+
+mprint = mprint_with_name(name="WebSocket Server")
 
 
 class WebSocketServer:
@@ -61,7 +63,7 @@ class WebSocketServer:
         need_title = request_data["need_title"] and user_settings.get("agent.auto_title", False)
         backend = request_data["conversation"]["model_provider"].lower()
         model = request_data["conversation"]["model"]
-        mprint(f"[WebSocket Server] Agent chat start: {backend} {model}")
+        mprint(f"Agent chat start: {backend} {model}")
 
         if backend.startswith("_local__"):
             backend = BackendType.Local
@@ -97,7 +99,7 @@ class WebSocketServer:
             tools_params = {}
 
         response = await client.create_stream(messages=messages, **tools_params)
-        mprint("[WebSocket Server] Agent chat response created")
+        mprint("Agent chat response created")
         full_content = ""
         tool_calls = {}
         selected_workflow = {}
@@ -105,7 +107,7 @@ class WebSocketServer:
         start_generate_time = time.time()
         async for chunk in response:
             if time.time() - start_generate_time > 1:
-                mprint("[WebSocket Server] Agent chat chunk generate time use: ", time.time() - start_generate_time)
+                mprint("Agent chat chunk generate time use: ", time.time() - start_generate_time)
             start_generate_time = time.time()
 
             full_content += chunk.content if chunk.content is not None else ""
@@ -138,9 +140,9 @@ class WebSocketServer:
             )
 
         if tool_calls:
-            mprint("[WebSocket Server] Agent chat tool_calls", tool_calls)
+            mprint("Agent chat tool_calls", tool_calls)
             function_name = tool_calls[0]["function"]["name"]
-            mprint("[WebSocket Server] Agent chat function_name", function_name)
+            mprint("Agent chat function_name", function_name)
             selected_workflow = get_tool_related_workflow(
                 request_data["conversation"],
                 tool_call_data,
@@ -206,7 +208,7 @@ class WebSocketServer:
         self.thread.start()
 
     def _run_server(self):
-        mprint(f"[WebSocket Server] Started at ws://{self.host}:{self.port}")
+        mprint(f"Started at ws://{self.host}:{self.port}")
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         loop.run_until_complete(self._serve())
@@ -217,8 +219,8 @@ class WebSocketServer:
             await server.serve_forever()
 
     def stop(self):
-        mprint("[WebSocket Server] Stopping...")
+        mprint("Stopping...")
         if self.thread:
             self.thread.join()
             self.thread = None
-        mprint("[WebSocket Server] Stopped.")
+        mprint("Stopped.")

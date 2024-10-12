@@ -3,8 +3,10 @@
 import time
 from threading import Thread
 
+from utilities.general import mprint_with_name
 from utilities.media_processing import TTSClient
-from utilities.general import mprint
+
+mprint = mprint_with_name(name="TTS Server")
 
 
 class TTSServer:
@@ -16,30 +18,30 @@ class TTSServer:
 
     def start(self):
         if self.thread is not None:
-            mprint("[TTS Server] Already running")
+            mprint("Already running")
             return
 
         self.thread = Thread(target=self.run, daemon=True)
         self.thread.start()
 
     def run(self):
-        mprint("[TTS Server] Running")
+        mprint("Running")
         while not self.terminate_requested:
             time.sleep(0.1)  # Keep the thread alive
 
     def stop(self):
         if self.tts_client is not None and self.playing:
-            mprint("[TTS Server] Stopping current TTS playback...")
+            mprint("Stopping current TTS playback...")
             self.tts_client.stop()
             self.playing = False
             self.tts_client = None
 
     def terminate(self):
         if self.thread is None:
-            mprint("[TTS Server] Not running")
+            mprint("Not running")
             return
 
-        mprint("[TTS Server] Terminating...")
+        mprint("Terminating...")
         self.terminate_requested = True
         self.stop()
         self.thread.join()
@@ -54,7 +56,7 @@ class TTSServer:
         skip_code_block: bool = True,
     ):
         if self.thread is None:
-            raise RuntimeError("[TTS Server] Not running")
+            raise RuntimeError("Not running")
 
         self.stop()  # Ensure any previous TTS is stopped before starting a new one
 

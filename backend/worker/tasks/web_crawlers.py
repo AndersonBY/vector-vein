@@ -10,12 +10,14 @@ import yt_dlp
 from pathvalidate import sanitize_filename
 from bilili.api.acg_video import get_acg_video_subtitle
 
-from utilities.general import mprint
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.general import mprint_with_name
 from utilities.network import crawl_text_from_url, new_httpx_client
 from worker.tasks import task, timer
 
+
+mprint = mprint_with_name(name="Web Crawlers Tasks")
 
 headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/112.0.0.0 Safari/537.36"

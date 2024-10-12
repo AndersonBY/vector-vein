@@ -3,11 +3,13 @@
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-25 15:22:18
-from utilities.general import mprint
+from utilities.general import mprint_with_name
 from utilities.config import Settings, cache
 from utilities.network import new_httpx_client
 from .utils import JResponse
 
+
+mprint = mprint_with_name(name="Official Site API")
 
 headers = {"user-agent": "vector-vein client"}
 

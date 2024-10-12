@@ -19,11 +19,13 @@ from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 from utilities.config import Settings
 from utilities.workflow import Workflow
-from utilities.general import Retry, mprint
+from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
 from utilities.network import headers, new_httpx_client
 from worker.tasks import task, timer
 
+
+mprint = mprint_with_name(name="Tools Tasks")
 
 SKIPPING_FIELDS = [
     "language",

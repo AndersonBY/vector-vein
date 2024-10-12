@@ -16,33 +16,35 @@ from utilities.config import config, Settings
 
 
 class MPrint:
-    def __init__(self, queue):
+    def __init__(self, queue, name: str = ""):
         self.queue = queue
+        self.name = name
+        self.prefix = f"[{self.name}] " if name else ""
 
     def __call__(self, *args):
         self.info(*args)
 
     def debug(self, *args):
         try:
-            self.queue.append(("debug", " ".join([str(arg) for arg in args])))
+            self.queue.append(("debug", self.prefix + " ".join([str(arg) for arg in args])))
         except Exception:
             pass
 
     def info(self, *args):
         try:
-            self.queue.append(("info", " ".join([str(arg) for arg in args])))
+            self.queue.append(("info", self.prefix + " ".join([str(arg) for arg in args])))
         except Exception:
             pass
 
     def warning(self, *args):
         try:
-            self.queue.append(("warning", " ".join([str(arg) for arg in args])))
+            self.queue.append(("warning", self.prefix + " ".join([str(arg) for arg in args])))
         except Exception:
             pass
 
     def error(self, *args):
         try:
-            self.queue.append(("error", " ".join([str(arg) for arg in args])))
+            self.queue.append(("error", self.prefix + " ".join([str(arg) for arg in args])))
         except Exception:
             pass
 
@@ -167,3 +169,7 @@ class LogServer:
 log_queue = Deque(directory=Path(config.data_path) / "cache" / "log_queue")
 
 mprint = MPrint(log_queue)
+
+
+def mprint_with_name(name: str):
+    return MPrint(log_queue, name)

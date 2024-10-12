@@ -20,7 +20,10 @@ from utilities.database import (
     get_schema_from_table,
     create_relational_database_table,
 )
-from utilities.general import mprint
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Relational Database API")
 
 
 class RelationalDatabaseAPI:
@@ -31,7 +34,7 @@ class RelationalDatabaseAPI:
             UserRelationalDatabase,
             rid=payload.get("rid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(database, UserRelationalDatabase):
             response = {"status": status, "msg": msg, "data": {}}
             return response
         database = model_serializer(database)
@@ -43,7 +46,7 @@ class RelationalDatabaseAPI:
             UserRelationalDatabase,
             rid=payload.get("rid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(database, UserRelationalDatabase):
             return {"status": status, "msg": msg, "data": {}}
         database.name = payload.get("name", database.name)
         database.update_time = datetime.now()
@@ -79,7 +82,7 @@ class RelationalDatabaseAPI:
             UserRelationalDatabase,
             rid=payload.get("rid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(database, UserRelationalDatabase):
             return {"status": status, "msg": msg, "data": {}}
 
         database_path = Path(database.database_path)
@@ -94,7 +97,7 @@ class RelationalDatabaseAPI:
             UserRelationalDatabase,
             rid=payload.get("rid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(database, UserRelationalDatabase):
             return {"status": status, "msg": msg, "data": {}}
 
         user_db_ctl = UserDatabaseControl(database)
@@ -114,7 +117,7 @@ class RelationalDatabaseTableAPI:
             UserRelationalTable,
             tid=payload.get("tid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(user_object, UserRelationalTable):
             return {"status": status, "msg": msg, "data": {}}
         user_object = model_serializer(user_object)
         return {"status": 200, "msg": "success", "data": user_object}
@@ -129,7 +132,7 @@ class RelationalDatabaseTableAPI:
             UserRelationalDatabase,
             rid=rid,
         )
-        if status != 200:
+        if status != 200 or not isinstance(relational_database, UserRelationalDatabase):
             return dict(status=status, msg=msg)
 
         all_table_names = [table["table_name"] for table in table_schema]
@@ -160,6 +163,8 @@ class RelationalDatabaseTableAPI:
                     add_method=add_method,
                     sql_statement=sql_statement,
                 )
+            else:
+                return dict(status=400, msg="invalid add method")
 
         return dict(status=200, data={"tid": table.tid.hex})
 
@@ -212,7 +217,7 @@ class RelationalDatabaseTableAPI:
             UserRelationalTable,
             tid=payload.get("tid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(table, UserRelationalTable):
             return {"status": status, "msg": msg, "data": {}}
         table.title = payload.get("title", "")
         table.info = payload.get("info", {})
@@ -225,7 +230,7 @@ class RelationalDatabaseTableAPI:
             UserRelationalTable,
             tid=payload.get("tid", None),
         )
-        if status != 200:
+        if status != 200 or not isinstance(table, UserRelationalTable):
             return {"status": status, "msg": msg, "data": {}}
         user_db_ctl = UserDatabaseControl(table.database)
         user_db_ctl.delete_table(table.name)
@@ -273,7 +278,7 @@ class RelationalDatabaseTableRecordAPI:
             UserRelationalTable,
             tid=payload.get("tid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(user_table, UserRelationalTable):
             return dict(status=status, msg=msg)
 
         page_num = payload.get("page", 1)
@@ -308,7 +313,7 @@ class RelationalDatabaseTableRecordAPI:
             UserRelationalTable,
             tid=payload.get("tid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(user_table, UserRelationalTable):
             return dict(status=status, msg=msg)
 
         database = user_table.database
@@ -324,7 +329,7 @@ class RelationalDatabaseTableRecordAPI:
             UserRelationalTable,
             tid=payload.get("tid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(user_table, UserRelationalTable):
             return dict(status=status, msg=msg)
 
         database = user_table.database
@@ -340,7 +345,7 @@ class RelationalDatabaseTableRecordAPI:
             UserRelationalTable,
             tid=payload.get("tid"),
         )
-        if status != 200:
+        if status != 200 or not isinstance(user_table, UserRelationalTable):
             return dict(status=status, msg=msg)
 
         add_method = payload.get("add_method")

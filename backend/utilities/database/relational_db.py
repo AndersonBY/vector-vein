@@ -10,7 +10,10 @@ import sqlparse
 import pandas as pd
 
 from models import UserRelationalDatabase, UserRelationalTable, Status
-from utilities.general import mprint
+from utilities.general import mprint_with_name
+
+
+mprint = mprint_with_name(name="Relational Database")
 
 
 def get_table_names(conn: sqlite3.Connection):
