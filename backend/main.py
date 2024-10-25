@@ -81,11 +81,11 @@ class MainServer:
 
         def open_file_dialog(self, multiple=False):
             result = window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=multiple)
-            return result
+            return result[0] if result else ""
 
         def open_folder_dialog(self, initial_directory=""):
             result = window.create_file_dialog(webview.FOLDER_DIALOG, directory=initial_directory)
-            return result
+            return result[0] if result else ""
 
         def get_drop_file_path(self, file_name):
             start_time = time.time()

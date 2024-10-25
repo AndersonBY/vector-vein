@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "MakerBi", email = "biying@vectorvein.com" }]
 dependencies = [
-  "pywebview>=4.1",
+  "pywebview>=5.3.2",
   "httpx>=0.22.0",
   "peewee>=3.16.2",
   "pypdf>=3.8.1",
