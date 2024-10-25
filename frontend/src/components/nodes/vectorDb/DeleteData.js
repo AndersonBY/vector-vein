@@ -19,7 +19,7 @@ export function createTemplateData() {
         "display_name": "object_id",
         "type": "list|str",
         "list": false,
-        "field_type": ""
+        "field_type": "input"
       },
       "database": {
         "required": true,
