@@ -2,7 +2,9 @@
 import { ref, reactive, nextTick } from 'vue'
 import { DirectionAdjustmentThree, Edit, Lightning } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
+import { v4 as uuidv4 } from 'uuid'
 import { VueDraggable, useDraggable } from 'vue-draggable-plus'
+import { deepCopy } from '@/utils/util'
 import { getUIDesignFromWorkflow, nonFormItemsTypes } from '@/utils/workflow'
 import ListFieldUse from "@/components/workspace/ListFieldUse.vue"
 import UploaderFieldUse from "@/components/workspace/UploaderFieldUse.vue"
@@ -88,6 +90,11 @@ const deleteField = (list, index) => {
   list.splice(index, 1)
   updateWorkflowUi()
 }
+
+function onClone(element) {
+  element.id = uuidv4()
+  return deepCopy(element)
+}
 </script>
 
 <template>
@@ -95,7 +102,7 @@ const deleteField = (list, index) => {
     <a-layout-sider class="ui-design-sider custom-scrollbar">
       <a-menu theme="light" mode="inline" ref="siderMenu" class="ui-design-sider-menu">
         <VueDraggable v-model="uiItems" animation="150" :group="{ name: 'fields', pull: 'clone', put: false }"
-          :sort="false">
+          :sort="false" :clone="onClone">
           <template v-for="(item, nodeIndex) in uiItems" :key="`node-${nodeIndex}`">
             <a-tooltip :title="t(`components.workspace.uiDesign.${item.name}.tip`)" placement="right">
               <a-menu-item class="draggable-menu-item" :id="item.id">
