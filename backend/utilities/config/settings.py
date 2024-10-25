@@ -37,7 +37,10 @@ DEFAULT_SETTINGS = {
         "openai": {"same_as_llm": True, "api_base": "https://api.openai.com/v1", "api_key": "", "model": "whisper-1"},
         "deepgram": {"api_key": "", "speech_to_text": {"model": "nova-2", "language": "en"}},
     },
-    "web_search": {"jinaai": {"api_key": ""}, "bing": {"ocp_apim_subscription_key": ""}},
+    "web_search": {
+        "jinaai": {"api_key": ""},
+        "bing": {"ocp_apim_subscription_key": "", "endpoint": "https://api.bing.microsoft.com/v7.0/search"},
+    },
     "llm_settings": {
         "endpoints": [
             {

@@ -400,7 +400,7 @@ def text_search(
             results["output_page_snippet"].append(snippets)
 
     if search_engine == "bing":
-        search_url = "https://api.bing.microsoft.com/v7.0/search"
+        search_url = settings.get("web_search.bing.endpoint")
         headers = {"Ocp-Apim-Subscription-Key": settings.get("web_search.bing.ocp_apim_subscription_key")}
         for text in search_texts:
             params = {"q": text, "count": count}

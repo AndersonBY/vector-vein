@@ -460,6 +460,9 @@ watch(selectedKeys, () => {
                   </template>
                 </a-alert>
                 <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+                  <a-form-item label="Endpoint">
+                    <a-input v-model:value="settingForm.data.web_search.bing.endpoint" />
+                  </a-form-item>
                   <a-form-item label="OCP_APIM_SUBSCRIPTION_KEY">
                     <a-input-password v-model:value="settingForm.data.web_search.bing.ocp_apim_subscription_key" />
                   </a-form-item>
