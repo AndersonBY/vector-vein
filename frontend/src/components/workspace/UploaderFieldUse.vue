@@ -200,8 +200,14 @@ const selectFile = async (e) => {
     if (!selectedFiles) {
       return
     }
+    let _files = []
+    if (typeof selectedFiles === 'string') {
+      _files = [selectedFiles]
+    } else {
+      _files = selectedFiles
+    }
 
-    selectedFiles.forEach((file, index) => {
+    _files.forEach((file, index) => {
       files.value.push(file)
       fileList.value.push({
         uid: uuidv4(),
