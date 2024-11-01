@@ -47,7 +47,7 @@ description = ""
 license = { text = "CC BY-NC-SA" }
 name = ""
 requires-python = ">=3.10,<3.13"
-version = "0.3.2"
+version = "0.3.3"
 
 [project.optional-dependencies]
 mac = ["pyobjc"]
