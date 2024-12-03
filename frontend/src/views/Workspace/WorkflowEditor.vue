@@ -3,7 +3,7 @@ import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTi
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code, Bug, LayoutFive } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background } from '@vue-flow/background'
@@ -54,6 +54,13 @@ const tabs = reactive([
     value: 'ui_design',
   },
 ])
+
+const collapsed = ref(false)
+const sidebarHover = ref(false)
+const onCollapse = (switchToCollapsed) => {
+  collapsed.value = switchToCollapsed
+}
+
 let workflowOrTemplate = 'workflow'
 let workflowOrTemplateAPI = null
 let queryParam = {}
@@ -788,7 +795,10 @@ async function layoutGraph(direction) {
     </div>
 
     <a-layout v-show="activeTab == 'canvas'" has-sider style="height: 100%;">
-      <a-layout-sider :style="{ overflow: 'auto' }" class="custom-scrollbar" :theme="componentTheme">
+      <a-layout-sider class="custom-scrollbar" :defaultCollapsed="collapsed" v-model:collapsed="collapsed"
+        :trigger="null" :width="220" collapsible :collapsedWidth="48" @collapse="onCollapse" breakpoint="lg"
+        :theme="componentTheme" :style="{ overflowY: sidebarHover ? 'auto' : 'hidden' }"
+        @mouseover="sidebarHover = true" @mouseleave="sidebarHover = false">
         <a-menu :theme="componentTheme" mode="inline">
           <a-sub-menu v-for="category in nodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
             <template #title>
@@ -800,6 +810,12 @@ async function layoutGraph(direction) {
               <span :data-node-type="node">{{ t(`components.nodes.${category.name}.${node}.title`) }}</span>
             </a-menu-item>
           </a-sub-menu>
+          <div class="collapse-button">
+            <a-button type="text" @click="onCollapse(!collapsed)">
+              <MenuFoldOne v-if="collapsed" class="trigger" />
+              <MenuUnfoldOne v-else class="trigger" />
+            </a-button>
+          </div>
         </a-menu>
       </a-layout-sider>
       <a-layout style="background-color: var(--component-background);">
