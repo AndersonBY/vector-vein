@@ -226,3 +226,36 @@ def text_truncation(
         final_output = outputs
     workflow.update_node_field_value(node_id, "output", final_output)
     return workflow.data
+
+
+@task
+@timer
+def text_replace(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    input_text = workflow.get_node_field_value(node_id, "text")
+    replace_items = workflow.get_node_field_value(node_id, "replace_items")
+
+    if isinstance(input_text, str):
+        texts = [input_text]
+    else:
+        texts = input_text
+
+    outputs = []
+    for text in texts:
+        for item in replace_items:
+            try:
+                source = item["source"].encode().decode("unicode_escape").encode("latin1").decode("utf-8")
+            except UnicodeDecodeError:
+                source = item["source"]
+
+            target = item["target"]
+            text = text.replace(source, target)
+        outputs.append(text)
+
+    final_output = outputs[0] if isinstance(input_text, str) else outputs
+
+    workflow.update_node_field_value(node_id, "output", final_output)
+    return workflow.data
