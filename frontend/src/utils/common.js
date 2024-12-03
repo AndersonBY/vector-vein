@@ -168,6 +168,18 @@ export const nonLocalChatModelOptions = [
         value: "qwen2-72b-instruct",
       },
       {
+        label: "qwen2.5-7b-instruct",
+        value: "qwen2.5-7b-instruct",
+      },
+      {
+        label: "qwen2.5-14b-instruct",
+        value: "qwen2.5-14b-instruct",
+      },
+      {
+        label: "qwen2.5-72b-instruct",
+        value: "qwen2.5-72b-instruct",
+      },
+      {
         label: "qwen-max",
         value: "qwen-max",
       },
@@ -221,7 +233,11 @@ export const nonLocalChatModelOptions = [
       },
       {
         label: "claude-3-5-sonnet",
-        value: "claude-3-5-sonnet-20240620",
+        value: "claude-3-5-sonnet-20241022",
+      },
+      {
+        label: "claude-3-5-haiku",
+        value: "claude-3-5-haiku-20240620",
       },
     ]
   },
@@ -301,10 +317,10 @@ export const nonLocalChatModelOptions = [
         label: "yi-spark",
         value: "yi-spark",
       },
-      // {
-      //   label: "yi-vision",
-      //   value: "yi-vision",
-      // },
+      {
+        label: "yi-lightning",
+        value: "yi-lightning",
+      },
     ]
   },
   {
@@ -461,19 +477,25 @@ export const modelTagBackgroundColorMap = {
   'glm-4-air': '#3875F6',
   'glm-4-airx': '#3875F6',
   'glm-4-flash': '#3875F6',
+  'glm-4-plus': '#3875F6',
+  'glm-4v-plus': '#3875F6',
   'qwen1.5-7b-chat': '#5444CB',
   'qwen1.5-14b-chat': '#5444CB',
   'qwen1.5-32b-chat': '#5444CB',
   'qwen1.5-72b-chat': '#5444CB',
   'qwen1.5-110b-chat': '#5444CB',
   'qwen2-72b-instruct': '#5444CB',
+  'qwen2.5-7b-instruct': '#5444CB',
+  'qwen2.5-14b-instruct': '#5444CB',
+  'qwen2.5-72b-instruct': '#5444CB',
   'moonshot-v1-8k': '#0B0C0F',
   'moonshot-v1-32k': '#0B0C0F',
   'moonshot-v1-128k': '#0B0C0F',
   'claude-3-haiku-20240307': '#CA9F7B',
   'claude-3-opus-20240229': '#CA9F7B',
   'claude-3-sonnet-20240229': '#CA9F7B',
-  'claude-3-5-sonnet-20240620': '#CA9F7B',
+  'claude-3-5-sonnet-20241022': '#CA9F7B',
+  'claude-3-5-haiku-20241022': '#CA9F7B',
   'mixtral-8x7b': '#FF7000',
   'mistral-small': '#FF7000',
   'mistral-medium': '#FF7000',
@@ -485,6 +507,8 @@ export const modelTagBackgroundColorMap = {
   'yi-medium': '#133426',
   'yi-medium-200k': '#133426',
   'yi-spark': '#133426',
+  'yi-lightning': '#133426',
+  'grok-beta': '#000000',
 }
 
 export const modelProviderTagBgColorMap = {
@@ -502,6 +526,7 @@ export const modelProviderTagBgColorMap = {
   'Mistral': '#FF7000',
   'Moonshot': '#0B0C0F',
   'OpenAI': '#000',
+  'XAi': '#000000',
 }
 
 export const nodeCategoryOptions = [
