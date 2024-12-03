@@ -27,10 +27,9 @@ class EmbeddingClient:
     def get(self, input: str | list) -> list:
         if self.provider == "openai":
             if self.dimensions and self.model_id != "text-embedding-ada-002":
-                dimensions_params = {"dimensions": self.dimensions}
+                response = self.client.embeddings.create(input=input, model=self.model_id, dimensions=self.dimensions)
             else:
-                dimensions_params = {}
-            response = self.client.embeddings.create(input=input, model=self.model_id, **dimensions_params)
+                response = self.client.embeddings.create(input=input, model=self.model_id)
             if isinstance(input, str):
                 return response.data[0].embedding
             else:
