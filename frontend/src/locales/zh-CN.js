@@ -888,6 +888,16 @@ export default {
           'floating_range': '浮动范围',
           'output': '输出',
         },
+        TextReplace: {
+          'title': '文本替换',
+          'description': '将文本中的指定内容替换为其他内容。',
+          'text': '待处理文本',
+          'source_text': '源文本',
+          'target_text': '替换为',
+          'replace_tip': '支持正则表达式（如换行的正则表达式为 \\n），替换处留空则删除该文本。',
+          'add_replace_item': '添加替换规则',
+          'output': '输出结果'
+        },
       },
       llms: {
         title: 'AI模型',

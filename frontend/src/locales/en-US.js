@@ -888,6 +888,16 @@ export default {
           'floating_range': 'Floating range',
           'output': 'Output',
         },
+        TextReplace: {
+          'title': 'Text Replace',
+          'description': 'Replace the specified content in the text with other content.',
+          'text': 'Text to be processed',
+          'source_text': 'Source text',
+          'target_text': 'Replace with',
+          'replace_tip': 'Supports regular expressions (e.g., the regular expression for line breaks is \\n). Leave the replacement field empty to delete the text.',
+          'add_replace_item': 'Add replace rule',
+          'output': 'Output'
+        },
       },
       llms: {
         title: 'Language models',
