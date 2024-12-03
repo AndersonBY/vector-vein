@@ -9,8 +9,8 @@ import time
 import base64
 import urllib.request
 from Crypto.Cipher import AES
-from typing import overload, Literal
 from Crypto.Util.Padding import unpad
+from typing import overload, Literal, Mapping
 
 import httpx
 from bs4 import BeautifulSoup
@@ -30,7 +30,15 @@ headers = {
 http_proxy_host_re = re.compile(r"http.*://(.*?)$")
 
 
-def proxies():
+@overload
+def proxies(is_async: Literal[False] = False) -> Mapping[str, httpx.HTTPTransport]: ...
+
+
+@overload
+def proxies(is_async: Literal[True] = True) -> Mapping[str, httpx.AsyncHTTPTransport]: ...
+
+
+def proxies(is_async: bool = False) -> Mapping[str, httpx.HTTPTransport | httpx.AsyncHTTPTransport]:
     settings = Settings()
     if not settings.get("use_system_proxy", True):
         return {}
@@ -42,7 +50,10 @@ def proxies():
             if not http_proxy_host:
                 continue
             proxy_url = f"http://{http_proxy_host[0]}"
-            proxies[f"{protocol}://"] = proxy_url
+            if is_async:
+                proxies[f"{protocol}://"] = httpx.AsyncHTTPTransport(proxy=proxy_url)
+            else:
+                proxies[f"{protocol}://"] = httpx.HTTPTransport(proxy=proxy_url)
         return proxies
 
 
@@ -74,9 +85,9 @@ def new_httpx_client(is_async: bool = False) -> httpx.Client | httpx.AsyncClient
     settings = Settings()
     ssl_verification = not settings.get("skip_ssl_verification", False)
     if is_async:
-        return httpx.AsyncClient(proxies=proxies(), verify=ssl_verification)
+        return httpx.AsyncClient(mounts=proxies(is_async=True), verify=ssl_verification)
     else:
-        return httpx.Client(proxies=proxies(), verify=ssl_verification)
+        return httpx.Client(mounts=proxies(is_async=False), verify=ssl_verification)
 
 
 def decrypt_aes_ecb_base64(ciphertext_base64, key):
