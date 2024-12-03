@@ -153,7 +153,7 @@ const openTemplateEditor = ref(false)
         </template>
 
         <div class="add-field-button-container">
-          <a-button type="dashed" block @click="addNewField" class="add-field-button">
+          <a-button type="dashed" block @click="addNewField">
             <template #icon>
               <AddOne />
             </template>

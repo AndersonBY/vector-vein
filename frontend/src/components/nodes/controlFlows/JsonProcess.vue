@@ -110,7 +110,7 @@ const addKey = () => {
                   </template>
                 </a-button>
               </a-space>
-              <a-button block type="dashed" class="add-field-button" @click="addKey">
+              <a-button block type="dashed" @click="addKey">
                 <template #icon>
                   <AddOne />
                 </template>

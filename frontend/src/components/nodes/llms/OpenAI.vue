@@ -273,7 +273,7 @@ const editProperty = () => {
                 </template>
               </a-button>
             </a-flex>
-            <a-button type="dashed" block @click="openAddFunctionDataDrawer" class="add-field-button">
+            <a-button type="dashed" block @click="openAddFunctionDataDrawer">
               <AddOne />
               {{ t('components.nodes.llms.common.add_function') }}
             </a-button>

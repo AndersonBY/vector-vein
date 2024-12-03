@@ -97,8 +97,10 @@ const editorModal = reactive({
         </template>
 
         <div style="padding: 10px;">
-          <a-button type="dashed" block @click="openAddField" class="add-field-button">
-            <AddOne />
+          <a-button type="dashed" block @click="openAddField">
+            <template #icon>
+              <AddOne />
+            </template>
             {{ t('components.nodes.tools.ProgrammingFunction.add_parameter') }}
           </a-button>
           <a-drawer v-model:open="showAddField" class="custom-class" style="color: red"

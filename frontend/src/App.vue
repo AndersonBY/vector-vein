@@ -112,13 +112,6 @@ Spin.setDefaultIndicator({
   background-color: var(--component-background);
 }
 
-.vue-flow .add-field-button {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  justify-content: center;
-}
-
 .ant-tour.ant-tour-primary .ant-tour-inner {
   background-color: #007de4;
 }
