@@ -18,7 +18,12 @@ const props = defineProps({
     type: [String, Array],
     required: true,
     default: '',
-  }
+  },
+  reservedFieldNames: {
+    type: Array,
+    required: true,
+    default: ['template', 'output'],
+  },
 })
 
 const { t } = useI18n()
@@ -64,7 +69,7 @@ const insertVariable = (field) => {
 
 const formatTemplate = () => {
   const formattedFields = Object.keys(props.fields)
-    .filter(field => !['template', 'output'].includes(field))
+    .filter(field => !props.reservedFieldNames.includes(field))
     .map(field => `<${field}>\n{{${field}}}\n</${field}>`)
     .join('\n\n');
 
@@ -94,8 +99,8 @@ const formatTemplate = () => {
           </template>
           <a-space direction="vertical" style="width: 100%">
             <template v-for="field in Object.keys(props.fields)" :key="field">
-              <a-button v-if="!['template', 'output'].includes(field)" class="template-variable" block draggable="true"
-                @dragstart="handleDragStart($event, field)" @click="insertVariable(field)">
+              <a-button v-if="!props.reservedFieldNames.includes(field)" class="template-variable" block
+                draggable="true" @dragstart="handleDragStart($event, field)" @click="insertVariable(field)">
                 {{ field }}
               </a-button>
             </template>
