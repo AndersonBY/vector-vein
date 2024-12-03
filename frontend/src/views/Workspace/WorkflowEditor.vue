@@ -591,8 +591,15 @@ const onNewNodeDragEnd = (event) => {
   addNodeToCanvas(nodeType, position)
 }
 
-const nodeFiles = import.meta.glob('@/components/nodes/*/[!_]*.vue', { eager: true })
-const nodeTemplateFiles = import.meta.glob('@/components/nodes/*/[!_]*.js', { eager: true })
+const nodeFiles = import.meta.glob([
+  '@/components/nodes/*/*.vue',
+  '!@/components/nodes/*/_*.vue'
+], { eager: true })
+
+const nodeTemplateFiles = import.meta.glob([
+  '@/components/nodes/*/*.js',
+  '!@/components/nodes/*/_*.js'
+], { eager: true })
 const nodeTypes = {}
 const nodeCategories = {}
 const nodeTemplateCreators = {}
