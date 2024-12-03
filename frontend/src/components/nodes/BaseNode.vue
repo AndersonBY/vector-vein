@@ -369,7 +369,7 @@ const collapseChanged = (data) => {
   padding: 0;
 }
 
-.node .output-container span {
+.node .output-container span.field-name {
   float: right;
   margin-right: 10px;
   font-size: 18px;
