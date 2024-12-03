@@ -275,18 +275,34 @@ class UserDatabaseControl:
             sort_field = ""
 
         connection = sqlite3.connect(self.db.database_path)
-        connection.row_factory = sqlite3.Row  # 设置行工厂以访问列信息
+        connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
+
+        # 获取表的主键信息
+        cursor.execute(f'PRAGMA table_info("{table_name}")')
+        columns_info = cursor.fetchall()
+        primary_key = next((col[1] for col in columns_info if col[5] == 1), None)  # col[5] 表示是否为主键
+
+        # 如果存在主键，同时返回主键和rowid；否则只返回rowid
+        if primary_key:
+            select_fields = f'*, "{primary_key}" as primary_key, rowid'
+        else:
+            select_fields = "*, rowid"
+            primary_key = "rowid"
+
         cursor.execute(
-            f'SELECT *, rowid FROM "{table_name}" {sort_field} LIMIT {page_size} OFFSET {(page_num - 1) * page_size}'
+            f'SELECT {select_fields} FROM "{table_name}" {sort_field} LIMIT {page_size} OFFSET {(page_num - 1) * page_size}'
         )
-        records = [dict(row) for row in cursor.fetchall()]  # 将每条记录转换为字典形式
+        records = [dict(row) for row in cursor.fetchall()]
+
         cursor.execute(f'SELECT COUNT(*) FROM "{table_name}"')
         total = cursor.fetchone()[0]
         connection.close()
+
         return {
             "records": records,
             "total": total,
+            "primary_key": primary_key,  # 返回主键信息
         }
 
     def get_table_max_rows(self, table_name: str) -> int:
