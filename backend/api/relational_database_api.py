@@ -302,6 +302,7 @@ class RelationalDatabaseTableRecordAPI:
             data={
                 "records": result["records"],
                 "schema": user_table.schema,
+                "primary_key": result["primary_key"],
                 "total": result["total"],
                 "page_size": page_size,
                 "page": page_num,

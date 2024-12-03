@@ -78,6 +78,7 @@ const tableRecords = reactive({
   columns: [],
   data: [],
   schema: [],
+  primaryKey: '',
   loading: false,
   current: 1,
   pageSize: 10,
@@ -103,6 +104,7 @@ const tableRecords = reactive({
     })
     if (res.status == 200) {
       tableRecords.data = res.data.records
+      tableRecords.primaryKey = res.data.primary_key
       tableRecords.columns = tableRecords.schema.columns.map((item) => ({
         title: item.name,
         dataIndex: item.name,
@@ -248,8 +250,8 @@ const addRecordModal = reactive({
               </a-button>
             </div>
             <a-table :loading="tableRecords.loading" :columns="tableRecords.columns" :data-source="tableRecords.data"
-              :pagination="tableRecords.pagination" :row-selection="tableRecords.rowSelection" rowKey="rowid"
-              :scroll="{ x: 970 }" @change="tableRecords.handleTableChange">
+              :pagination="tableRecords.pagination" :row-selection="tableRecords.rowSelection"
+              :rowKey="tableRecords.primaryKey" :scroll="{ x: 970 }" @change="tableRecords.handleTableChange">
               <template #title>
                 <a-flex gap="small" justify="space-between">
                   <div v-show="tableRecords.editable">
