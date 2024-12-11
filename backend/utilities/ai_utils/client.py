@@ -11,13 +11,13 @@ from utilities.config import Settings
 
 @overload
 def get_openai_client_and_model_id(
-    is_async: Literal[False] = False, model_id: str = ""
+    is_async: Literal[False], model_id: str = ""
 ) -> Tuple[OpenAI | AzureOpenAI, str]: ...
 
 
 @overload
 def get_openai_client_and_model_id(
-    is_async: Literal[True] = True, model_id: str = ""
+    is_async: Literal[True], model_id: str = ""
 ) -> Tuple[AsyncOpenAI | AsyncAzureOpenAI, str]: ...
 
 

@@ -31,11 +31,11 @@ http_proxy_host_re = re.compile(r"http.*://(.*?)$")
 
 
 @overload
-def proxies(is_async: Literal[False] = False) -> Mapping[str, httpx.HTTPTransport]: ...
+def proxies(is_async: Literal[False]) -> Mapping[str, httpx.HTTPTransport]: ...
 
 
 @overload
-def proxies(is_async: Literal[True] = True) -> Mapping[str, httpx.AsyncHTTPTransport]: ...
+def proxies(is_async: Literal[True]) -> Mapping[str, httpx.AsyncHTTPTransport]: ...
 
 
 def proxies(is_async: bool = False) -> Mapping[str, httpx.HTTPTransport | httpx.AsyncHTTPTransport]:
@@ -74,11 +74,11 @@ def proxies_for_requests():
 
 
 @overload
-def new_httpx_client(is_async: Literal[False] = False) -> httpx.Client: ...
+def new_httpx_client(is_async: Literal[False]) -> httpx.Client: ...
 
 
 @overload
-def new_httpx_client(is_async: Literal[True] = True) -> httpx.AsyncClient: ...
+def new_httpx_client(is_async: Literal[True]) -> httpx.AsyncClient: ...
 
 
 def new_httpx_client(is_async: bool = False) -> httpx.Client | httpx.AsyncClient:

@@ -79,7 +79,7 @@ class ParagraphInfo(TypedDict):
 
 
 @overload
-def split_text(text: str, rules: dict, flat: Literal[False] = False) -> List[ParagraphInfo]: ...
+def split_text(text: str, rules: dict, flat: Literal[False]) -> List[ParagraphInfo]: ...
 
 
 @overload
