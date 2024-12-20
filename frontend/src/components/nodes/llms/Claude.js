@@ -28,6 +28,14 @@ export function createTemplateData() {
         "value": "claude-3-haiku-20240307",
         "options": [
           {
+            "value": "claude-3-5-sonnet-20241022",
+            "label": "claude-3-5-sonnet-20241022"
+          },
+          {
+            "value": "claude-3-5-haiku-20241022",
+            "label": "claude-3-5-haiku-20241022"
+          },
+          {
             "value": "claude-3-5-sonnet-20240620",
             "label": "claude-3-5-sonnet-20240620"
           },

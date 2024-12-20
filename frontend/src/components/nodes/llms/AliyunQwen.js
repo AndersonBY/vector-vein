@@ -36,6 +36,14 @@ export function createTemplateData() {
             "label": "qwen2.5-32b-instruct"
           },
           {
+            "value": "qwen2.5-coder-32b-instruct",
+            "label": "qwen2.5-coder-32b-instruct"
+          },
+          {
+            "value": "qwq-32b-preview",
+            "label": "qwq-32b-preview"
+          },
+          {
             "value": "qwen2.5-14b-instruct",
             "label": "qwen2.5-14b-instruct"
           },
@@ -43,30 +51,6 @@ export function createTemplateData() {
             "value": "qwen2.5-7b-instruct",
             "label": "qwen2.5-7b-instruct"
           },
-          {
-            "value": "qwen2-72b-instruct",
-            "label": "qwen2-72b-instruct"
-          },
-          {
-            "value": "qwen1.5-110b-chat",
-            "label": "qwen1.5-110b-chat"
-          },
-          {
-            "value": "qwen1.5-72b-chat",
-            "label": "qwen1.5-72b-chat"
-          },
-          {
-            "value": "qwen1.5-32b-chat",
-            "label": "qwen1.5-32b-chat"
-          },
-          {
-            "value": "qwen1.5-14b-chat",
-            "label": "qwen1.5-14b-chat"
-          },
-          {
-            "value": "qwen1.5-7b-chat",
-            "label": "qwen1.5-7b-chat"
-          }
         ],
         "name": "llm_model",
         "display_name": "llm_model",

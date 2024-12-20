@@ -118,6 +118,9 @@ DEFAULT_SETTINGS = {
         ],
         "openai": {
             "models": {
+                "o1": {"id": "o1", "endpoints": ["openai-default"]},
+                "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
+                "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
                 "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
                 "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
                 "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},
@@ -147,6 +150,14 @@ DEFAULT_SETTINGS = {
                     "id": "claude-3-5-sonnet-20240620",
                     "endpoints": ["anthropic-default"],
                 },
+                "claude-3-5-sonnet-20241022": {
+                    "id": "claude-3-5-sonnet-20241022",
+                    "endpoints": ["anthropic-default"],
+                },
+                "claude-3-5-haiku-20241022": {
+                    "id": "claude-3-5-haiku-20241022",
+                    "endpoints": ["anthropic-default"],
+                },
             }
         },
         "minimax": {
@@ -161,12 +172,17 @@ DEFAULT_SETTINGS = {
             "models": {
                 "gemini-1.5-pro": {"id": "gemini-1.5-pro", "endpoints": ["gemini-default"]},
                 "gemini-1.5-flash": {"id": "gemini-1.5-flash", "endpoints": ["gemini-default"]},
+                "gemini-2.0-flash-exp": {"endpoints": ["gemini-default"], "id": "gemini-2.0-flash-exp"},
+                "gemini-2.0-flash-thinking-exp-1219": {
+                    "endpoints": ["gemini-default"],
+                    "id": "gemini-2.0-flash-thinking-exp-1219",
+                },
+                "gemini-exp-1206": {"endpoints": ["gemini-default"], "id": "gemini-exp-1206"},
             }
         },
         "deepseek": {
             "models": {
                 "deepseek-chat": {"id": "deepseek-chat", "endpoints": ["deepseek-default"]},
-                "deepseek-coder": {"id": "deepseek-coder", "endpoints": ["deepseek-default"]},
             }
         },
         "groq": {
@@ -264,102 +280,6 @@ DEFAULT_SETTINGS = {
         },
         "qwen": {
             "models": {
-                "qwen1.5-0.5b-chat": {
-                    "id": "qwen1.5-0.5b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-1.8b-chat": {
-                    "id": "qwen1.5-1.8b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-7b-chat": {
-                    "id": "qwen1.5-7b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 8096,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-14b-chat": {
-                    "id": "qwen1.5-14b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 8096,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-32b-chat": {
-                    "id": "qwen1.5-32b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-72b-chat": {
-                    "id": "qwen1.5-72b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 2048,
-                },
-                "qwen1.5-110b-chat": {
-                    "id": "qwen1.5-110b-chat",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2-0.5b-instruct": {
-                    "id": "qwen2-0.5b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 6144,
-                },
-                "qwen2-1.5b-instruct": {
-                    "id": "qwen2-1.5b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 6144,
-                },
-                "qwen2-7b-instruct": {
-                    "id": "qwen2-7b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 6144,
-                },
-                "qwen2-57b-a14b-instruct": {
-                    "id": "qwen2-57b-a14b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 6144,
-                },
-                "qwen2-72b-instruct": {
-                    "id": "qwen2-72b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 6144,
-                },
                 "qwen2.5-7b-instruct": {
                     "id": "qwen2.5-7b-instruct",
                     "endpoints": ["qwen-default"],
@@ -384,6 +304,14 @@ DEFAULT_SETTINGS = {
                     "context_length": 131072,
                     "max_output_tokens": 8192,
                 },
+                "qwen2.5-coder-32b-instruct": {
+                    "id": "qwen2.5-coder-32b-instruct",
+                    "endpoints": ["qwen-default"],
+                    "function_call_available": False,
+                    "response_format_available": False,
+                    "context_length": 131072,
+                    "max_output_tokens": 4096,
+                },
                 "qwen2.5-72b-instruct": {
                     "id": "qwen2.5-72b-instruct",
                     "endpoints": ["qwen-default"],
@@ -391,6 +319,14 @@ DEFAULT_SETTINGS = {
                     "response_format_available": False,
                     "context_length": 131072,
                     "max_output_tokens": 8192,
+                },
+                "qwq-32b-preview": {
+                    "id": "qwq-32b-preview",
+                    "endpoints": ["qwen-default"],
+                    "function_call_available": False,
+                    "response_format_available": False,
+                    "context_length": 32768,
+                    "max_output_tokens": 4096,
                 },
                 "qwen-max": {
                     "id": "qwen-max",
@@ -435,18 +371,22 @@ DEFAULT_SETTINGS = {
                 "yi-medium-200k": {"id": "yi-medium-200k", "endpoints": ["lingyiwanwu-default"]},
                 "yi-spark": {"id": "yi-spark", "endpoints": ["lingyiwanwu-default"]},
                 "yi-vision": {"id": "yi-vision", "endpoints": ["lingyiwanwu-default"]},
+                "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
             }
         },
         "zhipuai": {
             "models": {
                 "glm-3-turbo": {"id": "glm-3-turbo", "endpoints": ["zhipuai-default"]},
                 "glm-4": {"id": "glm-4", "endpoints": ["zhipuai-default"]},
+                "glm-4-plus": {"id": "glm-4-plus", "endpoints": ["zhipuai-default"]},
                 "glm-4-0520": {"id": "glm-4-0520", "endpoints": ["zhipuai-default"]},
                 "glm-4-air": {"id": "glm-4-air", "endpoints": ["zhipuai-default"]},
                 "glm-4-airx": {"id": "glm-4-airx", "endpoints": ["zhipuai-default"]},
                 "glm-4-flash": {"id": "glm-4-flash", "endpoints": ["zhipuai-default"]},
+                "glm-4-flashx": {"id": "glm-4-flashx", "endpoints": ["zhipuai-default"]},
                 "glm-4-long": {"id": "glm-4-long", "endpoints": ["zhipuai-default"]},
                 "glm-4v": {"id": "glm-4v", "endpoints": ["zhipuai-default"]},
+                "glm-4v-flash": {"id": "glm-4v-flash", "endpoints": ["zhipuai-default"]},
                 "glm-4v-plus": {"id": "glm-4v-plus", "endpoints": ["zhipuai-default"]},
             }
         },

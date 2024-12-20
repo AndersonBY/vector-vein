@@ -28,20 +28,32 @@ export function createTemplateData() {
         "value": "gpt-4o-mini",
         "options": [
           {
-            "value": "gpt-3.5",
-            "label": "gpt-3.5-turbo"
+            "value": "o1",
+            "label": "o1"
           },
           {
-            "value": "gpt-4",
-            "label": "gpt-4-turbo"
+            "value": "o1-mini",
+            "label": "o1-mini"
+          },
+          {
+            "value": "o1-preview",
+            "label": "o1-preview"
+          },
+          {
+            "value": "gpt-4o-mini",
+            "label": "gpt-4o-mini"
           },
           {
             "value": "gpt-4o",
             "label": "gpt-4o"
           },
           {
-            "value": "gpt-4o-mini",
-            "label": "gpt-4o-mini"
+            "value": "gpt-4",
+            "label": "gpt-4-turbo"
+          },
+          {
+            "value": "gpt-3.5",
+            "label": "gpt-3.5-turbo"
           },
         ],
         "name": "llm_model",

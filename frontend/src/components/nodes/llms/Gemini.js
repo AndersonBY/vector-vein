@@ -28,6 +28,18 @@ export function createTemplateData() {
         "value": "gemini-1.5-flash",
         "options": [
           {
+            "value": "gemini-2.0-flash-exp",
+            "label": "gemini-2.0-flash-exp"
+          },
+          {
+            "value": "gemini-2.0-flash-thinking-exp-1219",
+            "label": "gemini-2.0-flash-thinking-exp-1219"
+          },
+          {
+            "value": "gemini-exp-1206",
+            "label": "gemini-exp-1206"
+          },
+          {
             "value": "gemini-1.5-flash",
             "label": "gemini-1.5-flash"
           },
