@@ -9,6 +9,7 @@ from markdownify import MarkdownConverter, chomp
 from langchain_text_splitters import (
     TokenTextSplitter,
     MarkdownTextSplitter,
+    ExperimentalMarkdownSyntaxTextSplitter,
 )
 
 from utilities.file_processing import static_file_server
@@ -78,6 +79,52 @@ class ParagraphInfo(TypedDict):
     word_counts: int
 
 
+class ChunkedMarkdownSyntaxTextSplitter:
+    def __init__(self, chunk_size: int = 1000, strip_headers: bool = False):
+        self.chunk_size = chunk_size
+        self.markdown_splitter = ExperimentalMarkdownSyntaxTextSplitter(
+            strip_headers=strip_headers,
+        )
+        self.secondary_splitter = MarkdownTextSplitter(chunk_size=chunk_size, chunk_overlap=0)
+
+    def split_text(self, text: str) -> List[str]:
+        # 首先使用 ExperimentalMarkdownSyntaxTextSplitter 进行分段
+        initial_splits = self.markdown_splitter.split_text(text)
+
+        # 处理长段落
+        intermediate_paragraphs = []
+        for doc in initial_splits:
+            content = doc.page_content
+            # 如果段落长度超过 chunk_size，使用 MarkdownTextSplitter 进行二次分割
+            if len(content) > self.chunk_size:
+                sub_splits = self.secondary_splitter.split_text(content)
+                intermediate_paragraphs.extend(sub_splits)
+            else:
+                intermediate_paragraphs.append(content)
+
+        # 合并短段落
+        final_paragraphs = []
+        i = 0
+        while i < len(intermediate_paragraphs):
+            current = intermediate_paragraphs[i]
+
+            # 如果是最后一个段落，直接添加
+            if i == len(intermediate_paragraphs) - 1:
+                final_paragraphs.append(current)
+                break
+
+            next_para = intermediate_paragraphs[i + 1]
+            # 如果当前段落和下一个段落的总长度小于 chunk_size，则合并
+            if len(current) + len(next_para) <= self.chunk_size:
+                final_paragraphs.append(current + "\n\n" + next_para)
+                i += 2  # 跳过下一个段落
+            else:
+                final_paragraphs.append(current)
+                i += 1
+
+        return final_paragraphs
+
+
 @overload
 def split_text(text: str, rules: dict, flat: Literal[False]) -> List[ParagraphInfo]: ...
 
@@ -112,8 +159,8 @@ def split_text(text: str, rules: dict, flat: bool = False) -> Union[List[Paragra
         delimiter = delimiter.encode().decode("unicode_escape").encode("latin1").decode("utf-8")
         paragraphs = re.split(delimiter, text)
     elif split_method == "markdown":
-        text_splitter = MarkdownTextSplitter(chunk_size=chunk_length, chunk_overlap=chunk_overlap)
-        paragraphs = [paragraph.page_content for paragraph in text_splitter.create_documents([text])]
+        text_splitter = ChunkedMarkdownSyntaxTextSplitter(chunk_size=chunk_length)
+        paragraphs = text_splitter.split_text(text)
     elif split_method == "table":
         reader = csv.DictReader(io.StringIO(text))
         paragraphs = []
