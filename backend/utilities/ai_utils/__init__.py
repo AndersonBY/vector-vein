@@ -34,7 +34,7 @@ def conversation_title_generator(
             "content": f'Dialogue Content:\n\n{conversation_text[:max_input_length]}\n\n---\n\n# Objective\nGenerate a concise title based on the above dialogue content.\n\n# Requirements\n- Within 20 letters\n- Directly output the bare title text without explanation and decoration\n- No need to enclose with quotation marks\n- Do not start with "\n- The output language must be consistent with the dialogue language\n\n# Output Title',
         },
     ]
-    summary = client.create_completion(messages).content
+    summary = client.create_completion(messages=messages).content
     return summary
 
 
