@@ -166,6 +166,7 @@ DEFAULT_SETTINGS = {
                 "abab5.5-chat": {"id": "abab5.5-chat", "endpoints": ["minimax-default"]},
                 "abab6-chat": {"id": "abab6-chat", "endpoints": ["minimax-default"]},
                 "abab6.5s-chat": {"id": "abab6.5s-chat", "endpoints": ["minimax-default"]},
+                "MiniMax-Text-01": {"endpoints": ["minimax-default"], "id": "MiniMax-Text-01"},
             }
         },
         "gemini": {
@@ -183,6 +184,7 @@ DEFAULT_SETTINGS = {
         "deepseek": {
             "models": {
                 "deepseek-chat": {"id": "deepseek-chat", "endpoints": ["deepseek-default"]},
+                "deepseek-reasoner": {"id": "deepseek-reasoner", "endpoints": ["deepseek-default"]},
             }
         },
         "groq": {
@@ -388,6 +390,7 @@ DEFAULT_SETTINGS = {
                 "glm-4v": {"id": "glm-4v", "endpoints": ["zhipuai-default"]},
                 "glm-4v-flash": {"id": "glm-4v-flash", "endpoints": ["zhipuai-default"]},
                 "glm-4v-plus": {"id": "glm-4v-plus", "endpoints": ["zhipuai-default"]},
+                "glm-zero-preview": {"id": "glm-zero-preview", "endpoints": ["zhipuai-default"]},
             }
         },
         "moonshot": {

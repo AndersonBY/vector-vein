@@ -49,6 +49,14 @@ export const nonLocalChatModelOptions = [
         label: "gpt-4o-mini",
         value: "gpt-4o-mini",
       },
+      {
+        label: "o1-mini",
+        value: "o1-mini",
+      },
+      {
+        label: "o1-preview",
+        value: "o1-preview",
+      },
     ]
   },
   {
@@ -56,16 +64,12 @@ export const nonLocalChatModelOptions = [
     value: "MiniMax",
     children: [
       {
-        label: "abab5.5-chat",
-        value: "abab5.5-chat",
-      },
-      {
-        label: "abab6-chat",
-        value: "abab6-chat",
-      },
-      {
         label: "abab6.5s-chat",
         value: "abab6.5s-chat",
+      },
+      {
+        label: "MiniMax-Text-01",
+        value: "MiniMax-Text-01",
       },
     ]
   },
@@ -74,16 +78,12 @@ export const nonLocalChatModelOptions = [
     value: "ZhiPuAI",
     children: [
       {
-        label: "glm-3-turbo",
-        value: "glm-3-turbo",
+        label: "glm-4-plus",
+        value: "glm-4-plus",
       },
       {
         label: "glm-4",
         value: "glm-4",
-      },
-      {
-        label: "glm-4-plus",
-        value: "glm-4-plus",
       },
       {
         label: "glm-4-0520",
@@ -102,67 +102,15 @@ export const nonLocalChatModelOptions = [
         value: "glm-4-flash",
       },
       {
-        label: "glm-4v",
-        value: "glm-4v",
-      },
-      {
         label: "glm-4-long",
         value: "glm-4-long",
       },
-      {
-        label: "glm-4v-plus",
-        value: "glm-4v-plus",
-      }
     ]
   },
   {
     label: "Qwen",
     value: "Qwen",
     children: [
-      {
-        label: "qwen1.5-0.5b-chat",
-        value: "qwen1.5-0.5b-chat",
-      },
-      {
-        label: "qwen1.5-1.8b-chat",
-        value: "qwen1.5-1.8b-chat",
-      },
-      {
-        label: "qwen1.5-7b-chat",
-        value: "qwen1.5-7b-chat",
-      },
-      {
-        label: "qwen1.5-14b-chat",
-        value: "qwen1.5-14b-chat",
-      },
-      {
-        label: "qwen1.5-32b-chat",
-        value: "qwen1.5-32b-chat",
-      },
-      {
-        label: "qwen1.5-72b-chat",
-        value: "qwen1.5-72b-chat",
-      },
-      {
-        label: "qwen1.5-110b-chat",
-        value: "qwen1.5-110b-chat",
-      },
-      {
-        label: "qwen2-0.5b-instruct",
-        value: "qwen2-0.5b-instruct",
-      },
-      {
-        label: "qwen2-1.5b-instruct",
-        value: "qwen2-1.5b-instruct",
-      },
-      {
-        label: "qwen2-7b-instruct",
-        value: "qwen2-7b-instruct",
-      },
-      {
-        label: "qwen2-57b-a14b-instruct",
-        value: "qwen2-57b-a14b-instruct",
-      },
       {
         label: "qwen2-72b-instruct",
         value: "qwen2-72b-instruct",
@@ -176,6 +124,10 @@ export const nonLocalChatModelOptions = [
         value: "qwen2.5-14b-instruct",
       },
       {
+        label: "qwen2.5-32b-instruct",
+        value: "qwen2.5-32b-instruct",
+      },
+      {
         label: "qwen2.5-72b-instruct",
         value: "qwen2.5-72b-instruct",
       },
@@ -184,16 +136,20 @@ export const nonLocalChatModelOptions = [
         value: "qwen-max",
       },
       {
-        label: "qwen-max-longcontext",
-        value: "qwen-max-longcontext",
-      },
-      {
         label: "qwen-plus",
         value: "qwen-plus",
       },
       {
         label: "qwen-turbo",
         value: "qwen-turbo",
+      },
+      {
+        label: "qwq-32b-preview",
+        value: "qwq-32b-preview",
+      },
+      {
+        label: "qwen2.5-coder-32b-instruct",
+        value: "qwen2.5-coder-32b-instruct",
       },
     ]
   },
@@ -237,7 +193,7 @@ export const nonLocalChatModelOptions = [
       },
       {
         label: "claude-3-5-haiku",
-        value: "claude-3-5-haiku-20240620",
+        value: "claude-3-5-haiku-20241022",
       },
     ]
   },
@@ -284,9 +240,9 @@ export const nonLocalChatModelOptions = [
         value: "deepseek-chat",
       },
       {
-        label: "deepseek-coder",
-        value: "deepseek-coder",
-      },
+        label: "deepseek-reasoner",
+        value: "deepseek-reasoner",
+      }
     ]
   },
   {
@@ -294,16 +250,20 @@ export const nonLocalChatModelOptions = [
     value: "Yi",
     children: [
       {
+        label: "yi-lightning",
+        value: "yi-lightning",
+      },
+      {
         label: "yi-large",
         value: "yi-large",
       },
       {
-        label: "yi-large-turbo",
-        value: "yi-large-turbo",
-      },
-      {
         label: "yi-large-fc",
         value: "yi-large-fc",
+      },
+      {
+        label: "yi-large-turbo",
+        value: "yi-large-turbo",
       },
       {
         label: "yi-medium",
@@ -317,52 +277,6 @@ export const nonLocalChatModelOptions = [
         label: "yi-spark",
         value: "yi-spark",
       },
-      {
-        label: "yi-lightning",
-        value: "yi-lightning",
-      },
-    ]
-  },
-  {
-    label: "Groq",
-    value: "Groq",
-    children: [
-      {
-        label: "mixtral-8x7b-32768",
-        value: "mixtral-8x7b-32768",
-      },
-      {
-        label: "llama3-70b-8192",
-        value: "llama3-70b-8192",
-      },
-      {
-        label: "llama3-8b-8192",
-        value: "llama3-8b-8192",
-      },
-      {
-        label: "gemma-7b-it",
-        value: "gemma-7b-it",
-      },
-      {
-        label: "gemma2-9b-it",
-        value: "gemma2-9b-it",
-      },
-      {
-        label: "llama3-groq-70b-8192-tool-use-preview",
-        value: "llama3-groq-70b-8192-tool-use-preview",
-      },
-      {
-        label: "llama3-groq-8b-8192-tool-use-preview",
-        value: "llama3-groq-8b-8192-tool-use-preview",
-      },
-      {
-        label: "llama-3.1-70b-versatile",
-        value: "llama-3.1-70b-versatile",
-      },
-      {
-        label: "llama-3.1-8b-versatile",
-        value: "llama-3.1-8b-versatile",
-      },
     ]
   },
   {
@@ -370,12 +284,24 @@ export const nonLocalChatModelOptions = [
     value: "Gemini",
     children: [
       {
-        label: "gemini-1.5-pro",
-        value: "gemini-1.5-pro",
+        "value": "gemini-1.5-flash",
+        "label": "gemini-1.5-flash"
       },
       {
-        label: "gemini-1.5-flash",
-        value: "gemini-1.5-flash",
+        "value": "gemini-1.5-pro",
+        "label": "gemini-1.5-pro"
+      },
+      {
+        "value": "gemini-2.0-flash-exp",
+        "label": "gemini-2.0-flash-exp"
+      },
+      {
+        "value": "gemini-2.0-flash-thinking-exp-1219",
+        "label": "gemini-2.0-flash-thinking-exp-1219"
+      },
+      {
+        "value": "gemini-exp-1206",
+        "label": "gemini-exp-1206"
       },
     ]
   },
