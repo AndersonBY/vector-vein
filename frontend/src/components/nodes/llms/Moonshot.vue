@@ -1,8 +1,7 @@
 <script setup>
 import { ref } from 'vue'
-import BaseNode from '@/components/nodes/BaseNode.vue'
-import { createTemplateData } from './Moonshot'
-
+import BaseLLMComponent from './_BaseLLM.vue'
+import { createTemplateData } from './Moonshot.js'
 const props = defineProps({
   id: {
     type: String,
@@ -15,16 +14,10 @@ const props = defineProps({
 })
 
 const fieldsData = ref(props.data.template)
-const templateData = createTemplateData()
-Object.entries(templateData.template).forEach(([key, value]) => {
-  fieldsData.value[key] = fieldsData.value[key] || value
-  if (value.is_output) {
-    fieldsData.value[key].is_output = true
-  }
-})
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.Moonshot" documentPath="/help/docs/language-models#node-Moonshot" />
+  <BaseLLMComponent :id="id" :createTemplateData="createTemplateData" :debug="props.data.debug"
+    v-model:templateData="fieldsData" llmName="Moonshot" :responseFormatAvailable="true"
+    :functionCallAvailable="true" />
 </template>

@@ -1,9 +1,3 @@
-/**
- * @Author: Bi Ying
- * @Date:   2024-04-15 13:25:09
- * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-07 15:34:56
- */
 export function createTemplateData() {
   return {
     "description": "description",
@@ -28,8 +22,20 @@ export function createTemplateData() {
         "value": "gpt-4o-mini",
         "options": [
           {
-            "value": "o1",
-            "label": "o1"
+            "value": "gpt-3.5",
+            "label": "gpt-3.5-turbo"
+          },
+          {
+            "value": "gpt-4",
+            "label": "gpt-4-turbo"
+          },
+          {
+            "value": "gpt-4o",
+            "label": "gpt-4o"
+          },
+          {
+            "value": "gpt-4o-mini",
+            "label": "gpt-4o-mini"
           },
           {
             "value": "o1-mini",
@@ -40,26 +46,13 @@ export function createTemplateData() {
             "label": "o1-preview"
           },
           {
-            "value": "gpt-4o-mini",
-            "label": "gpt-4o-mini"
-          },
-          {
-            "value": "gpt-4o",
-            "label": "gpt-4o"
-          },
-          {
-            "value": "gpt-4",
-            "label": "gpt-4-turbo"
-          },
-          {
-            "value": "gpt-3.5",
-            "label": "gpt-3.5-turbo"
+            "value": "o1",
+            "label": "o1"
           },
         ],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },
@@ -73,6 +66,41 @@ export function createTemplateData() {
         "type": "float",
         "list": false,
         "field_type": "temperature"
+      },
+      "top_p": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": 0.95,
+        "name": "top_p",
+        "display_name": "top_p",
+        "type": "float",
+        "list": false,
+        "field_type": "top_p",
+        "group": "default",
+      },
+      "stream": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "stream",
+        "display_name": "stream",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
+      },
+      "system_prompt": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "system_prompt",
+        "display_name": "system_prompt",
+        "type": "str",
+        "list": false,
+        "field_type": "textarea",
+        "group": "default",
       },
       "response_format": {
         "required": false,
@@ -92,7 +120,6 @@ export function createTemplateData() {
         "name": "response_format",
         "display_name": "response_format",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },
@@ -136,7 +163,6 @@ export function createTemplateData() {
         "name": "function_call_mode",
         "display_name": "function_call_mode",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },

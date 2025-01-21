@@ -1,9 +1,3 @@
-/**
- * @Author: Bi Ying
- * @Date:   2024-04-15 13:21:37
- * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-24 11:47:47
- */
 export function createTemplateData() {
   return {
     "description": "description",
@@ -25,8 +19,12 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "yi-large",
+        "value": "yi-lightning",
         "options": [
+          {
+            "value": "yi-lightning",
+            "label": "yi-lightning",
+          },
           {
             "value": "yi-large",
             "label": "yi-large",
@@ -51,7 +49,6 @@ export function createTemplateData() {
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },
@@ -65,6 +62,29 @@ export function createTemplateData() {
         "type": "float",
         "list": false,
         "field_type": "temperature"
+      },
+      "top_p": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": 0.95,
+        "name": "top_p",
+        "display_name": "top_p",
+        "type": "float",
+        "list": false,
+        "field_type": "top_p",
+        "group": "default",
+      },
+      "stream": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "stream",
+        "display_name": "stream",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
       },
       "output": {
         "required": true,

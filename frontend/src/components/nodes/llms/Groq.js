@@ -1,9 +1,3 @@
-/**
- * @Author: Bi Ying
- * @Date:   2024-04-15 13:34:20
- * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-29 16:25:59
- */
 export function createTemplateData() {
   return {
     "description": "description",
@@ -25,7 +19,7 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "llama-3.1-70b-versatile",
+        "value": "groq-mixtral-8x7b-32768",
         "options": [
           {
             "label": "mixtral-8x7b-32768",
@@ -67,7 +61,6 @@ export function createTemplateData() {
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },
@@ -81,6 +74,29 @@ export function createTemplateData() {
         "type": "float",
         "list": false,
         "field_type": "temperature"
+      },
+      "top_p": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": 0.95,
+        "name": "top_p",
+        "display_name": "top_p",
+        "type": "float",
+        "list": false,
+        "field_type": "top_p",
+        "group": "default",
+      },
+      "stream": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "stream",
+        "display_name": "stream",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
       },
       "output": {
         "required": true,

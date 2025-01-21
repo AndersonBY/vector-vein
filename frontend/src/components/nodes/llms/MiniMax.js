@@ -1,9 +1,3 @@
-/**
- * @Author: Bi Ying
- * @Date:   2024-04-15 13:22:49
- * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-05-02 12:38:43
- */
 export function createTemplateData() {
   return {
     "description": "description",
@@ -25,25 +19,20 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "abab6.5s-chat",
+        "value": "MiniMax-Text-01",
         "options": [
-          {
-            "value": "abab5.5-chat",
-            "label": "abab5.5-chat"
-          },
-          {
-            "value": "abab6-chat",
-            "label": "abab6-chat"
-          },
           {
             "value": "abab6.5s-chat",
             "label": "abab6.5s-chat"
+          },
+          {
+            "value": "MiniMax-Text-01",
+            "label": "MiniMax-Text-01"
           },
         ],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
       },
@@ -56,7 +45,111 @@ export function createTemplateData() {
         "display_name": "temperature",
         "type": "float",
         "list": false,
-        "field_type": "temperature"
+        "field_type": "temperature",
+        "group": "default",
+      },
+      "top_p": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": 0.95,
+        "name": "top_p",
+        "display_name": "top_p",
+        "type": "float",
+        "list": false,
+        "field_type": "top_p",
+        "group": "default",
+      },
+      "stream": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "stream",
+        "display_name": "stream",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
+      },
+      "system_prompt": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "system_prompt",
+        "display_name": "system_prompt",
+        "type": "str",
+        "list": false,
+        "field_type": "textarea",
+        "group": "default",
+      },
+      "response_format": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "text",
+        "options": [
+          {
+            "value": "text",
+            "label": "Text"
+          },
+          {
+            "value": "json_object",
+            "label": "JSON"
+          },
+        ],
+        "name": "response_format",
+        "display_name": "response_format",
+        "type": "str",
+        "list": true,
+        "field_type": "select",
+        "group": "default",
+      },
+      "use_function_call": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "use_function_call",
+        "display_name": "use_function_call",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox",
+        "group": "default",
+      },
+      "functions": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": [],
+        "name": "functions",
+        "display_name": "functions",
+        "type": "list",
+        "list": false,
+        "field_type": "select",
+        "group": "default",
+      },
+      "function_call_mode": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "auto",
+        "options": [
+          {
+            "value": "auto",
+            "label": "auto"
+          },
+          {
+            "value": "none",
+            "label": "none"
+          },
+        ],
+        "name": "function_call_mode",
+        "display_name": "function_call_mode",
+        "type": "str",
+        "list": true,
+        "field_type": "select",
+        "group": "default",
       },
       "output": {
         "required": true,
@@ -69,6 +162,36 @@ export function createTemplateData() {
         "list": false,
         "field_type": "",
         "is_output": true
+      },
+      "function_call_output": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "function_call_output",
+        "display_name": "function_call_output",
+        "type": "str",
+        "list": false,
+        "field_type": "",
+        "is_output": true,
+        "condition": (fieldsData) => {
+          return fieldsData.use_function_call.value
+        }
+      },
+      "function_call_arguments": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "function_call_arguments",
+        "display_name": "function_call_arguments",
+        "type": "dict",
+        "list": false,
+        "field_type": "",
+        "is_output": true,
+        "condition": (fieldsData) => {
+          return fieldsData.use_function_call.value
+        }
       },
     }
   }

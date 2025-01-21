@@ -1,9 +1,3 @@
-/**
- * @Author: Bi Ying
- * @Date:   2024-04-15 13:17:37
- * @Last Modified by:   Bi Ying
- * @Last Modified time: 2024-06-24 22:49:13
- */
 export function createTemplateData() {
   return {
     "description": "description",
@@ -25,39 +19,57 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-haiku-20240307",
+        "value": "claude-3-5-haiku",
         "options": [
           {
-            "value": "claude-3-5-sonnet-20241022",
-            "label": "claude-3-5-sonnet-20241022"
+            "value": "claude-3-5-sonnet",
+            "label": "claude-3-5-sonnet"
           },
           {
-            "value": "claude-3-5-haiku-20241022",
-            "label": "claude-3-5-haiku-20241022"
+            "value": "claude-3-5-haiku",
+            "label": "claude-3-5-haiku"
           },
           {
-            "value": "claude-3-5-sonnet-20240620",
-            "label": "claude-3-5-sonnet-20240620"
+            "value": "claude-3-opus",
+            "label": "claude-3-opus"
           },
           {
-            "value": "claude-3-opus-20240229",
-            "label": "claude-3-opus-20240229"
+            "value": "claude-3-sonnet",
+            "label": "claude-3-sonnet"
           },
           {
-            "value": "claude-3-sonnet-20240229",
-            "label": "claude-3-sonnet-20240229"
-          },
-          {
-            "value": "claude-3-haiku-20240307",
-            "label": "claude-3-haiku-20240307"
+            "value": "claude-3-haiku",
+            "label": "claude-3-haiku"
           },
         ],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "select"
+      },
+      "stream": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "stream",
+        "display_name": "stream",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox"
+      },
+      "system_prompt": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "system_prompt",
+        "display_name": "system_prompt",
+        "type": "str",
+        "list": false,
+        "field_type": "textarea",
+        "group": "default",
       },
       "temperature": {
         "required": true,
@@ -68,7 +80,8 @@ export function createTemplateData() {
         "display_name": "temperature",
         "type": "float",
         "list": false,
-        "field_type": "temperature"
+        "field_type": "temperature",
+        "group": "default",
       },
       "output": {
         "required": true,
