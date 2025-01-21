@@ -196,11 +196,14 @@ const sendWebsocketMsg = async (msg) => {
         aiMessage.content_type = 'WKF'
         aiMessage.content.tool = data.tool_calls[0].function.name
         aiMessage.content.text += data.content ?? ''
-      } else if (data.content === null) {
+      } else if (data.content === null && data.reasoning_content === null) {
         return
       } else {
         aiMessage.workflow_invoke_step = ''
         aiMessage.content_type = 'TXT'
+        if (data.reasoning_content) {
+          aiMessage.content.text += data.reasoning_content ?? ''
+        }
         aiMessage.content.text += data.content ?? ''
       }
     } else {
@@ -211,7 +214,7 @@ const sendWebsocketMsg = async (msg) => {
         userChatsStore.updateConversation(conversationId.value, 'title', data.title)
       }
       await messageAPI('done_notice', { mid: aiMessage.mid })
-      aiMessage.content.text = data.content
+      aiMessage.content.text = (data.reasoning_content + '\n\n' ?? '') + (data.content ?? '')
       aiMessage.status = aiMessage.content_type == 'WKF' ? 'W' : 'S'
       if (aiMessage.content_type == 'WKF') {
         aiMessage.workflow_invoke_step = 'wait_for_invoke'
