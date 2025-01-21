@@ -21,7 +21,7 @@ const props = defineProps({
   },
   reservedFieldNames: {
     type: Array,
-    required: true,
+    required: false,
     default: ['template', 'output'],
   },
 })
