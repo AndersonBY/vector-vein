@@ -140,7 +140,7 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
           </a-sub-menu>
         </a-menu>
       </a-layout-sider>
-      <a-layout-content :style="{ padding: '12px 24px', minHeight: '280px' }">
+      <a-layout-content class="layout-content-container">
         <router-view :key="workflowId"></router-view>
       </a-layout-content>
     </a-layout>
@@ -149,12 +149,13 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
 
 <style scoped>
 .space-container {
-  height: calc(100vh - 64px);
+  height: 100%;
+  flex: 1;
 }
 
 .space-container .layout {
-  height: 100%;
-  background-color: var(--component-background);
+  padding: 24px 0;
+  background: var(--component-background);
 }
 
 .space-container .starred-workflow-item {
@@ -181,5 +182,10 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
 .space-container .starred-workflow-item:hover .starred-workflow-item-more-container {
   opacity: 1;
   visibility: visible;
+}
+
+.space-container .layout-content-container {
+  padding: 0 24px;
+  min-height: 280px;
 }
 </style>

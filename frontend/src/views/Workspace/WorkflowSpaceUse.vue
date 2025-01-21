@@ -189,25 +189,10 @@ const openEditor = async () => {
 
 <style scoped>
 .space-container {
-  height: calc(100vh - 76px);
+  height: 100%;
 }
 
 .main-use-container {
   padding-bottom: 60px;
-}
-
-.ui-special-item {
-  margin-bottom: 24px;
-}
-
-.html-iframe {
-  border: 2px solid #dedede;
-  border-radius: 10px;
-  width: 100%;
-  min-height: 80vh;
-}
-
-.text-output-title {
-  color: #005b79;
 }
 </style>
