@@ -37,6 +37,10 @@ class WebSocketServer:
         self.port = self.find_available_port(start_port)
         self.server = None
         self.thread = None
+        self.handlers = {
+            "/ws/chat": self.handle_chat,
+            "/ws/workflow_node": self.handle_workflow_node,
+        }
 
     def find_available_port(self, start_port):
         port = start_port
@@ -49,10 +53,42 @@ class WebSocketServer:
                     port += 1
 
     async def handler(self, websocket: ServerConnection):
-        async for message in websocket:
-            await self.process_message(websocket, message)
+        request_path = websocket.request.path if websocket.request else ""
+        mprint(f"WebSocket request path: {request_path}")
+        base_path = "/" + request_path.split("/")[1] + "/" + request_path.split("/")[2]
+        param = request_path.split("/")[3]
 
-    async def process_message(self, websocket: ServerConnection, message: str | bytes):
+        handler = self.handlers.get(base_path)
+        if handler:
+            await handler(websocket, param)
+        else:
+            mprint(f"No handler found for path: {request_path}")
+            await websocket.close(1008, "Path not supported")
+
+    async def handle_workflow_node(self, websocket: ServerConnection, param: str):
+        record_id, node_id = param.split("_")
+        queue_key = f"workflow_record{record_id}_node{node_id}:data_queue"
+        data_queue = []
+        assert isinstance(data_queue, list)
+        current_length = len(data_queue)
+
+        start_time = time.time()
+        while time.time() - start_time < 3 * 60:
+            latest_data_queue = cache.get(queue_key, [])
+            assert isinstance(latest_data_queue, list)
+            while len(latest_data_queue) > current_length:
+                data = latest_data_queue[current_length]
+                current_length += 1
+                await websocket.send(json.dumps(data, ensure_ascii=False))
+                if data == '{"end": true}':
+                    break
+            await asyncio.sleep(0.1)
+
+    async def handle_chat(self, websocket: ServerConnection, param: str):
+        async for message in websocket:
+            await self.process_message(websocket, message, param)
+
+    async def process_message(self, websocket: ServerConnection, message: str | bytes, param: str):
         user_settings = Settings()
         vectorvein_settings.load(user_settings.get("llm_settings"))
 
@@ -101,6 +137,7 @@ class WebSocketServer:
         response = await client.create_stream(messages=messages, **tools_params)
         mprint("Agent chat response created")
         full_content = ""
+        full_reasoning_content = ""
         tool_calls = {}
         selected_workflow = {}
         workflow_invoke_step = ""
@@ -111,6 +148,7 @@ class WebSocketServer:
             start_generate_time = time.time()
 
             full_content += chunk.content if chunk.content is not None else ""
+            full_reasoning_content += chunk.reasoning_content if chunk.reasoning_content is not None else ""
             if chunk.tool_calls and len(chunk.tool_calls) > 0:
                 workflow_invoke_step = "generating_params"
                 piece = chunk.tool_calls[0]
@@ -195,6 +233,7 @@ class WebSocketServer:
                     "title": conversation_title,
                     "role": "assistant",
                     "content": full_content,
+                    "reasoning_content": full_reasoning_content,
                     "selected_workflow": selected_workflow,
                     "model": model,
                     "end": True,

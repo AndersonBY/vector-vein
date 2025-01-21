@@ -4,6 +4,7 @@ import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@icon-park/vue-next'
+import ReconnectingWebSocket from 'reconnecting-websocket'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
@@ -23,9 +24,11 @@ import {
   hasShowFields,
   checkFieldsValid,
   nonFormItemsTypes,
+  getNodeConnectedNodes,
   getUIDesignFromWorkflow,
 } from '@/utils/workflow'
 import { deepCopy } from '@/utils/util'
+import { settingAPI } from '@/api/user'
 import { workflowAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 
@@ -175,6 +178,8 @@ onBeforeUnmount(() => {
   clearInterval(checkStatusTimer.value)
 })
 
+const wsPort = ref(null)
+
 const checkingStatus = ref(false)
 const checkWorkflowRunningStatus = async () => {
   if (checkingStatus.value) {
@@ -215,6 +220,83 @@ const checkWorkflowRunningStatus = async () => {
       if (finishedNode) {
         node.data = finishedNode.data
         node.finished = true
+      }
+    })
+    finishedNodes.forEach(async (node) => {
+      if (node.category == 'llms') {
+        const isExist = streamableNodes.value.some((item) => item.id == node.id)
+        if (!isExist) {
+          streamableNodes.value.push(node)
+          const connectedNodes = getNodeConnectedNodes(node.id, 'output', edges.value)
+          // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
+          const textNodeIds = connectedNodes.filter((item) => {
+            return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
+          })
+          const textNodes = outputNodes.value.filter((item) => textNodeIds.includes(item.id))
+          textNodes.forEach((textNode) => {
+            textNode.data.template.text.value = ''
+            textNode.finished = true
+          })
+
+          if (wsPort.value === null) {
+            const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
+            wsPort.value = res.data.port
+          }
+          const chatSocket = new ReconnectingWebSocket(
+            `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
+            null,
+            { maxReconnectAttempts: 5 }
+          );
+
+          chatSocket.onopen = () => {
+            chatSocket.send('start')
+            console.log('连接成功')
+          }
+          chatSocket.onmessage = async (e) => {
+            const data = JSON.parse(e.data)
+            if (data.end) {
+              chatSocket.close()
+              return
+            }
+            textNodes.forEach((textNode) => {
+              textNode.data.template.text.value += data.content || ''
+            });
+          }
+
+          if (node.type === 'Deepseek') {
+            const connectedNodes = getNodeConnectedNodes(node.id, 'reasoning_content', edges.value)
+            // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
+            const textNodeIds = connectedNodes.filter((item) => {
+              return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
+            })
+            const textNodes = outputNodes.value.filter((item) => textNodeIds.includes(item.id))
+            textNodes.forEach((textNode) => {
+              textNode.data.template.text.value = ''
+              textNode.finished = true
+            })
+
+            const chatSocket = new ReconnectingWebSocket(
+              `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
+              null,
+              { maxReconnectAttempts: 5 }
+            );
+
+            chatSocket.onopen = () => {
+              chatSocket.send('start')
+              console.log('连接成功')
+            }
+            chatSocket.onmessage = async (e) => {
+              const data = JSON.parse(e.data)
+              if (data.end) {
+                chatSocket.close()
+                return
+              }
+              textNodes.forEach((textNode) => {
+                textNode.data.template.text.value += data.reasoning_content
+              });
+            }
+          }
+        }
       }
     })
   } else if (statusResponse.status == 500) {

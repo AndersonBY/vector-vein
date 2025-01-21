@@ -5,23 +5,28 @@
 # @Last Modified time: 2024-06-15 18:44:21
 import uuid
 import time
+from pathlib import Path
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Any, Union
 from functools import cached_property
 
-from models import WorkflowRunRecord, Message
+from diskcache import Deque
+
 from models import Workflow as WorkflowModel
+from models import WorkflowRunRecord, Message
+from utilities.config import config, cache
 from utilities.general import mprint_with_name
 
 
 mprint = mprint_with_name(name="Workflow")
 
-
 ASYNC_TASKS = [
     "control_flows.workflow_loop",
     "tools.workflow_invoke",
 ]
+
+node_status_queue = Deque(directory=Path(config.data_path) / "cache" / "node_status")
 
 
 class DAG:
@@ -477,6 +482,61 @@ class Workflow:
             return False
         node.status = status
         return True
+
+    def report_node_status(
+        self,
+        node_id: str,
+    ):
+        try:
+            node = self.get_node(node_id)
+            if node is None:
+                return False
+
+            workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
+            if workflow_record is None:
+                return False
+            nodes = workflow_record.data["nodes"]
+            for _node in nodes:
+                if _node["id"] != node_id:
+                    continue
+                _node.update(node.data)
+                break
+            else:
+                mprint.error(f"Node {node_id} not found in workflow {self.record_id}")
+                return False
+
+            if node.status == 202:
+                cache.set(f"workflow:record:{self.record_id}:node_id:{node_id}:status", 202, 60 * 60)
+
+            finished_nodes = cache.get(f"workflow:record:finished_nodes:{self.record_id}", [])
+            assert isinstance(finished_nodes, list)
+            for finished_node in finished_nodes:
+                if finished_node.get("id") == node_id:
+                    break
+            else:
+                finished_nodes.append(_node)
+                cache.set(f"workflow:record:finished_nodes:{self.record_id}", finished_nodes, 60 * 60)
+
+            return True
+        except Exception as e:
+            mprint.error(f"report_node_status failed: {e}")
+            return False
+
+    def push_node_data(
+        self,
+        node_id: str,
+        data: dict | str,
+    ):
+        try:
+            key = f"workflow_record{self.record_id}_node{node_id}:data_queue"
+            data_queue = cache.get(key, [])
+            assert isinstance(data_queue, list)
+            data_queue.append(data)
+            cache.set(key, data_queue, 60 * 3)
+            return True
+        except Exception as e:
+            mprint.error(f"push_node_data failed: {e}")
+            return False
 
     def add_async_task(self, node_id: str, task_data: dict, timeout: int = 60 * 60):
         if "async_tasks" not in self.workflow_data:
