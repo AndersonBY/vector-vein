@@ -40,12 +40,12 @@ dependencies = [
   "pathvalidate>=3.2.0",
   "deepgram-sdk>=3.3.1",
   "deepgram-captions>=1.2.0",
-  "vectorvein>=0.1.23",
+  "vectorvein>=0.1.79",
   "docx-ea-font>=0.0.1",
 ]
 description = ""
 license = { text = "CC BY-NC-SA" }
-name = ""
+name = "VectorVein"
 requires-python = ">=3.10,<3.13"
 version = "0.3.4"
 
