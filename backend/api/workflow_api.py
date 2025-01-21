@@ -20,6 +20,7 @@ from api.utils import (
     run_workflow_common,
     get_user_object_general,
 )
+from utilities.config import cache
 from utilities.workflow import WorkflowData
 from utilities.file_processing import static_file_server
 from background_task.tasks import update_workflow_tool_call_data
@@ -211,9 +212,16 @@ class WorkflowAPI:
         if rid is None:
             return JResponse(status=400, msg="rid is None")
 
+        record_status = cache.get(f"workflow:record:{rid}")
+        finished_nodes = cache.get(f"workflow:record:finished_nodes:{rid}", [])
+        if record_status == 202:
+            return JResponse(status=202, data={"finished_nodes": finished_nodes})
+        elif record_status == 404:
+            return JResponse(status=404, msg="record not found")
+
         record_qs = WorkflowRunRecord.select().join(Workflow).where(WorkflowRunRecord.rid == rid)
         if not record_qs.exists():
-            response = {"status": 404, "msg": "record not found", "data": {}}
+            cache.set(f"workflow:record:{rid}", 404, 60 * 60)
             return JResponse(status=404, msg="record not found")
 
         record = record_qs.first()
@@ -222,12 +230,14 @@ class WorkflowAPI:
             workflow_serializer_data["data"] = record.data
             workflow_serializer_data["version"] = record.workflow_version
             response = {"status": 200, "msg": record.status, "data": workflow_serializer_data}
+            cache.set(f"workflow:record:{rid}", 200, 60 * 60)
         elif record.status in ("RUNNING", "QUEUED"):
-            response = {"status": 202, "msg": record.status, "data": {}}
+            response = {"status": 202, "msg": record.status, "data": {"finished_nodes": finished_nodes}}
         else:
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
             response = {"status": 500, "msg": record.status, "data": workflow_serializer_data}
+            cache.set(f"workflow:record:{rid}", 500, 60 * 60)
         return JResponse(**response)
 
     def add_to_fast_access(self, payload):
