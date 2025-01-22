@@ -227,21 +227,29 @@ const checkWorkflowRunningStatus = async () => {
         const isExist = streamableNodes.value.some((item) => item.id == node.id)
         if (!isExist) {
           streamableNodes.value.push(node)
-          const connectedNodes = getNodeConnectedNodes(node.id, 'output', edges.value)
+          const connectedOutputNodes = getNodeConnectedNodes(node.id, 'output', edges.value)
           // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
-          const textNodeIds = connectedNodes.filter((item) => {
+          const outputTextNodeIds = connectedOutputNodes.filter((item) => {
             return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
           })
-          const textNodes = outputNodes.value.filter((item) => textNodeIds.includes(item.id))
-          textNodes.forEach((textNode) => {
+          const outputTextNodes = outputNodes.value.filter((item) => outputTextNodeIds.includes(item.id))
+          outputTextNodes.forEach((textNode) => {
             textNode.data.template.text.value = ''
             textNode.finished = true
+          })
+
+          const connectedReasoningContentNodes = getNodeConnectedNodes(node.id, 'reasoning_content', edges.value)
+          const reasoningContentNodes = outputNodes.value.filter((item) => connectedReasoningContentNodes.includes(item.id))
+          reasoningContentNodes.forEach((reasoningContentNode) => {
+            reasoningContentNode.data.template.text.value = ''
+            reasoningContentNode.finished = true
           })
 
           if (wsPort.value === null) {
             const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
             wsPort.value = res.data.port
           }
+
           const chatSocket = new ReconnectingWebSocket(
             `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
             null,
@@ -258,43 +266,12 @@ const checkWorkflowRunningStatus = async () => {
               chatSocket.close()
               return
             }
-            textNodes.forEach((textNode) => {
-              textNode.data.template.text.value += data.content || ''
+            outputTextNodes.forEach((outputTextNode) => {
+              outputTextNode.data.template.text.value += data.content ?? ''
             });
-          }
-
-          if (node.type === 'Deepseek') {
-            const connectedNodes = getNodeConnectedNodes(node.id, 'reasoning_content', edges.value)
-            // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
-            const textNodeIds = connectedNodes.filter((item) => {
-              return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
-            })
-            const textNodes = outputNodes.value.filter((item) => textNodeIds.includes(item.id))
-            textNodes.forEach((textNode) => {
-              textNode.data.template.text.value = ''
-              textNode.finished = true
-            })
-
-            const chatSocket = new ReconnectingWebSocket(
-              `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
-              null,
-              { maxReconnectAttempts: 5 }
-            );
-
-            chatSocket.onopen = () => {
-              chatSocket.send('start')
-              console.log('连接成功')
-            }
-            chatSocket.onmessage = async (e) => {
-              const data = JSON.parse(e.data)
-              if (data.end) {
-                chatSocket.close()
-                return
-              }
-              textNodes.forEach((textNode) => {
-                textNode.data.template.text.value += data.reasoning_content
-              });
-            }
+            reasoningContentNodes.forEach((reasoningContentNode) => {
+              reasoningContentNode.data.template.text.value += data.reasoning_content ?? ''
+            });
           }
         }
       }
