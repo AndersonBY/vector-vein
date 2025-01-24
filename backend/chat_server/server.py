@@ -215,6 +215,7 @@ class WebSocketServer:
             "content_type": "TXT" if len(tool_calls) == 0 else "WKF",
             "content": {
                 "text": full_content,
+                "reasoning_content": full_reasoning_content,
             },
             "metadata": {
                 "selected_workflow": selected_workflow,

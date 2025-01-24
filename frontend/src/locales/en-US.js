@@ -308,6 +308,7 @@ export default {
       'native_multimodal_description': 'If the model supports multimodal, uploaded images will be passed directly to the model.',
       'drop_to_upload': 'Drop to upload attachments',
       'no_selected_workflows': 'No selected workflows',
+      'reasoning_content': 'Reasoning content',
     },
     agentSpace: {
       'my_agents': 'My AI agent',

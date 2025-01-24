@@ -266,7 +266,7 @@ const navigateToWorkflowRecord = () => {
 const markdownRenderRef = ref()
 watch(() => props.content.text, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
-    content.value = { text: newVal }
+    content.value.text = newVal
     if (props.status == 'S') return
     let markdownEl
     try {
@@ -328,6 +328,18 @@ onUnmounted(() => {
       <div class="chat-message-body">
         <span class="typing-dot" v-if="loading" />
         <template v-else>
+          <a-collapse v-if="content?.hasOwnProperty('reasoning_content')" :bordered="false">
+            <a-collapse-panel :key="`${props.mid}-reasoning`">
+              <template #header>
+                <a-typography-paragraph>
+                  {{ t('workspace.chatSpace.reasoning_content') }}
+                  {{ content.reasoning_content.length }}
+                </a-typography-paragraph>
+              </template>
+              <TextOutput :text="content.reasoning_content" :showCopy="false" />
+            </a-collapse-panel>
+          </a-collapse>
+
           <template v-if="content?.hasOwnProperty('text')">
             <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />

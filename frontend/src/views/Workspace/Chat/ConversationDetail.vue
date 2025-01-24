@@ -140,7 +140,7 @@ const aiMessage = reactive({
   create_time: new Date().getTime(),
   workflow_invoke_step: '',
   metadata: { selected_workflow: {}, record_id: '' },
-  content: { text: '', tool: {}, selected_workflow: {} },
+  content: { text: '', reasoning_content: '', tool: {}, selected_workflow: {} },
 })
 const clearAiMessage = () => {
   aiMessage.loading = true
@@ -150,7 +150,7 @@ const clearAiMessage = () => {
   aiMessage.workflow_invoke_step = ''
   aiMessage.create_time = new Date().getTime()
   aiMessage.metadata = { selected_workflow: {}, record_id: '' }
-  aiMessage.content = { text: '', tool: {}, selected_workflow: {} }
+  aiMessage.content = { text: '', reasoning_content: '', tool: {}, selected_workflow: {} }
 }
 
 const sendWebsocketMsg = async (msg) => {
@@ -201,9 +201,7 @@ const sendWebsocketMsg = async (msg) => {
       } else {
         aiMessage.workflow_invoke_step = ''
         aiMessage.content_type = 'TXT'
-        if (data.reasoning_content) {
-          aiMessage.content.text += data.reasoning_content ?? ''
-        }
+        aiMessage.content.reasoning_content += data.reasoning_content ?? ''
         aiMessage.content.text += data.content ?? ''
       }
     } else {
@@ -214,7 +212,8 @@ const sendWebsocketMsg = async (msg) => {
         userChatsStore.updateConversation(conversationId.value, 'title', data.title)
       }
       await messageAPI('done_notice', { mid: aiMessage.mid })
-      aiMessage.content.text = (data.reasoning_content + '\n\n' ?? '') + (data.content ?? '')
+      aiMessage.content.text = data.content ?? ''
+      aiMessage.content.reasoning_content = data.reasoning_content ?? ''
       aiMessage.status = aiMessage.content_type == 'WKF' ? 'W' : 'S'
       if (aiMessage.content_type == 'WKF') {
         aiMessage.workflow_invoke_step = 'wait_for_invoke'

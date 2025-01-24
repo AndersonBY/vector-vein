@@ -308,6 +308,7 @@ export default {
       'native_multimodal_description': '如果模型支持，则优先使用模型的多模态输入，此时上传的图片会被直接传递给模型。',
       'drop_to_upload': '放到此处上传附件',
       'no_selected_workflows': '未选择工作流',
+      'reasoning_content': '推理内容',
     },
     agentSpace: {
       'my_agents': '我的 AI Agent',
