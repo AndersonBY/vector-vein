@@ -216,7 +216,7 @@ const openTemplateEditor = ref(false)
         v-model:data="fieldsData.template">
         <a-typography-paragraph :ellipsis="{ row: 1, expandable: false }"
           :content="fieldsData.template.value"></a-typography-paragraph>
-        <a-button block type="dashed" class="open-template-editor-button" @click="openTemplateEditor = true">
+        <a-button block type="dashed" @click="openTemplateEditor = true">
           <template #icon>
             <Edit />
           </template>
