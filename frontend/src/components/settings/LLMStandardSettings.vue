@@ -1,7 +1,7 @@
 <script setup>
 import { computed, reactive, ref, toRaw } from "vue"
 import { useI18n } from 'vue-i18n'
-import { Delete } from '@icon-park/vue-next'
+import { Edit, Delete } from '@icon-park/vue-next'
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import { deepCopy } from '@/utils/util'
 
@@ -41,6 +41,13 @@ const modelForm = reactive({
   max_output_tokens: null
 })
 
+const endpointModelForm = reactive({
+  endpoint_id: '',
+  model_id: ''
+})
+
+const endpointModelModalOpen = ref(false)
+
 const addNewModel = () => {
   modelFormStatus.value = 'add'
   modelFormModalOpen.value = true
@@ -78,6 +85,40 @@ const resetModelForm = () => {
     context_length: 32768,
     max_output_tokens: null
   })
+}
+
+const addEndpoint = () => {
+  endpointModelForm.endpoint_id = ''
+  endpointModelForm.model_id = modelEditIndex.value
+  endpointModelModalOpen.value = true
+}
+
+const saveEndpoint = () => {
+  if (endpointModelForm.model_id) {
+    modelForm.endpoints.push({
+      endpoint_id: endpointModelForm.endpoint_id,
+      model_id: endpointModelForm.model_id
+    })
+  } else {
+    modelForm.endpoints.push(endpointModelForm.endpoint_id)
+  }
+  endpointModelModalOpen.value = false
+}
+
+const removeEndpoint = (index) => {
+  modelForm.endpoints.splice(index, 1)
+}
+
+const editEndpoint = (index) => {
+  const endpoint = modelForm.endpoints[index]
+  if (typeof endpoint === 'string') {
+    endpointModelForm.endpoint_id = endpoint
+    endpointModelForm.model_id = ''
+  } else {
+    endpointModelForm.endpoint_id = endpoint.endpoint_id
+    endpointModelForm.model_id = endpoint.model_id
+  }
+  endpointModelModalOpen.value = true
 }
 </script>
 
@@ -118,11 +159,36 @@ const resetModelForm = () => {
           <a-input v-model:value="modelForm.id" />
         </a-form-item>
         <a-form-item :label="t('settings.select_endpoint')">
-          <a-select v-model:value="modelForm.endpoints" :options="endpointOptions" style="width: 100%;" mode="multiple">
-            <template #placeholder>
-              <span>{{ t('settings.select_endpoint') }}</span>
-            </template>
-          </a-select>
+          <a-flex vertical gap="small">
+            <a-list bordered size="small">
+              <a-list-item v-for="(endpoint, index) in modelForm.endpoints" :key="index">
+                <a-flex justify="space-between" style="width: 100%">
+                  <span>
+                    {{ typeof endpoint === 'string' ? endpoint : `${endpoint.endpoint_id} (${endpoint.model_id})` }}
+                  </span>
+                  <a-flex gap="small">
+                    <a-tooltip :title="t('common.edit')">
+                      <a-button type="text" size="small" @click="editEndpoint(index)">
+                        <template #icon>
+                          <Edit />
+                        </template>
+                      </a-button>
+                    </a-tooltip>
+                    <a-tooltip :title="t('common.delete')">
+                      <a-button type="text" size="small" danger @click="removeEndpoint(index)">
+                        <template #icon>
+                          <Delete />
+                        </template>
+                      </a-button>
+                    </a-tooltip>
+                  </a-flex>
+                </a-flex>
+              </a-list-item>
+            </a-list>
+            <a-button type="dashed" block @click="addEndpoint">
+              {{ t('settings.add_endpoint') }}
+            </a-button>
+          </a-flex>
         </a-form-item>
         <a-form-item :label="t('settings.model_function_calling')">
           <a-switch v-model:checked="modelForm.function_call_available" />
@@ -139,6 +205,25 @@ const resetModelForm = () => {
         <a-form-item :label="t('settings.max_output_tokens')">
           <a-input-number v-model:value="modelForm.max_output_tokens" />
         </a-form-item>
+      </a-form>
+    </a-modal>
+    <a-modal v-model:open="endpointModelModalOpen" :title="t('settings.endpoint_config')" @ok="saveEndpoint">
+      <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+        <a-form-item :label="t('settings.endpoint')">
+          <a-select v-model:value="endpointModelForm.endpoint_id" :options="endpointOptions">
+            <template #placeholder>
+              <span>{{ t('settings.select_endpoint') }}</span>
+            </template>
+          </a-select>
+        </a-form-item>
+        <a-form-item>
+          <template #label>
+            {{ t('settings.model_id') }}
+            <QuestionPopover :contents="[t('settings.endpoint_model_id_tip')]" />
+          </template>
+          <a-input v-model:value="endpointModelForm.model_id" placeholder="可选，留空则使用默认模型" />
+        </a-form-item>
+
       </a-form>
     </a-modal>
   </a-flex>
