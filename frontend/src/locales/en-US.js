@@ -309,6 +309,12 @@ export default {
       'drop_to_upload': 'Drop to upload attachments',
       'no_selected_workflows': 'No selected workflows',
       'reasoning_content': 'Reasoning content',
+      "regenerate_failed": "Regenerate failed",
+      "regenerate_message": "Regenerate",
+      "delete_message": "Delete message",
+      "delete_message_confirm": "Confirm delete message?",
+      "delete_message_failed": "Delete message failed",
+      "delete_message_success": "Delete message success"
     },
     agentSpace: {
       'my_agents': 'My AI agent',
@@ -1986,6 +1992,10 @@ export default {
     'list_models_failed': 'Failed to get model list',
     'agent_tool_call_data_generate_model': 'Agent tool call data generation model',
     'skip_ssl_verification': 'Skip SSL verification',
+    'add_endpoint': 'Add Endpoint',
+    'endpoint_config': 'Endpoint Configuration',
+    'endpoint': 'Endpoint',
+    'endpoint_model_id_tip': 'The ID of the model under the current endpoint, leave blank to use the default model ID',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "Youthful Male Voice",

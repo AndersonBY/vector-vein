@@ -309,6 +309,12 @@ export default {
       'drop_to_upload': '放到此处上传附件',
       'no_selected_workflows': '未选择工作流',
       'reasoning_content': '推理内容',
+      "regenerate_failed": "重新生成失败",
+      "regenerate_message": "重新生成",
+      "delete_message": "删除消息",
+      "delete_message_confirm": "确认删除该消息？",
+      "delete_message_failed": "删除消息失败",
+      "delete_message_success": "删除消息成功"
     },
     agentSpace: {
       'my_agents': '我的 AI Agent',
@@ -1986,9 +1992,14 @@ export default {
     'list_models_failed': '获取模型列表失败',
     'agent_tool_call_data_generate_model': 'Agent 工具调用数据生成模型',
     'skip_ssl_verification': '跳过 SSL 验证',
+    'add_endpoint': '添加端点',
+    'endpoint_config': '端点配置',
+    'endpoint': '端点',
+    'endpoint_model_id_tip': '当前端点下该模型的 ID，留空则使用默认模型 ID',
   },
   voiceOptions: {
     "minimax_male-qn-qingse": "青涩青年音色",
+
     "minimax_male-qn-jingying": "精英青年音色",
     "minimax_male-qn-badao": "霸道青年音色",
     "minimax_male-qn-daxuesheng": "青年大学生音色",
