@@ -99,7 +99,7 @@ const modelChanged = async () => {
         </template>
       </IconButton>
     </a-popover>
-    <a-modal :open="open" :title="t('workspace.chatSpace.model_select')" :width="650" @cancel="cancel"
+    <a-modal :open="open" :title="t('workspace.chatSpace.model_select')" :width="850" @cancel="cancel"
       @ok="modelChanged" class="model-selection-modal">
       <a-row>
         <a-col :span="12">
