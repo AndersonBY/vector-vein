@@ -57,7 +57,11 @@
 
 ![LLM 设置](resources/images/remote-llms-settings-2_zh-CN.jpg)
 
-其中 `模型 Key` 是大模型的标准名称，一般不需要调整。`模型 ID` 是实际部署时的名称，一般情况下与 `模型 Key` 一致，但是在 Azure OpenAI 等部署中 `模型 ID` 是由用户自定义的，因此需要根据实际情况调整。
+> 其中 `模型 Key` 是大模型的标准名称，一般不需要调整。`模型 ID` 是实际部署时的名称，一般情况下与 `模型 Key` 一致，但是在 Azure OpenAI 等部署中 `模型 ID` 是由用户自定义的，因此需要根据实际情况调整。
+>
+> 由于同一模型的不同提供商的模型 ID 可能不同，您可以点击 `编辑` 按钮来配置该端点下该模型的具体模型 ID，如下图。
+>
+> ![端点模型 ID 配置](resources/images/endpoint-model-id-settings_zh-CN.jpg)
 
 #### 自定义大语言模型接口配置
 

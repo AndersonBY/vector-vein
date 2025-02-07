@@ -57,7 +57,11 @@ v0.2.10から、VectorPulseはAPIエンドポイントと大規模言語モデ�
 
 ![LLM設定](resources/images/remote-llms-settings-2_en-US.jpg)
 
-`Model Key` は大規模モデルの標準名であり、通常は調整する必要はありません。`Model ID` は実際のデプロイ時に使用される名前で、通常は `Model Key` と一致します。ただし、Azure OpenAIのようなデプロイでは、`Model ID` はユーザー定義であり、実際の状況に応じて調整する必要があります。
+> `Model Key` は大規模モデルの標準名であり、通常は調整する必要はありません。`Model ID` は実際のデプロイ時に使用される名前で、通常は `Model Key` と一致します。ただし、Azure OpenAIのようなデプロイでは、`Model ID` はユーザー定義であり、実際の状況に応じて調整する必要があります。
+>
+> 同一モデルの異なるプロバイダーのモデルIDは異なる場合があるため、以下の図のように、エンドポイントの該当モデルの具体的なモデルIDを設定するために `編集` ボタンをクリックしてください。
+>
+> ![エンドポイントモデルID設定](resources/images/endpoint-model-id-settings_en-US.jpg)
 
 #### カスタム大規模言語モデルインターフェース設定
 

@@ -57,7 +57,11 @@ Click on any model to set its specific configuration, as shown below.
 
 ![LLM Settings](resources/images/remote-llms-settings-2_en-US.jpg)
 
-The `Model Key` is the standard name of the large model and generally does not need to be adjusted. The `Model ID` is the name used during actual deployment, which usually matches the `Model Key`. However, in deployments like Azure OpenAI, the `Model ID` is user-defined and therefore needs to be adjusted according to the actual situation.
+> The `Model Key` is the standard name of the large model and generally does not need to be adjusted. The `Model ID` is the name used during actual deployment, which usually matches the `Model Key`. However, in deployments like Azure OpenAI, the `Model ID` is user-defined and therefore needs to be adjusted according to the actual situation.
+>
+> Since the model IDs from different providers for the same model may vary, you can click the `Edit` button to configure the specific model ID under this endpoint, as shown in the figure below.
+>
+> ![Endpoint Model ID Configuration](resources/images/endpoint-model-id-settings_en-US.jpg)
 
 #### Custom Large Language Model Interface Configuration
 
