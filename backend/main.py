@@ -160,7 +160,7 @@ class MainServer:
         else:
             url = "web/index.html"
         webview.settings["ALLOW_DOWNLOADS"] = True
-        webview.settings["ALLOW_DOPEN_EXTERNAL_LINKS_IN_BROWSEROWNLOADS"] = True
+        webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
         window = self.window = webview.create_window(
             f"VectorVein v{VERSION}",
             url=url,
