@@ -45,7 +45,7 @@ dependencies = [
 ]
 description = ""
 license = { text = "CC BY-NC-SA" }
-name = "VectorVein"
+name = ""
 requires-python = ">=3.10,<3.13"
 version = "0.3.5"
 
