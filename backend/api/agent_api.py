@@ -400,6 +400,118 @@ class MessageAPI:
 
         return JResponse(msg="success", data={"rid": record_rid})
 
+    def regenerate(self, payload):
+        cid = payload.get("cid")
+        mid = payload.get("mid")
+
+        # 获取对话和原始AI消息
+        conversation = Conversation.get_or_none(Conversation.cid == cid)
+        if not conversation:
+            return JResponse(status=404)
+
+        original_message = Message.get_or_none(
+            (Message.mid == mid)
+            & (Message.conversation == conversation)
+            & (Message.author_type == Message.AuthorTypes.ASSISTANT)
+        )
+        if not original_message:
+            return JResponse(status=400, msg="Invalid AI message")
+
+        # 创建新的AI消息
+        new_ai_message = Message.create(
+            conversation=conversation,
+            author_type=Message.AuthorTypes.ASSISTANT,
+            content_type=Message.ContentTypes.TEXT,
+            content={"text": ""},
+            parent=original_message.parent,
+        )
+
+        # 更新对话当前消息
+        conversation.current_message = new_ai_message.mid
+        conversation.update_time = new_ai_message.create_time
+        conversation.save()
+
+        # 准备历史消息
+        history_messages = get_history_messages(
+            start_message=original_message.parent,
+            count=None,
+            all_children=False,
+        )
+
+        while len(history_messages) > 0 and history_messages[0]["author_type"] == Message.AuthorTypes.ASSISTANT:
+            history_messages = history_messages[1:]
+
+        # 准备对话数据
+        conversation_data = model_serializer(conversation)
+        conversation_data["related_workflows"] = model_serializer(
+            conversation.related_workflows, many=True, fields=["wid", "title", "brief"]
+        )
+        conversation_data["related_templates"] = model_serializer(
+            conversation.related_templates, many=True, fields=["wid", "title", "brief"]
+        )
+        conversation_data["tool_call_data"] = {
+            "workflows": [workflow.tool_call_data for workflow in conversation.related_workflows],
+            "templates": [template.tool_call_data for template in conversation.related_templates],
+        }
+
+        return JResponse(
+            data={
+                "ai_message_mid": new_ai_message.mid.hex,
+                "conversation": conversation_data,
+                "history_messages": history_messages,
+                "need_title": False,
+            }
+        )
+
+    def delete(self, payload):
+        """删除消息及其所有子消息"""
+        mid = payload.get("mid")
+        if not mid:
+            return JResponse(status=400, msg="无效的消息ID")
+
+        # 获取要删除的消息
+        message = Message.get_or_none(Message.mid == mid)
+        if not message:
+            return JResponse(status=404, msg="消息不存在")
+
+        # 获取父消息和子消息
+        parent_message = message.parent
+        children_messages = Message.select().where(Message.parent == message)
+
+        # 如果有父消息，获取兄弟消息
+        sibling = None
+        if parent_message:
+            siblings = (
+                Message.select()
+                .where((Message.parent == parent_message) & (Message.mid != message.mid))
+                .order_by(Message.create_time.desc())
+            )
+            if siblings.count() > 0:
+                sibling = siblings[0]
+
+        # 处理子消息的关系
+        for child in children_messages:
+            if sibling:
+                child.parent = sibling
+            elif parent_message:
+                child.parent = parent_message
+            child.save()
+
+        # 更新conversation的current_message
+        if message.conversation.current_message == message.mid:
+            if sibling:
+                message.conversation.current_message = sibling.mid
+            elif parent_message:
+                message.conversation.current_message = parent_message.mid
+            else:
+                message.conversation.current_message = None
+            message.conversation.save()
+
+        # 删除消息
+        message.delete_instance()
+
+        return JResponse(msg="删除成功")
+
 
 class AgentAPI:
     name = "agent"
