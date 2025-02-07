@@ -57,9 +57,7 @@ def get_history_messages(
         if all_children:
             if start_message.parent is not None:
                 siblings = model_serializer(
-                    Message.select()
-                    .where(Message.parent == start_message.parent)
-                    .order_by(Message.create_time.desc()),
+                    Message.select().where(Message.parent == start_message.parent).order_by(Message.create_time.asc()),
                     many=True,
                 )
             else:
