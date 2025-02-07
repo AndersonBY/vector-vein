@@ -219,7 +219,8 @@ const sendWebsocketMsg = async (msg) => {
         aiMessage.workflow_invoke_step = 'wait_for_invoke'
       }
 
-      messages.value[messages.value.length - 1][0] = JSON.parse(JSON.stringify(aiMessage))
+      const lastGroup = messages.value[messages.value.length - 1]
+      lastGroup[lastGroup.length - 1] = JSON.parse(JSON.stringify(aiMessage))
       clearAiMessage()
     }
     if (!userScrolled.value) {
@@ -370,6 +371,60 @@ const handleScroll = () => {
     userScrolled.value = scrollHeight - scrollTop - clientHeight > 100
   }
 }
+
+const messagePagination = reactive(new Map())
+
+const regenerate = async (mid, groupIndex) => {
+  const res = await messageAPI('regenerate', { mid: mid, cid: conversationId.value })
+  if (res.status !== 200) {
+    message.error(t('workspace.chatSpace.regenerate_failed'))
+    return
+  }
+
+  aiMessage.loading = true
+  aiMessage.mid = res.data.ai_message_mid
+  aiMessage.create_time = new Date().getTime()
+
+  const parentGroup = messages.value[groupIndex]
+
+  messages.value[groupIndex] = [...parentGroup, aiMessage]
+
+  messagePagination.set(groupIndex, parentGroup.length)
+
+  sendWebsocketMsg(res.data)
+}
+
+const switchMessagePage = (groupIndex, direction) => {
+  const group = messages.value[groupIndex]
+  const currentPage = messagePagination.get(groupIndex) ?? (group.length - 1) // 默认显示最后一项
+  const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1
+  messagePagination.set(groupIndex, newPage)
+}
+
+const deleteMessage = async (mid, groupIndex) => {
+  const res = await messageAPI('delete', { mid: mid, cid: conversationId.value })
+  if (res.status !== 200) {
+    message.error(t('workspace.chatSpace.delete_message_failed'))
+    return
+  }
+
+  // 获取指定组
+  const group = messages.value[groupIndex]
+  // 从组内删除指定消息
+  const messageIndex = group.findIndex(msg => msg.mid === mid)
+  if (messageIndex !== -1) {
+    group.splice(messageIndex, 1)
+    // 如果组变空了，删除整个组
+    if (group.length === 0) {
+      messages.value.splice(groupIndex, 1)
+    }
+  }
+
+  // 重置相关的分页状态
+  messagePagination.clear()
+
+  message.success(t('workspace.chatSpace.delete_message_success'))
+}
 </script>
 
 <template>
@@ -390,15 +445,37 @@ const handleScroll = () => {
     </div>
     <div ref="chatBodyElementRef" class="chat-body custom-scrollbar">
       <a-spin :spinning="loading">
-        <template v-for="chatMessageSection in messages">
-          <ChatMessage :loading="chatMessageSection[0].loading" :cid="conversationId" :mid="chatMessageSection[0].mid"
-            v-model:status="chatMessageSection[0].status" :authorType="chatMessageSection[0].author_type"
-            :contentType="chatMessageSection[0].content_type" :createTime="chatMessageSection[0].create_time"
-            :metadata="chatMessageSection[0].metadata" :content="chatMessageSection[0].content"
-            :workflowInvokeStep="chatMessageSection[0].workflow_invoke_step"
-            :attachments="chatMessageSection[0]?.attachments"
-            :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
-            @append-answer="onAppendAnswer" />
+        <template v-for="(chatMessageGroup, groupIndex) in messages" :key="groupIndex">
+          <div class="message-group">
+            <ChatMessage
+              v-for="currentMessage in [chatMessageGroup[messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)]]"
+              :key="currentMessage.mid" :loading="currentMessage.loading" :cid="conversationId"
+              :mid="currentMessage.mid" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
+              :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
+              :metadata="currentMessage.metadata" :content="currentMessage.content"
+              :workflowInvokeStep="currentMessage.workflow_invoke_step" :attachments="currentMessage?.attachments"
+              :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
+              @append-answer="onAppendAnswer" @regenerate="regenerate(currentMessage.mid, groupIndex)"
+              @delete="deleteMessage(currentMessage.mid, groupIndex)" />
+
+            <!-- 分页控件 -->
+            <div v-if="chatMessageGroup.length > 1" class="message-pagination">
+              <a-button type="text" size="small"
+                :disabled="(messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
+                @click="switchMessagePage(groupIndex, 'prev')">
+                &lt;
+              </a-button>
+              <span class="page-indicator">
+                {{ (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) + 1 }} / {{
+                  chatMessageGroup.length }}
+              </span>
+              <a-button type="text" size="small"
+                :disabled="(messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === chatMessageGroup.length - 1"
+                @click="switchMessagePage(groupIndex, 'next')">
+                &gt;
+              </a-button>
+            </div>
+          </div>
         </template>
       </a-spin>
       <ScrollEndButton :target="chatBodyElementRef" direction="bottom" bottom="0" left="calc(50% - 16px)" />

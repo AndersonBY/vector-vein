@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Share, LoadingFour } from '@icon-park/vue-next'
+import { Share, LoadingFour, Redo, Delete } from '@icon-park/vue-next'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
@@ -86,7 +86,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:status', 'append-answer'])
+const emit = defineEmits(['update:status', 'append-answer', 'regenerate', 'delete'])
 
 const { t } = useI18n()
 const router = useRouter()
@@ -317,6 +317,14 @@ onUnmounted(() => {
     clearInterval(checkStatusTimer.value)
   }
 })
+
+const regenerate = () => {
+  emit('regenerate', props.mid)
+}
+
+const deleteMessage = () => {
+  emit('delete', props.mid)
+}
 </script>
 
 <template>
@@ -328,24 +336,42 @@ onUnmounted(() => {
       <div class="chat-message-body">
         <span class="typing-dot" v-if="loading" />
         <template v-else>
-          <a-collapse v-if="content?.hasOwnProperty('reasoning_content')" :bordered="false">
+          <a-collapse v-if="content?.hasOwnProperty('reasoning_content') && content.reasoning_content.length > 0"
+            :bordered="false">
             <a-collapse-panel :key="`${props.mid}-reasoning`">
               <template #header>
-                <a-typography-paragraph>
+                <a-typography-text>
                   {{ t('workspace.chatSpace.reasoning_content') }}
                   {{ content.reasoning_content.length }}
-                </a-typography-paragraph>
+                </a-typography-text>
               </template>
               <TextOutput :text="content.reasoning_content" :showCopy="false" />
             </a-collapse-panel>
           </a-collapse>
 
           <template v-if="content?.hasOwnProperty('text')">
-            <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" />
+            <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" :checkFileCodeBlocks="true" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />
-            <div class="chat-message-footer">
+            <a-flex class="chat-message-footer" gap="small">
               <a-typography-paragraph :copyable="{ text: content.text }" />
-            </div>
+              <a-tooltip v-if="props.authorType == 'A'" :title="t('workspace.chatSpace.regenerate_message')">
+                <a-button type="text" size="small" @click="regenerate">
+                  <template #icon>
+                    <Redo fill="#28c5e5" />
+                  </template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip :title="t('workspace.chatSpace.delete_message')">
+                <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" @confirm="deleteMessage">
+                  <a-button type="text" size="small" danger>
+                    <template #icon>
+                      <Delete />
+                    </template>
+                  </a-button>
+                </a-popconfirm>
+              </a-tooltip>
+            </a-flex>
+
           </template>
           <div class="workflow-container" v-if="contentType == 'WKF'">
             <a-collapse v-model:activeKey="activeKey" :bordered="false" @change="workflowPanelChange">
