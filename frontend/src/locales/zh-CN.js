@@ -1975,6 +1975,7 @@ export default {
     'credentials_placeholder': '请输入特殊凭证，例如 Google 凭证',
     'concurrent_requests': '并发请求数',
     'select_endpoint': '选择端点',
+    'select_endpoint_tip': '选择端点后，您可以配置在此端点下模型的具体信息如模型 ID 等',
     'api_base_empty': 'API Base 不能为空',
     'max_output_tokens': '最大输出 Token 数',
     'delete_model_family': '删除模型系列',

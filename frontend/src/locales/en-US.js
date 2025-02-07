@@ -1975,6 +1975,7 @@ export default {
     'credentials_placeholder': 'Enter special credentials, such as Google credentials',
     'concurrent_requests': 'Concurrent requests',
     'select_endpoint': 'Select endpoint',
+    'select_endpoint_tip': 'After selecting the endpoint, you can configure the specific information of the model under the endpoint, such as the model ID.',
     'api_base_empty': 'API Base cannot be empty',
     'max_output_tokens': 'Max output tokens',
     'delete_model_family': 'Delete model family',

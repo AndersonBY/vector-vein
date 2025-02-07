@@ -158,7 +158,11 @@ const editEndpoint = (index) => {
           </template>
           <a-input v-model:value="modelForm.id" />
         </a-form-item>
-        <a-form-item :label="t('settings.select_endpoint')">
+        <a-form-item>
+          <template #label>
+            {{ t('settings.select_endpoint') }}
+            <QuestionPopover :contents="[t('settings.select_endpoint_tip')]" />
+          </template>
           <a-flex vertical gap="small">
             <a-list bordered size="small">
               <a-list-item v-for="(endpoint, index) in modelForm.endpoints" :key="index">
