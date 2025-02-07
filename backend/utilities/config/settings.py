@@ -87,7 +87,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "gemini-default",
-                "api_base": "https://generativelanguage.googleapis.com/v1beta",
+                "api_base": "https://generativelanguage.googleapis.com/v1beta/openai/",
                 "api_key": "",
             },
             {
@@ -173,12 +173,20 @@ DEFAULT_SETTINGS = {
             "models": {
                 "gemini-1.5-pro": {"id": "gemini-1.5-pro", "endpoints": ["gemini-default"]},
                 "gemini-1.5-flash": {"id": "gemini-1.5-flash", "endpoints": ["gemini-default"]},
-                "gemini-2.0-flash-exp": {"endpoints": ["gemini-default"], "id": "gemini-2.0-flash-exp"},
                 "gemini-2.0-flash-thinking-exp-1219": {
                     "endpoints": ["gemini-default"],
                     "id": "gemini-2.0-flash-thinking-exp-1219",
                 },
-                "gemini-exp-1206": {"endpoints": ["gemini-default"], "id": "gemini-exp-1206"},
+                "gemini-2.0-flash-thinking-exp-01-21": {
+                    "endpoints": ["gemini-default"],
+                    "id": "gemini-2.0-flash-thinking-exp-01-21",
+                },
+                "gemini-2.0-pro-exp-02-05": {"id": "gemini-2.0-pro-exp-02-05", "endpoints": ["gemini-default"]},
+                "gemini-2.0-flash": {"id": "gemini-2.0-flash", "endpoints": ["gemini-default"]},
+                "gemini-2.0-flash-lite-preview-02-05": {
+                    "id": "gemini-2.0-flash-lite-preview-02-05",
+                    "endpoints": ["gemini-default"],
+                },
             }
         },
         "deepseek": {
@@ -598,7 +606,19 @@ class Settings:
             setting = SettingModel.select().order_by(SettingModel.create_time.desc()).first()
             setting.data = update_llm_settings_to_v2(setting.data)
             setting.data = deep_merge(DEFAULT_SETTINGS.copy(), setting.data)
-            setting.save()
+
+            # Update Gemini endpoint api_base to openai compatible version
+            need_save = False
+            for endpoint in setting.data["llm_settings"]["endpoints"]:
+                if endpoint.get("api_base") == "https://generativelanguage.googleapis.com/v1beta":
+                    endpoint["api_base"] = "https://generativelanguage.googleapis.com/v1beta/openai/"
+                    need_save = True
+
+            if need_save:
+                vectorvein_settings.load(setting.data["llm_settings"])
+                setting.data["llm_settings"] = vectorvein_settings.model_dump()
+                setting.save()
+
         self.data = model_serializer(setting)["data"]
 
     def __getattribute__(self, name: str) -> Any:
