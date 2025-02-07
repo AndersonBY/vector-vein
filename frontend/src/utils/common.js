@@ -292,12 +292,20 @@ export const nonLocalChatModelOptions = [
         "label": "gemini-1.5-pro"
       },
       {
-        "value": "gemini-2.0-flash-exp",
-        "label": "gemini-2.0-flash-exp"
+        "value": "gemini-2.0-flash",
+        "label": "gemini-2.0-flash"
       },
       {
-        "value": "gemini-2.0-flash-thinking-exp-1219",
-        "label": "gemini-2.0-flash-thinking-exp-1219"
+        "value": "gemini-2.0-flash-thinking-exp-01-21",
+        "label": "gemini-2.0-flash-thinking-exp-01-21"
+      },
+      {
+        "value": "gemini-2.0-pro-exp-02-05",
+        "label": "gemini-2.0-pro-exp-02-05"
+      },
+      {
+        "value": "gemini-2.0-flash-lite-preview-02-05",
+        "label": "gemini-2.0-flash-lite-preview-02-05"
       },
       {
         "value": "gemini-exp-1206",
