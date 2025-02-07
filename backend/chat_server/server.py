@@ -163,7 +163,10 @@ class WebSocketServer:
                 if piece.function:
                     if piece.function.name:
                         tool_calls[index]["function"]["name"] = piece.function.name
-                    if backend in TOOL_CALL_INCREMENTAL_BACKENDS:
+                    if (
+                        backend in TOOL_CALL_INCREMENTAL_BACKENDS
+                        and model_settings.models[model].function_call_available
+                    ):
                         # OpenAI/Moonshot/Anthropic/DeepSeek/Minimax is incremental and needs to be concatenated
                         if piece.function.arguments:
                             tool_calls[index]["function"]["arguments"] += piece.function.arguments
