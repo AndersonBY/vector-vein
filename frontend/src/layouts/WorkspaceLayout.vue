@@ -16,20 +16,37 @@ const openTour = ref(false)
 const initialSetupModalOpen = ref(false)
 
 onBeforeMount(async () => {
-  const settingsResponse = await settingAPI('get', {})
-  if (!settingsResponse.data.data.initial_setup) {
-    initialSetupModalOpen.value = true
+  const maxRetries = 3;
+  const retryDelay = 1000;
+
+  const tryFetchSettings = async (retryCount = 0) => {
+    try {
+      const settingsResponse = await settingAPI('get', {})
+      if (!settingsResponse.data.data.initial_setup) {
+        initialSetupModalOpen.value = true
+      }
+      userSettingsStore.setSetting(settingsResponse.data)
+      if (typeof setting.value.data.tour_version === "undefined" ? 0 : setting.value.data.tour_version < currentTourVersion) {
+        setting.value.data.tour_version = currentTourVersion
+        userSettingsStore.setSetting(setting.value)
+        await settingAPI('update', setting.value)
+        setTimeout(() => {
+          openTour.value = true
+        }, 1000)
+      }
+      loading.value = false
+    } catch (error) {
+      if (retryCount < maxRetries) {
+        console.warn(`Fetch setting failed, retry in ${retryDelay}ms (${retryCount + 1}/${maxRetries})`, error)
+        await new Promise(resolve => setTimeout(resolve, retryDelay))
+        return tryFetchSettings(retryCount + 1)
+      }
+      console.error('Failed to fetch settings after multiple attempts', error)
+      loading.value = false
+    }
   }
-  userSettingsStore.setSetting(settingsResponse.data)
-  if (typeof setting.value.data.tour_version === "undefined" ? 0 : setting.value.data.tour_version < currentTourVersion) {
-    setting.value.data.tour_version = currentTourVersion
-    userSettingsStore.setSetting(setting.value)
-    await settingAPI('update', setting.value)
-    setTimeout(() => {
-      openTour.value = true
-    }, 1000)
-  }
-  loading.value = false
+
+  await tryFetchSettings()
 })
 
 const tourCurrentStep = ref(0)
