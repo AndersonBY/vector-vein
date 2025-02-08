@@ -5,6 +5,8 @@ import json
 import socket
 import asyncio
 from threading import Thread
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 from websockets.asyncio.server import serve, ServerConnection
 from vectorvein.types.enums import BackendType
@@ -97,6 +99,7 @@ class WebSocketServer:
         ai_message_mid = request_data["ai_message_mid"]
         history_messages = request_data["history_messages"]
         need_title = request_data["need_title"] and user_settings.get("agent.auto_title", False)
+        user_timezone = request_data["user_timezone"]
         backend = request_data["conversation"]["model_provider"].lower()
         model = request_data["conversation"]["model"]
         mprint(f"Agent chat start: {backend} {model}")
@@ -109,14 +112,23 @@ class WebSocketServer:
         model_settings = vectorvein_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
 
-        system_message = {
-            "role": "system",
-            "content": settings.get("system_prompt"),
-        }
+        system_prompt = settings.get("system_prompt") or ""
+        if system_prompt:
+            current_time = datetime.now().astimezone(ZoneInfo(user_timezone)).strftime("%Y-%m-%d %H:%M:%S %Z")
+            system_prompt = system_prompt.replace("{{time}}", current_time)
+            system_message = [
+                {
+                    "role": "system",
+                    "content": system_prompt,
+                }
+            ]
+        else:
+            system_message = []
+
         user_messages = format_messages(
             messages=history_messages, backend=backend, native_multimodal=native_multimodal
         )
-        messages = [system_message, *user_messages]
+        messages = [*system_message, *user_messages]
 
         if need_title:
             title_backend, title_model = user_settings.get("agent.auto_title_model", ["openai", "gpt-4o-mini"])

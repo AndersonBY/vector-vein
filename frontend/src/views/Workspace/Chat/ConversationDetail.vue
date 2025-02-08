@@ -291,7 +291,7 @@ const sendMessage = async (content, needTitle = false) => {
     navigateToElementBottom(chatBodyElementRef.value)
   })
 
-  sendWebsocketMsg(res.data)
+  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
   userInput.value = ''
 }
 
@@ -313,7 +313,7 @@ const onAppendAnswer = async (mid) => {
     })
   }
 
-  sendWebsocketMsg(res.data)
+  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
 
 const editable = reactive({
@@ -391,7 +391,7 @@ const regenerate = async (mid, groupIndex) => {
 
   messagePagination.set(groupIndex, parentGroup.length)
 
-  sendWebsocketMsg(res.data)
+  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
 
 const switchMessagePage = (groupIndex, direction) => {

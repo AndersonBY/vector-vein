@@ -537,7 +537,7 @@ export const websiteBase = computed(() => {
 
 export const defaultSettings = {
   'en-US': {
-    system_prompt: 'You are an AI assistant from VectorVein(Chinese name: 向量脉络) and you can use automated workflows to do all kinds of tasks.',
+    system_prompt: 'You are an AI assistant from VectorVein(Chinese name: 向量脉络) and you can use automated workflows to do all kinds of tasks.\nNow the time is {{time}}.',
     auto_run_workflow: false,
     opening_dialog: {
       text: 'Hello! How can I help you?',
@@ -545,7 +545,7 @@ export const defaultSettings = {
     }
   },
   'zh-CN': {
-    system_prompt: '你是来自向量脉络的AI助手，你可以使用自动化工作流来完成各种任务。',
+    system_prompt: '你是来自向量脉络的AI助手，你可以使用自动化工作流来完成各种任务。\n现在的时间是 {{time}}。',
     auto_run_workflow: false,
     opening_dialog: {
       text: '您好！有什么可以帮助您的？',

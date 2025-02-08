@@ -339,7 +339,7 @@ export default {
       'add_templates_to_your_workflows': '是否同步将该 Agent 中的工作流模板添加为您的个人工作流。添加后可回看工作流运行记录，方便查看。若不添加则该 Agent 不会关联任何工作流，需要您手动处理。',
       'modify_agent': '修改 Agent',
       'system_prompt': '系统提示词',
-      'system_prompt_tip': '系统提示是用于引导 AI 行为的特殊消息，可以允许开发人员在一定范围内规定人工智能的风格和任务，使其更加可定制和适应各种用例。',
+      'system_prompt_tip': '系统提示是用于引导 AI 行为的特殊消息，可以允许开发人员在一定范围内规定人工智能的风格和任务，使其更加可定制和适应各种用例。您可以使用 {{time}} 作为时间变量，告知 Agent 当前时间。',
       'opening_dialog': '开场白',
       'opening_question_suggestions': '建议问题',
       'opening_question_suggestions_tip': '给出几个可选的开场问题，让用户可以快速开始对话。',
