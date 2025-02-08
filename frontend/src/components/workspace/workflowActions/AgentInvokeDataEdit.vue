@@ -38,6 +38,7 @@ parameters.value = Object.keys(props.workflowData?.tool_call_data?.parameters?.p
     value: props.workflowData.tool_call_data.parameters.properties[key],
     source: props.workflowData.tool_call_data.parameter_sources[key],
     required: props.workflowData.tool_call_data.parameters.required.includes(key),
+    description: props.workflowData.tool_call_data.parameters.properties[key].description,
   }
 })
 
