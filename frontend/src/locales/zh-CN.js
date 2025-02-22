@@ -905,6 +905,14 @@ export default {
           'add_replace_item': '添加替换规则',
           'output': '输出结果'
         },
+        RegexExtract: {
+          'title': '正则提取',
+          'description': '使用正则表达式提取文本中的指定内容。',
+          'text': '待处理文本',
+          'pattern': '正则表达式',
+          'pattern_tip': '支持正则表达式，提取小括号内的内容。',
+          'output': '输出结果'
+        }
       },
       llms: {
         title: 'AI模型',

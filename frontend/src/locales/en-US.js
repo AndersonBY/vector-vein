@@ -905,6 +905,14 @@ export default {
           'add_replace_item': 'Add replace rule',
           'output': 'Output'
         },
+        RegexExtract: {
+          'title': 'Regex Extract',
+          'description': 'Extract the specified content from the text using a regular expression.',
+          'text': 'Text to be processed',
+          'pattern': 'Regular expression',
+          'pattern_tip': 'Supports regular expressions, extract the content inside the parentheses.',
+          'output': 'Output'
+        }
       },
       llms: {
         title: 'Language models',

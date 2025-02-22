@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Bi Ying
 # @Date:   2023-04-26 20:58:33
-# @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-09 00:14:21
+import re
+
 import markdown2
 from langchain_text_splitters import (
     RecursiveCharacterTextSplitter,
@@ -258,4 +258,35 @@ def text_replace(
     final_output = outputs[0] if isinstance(input_text, str) else outputs
 
     workflow.update_node_field_value(node_id, "output", final_output)
+    return workflow.data
+
+
+@task
+@timer
+def regex_extract(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    text = workflow.get_node_field_value(node_id, "text")
+    pattern = workflow.get_node_field_value(node_id, "pattern")
+
+    if isinstance(text, str):
+        texts = [text]
+    else:
+        texts = text
+
+    all_matches = []
+    for single_text in texts:
+        matches = re.findall(pattern, single_text, re.DOTALL)
+
+        if matches and isinstance(matches[0], tuple):
+            matches = [match[0] for match in matches]
+
+        if not matches:
+            all_matches.append("")
+        else:
+            all_matches.extend(matches)
+
+    workflow.update_node_field_value(node_id, "output", all_matches)
     return workflow.data
