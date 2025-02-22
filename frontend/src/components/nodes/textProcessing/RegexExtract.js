@@ -33,6 +33,18 @@ export function createTemplateData() {
         "field_type": "input",
         "has_tooltip": true,
       },
+      "first_match": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": true,
+        "name": "first_match",
+        "display_name": "first_match",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox",
+        "has_tooltip": true,
+      },
       "output": {
         "required": true,
         "placeholder": "",

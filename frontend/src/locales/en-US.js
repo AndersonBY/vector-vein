@@ -911,6 +911,8 @@ export default {
           'text': 'Text to be processed',
           'pattern': 'Regular expression',
           'pattern_tip': 'Supports regular expressions, extract the content inside the parentheses.',
+          'first_match': 'Extract the first match',
+          'first_match_tip': 'Check to extract the first match, the output result is a string, otherwise all matches are extracted, the output result is a list.',
           'output': 'Output'
         }
       },

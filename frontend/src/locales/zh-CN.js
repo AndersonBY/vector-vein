@@ -911,6 +911,8 @@ export default {
           'text': '待处理文本',
           'pattern': '正则表达式',
           'pattern_tip': '支持正则表达式，提取小括号内的内容。',
+          'first_match': '只提取第一个匹配项',
+          'first_match_tip': '勾选后，只提取第一个匹配项，此时输出结果为字符串，否则提取所有匹配项，输出结果为列表。',
           'output': '输出结果'
         }
       },

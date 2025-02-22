@@ -270,6 +270,7 @@ def regex_extract(
     workflow = Workflow(workflow_data)
     text = workflow.get_node_field_value(node_id, "text")
     pattern = workflow.get_node_field_value(node_id, "pattern")
+    first_match = workflow.get_node_field_value(node_id, "first_match", True)
 
     if isinstance(text, str):
         texts = [text]
@@ -286,7 +287,12 @@ def regex_extract(
         if not matches:
             all_matches.append("")
         else:
-            all_matches.extend(matches)
+            if first_match:
+                all_matches.append(matches[0])
+            else:
+                all_matches.append(matches)
 
-    workflow.update_node_field_value(node_id, "output", all_matches)
+    final_output = all_matches[0] if isinstance(text, str) else all_matches
+
+    workflow.update_node_field_value(node_id, "output", final_output)
     return workflow.data
