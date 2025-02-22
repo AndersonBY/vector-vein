@@ -13,7 +13,7 @@
     "@codemirror/lang-python": "^6.1.7",
     "@codemirror/lang-sql": "^6.8.0",
     "@codemirror/theme-one-dark": "^6.1.2",
-    "@codemirror/view": "^6.36.2",
+    "@codemirror/view": "^6.36.3",
     "@dagrejs/dagre": "^1.1.4",
     "@icon-park/vue-next": "^1.4.2",
     "@liripeng/vue-audio-player": "^2.0.4",
@@ -44,7 +44,7 @@
     "pinia": "^3.0.1",
     "reconnecting-websocket": "^4.4.0",
     "smplr": "^0.16.1",
-    "uuid": "^11.0.5",
+    "uuid": "^11.1.0",
     "vue": "^3.5.13",
     "vue-codemirror": "^6.1.1",
     "vue-draggable-plus": "0.6.0",
@@ -59,10 +59,18 @@
     "@vitejs/plugin-vue": "^5.2.1",
     "@vue-flow/core": "^1.42.1",
     "@vue/eslint-config-prettier": "^10.2.0",
-    "eslint": "^9.20.1",
+    "eslint": "^9.21.0",
     "eslint-plugin-vue": "^9.32.0",
-    "prettier": "^3.5.1",
-    "unplugin-vue-components": "^28.1.0",
-    "vite": "^6.1.0"
+    "prettier": "^3.5.2",
+    "unplugin-vue-components": "^28.4.0",
+    "vite": "^6.1.1"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "core-js",
+      "esbuild",
+      "midi-player-js",
+      "vue-demi"
+    ]
   }
 }
