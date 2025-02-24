@@ -37,7 +37,7 @@ VectorVeinはpywebviewを使用して構築されており、webview2ランタ�
 
 #### APIエンドポイント設定
 
-v0.2.10から、VectorPulseはAPIエンドポイントと大規模言語モデルの設定を分離し、同じ大規模言語モデルに対して複数のAPIエンドポイントを設定できるようになりました。
+v0.2.10から、VectorVeinはAPIエンドポイントと大規模言語モデルの設定を分離し、同じ大規模言語モデルに対して複数のAPIエンドポイントを設定できるようになりました。
 
 ![APIエンドポイント設定](resources/images/endpoint-settings_en-US.jpg)
 

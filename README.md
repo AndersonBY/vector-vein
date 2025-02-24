@@ -37,7 +37,7 @@ Most workflows and agents in the software involve the use of AI large language m
 
 #### API Endpoint Configuration
 
-Starting from v0.2.10, VectorPulse separates API endpoints and large language model configurations, allowing multiple API endpoints for the same large language model.
+Starting from v0.2.10, VectorVein separates API endpoints and large language model configurations, allowing multiple API endpoints for the same large language model.
 
 ![API Endpoint Configuration](resources/images/endpoint-settings_en-US.jpg)
 
