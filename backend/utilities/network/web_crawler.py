@@ -97,17 +97,17 @@ def decrypt_aes_ecb_base64(ciphertext_base64, key):
 
 
 class CustomMarkdownConverter(MarkdownConverter):
-    def convert_b(self, el, text, convert_as_inline):
-        return self.custom_bold_conversion(el, text, convert_as_inline)
+    def convert_b(self, node, text, parent_tags):
+        return self.custom_bold_conversion(node, text, parent_tags)
 
     convert_strong = convert_b
 
-    def custom_bold_conversion(self, el, text, convert_as_inline):
+    def custom_bold_conversion(self, node, text, parent_tags):
         markup = 2 * self.options["strong_em_symbol"]
         prefix, suffix, text = chomp(text)
         if not text:
             return ""
-        return "%s%s%s%s%s " % (prefix, markup, text, markup, suffix)
+        return f"{prefix}{markup}{text}{markup}{suffix} "
 
 
 def markdownify(html, **options):
