@@ -1,9 +1,9 @@
 <script setup>
 import { ref, reactive, toRaw, computed } from "vue"
 import { useI18n } from 'vue-i18n'
-import { message } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { Delete } from '@icon-park/vue-next'
-import { deepCopy } from '@/utils/util'
+import { deepCopy, hashObject } from '@/utils/util'
 import { settingAPI } from "@/api/user"
 
 const { t } = useI18n()
@@ -25,23 +25,56 @@ const defaultParams = {
   endpoint_name: '',
   is_azure: false,
   is_vertex: false,
+  is_bedrock: false,
   credentials: '',
 }
 const endpointForm = reactive(deepCopy(defaultParams))
+const originalFormHash = ref(0)
 
 const endpointFormRemove = (index) => {
   endpoints.value.splice(index, 1)
 }
 
-const endpointFormEdit = (endpoint, index) => {
+const hasUnsavedChanges = () => {
+  // 使用hashObject计算当前表单的哈希值，并与原始哈希值比较
+  const currentHash = hashObject(toRaw(endpointForm), ['credentials'])
+  return currentHash !== originalFormHash.value
+}
+
+const switchEndpoint = (endpoint, index) => {
   Object.assign(endpointForm, defaultParams)
   const copiedEndpoint = deepCopy(toRaw(endpoint))
   copiedEndpoint.is_azure = copiedEndpoint.is_azure
   copiedEndpoint.is_vertex = copiedEndpoint.is_vertex
+  copiedEndpoint.is_bedrock = copiedEndpoint.is_bedrock
   copiedEndpoint.credentials = copiedEndpoint.credentials ? JSON.stringify(copiedEndpoint.credentials, null, 2) : ''
   Object.assign(endpointForm, copiedEndpoint)
   endpointFormStatus.value = 'edit'
   endpointEditIndex.value = index
+
+  // 保存初始状态的哈希值，用于后续比较
+  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
+}
+
+const endpointFormEdit = (endpoint, index) => {
+  // 检查当前表单是否有未保存的更改
+  if (endpointFormStatus.value !== '' && hasUnsavedChanges()) {
+    Modal.confirm({
+      title: t('settings.unsaved_changes'),
+      content: t('settings.save_changes_confirm'),
+      okText: t('settings.save'),
+      cancelText: t('settings.discard'),
+      onOk: () => {
+        endpointFormSave()
+        switchEndpoint(endpoint, index)
+      },
+      onCancel: () => {
+        switchEndpoint(endpoint, index)
+      }
+    })
+  } else {
+    switchEndpoint(endpoint, index)
+  }
 }
 
 const endpointFormSave = () => {
@@ -58,6 +91,7 @@ const endpointFormSave = () => {
     formData.credentials = formData.credentials ? JSON.parse(formData.credentials) : {}
   } catch (error) {
     console.error('凭证 JSON 解析错误:', error)
+    message.error(t('settings.credentials_parse_failed'))
     return ''
   }
 
@@ -68,13 +102,36 @@ const endpointFormSave = () => {
   }
   Object.keys(endpointForm).forEach(key => endpointForm[key] = '')
   endpointFormStatus.value = ''
+  originalFormHash.value = 0
   return formData.id
 }
 
 const addNewEndpoint = () => {
+  // 检查当前表单是否有未保存的更改
+  if (endpointFormStatus.value !== '' && hasUnsavedChanges()) {
+    Modal.confirm({
+      title: t('settings.unsaved_changes'),
+      content: t('settings.save_changes_confirm'),
+      okText: t('settings.save'),
+      cancelText: t('settings.discard'),
+      onOk: () => {
+        endpointFormSave()
+        resetForm()
+      },
+      onCancel: () => {
+        resetForm()
+      }
+    })
+  } else {
+    resetForm()
+  }
+}
+
+const resetForm = () => {
   Object.assign(endpointForm, defaultParams)
   endpointForm.id = 'new-endpoint'
   endpointFormStatus.value = 'add'
+  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
 }
 
 const availableModelsState = reactive({
@@ -168,7 +225,7 @@ const availableModelsState = reactive({
     </a-col>
     <a-col v-show="['edit', 'add'].includes(endpointFormStatus)" :sm="24" :md="16">
       <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-        <a-form-item :label="t('settings.endpoint_id')">
+        <a-form-item :label="t('settings.endpoint_id')" :required="true">
           <a-input v-model:value="endpointForm.id" />
         </a-form-item>
         <a-form-item :label="t('settings.is_azure')">
@@ -177,7 +234,10 @@ const availableModelsState = reactive({
         <a-form-item :label="t('settings.is_vertex')">
           <a-switch v-model:checked="endpointForm.is_vertex" />
         </a-form-item>
-        <a-form-item :label="t('settings.api_base')">
+        <a-form-item label="Bedrock">
+          <a-switch v-model:checked="endpointForm.is_bedrock" />
+        </a-form-item>
+        <a-form-item :label="t('settings.api_base')" :required="true">
           <a-input v-model:value="endpointForm.api_base" />
         </a-form-item>
         <a-form-item :label="t('settings.api_key')">
@@ -191,9 +251,6 @@ const availableModelsState = reactive({
         </a-form-item>
         <a-form-item :label="t('settings.region')">
           <a-input v-model:value="endpointForm.region" />
-        </a-form-item>
-        <a-form-item :label="t('settings.endpoint_name')">
-          <a-input v-model:value="endpointForm.endpoint_name" />
         </a-form-item>
         <a-form-item :label="t('settings.credentials')">
           <a-textarea v-model:value="endpointForm.credentials" :placeholder="t('settings.credentials_placeholder')"
