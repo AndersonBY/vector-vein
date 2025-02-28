@@ -17,7 +17,7 @@ dependencies = [
   "tiktoken>=0.4.0",
   "pyinstaller>=5.11.0",
   "readability-lxml>=0.8.1",
-  "markdownify>=0.11.6",
+  "markdownify>=1.0.0",
   "yt-dlp>=2023.3.4",
   "pycryptodome>=3.18.0",
   "clr-loader>=0.2.6",
@@ -40,7 +40,7 @@ dependencies = [
   "pathvalidate>=3.2.0",
   "deepgram-sdk>=3.3.1",
   "deepgram-captions>=1.2.0",
-  "vectorvein>=0.1.79",
+  "vectorvein>=0.2.14",
   "docx-ea-font>=0.0.1",
 ]
 description = ""
