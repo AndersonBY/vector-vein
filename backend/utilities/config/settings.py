@@ -54,7 +54,6 @@ DEFAULT_SETTINGS = {
                 "id": "azure-openai",
                 "region": "East US",
                 "api_base": "",
-                "endpoint_name": "",
                 "api_key": "",
                 "rpm": 900,
                 "tpm": 150000,
@@ -64,13 +63,6 @@ DEFAULT_SETTINGS = {
                 "id": "anthropic-default",
                 "api_base": "https://api.anthropic.com/v1",
                 "api_key": "",
-            },
-            {
-                "id": "vertex-anthropic",
-                "region": "europe-west1",
-                "api_base": "",
-                "credentials": {},
-                "is_vertex": True,
             },
             {
                 "id": "moonshot-default",
@@ -115,12 +107,21 @@ DEFAULT_SETTINGS = {
                 "api_base": "https://open.bigmodel.cn/api/paas/v4",
                 "api_key": "",
             },
+            {
+                "api_base": "https://api.siliconflow.cn/v1",
+                "api_key": "",
+                "concurrent_requests": 20,
+                "id": "siliconflow",
+                "rpm": 1000,
+                "tpm": 50000,
+            },
         ],
         "openai": {
             "models": {
                 "o1": {"id": "o1", "endpoints": ["openai-default"]},
                 "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
                 "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
+                "o3-mini": {"id": "o3-mini", "endpoints": ["openai-default"]},
                 "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
                 "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
                 "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},
@@ -156,6 +157,10 @@ DEFAULT_SETTINGS = {
                 },
                 "claude-3-5-haiku-20241022": {
                     "id": "claude-3-5-haiku-20241022",
+                    "endpoints": ["anthropic-default"],
+                },
+                "claude-3-7-sonnet-20250219": {
+                    "id": "claude-3-7-sonnet-20250219",
                     "endpoints": ["anthropic-default"],
                 },
             }
@@ -338,6 +343,24 @@ DEFAULT_SETTINGS = {
                     "context_length": 32768,
                     "max_output_tokens": 4096,
                 },
+                "qwen2.5-vl-72b-instruct": {
+                    "id": "qwen2.5-vl-72b-instruct",
+                    "endpoints": ["qwen-default"],
+                    "function_call_available": False,
+                    "max_output_tokens": 8192,
+                },
+                "qwen2.5-vl-7b-instruct": {
+                    "id": "qwen2.5-vl-7b-instruct",
+                    "endpoints": ["qwen-default"],
+                    "function_call_available": False,
+                    "max_output_tokens": 8192,
+                },
+                "qwen2.5-vl-3b-instruct": {
+                    "id": "qwen2.5-vl-3b-instruct",
+                    "endpoints": ["qwen-default"],
+                    "function_call_available": False,
+                    "max_output_tokens": 8192,
+                },
                 "qwen-max": {
                     "id": "qwen-max",
                     "endpoints": ["qwen-default"],
@@ -374,13 +397,7 @@ DEFAULT_SETTINGS = {
         },
         "yi": {
             "models": {
-                "yi-large": {"id": "yi-large", "endpoints": ["lingyiwanwu-default"]},
-                "yi-large-turbo": {"id": "yi-large-turbo", "endpoints": ["lingyiwanwu-default"]},
-                "yi-large-fc": {"id": "yi-large-fc", "endpoints": ["lingyiwanwu-default"]},
-                "yi-medium": {"id": "yi-medium", "endpoints": ["lingyiwanwu-default"]},
-                "yi-medium-200k": {"id": "yi-medium-200k", "endpoints": ["lingyiwanwu-default"]},
-                "yi-spark": {"id": "yi-spark", "endpoints": ["lingyiwanwu-default"]},
-                "yi-vision": {"id": "yi-vision", "endpoints": ["lingyiwanwu-default"]},
+                "yi-vision-v2": {"id": "yi-vision-v2", "endpoints": ["lingyiwanwu-default"]},
                 "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
             }
         },
@@ -406,6 +423,18 @@ DEFAULT_SETTINGS = {
                 "moonshot-v1-8k": {"id": "moonshot-v1-8k", "endpoints": ["moonshot-default"]},
                 "moonshot-v1-32k": {"id": "moonshot-v1-32k", "endpoints": ["moonshot-default"]},
                 "moonshot-v1-128k": {"id": "moonshot-v1-128k", "endpoints": ["moonshot-default"]},
+                "moonshot-v1-8k-vision-preview": {
+                    "endpoints": ["moonshot-default"],
+                    "id": "moonshot-v1-8k-vision-preview",
+                },
+                "moonshot-v1-32k-vision-preview": {
+                    "endpoints": ["moonshot-default"],
+                    "id": "moonshot-v1-32k-vision-preview",
+                },
+                "moonshot-v1-128k-vision-preview": {
+                    "endpoints": ["moonshot-default"],
+                    "id": "moonshot-v1-128k-vision-preview",
+                },
             }
         },
         "local": {
