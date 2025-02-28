@@ -87,6 +87,11 @@ const resetModelForm = () => {
   })
 }
 
+const cancelModel = () => {
+  modelFormModalOpen.value = false
+  resetModelForm()
+}
+
 const addEndpoint = () => {
   endpointModelForm.endpoint_id = ''
   endpointModelForm.model_id = modelEditIndex.value
@@ -142,7 +147,8 @@ const editEndpoint = (index) => {
       {{ t('settings.add_model') }}
     </a-button>
     <a-modal v-model:open="modelFormModalOpen"
-      :title="modelFormStatus === 'add' ? t('settings.add_model') : t('settings.edit_model')" @ok="saveModel">
+      :title="modelFormStatus === 'add' ? t('settings.add_model') : t('settings.edit_model')" @ok="saveModel"
+      @cancel="cancelModel">
       <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <a-form-item>
           <template #label>
