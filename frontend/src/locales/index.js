@@ -5,8 +5,8 @@
  * @Last Modified time: 2023-05-17 11:42:37
  */
 import { createI18n } from 'vue-i18n'
-import zh_CN from '@/locales/zh-CN'
-import en_US from '@/locales/en-US'
+import zh_CN from '@/locales/zh-CN.json'
+import en_US from '@/locales/en-US.json'
 
 
 export const languageList = {
