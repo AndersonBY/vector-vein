@@ -329,7 +329,7 @@
       "add_templates_to_your_workflows": "Do you want to add the workflow templates in this Agent as your personal workflows? After adding, you can review the workflow run records. If not added, this Agent will not be associated with any workflows and will require manual handling by you.",
       "modify_agent": "Modify agent",
       "system_prompt": "System prompt",
-      "system_prompt_tip": "System prompts are special messages used to guide AI behavior, which allow developers to define the style and tasks of artificial intelligence within a certain range, making it more customizable and adaptable to various use cases.  You can use {{time}} as a time variable to tell the Agent the current time.",
+      "system_prompt_tip": "System prompts are special messages used to guide AI behavior, which allow developers to define the style and tasks of artificial intelligence within a certain range, making it more customizable and adaptable to various use cases.  You can use {'{{'}time{'}}'} as a time variable to tell the Agent the current time.",
       "opening_dialog": "Opening dialog",
       "opening_question_suggestions": "Opening question suggestions",
       "opening_question_suggestions_tip": "Give a few optional opening questions so that users can start the conversation quickly.",
