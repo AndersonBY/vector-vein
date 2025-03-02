@@ -49,16 +49,22 @@ const downloadMindmap = () => {
   saveAs(blob, 'mindmap.svg')
 }
 
+const decodeHTMLEntities = (text) => {
+  const textarea = document.createElement('textarea');
+  textarea.innerHTML = text;
+  return textarea.getHTML()
+}
+
 const exportToXmind = async () => {
   const rootNode = rootRef.value
   const buildTopic = (node) => {
-    const topic = Topic(node.content)
+    const topic = Topic(decodeHTMLEntities(node.content))
     if (node.children && node.children.length > 0) {
       topic.children(node.children.map(child => buildTopic(child)))
     }
     return topic
   }
-  const rootTopic = RootTopic(rootNode.content).children(rootNode.children.map(child => buildTopic(child)))
+  const rootTopic = RootTopic(decodeHTMLEntities(rootNode.content)).children(rootNode.children.map(child => buildTopic(child)))
   const workbook = Workbook(rootTopic)
 
   const arrayBuffer = await workbook.archive()
