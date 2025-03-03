@@ -144,90 +144,6 @@
     "WARNING": "Warning",
     "CAUTION": "Caution"
   },
-  "email": {
-    "verify": {
-      "email_verify_success": "Email verify success!",
-      "email_verify_success_subtitle": "Your email has been verified successfully, check the courses now!",
-      "check_control_panel": "Check control panel",
-      "email_verify_failed": "Email verify failed!",
-      "email_verify_failed_subtitle": "There is an error in the verification link, please recheck and refresh.",
-      "email_verify_expired_subtitle": "This link has expired. Please resend the verification email.",
-      "resend_email": "Resend email",
-      "email_already_verified": "Email already verified!",
-      "email_already_verified_subtitle": "This link is verified, please login directly",
-      "please_verify_your_email": "Please verify your email",
-      "please_verify_your_email_subtitle": "To keep your account safe, we need to verify your email address: ",
-      "sending_failed": "Sending failed",
-      "too_frequently_resend": "Your emails are being sent too often, please try again later",
-      "sending_successfull": "Sending successfull",
-      "please_relogin_after_verify": "Please re-login after successful verification"
-    }
-  },
-  "userAuth": {
-    "common": {
-      "please_enter": "Please enter ",
-      "username": "Username",
-      "email": "Email",
-      "mobile": "Mobile",
-      "verification_code": "Verification code",
-      "send_verification_code": "Send verification code",
-      "password": "Password",
-      "login": "Login",
-      "logout": "Logout",
-      "or": "or",
-      "register": "Register",
-      "sign_up": "Sign up",
-      "error": "Server error"
-    },
-    "login": {
-      "please_enter_username": "Please enter username",
-      "please_enter_email": "Please enter email",
-      "please_enter_password": "Please enter password",
-      "remember_account": "Remember me",
-      "forget_password": "Forget password",
-      "account_not_exists_title": "Password incorrect or account not exists",
-      "account_not_exists_content": "Please check if your account password is correct or register a new account.",
-      "mobileLogin": "Mobile login",
-      "wechatLogin": "Wechat login",
-      "email_login": "Email login"
-    },
-    "register": {
-      "region_search_or_select": "Region (search or select)",
-      "please_select_your_region": "Please select your region",
-      "human_verification_error": "Human verification error!",
-      "connection_error": "Connection error!",
-      "email_already_exists": "Email already registered! Please login directly.",
-      "username_already_exists": "Username already used!",
-      "register_success": "Register success! Please verify your email."
-    },
-    "registerResult": {
-      "check_email": "Check email",
-      "back_to_login": "Back to login",
-      "verification_email_sent": "The activation email has been sent to your email address, and the email is valid for 24 hours. Please log in to your mailbox in time and click the link in the email to activate your account.",
-      "your_email_account_register_success": "Your account {email} registered successfully!"
-    },
-    "forgetPassword": {
-      "verify_email": "Verify email",
-      "enter_new_password": "Enter new password",
-      "verify": "Verify",
-      "verification_code_send_success": "Verification code sent",
-      "human_verification_error": "Human verification error!",
-      "connection_error": "Connection error!",
-      "email_not_exists": "Email not exists!",
-      "reset_password": "Reset password",
-      "reset_success": "Reset success! Please login."
-    }
-  },
-  "userAccount": {
-    "accountInfo": {
-      "my_account": "My account",
-      "my_credits": "My credits"
-    },
-    "accountSettings": {
-      "account_email": "Account email",
-      "account_settings": "Account settings"
-    }
-  },
   "workspace": {
     "chatSpace": {
       "fetch_conversations_failed": "Fetch conversations failed",
@@ -1986,7 +1902,8 @@
     "unsaved_changes": "Unsaved Changes",
     "save_changes_confirm": "You have unsaved changes. Do you want to save them?",
     "discard": "Discard",
-    "credentials_parse_failed": "Credentials JSON parse error"
+    "credentials_parse_failed": "Credentials JSON parse error",
+    "moonshot": "Moonshot"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "Youthful Male Voice",

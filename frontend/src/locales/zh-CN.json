@@ -144,90 +144,6 @@
     "WARNING": "警告",
     "CAUTION": "小心"
   },
-  "email": {
-    "verify": {
-      "email_verify_success": "邮箱验证成功！",
-      "email_verify_success_subtitle": "您的邮箱验证成功，快来试用一下吧！",
-      "check_control_panel": "查看控制台",
-      "email_verify_failed": "邮箱验证失败！",
-      "email_verify_failed_subtitle": "验证链接有误，请重新检查并刷新",
-      "email_verify_expired_subtitle": "链接已超时，请重新发送",
-      "resend_email": "重新发送邮件",
-      "email_already_verified": "邮箱已验证！",
-      "email_already_verified_subtitle": "该链接已验证，请直接登陆",
-      "please_verify_your_email": "请验证您的邮箱",
-      "please_verify_your_email_subtitle": "为保证您的账号安全，我们需要确认您的邮箱地址：",
-      "sending_failed": "发送失败",
-      "too_frequently_resend": "您的邮件发送过于频繁，请稍后再试",
-      "sending_successfull": "发送成功",
-      "please_relogin_after_verify": "验证成功后请重新登录网站"
-    }
-  },
-  "userAuth": {
-    "common": {
-      "please_enter": "请输入",
-      "username": "用户名",
-      "email": "Email电子邮箱",
-      "mobile": "手机",
-      "verification_code": "验证码",
-      "send_verification_code": "发送验证码",
-      "password": "密码",
-      "login": "登录",
-      "logout": "登出",
-      "or": "或",
-      "register": "注册新账号",
-      "sign_up": "注册新账号",
-      "error": "服务器错误"
-    },
-    "login": {
-      "please_enter_username": "请输入手机号或用户名",
-      "please_enter_email": "请输入邮箱",
-      "please_enter_password": "请输入密码",
-      "remember_account": "记住账号",
-      "forget_password": "忘记密码",
-      "account_not_exists_title": "密码错误或账号不存在",
-      "account_not_exists_content": "请检查账号密码是否正确或注册新账号",
-      "mobileLogin": "手机号登录",
-      "wechatLogin": "微信登录",
-      "email_login": "邮箱登录"
-    },
-    "register": {
-      "region_search_or_select": "请搜索或选择您的区域",
-      "please_select_your_region": "请选择您的区域",
-      "human_verification_error": "人机验证失败！",
-      "connection_error": "连接错误！",
-      "email_already_exists": "该邮箱已注册，请直接登录",
-      "username_already_exists": "该用户名已被使用",
-      "register_success": "注册成功，请验证邮件"
-    },
-    "registerResult": {
-      "check_email": "查看邮箱",
-      "back_to_login": "返回登录",
-      "verification_email_sent": "激活邮件已发送到你的邮箱中，邮件有效期为24小时。请及时登录邮箱，点击邮件中的链接激活帐户。",
-      "your_email_account_register_success": "你的账户：{email} 注册成功"
-    },
-    "forgetPassword": {
-      "verify_email": "验证邮箱",
-      "enter_new_password": "输入新密码",
-      "verify": "验证",
-      "verification_code_send_success": "验证码已发送",
-      "human_verification_error": "人机验证失败！",
-      "connection_error": "连接错误！",
-      "email_not_exists": "该邮箱未注册",
-      "reset_password": "重置密码",
-      "reset_success": "重置密码成功"
-    }
-  },
-  "userAccount": {
-    "accountInfo": {
-      "my_account": "我的账号",
-      "my_credits": "我的积分"
-    },
-    "accountSettings": {
-      "account_email": "账号邮箱",
-      "account_settings": "账号设置"
-    }
-  },
   "workspace": {
     "chatSpace": {
       "fetch_conversations_failed": "获取会话列表失败",
@@ -1986,7 +1902,8 @@
     "unsaved_changes": "未保存的更改",
     "save_changes_confirm": "当前有未保存的更改，是否保存？",
     "discard": "放弃",
-    "credentials_parse_failed": "凭证 JSON 解析错误"
+    "credentials_parse_failed": "凭证 JSON 解析错误",
+    "moonshot": "月之暗面"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "青涩青年音色",
