@@ -116,329 +116,331 @@ DEFAULT_SETTINGS = {
                 "tpm": 50000,
             },
         ],
-        "openai": {
-            "models": {
-                "o1": {"id": "o1", "endpoints": ["openai-default"]},
-                "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
-                "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
-                "o3-mini": {"id": "o3-mini", "endpoints": ["openai-default"]},
-                "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
-                "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
-                "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},
-                "gpt-35-turbo": {"id": "gpt-3.5-turbo", "endpoints": ["openai-default"]},
-                "whisper-1": {"id": "whisper-1", "endpoints": ["openai-default"]},
-                "tts-1": {"id": "tts-1", "endpoints": ["openai-default"]},
-                "tts-1-hd": {"id": "tts-1-hd", "endpoints": ["openai-default"]},
-                "dall-e-3": {"id": "dall-e-3", "endpoints": ["openai-default"]},
-                "text-embedding-ada-002": {"id": "text-embedding-ada-002", "endpoints": ["openai-default"]},
-            }
-        },
-        "anthropic": {
-            "models": {
-                "claude-3-opus-20240229": {
-                    "id": "claude-3-opus-20240229",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-sonnet-20240229": {
-                    "id": "claude-3-sonnet-20240229",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-haiku-20240307": {
-                    "id": "claude-3-haiku-20240307",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-5-sonnet-20240620": {
-                    "id": "claude-3-5-sonnet-20240620",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-5-sonnet-20241022": {
-                    "id": "claude-3-5-sonnet-20241022",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-5-haiku-20241022": {
-                    "id": "claude-3-5-haiku-20241022",
-                    "endpoints": ["anthropic-default"],
-                },
-                "claude-3-7-sonnet-20250219": {
-                    "id": "claude-3-7-sonnet-20250219",
-                    "endpoints": ["anthropic-default"],
-                },
-            }
-        },
-        "minimax": {
-            "models": {
-                "abab5-chat": {"id": "abab5-chat", "endpoints": ["minimax-default"]},
-                "abab5.5-chat": {"id": "abab5.5-chat", "endpoints": ["minimax-default"]},
-                "abab6-chat": {"id": "abab6-chat", "endpoints": ["minimax-default"]},
-                "abab6.5s-chat": {"id": "abab6.5s-chat", "endpoints": ["minimax-default"]},
-                "MiniMax-Text-01": {"endpoints": ["minimax-default"], "id": "MiniMax-Text-01"},
-            }
-        },
-        "gemini": {
-            "models": {
-                "gemini-1.5-pro": {"id": "gemini-1.5-pro", "endpoints": ["gemini-default"]},
-                "gemini-1.5-flash": {"id": "gemini-1.5-flash", "endpoints": ["gemini-default"]},
-                "gemini-2.0-flash-thinking-exp-1219": {
-                    "endpoints": ["gemini-default"],
-                    "id": "gemini-2.0-flash-thinking-exp-1219",
-                },
-                "gemini-2.0-flash-thinking-exp-01-21": {
-                    "endpoints": ["gemini-default"],
-                    "id": "gemini-2.0-flash-thinking-exp-01-21",
-                },
-                "gemini-2.0-pro-exp-02-05": {"id": "gemini-2.0-pro-exp-02-05", "endpoints": ["gemini-default"]},
-                "gemini-2.0-flash": {"id": "gemini-2.0-flash", "endpoints": ["gemini-default"]},
-                "gemini-2.0-flash-lite-preview-02-05": {
-                    "id": "gemini-2.0-flash-lite-preview-02-05",
-                    "endpoints": ["gemini-default"],
-                },
-            }
-        },
-        "deepseek": {
-            "models": {
-                "deepseek-chat": {"id": "deepseek-chat", "endpoints": ["deepseek-default"]},
-                "deepseek-reasoner": {"id": "deepseek-reasoner", "endpoints": ["deepseek-default"]},
-            }
-        },
-        "groq": {
-            "models": {
-                "mixtral-8x7b-32768": {
-                    "id": "mixtral-8x7b-32768",
-                    "endpoints": ["groq-default"],
-                },
-                "llama3-70b-8192": {
-                    "id": "llama3-70b-8192",
-                    "endpoints": ["groq-default"],
-                },
-                "llama3-8b-8192": {
-                    "id": "llama3-8b-8192",
-                    "endpoints": ["groq-default"],
-                },
-                "gemma-7b-it": {
-                    "id": "gemma-7b-it",
-                    "endpoints": ["groq-default"],
-                },
-                "gemma2-9b-it": {
-                    "id": "gemma2-9b-it",
-                    "endpoints": ["groq-default"],
-                },
-                "llama3-groq-70b-8192-tool-use-preview": {
-                    "id": "llama3-groq-70b-8192-tool-use-preview",
-                    "endpoints": ["groq-default"],
-                },
-                "llama3-groq-8b-8192-tool-use-preview": {
-                    "id": "llama3-groq-8b-8192-tool-use-preview",
-                    "endpoints": ["groq-default"],
-                },
-                "llama-3.1-70b-versatile": {
-                    "id": "llama-3.1-70b-versatile",
-                    "endpoints": ["groq-default"],
-                },
-                "llama-3.1-8b-instant": {
-                    "id": "llama-3.1-8b-instant",
-                    "endpoints": ["groq-default"],
-                },
-            }
-        },
-        "mistral": {
-            "models": {
-                "mistral-large": {
-                    "id": "mistral-large-latest",
-                    "context_length": 128000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-                "mistral-small": {
-                    "id": "mistral-small-latest",
-                    "context_length": 128000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-                "codestral": {
-                    "id": "codestral-latest",
-                    "context_length": 32000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-                "mistral-embed": {
-                    "id": "mistral-embed",
-                    "context_length": 8000,
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "endpoints": ["mistral-default"],
-                },
-                "pixtral": {
-                    "id": "pixtral-12b-2409",
-                    "context_length": 128000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-                "mistral-nemo": {
-                    "id": "open-mistral-nemo",
-                    "context_length": 128000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-                "codestral-mamba": {
-                    "id": "open-codestral-mamba",
-                    "context_length": 256000,
-                    "function_call_available": True,
-                    "response_format_available": True,
-                    "endpoints": ["mistral-default"],
-                },
-            }
-        },
-        "qwen": {
-            "models": {
-                "qwen2.5-7b-instruct": {
-                    "id": "qwen2.5-7b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2.5-14b-instruct": {
-                    "id": "qwen2.5-14b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2.5-32b-instruct": {
-                    "id": "qwen2.5-32b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2.5-coder-32b-instruct": {
-                    "id": "qwen2.5-coder-32b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 4096,
-                },
-                "qwen2.5-72b-instruct": {
-                    "id": "qwen2.5-72b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 131072,
-                    "max_output_tokens": 8192,
-                },
-                "qwq-32b-preview": {
-                    "id": "qwq-32b-preview",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": False,
-                    "context_length": 32768,
-                    "max_output_tokens": 4096,
-                },
-                "qwen2.5-vl-72b-instruct": {
-                    "id": "qwen2.5-vl-72b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2.5-vl-7b-instruct": {
-                    "id": "qwen2.5-vl-7b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "max_output_tokens": 8192,
-                },
-                "qwen2.5-vl-3b-instruct": {
-                    "id": "qwen2.5-vl-3b-instruct",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "max_output_tokens": 8192,
-                },
-                "qwen-max": {
-                    "id": "qwen-max",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": True,
-                    "context_length": 8096,
-                    "max_output_tokens": 2048,
-                },
-                "qwen-max-longcontext": {
-                    "id": "qwen-max-longcontext",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": True,
-                    "context_length": 30000,
-                    "max_output_tokens": 2048,
-                },
-                "qwen-plus": {
-                    "id": "qwen-plus",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": True,
-                    "context_length": 131072,
-                    "max_output_tokens": 8096,
-                },
-                "qwen-turbo": {
-                    "id": "qwen-turbo",
-                    "endpoints": ["qwen-default"],
-                    "function_call_available": False,
-                    "response_format_available": True,
-                    "context_length": 8096,
-                    "max_output_tokens": 1500,
-                },
-            }
-        },
-        "yi": {
-            "models": {
-                "yi-vision-v2": {"id": "yi-vision-v2", "endpoints": ["lingyiwanwu-default"]},
-                "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
-            }
-        },
-        "zhipuai": {
-            "models": {
-                "glm-3-turbo": {"id": "glm-3-turbo", "endpoints": ["zhipuai-default"]},
-                "glm-4": {"id": "glm-4", "endpoints": ["zhipuai-default"]},
-                "glm-4-plus": {"id": "glm-4-plus", "endpoints": ["zhipuai-default"]},
-                "glm-4-0520": {"id": "glm-4-0520", "endpoints": ["zhipuai-default"]},
-                "glm-4-air": {"id": "glm-4-air", "endpoints": ["zhipuai-default"]},
-                "glm-4-airx": {"id": "glm-4-airx", "endpoints": ["zhipuai-default"]},
-                "glm-4-flash": {"id": "glm-4-flash", "endpoints": ["zhipuai-default"]},
-                "glm-4-flashx": {"id": "glm-4-flashx", "endpoints": ["zhipuai-default"]},
-                "glm-4-long": {"id": "glm-4-long", "endpoints": ["zhipuai-default"]},
-                "glm-4v": {"id": "glm-4v", "endpoints": ["zhipuai-default"]},
-                "glm-4v-flash": {"id": "glm-4v-flash", "endpoints": ["zhipuai-default"]},
-                "glm-4v-plus": {"id": "glm-4v-plus", "endpoints": ["zhipuai-default"]},
-                "glm-zero-preview": {"id": "glm-zero-preview", "endpoints": ["zhipuai-default"]},
-            }
-        },
-        "moonshot": {
-            "models": {
-                "moonshot-v1-8k": {"id": "moonshot-v1-8k", "endpoints": ["moonshot-default"]},
-                "moonshot-v1-32k": {"id": "moonshot-v1-32k", "endpoints": ["moonshot-default"]},
-                "moonshot-v1-128k": {"id": "moonshot-v1-128k", "endpoints": ["moonshot-default"]},
-                "moonshot-v1-8k-vision-preview": {
-                    "endpoints": ["moonshot-default"],
-                    "id": "moonshot-v1-8k-vision-preview",
-                },
-                "moonshot-v1-32k-vision-preview": {
-                    "endpoints": ["moonshot-default"],
-                    "id": "moonshot-v1-32k-vision-preview",
-                },
-                "moonshot-v1-128k-vision-preview": {
-                    "endpoints": ["moonshot-default"],
-                    "id": "moonshot-v1-128k-vision-preview",
-                },
-            }
-        },
-        "local": {
-            "models": {},
+        "backends": {
+            "openai": {
+                "models": {
+                    "o1": {"id": "o1", "endpoints": ["openai-default"]},
+                    "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
+                    "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
+                    "o3-mini": {"id": "o3-mini", "endpoints": ["openai-default"]},
+                    "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
+                    "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
+                    "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},
+                    "gpt-35-turbo": {"id": "gpt-3.5-turbo", "endpoints": ["openai-default"]},
+                    "whisper-1": {"id": "whisper-1", "endpoints": ["openai-default"]},
+                    "tts-1": {"id": "tts-1", "endpoints": ["openai-default"]},
+                    "tts-1-hd": {"id": "tts-1-hd", "endpoints": ["openai-default"]},
+                    "dall-e-3": {"id": "dall-e-3", "endpoints": ["openai-default"]},
+                    "text-embedding-ada-002": {"id": "text-embedding-ada-002", "endpoints": ["openai-default"]},
+                }
+            },
+            "anthropic": {
+                "models": {
+                    "claude-3-opus-20240229": {
+                        "id": "claude-3-opus-20240229",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-sonnet-20240229": {
+                        "id": "claude-3-sonnet-20240229",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-haiku-20240307": {
+                        "id": "claude-3-haiku-20240307",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-5-sonnet-20240620": {
+                        "id": "claude-3-5-sonnet-20240620",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-5-sonnet-20241022": {
+                        "id": "claude-3-5-sonnet-20241022",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-5-haiku-20241022": {
+                        "id": "claude-3-5-haiku-20241022",
+                        "endpoints": ["anthropic-default"],
+                    },
+                    "claude-3-7-sonnet-20250219": {
+                        "id": "claude-3-7-sonnet-20250219",
+                        "endpoints": ["anthropic-default"],
+                    },
+                }
+            },
+            "minimax": {
+                "models": {
+                    "abab5-chat": {"id": "abab5-chat", "endpoints": ["minimax-default"]},
+                    "abab5.5-chat": {"id": "abab5.5-chat", "endpoints": ["minimax-default"]},
+                    "abab6-chat": {"id": "abab6-chat", "endpoints": ["minimax-default"]},
+                    "abab6.5s-chat": {"id": "abab6.5s-chat", "endpoints": ["minimax-default"]},
+                    "MiniMax-Text-01": {"endpoints": ["minimax-default"], "id": "MiniMax-Text-01"},
+                }
+            },
+            "gemini": {
+                "models": {
+                    "gemini-1.5-pro": {"id": "gemini-1.5-pro", "endpoints": ["gemini-default"]},
+                    "gemini-1.5-flash": {"id": "gemini-1.5-flash", "endpoints": ["gemini-default"]},
+                    "gemini-2.0-flash-thinking-exp-1219": {
+                        "endpoints": ["gemini-default"],
+                        "id": "gemini-2.0-flash-thinking-exp-1219",
+                    },
+                    "gemini-2.0-flash-thinking-exp-01-21": {
+                        "endpoints": ["gemini-default"],
+                        "id": "gemini-2.0-flash-thinking-exp-01-21",
+                    },
+                    "gemini-2.0-pro-exp-02-05": {"id": "gemini-2.0-pro-exp-02-05", "endpoints": ["gemini-default"]},
+                    "gemini-2.0-flash": {"id": "gemini-2.0-flash", "endpoints": ["gemini-default"]},
+                    "gemini-2.0-flash-lite-preview-02-05": {
+                        "id": "gemini-2.0-flash-lite-preview-02-05",
+                        "endpoints": ["gemini-default"],
+                    },
+                }
+            },
+            "deepseek": {
+                "models": {
+                    "deepseek-chat": {"id": "deepseek-chat", "endpoints": ["deepseek-default"]},
+                    "deepseek-reasoner": {"id": "deepseek-reasoner", "endpoints": ["deepseek-default"]},
+                }
+            },
+            "groq": {
+                "models": {
+                    "mixtral-8x7b-32768": {
+                        "id": "mixtral-8x7b-32768",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama3-70b-8192": {
+                        "id": "llama3-70b-8192",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama3-8b-8192": {
+                        "id": "llama3-8b-8192",
+                        "endpoints": ["groq-default"],
+                    },
+                    "gemma-7b-it": {
+                        "id": "gemma-7b-it",
+                        "endpoints": ["groq-default"],
+                    },
+                    "gemma2-9b-it": {
+                        "id": "gemma2-9b-it",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama3-groq-70b-8192-tool-use-preview": {
+                        "id": "llama3-groq-70b-8192-tool-use-preview",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama3-groq-8b-8192-tool-use-preview": {
+                        "id": "llama3-groq-8b-8192-tool-use-preview",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama-3.1-70b-versatile": {
+                        "id": "llama-3.1-70b-versatile",
+                        "endpoints": ["groq-default"],
+                    },
+                    "llama-3.1-8b-instant": {
+                        "id": "llama-3.1-8b-instant",
+                        "endpoints": ["groq-default"],
+                    },
+                }
+            },
+            "mistral": {
+                "models": {
+                    "mistral-large": {
+                        "id": "mistral-large-latest",
+                        "context_length": 128000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "mistral-small": {
+                        "id": "mistral-small-latest",
+                        "context_length": 128000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "codestral": {
+                        "id": "codestral-latest",
+                        "context_length": 32000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "mistral-embed": {
+                        "id": "mistral-embed",
+                        "context_length": 8000,
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "pixtral": {
+                        "id": "pixtral-12b-2409",
+                        "context_length": 128000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "mistral-nemo": {
+                        "id": "open-mistral-nemo",
+                        "context_length": 128000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                    "codestral-mamba": {
+                        "id": "open-codestral-mamba",
+                        "context_length": 256000,
+                        "function_call_available": True,
+                        "response_format_available": True,
+                        "endpoints": ["mistral-default"],
+                    },
+                }
+            },
+            "qwen": {
+                "models": {
+                    "qwen2.5-7b-instruct": {
+                        "id": "qwen2.5-7b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 131072,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen2.5-14b-instruct": {
+                        "id": "qwen2.5-14b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 131072,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen2.5-32b-instruct": {
+                        "id": "qwen2.5-32b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 131072,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen2.5-coder-32b-instruct": {
+                        "id": "qwen2.5-coder-32b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 131072,
+                        "max_output_tokens": 4096,
+                    },
+                    "qwen2.5-72b-instruct": {
+                        "id": "qwen2.5-72b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 131072,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwq-32b-preview": {
+                        "id": "qwq-32b-preview",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": False,
+                        "context_length": 32768,
+                        "max_output_tokens": 4096,
+                    },
+                    "qwen2.5-vl-72b-instruct": {
+                        "id": "qwen2.5-vl-72b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen2.5-vl-7b-instruct": {
+                        "id": "qwen2.5-vl-7b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen2.5-vl-3b-instruct": {
+                        "id": "qwen2.5-vl-3b-instruct",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "max_output_tokens": 8192,
+                    },
+                    "qwen-max": {
+                        "id": "qwen-max",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": True,
+                        "context_length": 8096,
+                        "max_output_tokens": 2048,
+                    },
+                    "qwen-max-longcontext": {
+                        "id": "qwen-max-longcontext",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": True,
+                        "context_length": 30000,
+                        "max_output_tokens": 2048,
+                    },
+                    "qwen-plus": {
+                        "id": "qwen-plus",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": True,
+                        "context_length": 131072,
+                        "max_output_tokens": 8096,
+                    },
+                    "qwen-turbo": {
+                        "id": "qwen-turbo",
+                        "endpoints": ["qwen-default"],
+                        "function_call_available": False,
+                        "response_format_available": True,
+                        "context_length": 8096,
+                        "max_output_tokens": 1500,
+                    },
+                }
+            },
+            "yi": {
+                "models": {
+                    "yi-vision-v2": {"id": "yi-vision-v2", "endpoints": ["lingyiwanwu-default"]},
+                    "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
+                }
+            },
+            "zhipuai": {
+                "models": {
+                    "glm-3-turbo": {"id": "glm-3-turbo", "endpoints": ["zhipuai-default"]},
+                    "glm-4": {"id": "glm-4", "endpoints": ["zhipuai-default"]},
+                    "glm-4-plus": {"id": "glm-4-plus", "endpoints": ["zhipuai-default"]},
+                    "glm-4-0520": {"id": "glm-4-0520", "endpoints": ["zhipuai-default"]},
+                    "glm-4-air": {"id": "glm-4-air", "endpoints": ["zhipuai-default"]},
+                    "glm-4-airx": {"id": "glm-4-airx", "endpoints": ["zhipuai-default"]},
+                    "glm-4-flash": {"id": "glm-4-flash", "endpoints": ["zhipuai-default"]},
+                    "glm-4-flashx": {"id": "glm-4-flashx", "endpoints": ["zhipuai-default"]},
+                    "glm-4-long": {"id": "glm-4-long", "endpoints": ["zhipuai-default"]},
+                    "glm-4v": {"id": "glm-4v", "endpoints": ["zhipuai-default"]},
+                    "glm-4v-flash": {"id": "glm-4v-flash", "endpoints": ["zhipuai-default"]},
+                    "glm-4v-plus": {"id": "glm-4v-plus", "endpoints": ["zhipuai-default"]},
+                    "glm-zero-preview": {"id": "glm-zero-preview", "endpoints": ["zhipuai-default"]},
+                }
+            },
+            "moonshot": {
+                "models": {
+                    "moonshot-v1-8k": {"id": "moonshot-v1-8k", "endpoints": ["moonshot-default"]},
+                    "moonshot-v1-32k": {"id": "moonshot-v1-32k", "endpoints": ["moonshot-default"]},
+                    "moonshot-v1-128k": {"id": "moonshot-v1-128k", "endpoints": ["moonshot-default"]},
+                    "moonshot-v1-8k-vision-preview": {
+                        "endpoints": ["moonshot-default"],
+                        "id": "moonshot-v1-8k-vision-preview",
+                    },
+                    "moonshot-v1-32k-vision-preview": {
+                        "endpoints": ["moonshot-default"],
+                        "id": "moonshot-v1-32k-vision-preview",
+                    },
+                    "moonshot-v1-128k-vision-preview": {
+                        "endpoints": ["moonshot-default"],
+                        "id": "moonshot-v1-128k-vision-preview",
+                    },
+                }
+            },
+            "local": {
+                "models": {},
+            },
         },
     },
     "custom_llms": {},
@@ -462,7 +464,14 @@ def update_llm_settings_to_v2(data: dict):
     from vectorvein.settings import settings as vectorvein_settings
 
     if data.get("settings_version", 1) == 2:
-        return data
+        if data.get("llm_settings", {}).get("VERSION", "1") == "2":
+            return data
+        else:
+            vectorvein_llm_settings_v1 = data.get("llm_settings", {})
+            vectorvein_settings.load(vectorvein_llm_settings_v1)
+            vectorvein_settings.upgrade_to_v2()
+            data["llm_settings"] = vectorvein_settings.export()
+            return data
 
     with open("settings_v1.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
@@ -608,8 +617,9 @@ def update_llm_settings_to_v2(data: dict):
             del data[field]
 
     data["settings_version"] = 2
-    vectorvein_settings.load(llm_settings)
-    data["llm_settings"] = vectorvein_settings.model_dump()
+    vectorvein_settings.load(llm_settings)  # type: ignore
+    vectorvein_settings.upgrade_to_v2()
+    data["llm_settings"] = vectorvein_settings.export()
     return data
 
 
@@ -629,15 +639,17 @@ class Settings:
         if SettingModel.select().count() == 0:
             setting = SettingModel.create(data=DEFAULT_SETTINGS)
             vectorvein_settings.load(DEFAULT_SETTINGS["llm_settings"])
-            setting.data["llm_settings"] = vectorvein_settings.model_dump()
+            setting.data["llm_settings"] = vectorvein_settings.export()
             setting.save()
         else:
+            need_save = False
             setting = SettingModel.select().order_by(SettingModel.create_time.desc()).first()
+            if setting.data.get("llm_settings", {}).get("VERSION", "1") != "2":
+                need_save = True
             setting.data = update_llm_settings_to_v2(setting.data)
             setting.data = deep_merge(DEFAULT_SETTINGS.copy(), setting.data)
 
             # Update Gemini endpoint api_base to openai compatible version
-            need_save = False
             for endpoint in setting.data["llm_settings"]["endpoints"]:
                 if endpoint.get("api_base") == "https://generativelanguage.googleapis.com/v1beta":
                     endpoint["api_base"] = "https://generativelanguage.googleapis.com/v1beta/openai/"
@@ -645,7 +657,7 @@ class Settings:
 
             if need_save:
                 vectorvein_settings.load(setting.data["llm_settings"])
-                setting.data["llm_settings"] = vectorvein_settings.model_dump()
+                setting.data["llm_settings"] = vectorvein_settings.export()
                 setting.save()
 
         self.data = model_serializer(setting)["data"]
