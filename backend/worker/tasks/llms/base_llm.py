@@ -7,19 +7,20 @@ from typing import Any, Iterable
 from traceback import format_exc
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from vectorvein.types.enums import BackendType
-from vectorvein.types.exception import APIStatusError
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients.utils import get_token_counts, format_messages
-from vectorvein.types.llm_parameters import (
+from vectorvein.types import (
+    BackendType,
     ModelSetting,
+    APIStatusError,
     EndpointSetting,
     EndpointOptionDict,
     NotGiven,
     NOT_GIVEN,
     ToolParam,
     ToolChoice,
+    ResponseFormat,
 )
 
 from utilities.config import Settings
@@ -136,7 +137,7 @@ class BaseLLMTask:
                     self.tool_choice = "auto"
             self.tools = [{"type": "function", "function": function} for function in self.functions]
 
-        self.response_format: dict | None = None
+        self.response_format: ResponseFormat | NotGiven = NOT_GIVEN
         if response_format == "json_object" and self.model_settings.response_format_available:
             self.response_format = {"type": response_format}
 
