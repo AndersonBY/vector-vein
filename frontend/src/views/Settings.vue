@@ -21,7 +21,7 @@ import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import EndpointSettings from "@/components/settings/EndpointSettings.vue"
 import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
-import LLMStandardSettings from "@/components/settings/LLMStandardSettings.vue"
+import LLMTabsSettings from "@/components/settings/LLMTabsSettings.vue"
 import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
 import { hashObject } from "@/utils/util"
@@ -213,9 +213,10 @@ watch(selectedKeys, () => {
               {{ t('settings.save') }}
             </a-button>
           </template>
-          <EndpointSettings v-if="settingForm.data?.llm_settings?.endpoints && settingForm.data.llm_settings?.local"
+          <EndpointSettings
+            v-if="settingForm.data?.llm_settings?.endpoints && settingForm.data.llm_settings?.backends.local"
             v-model:endpoints="settingForm.data.llm_settings.endpoints"
-            v-model:localModels="settingForm.data.llm_settings.local"
+            v-model:localModels="settingForm.data.llm_settings.backends.local"
             v-model:modelFamilyMap="settingForm.data.custom_llms" />
         </a-card>
 
@@ -225,80 +226,8 @@ watch(selectedKeys, () => {
               {{ t('settings.save') }}
             </a-button>
           </template>
-          <a-tabs tab-position="left">
-            <a-tab-pane key="openai" tab="OpenAI">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.openai"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="moonshot" tab="Moonshot">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.moonshot"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="zhipuai" :tab="t('settings.zhipuai')">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.zhipuai"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="anthropic" tab="Anthropic">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.anthropic"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="minimax" tab="MiniMax">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.minimax"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="qwen" :tab="t('settings.qwen')">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.qwen"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="mistral" tab="Mistral">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.mistral"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="deepseek" tab="DeepSeek">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.deepseek"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="lingyiwanwu" :tab="t('settings.lingyiwanwu')">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.yi"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="gemini" tab="Gemini">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.gemini"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="groq" tab="Groq">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.groq"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-            <a-tab-pane key="baichuan" tab="Baichuan">
-              <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                <LLMStandardSettings v-model="settingForm.data.llm_settings.baichuan"
-                  :endpoints="settingForm.data.llm_settings.endpoints" />
-              </a-form>
-            </a-tab-pane>
-          </a-tabs>
+          <LLMTabsSettings v-if="settingForm.data.llm_settings?.backends && settingForm.data.llm_settings?.endpoints"
+            v-model="settingForm.data.llm_settings.backends" :endpoints="settingForm.data.llm_settings.endpoints" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'custom_llms'" :title="t('settings.custom_llms')" :loading="loading">
@@ -308,7 +237,7 @@ watch(selectedKeys, () => {
             </a-button>
           </template>
           <a-skeleton v-if="loading" active />
-          <CustomLLMSettings v-else v-model:localModels="settingForm.data.llm_settings.local"
+          <CustomLLMSettings v-else v-model:localModels="settingForm.data.llm_settings.backends.local"
             v-model:modelFamilyMap="settingForm.data.custom_llms"
             :endpoints="settingForm.data.llm_settings.endpoints" />
         </a-card>
