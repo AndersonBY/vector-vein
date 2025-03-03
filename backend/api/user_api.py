@@ -7,7 +7,7 @@ import json
 import time
 
 import webview
-from openai import OpenAI
+from vectorvein.types import EndpointSetting
 
 from .utils import JResponse
 from models import Setting, Conversation, Agent, model_serializer
@@ -158,9 +158,15 @@ class SettingAPI:
         return JResponse(data={"port": port})
 
     def list_models(self, payload):
-        client = OpenAI(api_key=payload.get("api_key"), base_url=payload.get("base_url"))
-        models = client.models.list()
-        return JResponse(data={"models": models.model_dump()})
+        endpoint = EndpointSetting(
+            **{
+                "id": "test-endpoint",
+                "api_base": payload.get("base_url"),
+                "api_key": payload.get("api_key"),
+            }
+        )
+        models = endpoint.model_list()
+        return JResponse(data={"models": models})
 
 
 class HardwareAPI:
