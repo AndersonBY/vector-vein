@@ -5,7 +5,7 @@ import csv
 from io import StringIO
 
 import sqlparse
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 
@@ -67,7 +67,7 @@ def format_output(records: list, output_type: str = "markdown"):
             output += "|".join(["---" for _ in headers]) + "\n"
             rows = [[format_cell(record[key]) for key in headers] for record in records]
         else:
-            headers = [f"{i+1}" for i in range(len(records[0]))]
+            headers = [f"{i + 1}" for i in range(len(records[0]))]
             output += "|".join(headers) + "\n"
             output += "|".join(["---" for _ in headers]) + "\n"
             rows = [[format_cell(value) for value in record] for record in records]

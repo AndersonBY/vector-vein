@@ -2,7 +2,7 @@ from typing import overload, Tuple, Literal, Union
 
 from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI, AzureOpenAI
 
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients import create_chat_client, create_async_chat_client
 

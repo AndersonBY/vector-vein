@@ -3,7 +3,7 @@
 # @Date:   2023-12-12 15:38:43
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-24 14:59:24
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients import create_chat_client, create_async_chat_client
 from vectorvein.chat_clients.utils import get_token_counts, format_messages, cutoff_messages, ToolCallContentProcessor
@@ -22,7 +22,7 @@ def conversation_title_generator(
     client = create_chat_client(backend=backend, model=model, stream=False)
     conversation_text = ""
     for message in messages:
-        conversation_text += f'{message["role"]}:\n{message["content"]}\n\n'
+        conversation_text += f"{message['role']}:\n{message['content']}\n\n"
 
     messages = [
         {

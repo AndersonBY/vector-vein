@@ -8,7 +8,7 @@ import json
 import random
 from typing import Any
 
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.types.llm_parameters import ChatCompletionMessage

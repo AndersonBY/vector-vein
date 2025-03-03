@@ -16,7 +16,7 @@ from qdrant_client.http.models import (
     FilterSelector,
     FieldCondition,
 )
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients.utils import format_messages
 
 from models import Workflow, WorkflowTemplate, UserObject

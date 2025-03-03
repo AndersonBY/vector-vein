@@ -9,7 +9,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from websockets.asyncio.server import serve, ServerConnection
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients import create_async_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messages

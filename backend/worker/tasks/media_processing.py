@@ -5,7 +5,7 @@
 # @Last Modified time: 2024-07-10 17:57:12
 import time
 
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.chat_clients.utils import format_messages
 from vectorvein.settings import settings as vectorvein_settings

@@ -2,7 +2,7 @@
 # @Date:   2024-06-07 12:59:42
 import re
 
-from vectorvein.types.enums import BackendType
+from vectorvein.types import BackendType
 from vectorvein.chat_clients import create_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 
