@@ -389,6 +389,17 @@ class WorkflowRunRecordAPI:
             }
         )
 
+    def delete(self, payload):
+        status, msg, record = get_user_object_general(
+            WorkflowRunRecord,
+            rid=payload.get("rid", None),
+        )
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+
+        record.delete_instance()
+        return JResponse()
+
 
 class WorkflowTagAPI:
     name = "workflow_tag"

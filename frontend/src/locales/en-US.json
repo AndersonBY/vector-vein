@@ -628,7 +628,10 @@
         "check_record": "Check record",
         "check_record_and_error_task": "Check record and error task",
         "workflow_title": "Workflow title",
-        "version": "Version"
+        "version": "Version",
+        "delete_record_success": "Workflow record deleted!",
+        "delete_record": "Delete record",
+        "delete_record_warning": "Confirm deletion? The record can not be restored after deletion."
       },
       "vueFlowStyleSettings": {
         "title": "Style Settings",

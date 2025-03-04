@@ -628,7 +628,10 @@
         "check_record": "查看记录",
         "check_record_and_error_task": "查看记录及错误任务",
         "workflow_title": "工作流标题",
-        "version": "版本"
+        "version": "版本",
+        "delete_record_success": "工作流记录删除成功！",
+        "delete_record": "删除记录",
+        "delete_record_warning": "确认删除该记录？删除后无法恢复！"
       },
       "vueFlowStyleSettings": {
         "title": "风格设置",

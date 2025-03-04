@@ -6,6 +6,7 @@ import {
   Tag,
   Time,
   Login,
+  Delete,
   Control,
   Timeline,
   ListNumbers,
@@ -185,9 +186,7 @@ const showDrawer = async () => {
 const getWorkflowRunRecordDetail = async (rid, workflow) => {
   loading.value = true
   if (props.openType == 'detail') {
-    const res = await workflowRunRecordAPI('get', {
-      rid: rid
-    })
+    const res = await workflowRunRecordAPI('get', { rid })
     if (res.status == 200) {
       emit('open-record', res.data)
       open.value = false
@@ -197,6 +196,25 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
   } else {
     emit('open-record', { rid, wid: workflow.wid })
     open.value = false
+  }
+  loading.value = false
+}
+
+const deleteWorkflowRunRecord = async (rid) => {
+  loading.value = true
+  const res = await workflowRunRecordAPI('delete', { rid })
+  if (res.status == 200) {
+    message.success(t('components.workspace.workflowRunRecordsDrawer.delete_record_success'))
+    await workflowRunRecords.load({
+      page_size: workflowRunRecords.pageSize,
+      page: workflowRunRecords.current,
+      sort_field: workflowRunRecords.sort_field,
+      sort_order: workflowRunRecords.sort_order,
+      status: workflowRunRecords.filters.status,
+      need_workflow: props.showWorkflowTitle,
+    })
+  } else {
+    message.error(res.msg)
   }
   loading.value = false
 }
@@ -266,6 +284,19 @@ const getWorkflowRunRecordDetail = async (rid, workflow) => {
                         <Login />
                       </template>
                     </a-button>
+                  </a-tooltip>
+                  <a-tooltip v-if="['FINISHED', 'FAILED', 'STOPPED'].includes(record.status)"
+                    :title="t('components.workspace.workflowRunRecordsDrawer.delete_record')">
+                    <a-popconfirm placement="left" :overlayInnerStyle="{ maxWidth: '300px' }"
+                      :title="t('components.workspace.workflowRunRecordsDrawer.delete_record')"
+                      :description="t('components.workspace.workflowRunRecordsDrawer.delete_record_warning')"
+                      @confirm="deleteWorkflowRunRecord(record.rid)">
+                      <a-button type="text" danger>
+                        <template #icon>
+                          <Delete />
+                        </template>
+                      </a-button>
+                    </a-popconfirm>
                   </a-tooltip>
                 </a-flex>
               </template>
