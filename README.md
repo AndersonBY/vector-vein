@@ -152,6 +152,8 @@ You can also try this [online interactive tutorial](https://vectorvein.ai/worksp
 
 ### Project Development
 
+Copy and modify backend/.env.example to .env file, this is the basic environment variable information, which will be used during development and packaging.
+
 Run the following command in the **backend** directory to install dependencies:
 
 #### Windows

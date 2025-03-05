@@ -150,6 +150,8 @@ set COMMANDLINE_ARGS=--api
 
 ### 项目开发
 
+将 backend/.env.example 复制并修改为 .env 文件，这是基础的环境变量信息，在开发和打包时会用到。
+
 在 **backend** 目录下运行以下命令安装依赖：
 
 #### Windows
