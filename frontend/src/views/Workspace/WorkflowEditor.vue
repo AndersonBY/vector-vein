@@ -169,6 +169,10 @@ onMounted(async () => {
       if (node.data.template.hasOwnProperty(key)) {
         sortedTemplate[key] = node.data.template[key]
       }
+      // 对于 llms 的 options 字段，采用 nodeTemplateData.template 中的 options，这样能确保选项和最新模板节点一致
+      if (node.category == 'llms' && nodeTemplateData.template[key]?.options) {
+        sortedTemplate[key].options = nodeTemplateData.template[key].options
+      }
     })
 
     // 然后添加那些在 nodeTemplateData.template 中不存在的键
