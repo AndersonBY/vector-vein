@@ -35,6 +35,10 @@ const parseData = (data) => {
       console.error(e)
       parsedData = []
     }
+  } else if (typeof data === 'object' && data !== null) {
+    parsedData = data
+  } else {
+    parsedData = []
   }
   return parsedData
 }
