@@ -1,11 +1,9 @@
 <script setup>
 import { ref, onMounted, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { Download } from '@icon-park/vue-next'
-import mermaid from "mermaid"
+import { Download, Copy, Check } from '@icon-park/vue-next'
+import { Flex, Tooltip, Button } from 'ant-design-vue'
 import { saveAs } from 'file-saver'
-
-const { t } = useI18n()
+import mermaid from "mermaid"
 
 const props = defineProps({
   content: {
@@ -13,11 +11,20 @@ const props = defineProps({
     required: true,
     default: '',
   },
+  downloadTitle: {
+    type: String,
+    default: 'Download SVG',
+  },
+  id: {
+    type: String,
+    default: () => `mermaid-${Date.now()}-${Math.floor(Math.random() * 10000)}`
+  }
 })
 
-mermaid.mermaidAPI.initialize({ startOnLoad: false, securityLevel: "loose" })
+mermaid.initialize({ startOnLoad: false, securityLevel: "loose" })
 const mermaidRef = ref()
 const content = ref(props.content)
+
 const update = async () => {
   if (!content.value) {
     return
@@ -25,8 +32,13 @@ const update = async () => {
   // 如果是Markdown代码格式的Mermaid，先用正则表达式提取出Mermaid代码，否则直接渲染可能有问题
   const mermaidCode = content.value.match(/```mermaid((.|\n)*?)```/)?.[1] || content.value
   // 渲染Mermaid
-  const { svg } = await mermaid.render('graphDiv', mermaidCode)
-  mermaidRef.value.innerHTML = svg
+  try {
+    const { svg } = await mermaid.render(props.id, mermaidCode)
+    mermaidRef.value.innerHTML = svg
+  } catch (error) {
+    console.error('Mermaid rendering error:', error)
+    mermaidRef.value.innerHTML = `<div style="color:red">Mermaid rendering error: ${error.message}</div>`
+  }
 }
 
 onMounted(() => {
@@ -44,18 +56,46 @@ const downloadMermaid = () => {
   saveAs(blob, 'mermaid.svg')
 }
 
+const isCopied = ref(false)
+const copyTip = ref('Copy Mermaid Code')
+const copyMermaidCode = () => {
+  const mermaidCode = content.value.match(/```mermaid((.|\n)*?)```/)?.[1] || content.value
+  navigator.clipboard.writeText(mermaidCode)
+
+  // 设置复制状态为真，并在1秒后恢复
+  isCopied.value = true
+  copyTip.value = 'Copied'
+  setTimeout(() => {
+    isCopied.value = false
+    copyTip.value = 'Copy Mermaid Code'
+  }, 1000)
+}
 </script>
 
 <template>
-  <a-flex vertical>
-    <div class="mermaid" ref="mermaidRef" style="width: 100%; min-height: 50vh;">
+  <Flex vertical>
+    <div class="mermaid" ref="mermaidRef" style="width: 100%;">
     </div>
-    <a-tooltip :title="t('components.workspace.mindmapRenderer.download_svg')">
-      <a-button @click="downloadMermaid" type="text">
-        <template #icon>
-          <Download />
-        </template>
-      </a-button>
-    </a-tooltip>
-  </a-flex>
+    <Flex gap="small">
+      <Tooltip :title="downloadTitle">
+        <Button @click="downloadMermaid" type="text">
+          <template #icon>
+            <Download />
+          </template>
+        </Button>
+      </Tooltip>
+      <Tooltip :title="copyTip">
+        <Button @click="copyMermaidCode" type="text">
+          <template #icon>
+            <template v-if="isCopied">
+              <Check />
+            </template>
+            <template v-else>
+              <Copy />
+            </template>
+          </template>
+        </Button>
+      </Tooltip>
+    </Flex>
+  </Flex>
 </template>

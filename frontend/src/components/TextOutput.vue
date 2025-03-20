@@ -6,6 +6,7 @@ import VueMarkdown from 'vue-markdown-render'
 import markdownItKatex from '@vscode/markdown-it-katex'
 import MarkdownItGitHubAlerts from 'markdown-it-github-alerts'
 import MarkdownItLinkAttributes from 'markdown-it-link-attributes'
+import MermaidRenderer from '@/components/workspace/MermaidRenderer.vue'
 import 'katex/dist/katex.min.css'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/monokai-sublime.css'
@@ -16,6 +17,10 @@ const props = defineProps({
     default: '',
   },
   renderMarkdown: {
+    type: Boolean,
+    default: true,
+  },
+  renderMermaid: {
     type: Boolean,
     default: true,
   },
@@ -179,23 +184,85 @@ const highlightCodeBlocks = () => {
   }
 }
 
+const renderMermaidCodeBlock = () => {
+  if (!markdownRef.value || !props.renderMermaid) return
+
+  const codeBlocks = markdownRef.value.$el.querySelectorAll('pre code.language-mermaid')
+  codeBlocks.forEach(block => {
+    try {
+      // 创建一个容器替换原始代码块
+      const container = document.createElement('div')
+      container.className = 'mermaid-container'
+
+      // 获取父元素的父元素（pre的父元素）
+      const preParent = block.parentNode.parentNode
+
+      // 将容器插入到pre元素之前
+      preParent.insertBefore(container, block.parentNode)
+
+      // 渲染MermaidRenderer组件
+      render(h(MermaidRenderer, {
+        content: block.textContent,
+        downloadTitle: t('components.workspace.mindmapRenderer.download_svg')
+      }), container)
+
+      // 隐藏原始pre元素
+      block.parentNode.style.display = 'none'
+    } catch (error) {
+      console.error('Error rendering mermaid block:', error)
+      // 如果渲染失败，保留原始代码块
+      if (block.parentNode) {
+        block.parentNode.style.display = ''
+      }
+      // 添加错误提示
+      const errorDiv = document.createElement('div')
+      errorDiv.className = 'mermaid-error'
+      errorDiv.style.color = 'red'
+      errorDiv.textContent = `Mermaid rendering error: ${error.message}`
+      if (block.parentNode && block.parentNode.parentNode) {
+        block.parentNode.parentNode.insertBefore(errorDiv, block.parentNode)
+      }
+    }
+  })
+}
+
 onMounted(() => {
-  nextTick(highlightCodeBlocks)
+  nextTick(() => {
+    highlightCodeBlocks()
+    renderMermaidCodeBlock()
+  })
 })
 
 watch(() => props.text, () => {
-  nextTick(highlightCodeBlocks)
+  nextTick(() => {
+    highlightCodeBlocks()
+    renderMermaidCodeBlock()
+  })
 })
 
 onBeforeUnmount(() => {
   if (markdownRef.value) {
-    const blocks = markdownRef.value.$el.querySelectorAll('.code-block')
-    blocks.forEach(block => {
+    // 清理代码块
+    const codeBlocks = markdownRef.value.$el.querySelectorAll('.code-block')
+    codeBlocks.forEach(block => {
       const copyContainer = block.querySelector('.copy-container')
       if (copyContainer) {
         render(null, copyContainer)
       }
       block.remove()
+    })
+
+    // 清理Mermaid容器
+    const mermaidContainers = markdownRef.value.$el.querySelectorAll('.mermaid-container')
+    mermaidContainers.forEach(container => {
+      render(null, container)
+      container.remove()
+    })
+
+    // 清理Mermaid错误信息
+    const mermaidErrors = markdownRef.value.$el.querySelectorAll('.mermaid-error')
+    mermaidErrors.forEach(error => {
+      error.remove()
     })
   }
 })
@@ -241,5 +308,22 @@ onBeforeUnmount(() => {
 
 .code-block .copied-text {
   font-size: 12px;
+}
+
+.mermaid-container {
+  width: 100%;
+  margin: 1rem 0;
+  padding: 1rem;
+}
+
+.mermaid-error {
+  width: 100%;
+  margin: 0.5rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #fff0f0;
+  border-left: 3px solid #ff6b6b;
+  border-radius: 2px;
+  font-family: monospace;
+  white-space: pre-wrap;
 }
 </style>
