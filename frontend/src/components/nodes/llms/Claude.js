@@ -22,6 +22,14 @@ export function createTemplateData() {
         "value": "claude-3-5-haiku",
         "options": [
           {
+            "value": "claude-3-7-sonnet-thinking",
+            "label": "claude-3-7-sonnet-thinking"
+          },
+          {
+            "value": "claude-3-7-sonnet",
+            "label": "claude-3-7-sonnet"
+          },
+          {
             "value": "claude-3-5-sonnet",
             "label": "claude-3-5-sonnet"
           },
@@ -94,6 +102,21 @@ export function createTemplateData() {
         "list": false,
         "field_type": "",
         "is_output": true
+      },
+      "reasoning_content": {
+        "required": true,
+        "placeholder": "",
+        "show": false,
+        "value": "",
+        "name": "reasoning_content",
+        "display_name": "reasoning_content",
+        "type": "str",
+        "list": false,
+        "field_type": "textarea",
+        "is_output": true,
+        "condition": (fieldsData) => {
+          return fieldsData.llm_model.value === "claude-3-7-sonnet-thinking"
+        }
       },
     }
   }
