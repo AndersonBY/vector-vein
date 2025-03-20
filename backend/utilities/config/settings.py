@@ -123,6 +123,7 @@ DEFAULT_SETTINGS = {
                     "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
                     "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
                     "o3-mini": {"id": "o3-mini", "endpoints": ["openai-default"]},
+                    "o3-mini-high": {"id": "o3-mini-high", "endpoints": ["openai-default"]},
                     "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
                     "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
                     "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},

@@ -118,6 +118,15 @@ class BaseLLMTask:
         else:
             self.thinking = NOT_GIVEN
 
+        if self.model.startswith("o3-mini"):
+            self.top_p = NOT_GIVEN
+
+        if self.model == "o3-mini-high":
+            self.model = "o3-mini"
+            self.reasoning_effort = "high"
+        else:
+            self.reasoning_effort = NOT_GIVEN
+
         self.model = self.MODEL_MAPPING.get(self.model, self.model)
 
         self.chat_client = create_chat_client(
@@ -250,6 +259,7 @@ class BaseLLMTask:
                             top_p=self.top_p,
                             skip_cutoff=True,
                             thinking=self.thinking,
+                            reasoning_effort=self.reasoning_effort,  # type: ignore
                         )
                     else:
                         response = _chat_client.create_completion(
@@ -264,6 +274,7 @@ class BaseLLMTask:
                             top_p=self.top_p,
                             skip_cutoff=True,
                             thinking=self.thinking,
+                            reasoning_effort=self.reasoning_effort,  # type: ignore
                         )
                     request_success = True
                     self.add_endpoint_request_record(endpoint)

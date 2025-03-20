@@ -49,6 +49,14 @@ export function createTemplateData() {
             "value": "o1",
             "label": "o1"
           },
+          {
+            "value": "o3-mini",
+            "label": "o3-mini"
+          },
+          {
+            "value": "o3-mini-high",
+            "label": "o3-mini-high"
+          },
         ],
         "name": "llm_model",
         "display_name": "llm_model",
