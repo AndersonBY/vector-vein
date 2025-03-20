@@ -21,6 +21,7 @@ from vectorvein.types import (
     ToolParam,
     ToolChoice,
     ResponseFormat,
+    ThinkingConfigEnabledParam,
 )
 
 from utilities.config import Settings
@@ -82,6 +83,7 @@ class BaseLLMTask:
     MODEL_TYPE: BackendType
     NAME: str = "BaseLLMTask"
     SINGLE_PROCESS_TIMEOUT = 180
+    MODEL_MAPPING: dict[str, str] = {}
 
     def __init__(self, workflow_data: dict, node_id: str):
         self.workflow = Workflow(workflow_data)
@@ -108,6 +110,15 @@ class BaseLLMTask:
         if self.model == "deepseek-reasoner":
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
+
+        if self.model == "claude-3-7-sonnet-thinking":
+            self.model = "claude-3-7-sonnet"
+            self.thinking: ThinkingConfigEnabledParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
+            self.temperature = 1.0
+        else:
+            self.thinking = NOT_GIVEN
+
+        self.model = self.MODEL_MAPPING.get(self.model, self.model)
 
         self.chat_client = create_chat_client(
             backend=self.MODEL_TYPE,
@@ -198,7 +209,10 @@ class BaseLLMTask:
             max_tokens = self.model_settings.context_length - input_token_counts - 64
         else:
             max_tokens = self.model_settings.max_output_tokens
-            max_tokens = min(max(max_tokens, 1), self.model_settings.max_output_tokens)
+
+        if self.thinking:
+            max_tokens = 16000
+            self.thinking["budget_tokens"] = max_tokens - 1000
 
         request_success = False
         stream_response = response = None
@@ -218,11 +232,15 @@ class BaseLLMTask:
                 if not self.endpoint_available(endpoint):
                     continue
                 _chat_client.endpoint = endpoint
+                if endpoint.endpoint_type and endpoint.endpoint_type.startswith("openai"):
+                    backend_type = BackendType.OpenAI
+                else:
+                    backend_type = self.MODEL_TYPE
                 try:
                     if self.stream:
                         stream_response = _chat_client.create_completion(
                             model=self.model,
-                            messages=format_messages(messages, backend=self.MODEL_TYPE),
+                            messages=format_messages(messages, backend=backend_type),
                             temperature=self.temperature,
                             max_tokens=max_tokens,
                             stream=True,
@@ -231,11 +249,12 @@ class BaseLLMTask:
                             tool_choice=self.tool_choice,
                             top_p=self.top_p,
                             skip_cutoff=True,
+                            thinking=self.thinking,
                         )
                     else:
                         response = _chat_client.create_completion(
                             model=self.model,
-                            messages=format_messages(messages, backend=self.MODEL_TYPE),
+                            messages=format_messages(messages, backend=backend_type),
                             temperature=self.temperature,
                             max_tokens=max_tokens,
                             stream=False,
@@ -244,6 +263,7 @@ class BaseLLMTask:
                             tool_choice=self.tool_choice,
                             top_p=self.top_p,
                             skip_cutoff=True,
+                            thinking=self.thinking,
                         )
                     request_success = True
                     self.add_endpoint_request_record(endpoint)
