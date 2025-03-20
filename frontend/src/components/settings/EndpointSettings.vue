@@ -23,9 +23,7 @@ const defaultParams = {
   concurrent_requests: 1,
   region: '',
   endpoint_name: '',
-  is_azure: false,
-  is_vertex: false,
-  is_bedrock: false,
+  endpoint_type: 'default',
   credentials: '',
 }
 const endpointForm = reactive(deepCopy(defaultParams))
@@ -44,9 +42,6 @@ const hasUnsavedChanges = () => {
 const switchEndpoint = (endpoint, index) => {
   Object.assign(endpointForm, defaultParams)
   const copiedEndpoint = deepCopy(toRaw(endpoint))
-  copiedEndpoint.is_azure = copiedEndpoint.is_azure
-  copiedEndpoint.is_vertex = copiedEndpoint.is_vertex
-  copiedEndpoint.is_bedrock = copiedEndpoint.is_bedrock
   copiedEndpoint.credentials = copiedEndpoint.credentials ? JSON.stringify(copiedEndpoint.credentials, null, 2) : ''
   Object.assign(endpointForm, copiedEndpoint)
   endpointFormStatus.value = 'edit'
@@ -228,16 +223,17 @@ const availableModelsState = reactive({
         <a-form-item :label="t('settings.endpoint_id')" :required="true">
           <a-input v-model:value="endpointForm.id" />
         </a-form-item>
-        <a-form-item :label="t('settings.is_azure')">
-          <a-switch v-model:checked="endpointForm.is_azure" />
+        <a-form-item :label="t('settings.endpoint_type')">
+          <a-select v-model:value="endpointForm.endpoint_type" :options="[
+            { label: t('settings.endpoint_type_default'), value: 'default' },
+            { label: 'OpenAI', value: 'openai' },
+            { label: 'OpenAI Azure', value: 'openai_azure' },
+            { label: 'Anthropic', value: 'anthropic' },
+            { label: 'Anthropic Vertex', value: 'anthropic_vertex' },
+            { label: 'Anthropic Bedrock', value: 'anthropic_bedrock' },
+          ]" />
         </a-form-item>
-        <a-form-item :label="t('settings.is_vertex')">
-          <a-switch v-model:checked="endpointForm.is_vertex" />
-        </a-form-item>
-        <a-form-item label="Bedrock">
-          <a-switch v-model:checked="endpointForm.is_bedrock" />
-        </a-form-item>
-        <a-form-item :label="t('settings.api_base')" :required="true">
+        <a-form-item :label="t('settings.api_base')">
           <a-input v-model:value="endpointForm.api_base" />
         </a-form-item>
         <a-form-item :label="t('settings.api_key')">
@@ -249,10 +245,12 @@ const availableModelsState = reactive({
         <a-form-item label="TPM">
           <a-input-number v-model:value="endpointForm.tpm" />
         </a-form-item>
-        <a-form-item :label="t('settings.region')">
+        <a-form-item :label="t('settings.region')"
+          :required="['anthropic_vertex', 'anthropic_bedrock'].includes(endpointForm.endpoint_type)">
           <a-input v-model:value="endpointForm.region" />
         </a-form-item>
-        <a-form-item :label="t('settings.credentials')">
+        <a-form-item :label="t('settings.credentials')"
+          :required="['anthropic_vertex', 'anthropic_bedrock'].includes(endpointForm.endpoint_type)">
           <a-textarea v-model:value="endpointForm.credentials" :placeholder="t('settings.credentials_placeholder')"
             :auto-size="{ minRows: 4, maxRows: 8 }" />
         </a-form-item>
@@ -264,7 +262,7 @@ const availableModelsState = reactive({
         <a-button block @click="availableModelsState.list" :loading="availableModelsState.listing">
           {{ t('settings.list_models') }}
         </a-button>
-        <a-button type="primary" block @click="endpointFormSave" :disabled="!endpointForm.id || !endpointForm.api_base">
+        <a-button type="primary" block @click="endpointFormSave" :disabled="!endpointForm.id">
           {{ t('settings.save_endpoint') }}
         </a-button>
         <a-modal v-model:open="availableModelsState.modalOpen" :title="t('settings.available_models')">
