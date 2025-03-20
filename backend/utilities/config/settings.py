@@ -651,6 +651,8 @@ class Settings:
 
             # Update Gemini endpoint api_base to openai compatible version
             for endpoint in setting.data["llm_settings"]["endpoints"]:
+                if "is_azure" in endpoint or "is_vertex" in endpoint or "is_bedrock" in endpoint:
+                    need_save = True
                 if endpoint.get("api_base") == "https://generativelanguage.googleapis.com/v1beta":
                     endpoint["api_base"] = "https://generativelanguage.googleapis.com/v1beta/openai/"
                     need_save = True
