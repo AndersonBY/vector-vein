@@ -24,7 +24,7 @@
     "@vue-flow/node-resizer": "^1.4.0",
     "@vue-js-cron/ant": "^3.0.9",
     "ant-design-vue": "^4.2.6",
-    "axios": "^1.8.3",
+    "axios": "^1.8.4",
     "codemirror": "^6.0.1",
     "echarts": "^5.6.0",
     "file-saver": "^2.0.5",
