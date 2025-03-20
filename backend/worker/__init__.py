@@ -32,6 +32,8 @@ from worker.tasks import (
     image_generation,
     media_processing,
 )
+from worker.types import Task
+
 
 mprint = mprint_with_name(name="Workflow Task Server")
 
@@ -92,7 +94,7 @@ def merge_results(workflow_data_list: list, node_ids: list):
 
 
 @task
-def batch_tasks(workflow_data: dict, tasks: list):
+def batch_tasks(workflow_data: dict, tasks: list[Task]):
     """手动构造的并发运行任务
 
     Args:
@@ -112,7 +114,7 @@ def batch_tasks(workflow_data: dict, tasks: list):
     error_tasks = []
     result_lock = threading.Lock()
 
-    def run_task(task):
+    def run_task(task: Task):
         nonlocal has_failed_task
         module, function = task["task_name"].split(".")
         # 执行任务并获取结果
