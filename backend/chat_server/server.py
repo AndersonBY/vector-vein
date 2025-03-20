@@ -9,7 +9,12 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from websockets.asyncio.server import serve, ServerConnection
-from vectorvein.types import BackendType
+from vectorvein.types import (
+    NotGiven,
+    NOT_GIVEN,
+    BackendType,
+    ThinkingConfigParam,
+)
 from vectorvein.chat_clients import create_async_chat_client
 from vectorvein.settings import settings as vectorvein_settings
 from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messages
@@ -109,6 +114,25 @@ class WebSocketServer:
         else:
             backend = BackendType(backend)
 
+        if model == "claude-3-7-sonnet-thinking":
+            model = "claude-3-7-sonnet-20250219"
+            thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
+            temperature = 1.0
+            max_tokens = 20000
+        elif model == "deepseek-reasoner":
+            thinking = NOT_GIVEN
+            temperature = 0.6
+            max_tokens = None
+        else:
+            thinking = NOT_GIVEN
+            temperature = NOT_GIVEN
+            max_tokens = None
+
+        if model == "o3-mini-high":
+            reasoning_effort = "high"
+        else:
+            reasoning_effort = NOT_GIVEN
+
         model_settings = vectorvein_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
 
@@ -142,11 +166,24 @@ class WebSocketServer:
 
         tool_call_data = request_data["conversation"]["tool_call_data"]
         if tool_call_data.get("workflows") or tool_call_data.get("templates"):
-            tools_params = {"tools": get_tool_call_data(tool_call_data, simple=False), "tool_choice": "auto"}
+            response = await client.create_stream(
+                messages=messages,
+                stream_options={"include_usage": True},
+                tools=get_tool_call_data(tool_call_data, simple=False),
+                temperature=temperature,
+                max_tokens=max_tokens,
+                thinking=thinking,
+                reasoning_effort=reasoning_effort,
+            )
         else:
-            tools_params = {}
-
-        response = await client.create_stream(messages=messages, **tools_params)
+            response = await client.create_stream(
+                messages=messages,
+                stream_options={"include_usage": True},
+                temperature=temperature,
+                max_tokens=max_tokens,
+                thinking=thinking,
+                reasoning_effort=reasoning_effort,
+            )
         mprint("Agent chat response created")
         full_content = ""
         full_reasoning_content = ""
