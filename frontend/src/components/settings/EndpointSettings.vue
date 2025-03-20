@@ -22,7 +22,6 @@ const defaultParams = {
   tpm: 300000,
   concurrent_requests: 1,
   region: '',
-  endpoint_name: '',
   endpoint_type: 'default',
   credentials: '',
 }
