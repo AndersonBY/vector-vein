@@ -57,6 +57,14 @@ export const nonLocalChatModelOptions = [
         label: "o1-preview",
         value: "o1-preview",
       },
+      {
+        label: "o3-mini",
+        value: "o3-mini",
+      },
+      {
+        label: "o3-mini-high",
+        value: "o3-mini-high",
+      },
     ]
   },
   {
@@ -105,6 +113,10 @@ export const nonLocalChatModelOptions = [
         label: "glm-4-long",
         value: "glm-4-long",
       },
+      {
+        label: "glm-zero-preview",
+        value: "glm-zero-preview",
+      },
     ]
   },
   {
@@ -144,8 +156,8 @@ export const nonLocalChatModelOptions = [
         value: "qwen-turbo",
       },
       {
-        label: "qwq-32b-preview",
-        value: "qwq-32b-preview",
+        label: "qwq-32b",
+        value: "qwq-32b",
       },
       {
         label: "qwen2.5-coder-32b-instruct",
@@ -194,6 +206,14 @@ export const nonLocalChatModelOptions = [
       {
         label: "claude-3-5-haiku",
         value: "claude-3-5-haiku-20241022",
+      },
+      {
+        label: "claude-3-7-sonnet",
+        value: "claude-3-7-sonnet-20250219",
+      },
+      {
+        label: "claude-3-7-sonnet-thinking",
+        value: "claude-3-7-sonnet-thinking",
       },
     ]
   },
@@ -253,30 +273,6 @@ export const nonLocalChatModelOptions = [
         label: "yi-lightning",
         value: "yi-lightning",
       },
-      {
-        label: "yi-large",
-        value: "yi-large",
-      },
-      {
-        label: "yi-large-fc",
-        value: "yi-large-fc",
-      },
-      {
-        label: "yi-large-turbo",
-        value: "yi-large-turbo",
-      },
-      {
-        label: "yi-medium",
-        value: "yi-medium",
-      },
-      {
-        label: "yi-medium-200k",
-        value: "yi-medium-200k",
-      },
-      {
-        label: "yi-spark",
-        value: "yi-spark",
-      },
     ]
   },
   {
@@ -284,32 +280,28 @@ export const nonLocalChatModelOptions = [
     value: "Gemini",
     children: [
       {
-        "value": "gemini-1.5-flash",
-        "label": "gemini-1.5-flash"
+        value: "gemini-1.5-flash",
+        label: "gemini-1.5-flash"
       },
       {
-        "value": "gemini-1.5-pro",
-        "label": "gemini-1.5-pro"
+        value: "gemini-1.5-pro",
+        label: "gemini-1.5-pro"
       },
       {
-        "value": "gemini-2.0-flash",
-        "label": "gemini-2.0-flash"
+        label: "gemini-2.0-flash",
+        value: "gemini-2.0-flash",
       },
       {
-        "value": "gemini-2.0-flash-thinking-exp-01-21",
-        "label": "gemini-2.0-flash-thinking-exp-01-21"
+        label: "gemini-2.0-flash-lite-preview-02-05",
+        value: "gemini-2.0-flash-lite-preview-02-05",
       },
       {
-        "value": "gemini-2.0-pro-exp-02-05",
-        "label": "gemini-2.0-pro-exp-02-05"
+        value: "gemini-2.0-flash-thinking-exp-01-21",
+        label: "gemini-2.0-flash-thinking-exp-01-21"
       },
       {
-        "value": "gemini-2.0-flash-lite-preview-02-05",
-        "label": "gemini-2.0-flash-lite-preview-02-05"
-      },
-      {
-        "value": "gemini-exp-1206",
-        "label": "gemini-exp-1206"
+        label: "gemini-2.0-pro-exp-02-05",
+        value: "gemini-2.0-pro-exp-02-05",
       },
     ]
   },
