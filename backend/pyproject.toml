@@ -40,7 +40,7 @@ dependencies = [
   "pathvalidate>=3.2.0",
   "deepgram-sdk>=3.3.1",
   "deepgram-captions>=1.2.0",
-  "vectorvein[vertex,bedrock]>=0.2.21",
+  "vectorvein[vertex,bedrock]>=0.2.44",
   "docx-ea-font>=0.0.1",
 ]
 description = ""
