@@ -974,7 +974,8 @@
           "precise": "精准",
           "stream": "流式传输",
           "system_prompt": "系统提示词",
-          "output": "输出"
+          "output": "输出",
+          "reasoning_content": "推理内容"
         },
         "Gemini": {
           "title": "Gemini",
@@ -1906,7 +1907,10 @@
     "save_changes_confirm": "当前有未保存的更改，是否保存？",
     "discard": "放弃",
     "credentials_parse_failed": "凭证 JSON 解析错误",
-    "moonshot": "月之暗面"
+    "moonshot": "月之暗面",
+    "proxy": "代理",
+    "endpoint_type": "端点类型",
+    "endpoint_type_default": "默认"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "青涩青年音色",

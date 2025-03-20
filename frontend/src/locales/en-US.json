@@ -974,7 +974,8 @@
           "precise": "Precise",
           "stream": "Stream",
           "system_prompt": "System Prompt",
-          "output": "Output"
+          "output": "Output",
+          "reasoning_content": "Reasoning content"
         },
         "Gemini": {
           "title": "Gemini",
@@ -1906,7 +1907,8 @@
     "save_changes_confirm": "You have unsaved changes. Do you want to save them?",
     "discard": "Discard",
     "credentials_parse_failed": "Credentials JSON parse error",
-    "moonshot": "Moonshot"
+    "moonshot": "Moonshot",
+    "proxy": "Proxy"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "Youthful Male Voice",
