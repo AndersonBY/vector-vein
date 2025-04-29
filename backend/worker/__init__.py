@@ -283,6 +283,6 @@ class WorkflowServer:
                 if workflow := Workflow(task_data):
                     workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
             except Exception:
-                mprint.error("Unexpected error: {traceback.format_exc()}")
+                mprint.error(f"Unexpected error: {traceback.format_exc()}")
                 time.sleep(1)
         mprint("Stopped.")
