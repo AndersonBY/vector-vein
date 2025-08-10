@@ -1,46 +1,17 @@
-# -*- coding: utf-8 -*-
 # @Author: Bi Ying
-# @Date:   2023-05-14 23:56:32
-# @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-07-10 00:49:51
+# @Date:   2025-08-04
+# Integrated FastAPI + PyWebView main application
+
 import os
-import time
 from pathlib import Path
 
 import webview
-import mimetypes
 from webview.dom import DOMEventHandler
 
+# Set up environment
 os.environ["TIKTOKEN_CACHE_DIR"] = (Path(__file__).parent / Path("./assets/tiktoken_cache")).absolute().as_posix()
 
-from api import API
-from api.workflow_api import (
-    WorkflowAPI,
-    WorkflowTagAPI,
-    WorkflowTemplateAPI,
-    WorkflowRunRecordAPI,
-    WorkflowRunScheduleAPI,
-)
-from api.vector_database_api import DatabaseAPI, DatabaseObjectAPI
-from api.relational_database_api import (
-    RelationalDatabaseAPI,
-    RelationalDatabaseTableAPI,
-    RelationalDatabaseTableRecordAPI,
-)
-from api.agent_api import (
-    AudioAPI,
-    AgentAPI,
-    MessageAPI,
-    ConversationAPI,
-)
-from api.user_api import (
-    LogAPI,
-    SettingAPI,
-    HardwareAPI,
-    ShortcutAPI,
-    register_shortcuts,
-)
-from api.remote_api import OfficialSiteAPI
+# Import existing components
 from utilities.config import config, cache
 from utilities.general import LogServer, mprint
 from utilities.shortcuts import shortcuts_listener
@@ -50,24 +21,15 @@ from models import create_tables, run_migrations
 from worker import WorkflowServer
 from tts_server.server import tts_server
 from chat_server.server import WebSocketServer
-from background_task.server import BackgroundTaskServer
+
+# Import new server components
+from fastapi_server import FastAPIServer
+from celery_worker import CeleryWorkerManager
 
 
 class MainServer:
     def __init__(self):
-        # Some mimetypes are not correctly registered in Windows. Register them manually.
-        mimetypes.add_type("application/javascript", ".js")
-
-        data_path = Path(config.data_path)
-        if not data_path.exists():
-            data_path.mkdir()
-            (data_path / "static").mkdir()
-            (data_path / "static" / "images").mkdir()
-
-        # Create SQLite tables. Will ignore if tables already exist.
-        run_migrations()
-        create_tables()
-
+        # Initialize debug and version info
         if Path("./DEBUG").exists():
             self.DEBUG = Path("./DEBUG").read_text() == "1"
         else:
@@ -77,27 +39,90 @@ class MainServer:
         else:
             VERSION = os.environ.get("VECTORVEIN_VERSION", "0.0.1")
 
+        # Create data directories
+        data_path = Path(config.data_path)
+        if not data_path.exists():
+            data_path.mkdir()
+            (data_path / "static").mkdir()
+            (data_path / "static" / "images").mkdir()
+
+        # Initialize database
+        run_migrations()
+        create_tables()
+
         mprint(f"TIKTOKEN_CACHE_DIR: {os.environ['TIKTOKEN_CACHE_DIR']}")
+        mprint(f"Debug: {self.DEBUG}")
+        mprint(f"Version: {VERSION}")
 
-        def open_file_dialog(self, multiple=False):
-            result = window.create_file_dialog(webview.OPEN_DIALOG, allow_multiple=multiple)
-            return result[0] if result else ""
+        # Set up proxy configuration
+        _proxies_for_requests = proxies_for_requests()
+        mprint("Proxies", _proxies_for_requests)
 
-        def open_folder_dialog(self, initial_directory=""):
-            result = window.create_file_dialog(webview.FOLDER_DIALOG, directory=initial_directory)
-            return result[0] if result else ""
+        if "http" in _proxies_for_requests:
+            os.environ["http_proxy"] = _proxies_for_requests["http"]
+        if "https" in _proxies_for_requests:
+            os.environ["https_proxy"] = _proxies_for_requests["https"]
 
-        def get_drop_file_path(self, file_name):
-            start_time = time.time()
-            while time.time() - start_time < 5:
-                file_paths = cache.get(f"drop_file_{file_name}")
-                if file_paths:
-                    cache.delete(f"drop_file_{file_name}")
-                    return file_paths
-                time.sleep(0.1)
-            return []
+        # Start existing services first
+        self.workflow_server = WorkflowServer()
+        self.workflow_server.start()
+
+        self.static_file_server = static_file_server
+        self.static_file_server.start()
+
+        # Start Celery worker using new manager
+        self.celery_worker_manager = CeleryWorkerManager(concurrency=2)
+        self.celery_worker_manager.start()
+
+        self.ws_server = WebSocketServer(host="localhost", start_port=8765)
+        self.ws_server.start()
+        cache.set("chat_ws_port", self.ws_server.port)
+
+        self.log_server = LogServer()
+        self.log_server.start()
+
+        self.tts_server = tts_server
+        tts_server.start()
+
+        self.shortcuts_listener = shortcuts_listener
+        # Register shortcuts
+        from api.user_api import register_shortcuts
+
+        register_shortcuts()
+
+        # Create API bridge for PyWebView
+        from api_bridge import API
 
         api = API(self.DEBUG, VERSION)
+
+        # Add all API classes like original main.py
+        from api.workflow_api import (
+            WorkflowAPI,
+            WorkflowTagAPI,
+            WorkflowTemplateAPI,
+            WorkflowRunRecordAPI,
+            WorkflowRunScheduleAPI,
+        )
+        from api.vector_database_api import DatabaseAPI, DatabaseObjectAPI
+        from api.relational_database_api import (
+            RelationalDatabaseAPI,
+            RelationalDatabaseTableAPI,
+            RelationalDatabaseTableRecordAPI,
+        )
+        from api.agent_api import (
+            AudioAPI,
+            AgentAPI,
+            MessageAPI,
+            ConversationAPI,
+        )
+        from api.user_api import (
+            LogAPI,
+            SettingAPI,
+            HardwareAPI,
+            ShortcutAPI,
+        )
+        from api.remote_api import OfficialSiteAPI
+
         api_class_list = [
             WorkflowAPI,
             WorkflowTagAPI,
@@ -119,49 +144,79 @@ class MainServer:
             ShortcutAPI,
             LogAPI,
         ]
+
+        mprint("Registering API classes...")
         for api_class in api_class_list:
             api.add_apis(api_class)
-        setattr(API, "open_file_dialog", open_file_dialog)
-        setattr(API, "open_folder_dialog", open_folder_dialog)
-        setattr(API, "get_drop_file_path", get_drop_file_path)
 
-        _proxies_for_requests = proxies_for_requests()
-        mprint("Proxies", _proxies_for_requests)
+        # Add additional API methods like original main.py
+        API.get_drop_file_path = staticmethod(api.get_drop_file_path)
 
-        if "http" in _proxies_for_requests:
-            os.environ["http_proxy"] = _proxies_for_requests["http"]
-        if "https" in _proxies_for_requests:
-            os.environ["https_proxy"] = _proxies_for_requests["https"]
-
-        self.workflow_server = WorkflowServer()
-        self.workflow_server.start()
-
-        self.static_file_server = static_file_server
-        self.static_file_server.start()
-
-        self.background_task_server = BackgroundTaskServer(num_workers=2)
-        self.background_task_server.start()
-
-        self.ws_server = WebSocketServer(host="localhost", start_port=8765)
-        self.ws_server.start()
-        cache.set("chat_ws_port", self.ws_server.port)
-
-        self.log_server = LogServer()
-        self.log_server.start()
-
-        self.tts_server = tts_server
-        tts_server.start()
-
-        self.shortcuts_listener = shortcuts_listener
-        register_shortcuts()
-
+        # Debug: Print all registered methods
         if self.DEBUG:
-            url = os.environ.get("VITE_LOCAL", "web/index.html")
+            all_api_methods = [attr for attr in dir(API) if "__" in attr and not attr.startswith("_")]
+            mprint(f"Total API methods registered: {len(all_api_methods)}")
+            mprint("First 10 methods:", all_api_methods[:10])
+
+        mprint("API registration complete")
+
+        # Store the api instance for later use
+        self.api = api
+
+        # Start FastAPI server using configured port or default
+        api_host = config.get("api.host", "127.0.0.1")
+        api_port = config.get("api.port", 8787)  # Default port 8787
+
+        # Try to use configured port first
+        try:
+            self.api_server = FastAPIServer(host=api_host, port=api_port)
+            self.api_server.start()
+        except Exception as e:
+            mprint(f"Failed to start on configured port {api_port}: {e}")
+            # Fallback to auto-assign port
+            mprint("Falling back to auto-assigned port...")
+            self.api_server = FastAPIServer(host=api_host, port=0)
+            self.api_server.start()
+            # Save the auto-assigned port back to config for next time
+            if self.api_server.actual_port:
+                config.save("api.port", self.api_server.actual_port)
+
+        # Save API server info to cache for external access
+        cache.set("api_server_host", self.api_server.host)
+        cache.set("api_server_port", self.api_server.actual_port)
+        cache.set("api_server_url", f"http://{self.api_server.host}:{self.api_server.actual_port}")
+
+        # Configure WebView URL - use FastAPI server to serve frontend
+        if self.DEBUG:
+            # In debug mode, check for Vite dev server first
+            vite_url = os.environ.get("VITE_LOCAL")
+            if vite_url and vite_url.startswith("http"):
+                # Check if Vite dev server is actually running
+                import requests
+
+                try:
+                    response = requests.get(vite_url, timeout=1)
+                    if response.status_code == 200:
+                        url = vite_url
+                        mprint("Using Vite dev server for frontend")
+                    else:
+                        url = f"http://{self.api_server.host}:{self.api_server.actual_port}"
+                        mprint("Vite dev server not responding, using FastAPI server for frontend")
+                except Exception:
+                    url = f"http://{self.api_server.host}:{self.api_server.actual_port}"
+                    mprint("Vite dev server not available, using FastAPI server for frontend")
+            else:
+                url = f"http://{self.api_server.host}:{self.api_server.actual_port}"
+                mprint("Using FastAPI server for frontend")
         else:
-            url = "web/index.html"
+            url = f"http://{self.api_server.host}:{self.api_server.actual_port}"
+            mprint("Using FastAPI server for frontend")
+
         webview.settings["ALLOW_DOWNLOADS"] = True
         webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
-        window = self.window = webview.create_window(
+
+        # Create WebView window with js_api support
+        self.window = webview.create_window(
             f"VectorVein v{VERSION}",
             url=url,
             js_api=api,
@@ -173,27 +228,32 @@ class MainServer:
             confirm_close=True,
         )
 
-        mprint(f"Debug: {self.DEBUG}")
-        mprint(f"Version: {VERSION}")
-
     def terminate(self):
+        """Terminate all services"""
         mprint("Terminating...")
+
+        # Stop FastAPI server
+        self.api_server.stop()
+
+        # Stop Celery worker manager
+        if hasattr(self, "celery_worker_manager"):
+            self.celery_worker_manager.stop()
+
+        # Stop other services
         config.close()
         self.static_file_server.shutdown()
-        self.background_task_server.stop()
         self.shortcuts_listener.stop()
         self.ws_server.stop()
         self.log_server.stop()
         self.tts_server.terminate()
-        self.window.destroy()
+        if self.window:
+            self.window.destroy()
+
         mprint("Terminated.")
 
     @staticmethod
     def on_drop(e):
-        """
-        We need pywebviewFullPath to get the file path.
-        So store the full path in cache and get them using get_drop_file_path in frontend.
-        """
+        """Handle file drop events"""
         files = e["dataTransfer"]["files"]
         if len(files) == 0:
             return e
@@ -205,22 +265,47 @@ class MainServer:
 
     @staticmethod
     def on_moved(x, y):
+        """Handle window move events"""
         config.save("window.x", x)
         config.save("window.y", y)
 
     @staticmethod
     def on_resized(width, height):
+        """Handle window resize events"""
         config.save("window.width", width)
         config.save("window.height", height)
 
     def bind(self, window):
+        """Bind event handlers to window"""
         window.dom.document.events.drop += DOMEventHandler(MainServer.on_drop)
         window.events.closed += self.terminate
         window.events.resized += MainServer.on_resized
         window.events.moved += MainServer.on_moved
 
+        # Now that window is created, we can override the file dialog methods
+        # to use the actual window dialogs
+        def open_file_dialog(multiple=False):
+            if window:
+                result = window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=multiple)
+                if result:
+                    return result if multiple else result[0]
+            return [] if multiple else ""
+
+        def open_folder_dialog(initial_directory=""):
+            if window:
+                result = window.create_file_dialog(webview.FileDialog.FOLDER, directory=initial_directory)
+                if result:
+                    return result[0]
+            return ""
+
+        # Set the methods on the api instance rather than the class
+        # This will make them available to the JavaScript side through PyWebView
+        self.api.open_file_dialog = open_file_dialog
+        self.api.open_folder_dialog = open_folder_dialog
+
     def start(self):
-        webview.start(self.bind, [self.window], debug=self.DEBUG, http_server=True)
+        """Start the application"""
+        webview.start(self.bind, [self.window], debug=self.DEBUG, http_server=False)
 
 
 if __name__ == "__main__":

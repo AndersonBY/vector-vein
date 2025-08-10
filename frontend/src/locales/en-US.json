@@ -664,6 +664,15 @@
         "title": "Tag management",
         "color": "Color",
         "delete_tag_confirm": "Confirm to delete the tag?"
+      },
+      "apiAccessButton": {
+        "api_access": "API Access",
+        "api_access_document": "API Documentation",
+        "workflow_id": "Workflow ID",
+        "node_id": "Node ID",
+        "field_name": "Field Name",
+        "input_fields": "Input Fields",
+        "local_api_note": "Local API is running at: {url}. You can change the API settings in the Settings page."
       }
     },
     "codeEditorModal": {
@@ -1784,7 +1793,7 @@
     }
   },
   "settings": {
-    "endpoints": "API Endpoints",
+    "endpoints": "LLM API Endpoints",
     "llms": "Remote LLMs",
     "other": "Other",
     "open": "Open setting",
@@ -1830,6 +1839,17 @@
     "save_model_family": "Save model family",
     "output_folder": "Output folder",
     "select_folder": "Select folder",
+    "api_settings": "API Settings",
+    "api_enabled": "Enable API",
+    "api_host": "API Host",
+    "api_port": "API Port",
+    "api_current_url": "Current API URL",
+    "api_restart_notice": "Changes to API settings will take effect after restarting the application.",
+    "api_usage_examples": "API Usage Examples",
+    "run_workflow": "Run Workflow",
+    "get_workflow_status": "Get Workflow Status",
+    "example_code": "Example Code",
+    "api_documentation": "API Documentation",
     "email_settings": "Email settings",
     "email_user": "Email user",
     "email_password": "Email password",

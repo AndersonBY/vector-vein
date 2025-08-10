@@ -23,7 +23,7 @@ from api.utils import (
 from utilities.config import cache
 from utilities.workflow import WorkflowData
 from utilities.file_processing import static_file_server
-from background_task.tasks import update_workflow_tool_call_data
+from celery_tasks import update_workflow_tool_call_data
 
 
 def copy_images(images):
@@ -82,8 +82,7 @@ class WorkflowAPI:
                     color=tag.get("color", "#28c5e5"),
                 )
                 workflow.tags.add(tag_obj)
-        workflow = model_serializer(workflow, manytomany=True)
-        return JResponse(data=workflow)
+        return JResponse(data=model_serializer(workflow, manytomany=True))
 
     def update(self, payload):
         wid = payload.get("wid", None)
@@ -157,16 +156,9 @@ class WorkflowAPI:
         else:
             workflows = Workflow.select()
         if tags is not None and len(tags) > 0:
-            workflows = (
-                workflows.join(Workflow.tags.get_through_model())
-                .where(Workflow.tags.get_through_model().workflowtag_id.in_(tags))
-                .distinct()
-            )
+            workflows = workflows.join(Workflow.tags.get_through_model()).where(Workflow.tags.get_through_model().workflowtag_id.in_(tags)).distinct()
         if len(search_text) > 0:
-            workflows = workflows.select().where(
-                (fn.Lower(Workflow.title).contains(search_text.lower()))
-                | (fn.Lower(Workflow.brief).contains(search_text.lower()))
-            )
+            workflows = workflows.select().where((fn.Lower(Workflow.title).contains(search_text.lower())) | (fn.Lower(Workflow.brief).contains(search_text.lower())))
         workflows_count = workflows.count()
         offset = (page_num - 1) * page_size
         limit = page_size
@@ -182,9 +174,7 @@ class WorkflowAPI:
         }
         if payload.get("need_fast_access", False):
             fast_access_workflows = Workflow.select().where(Workflow.is_fast_access).order_by(sort_field)
-            response_data["fast_access_workflows"] = model_serializer(
-                fast_access_workflows, many=True, manytomany=True
-            )
+            response_data["fast_access_workflows"] = model_serializer(fast_access_workflows, many=True, manytomany=True)
 
         return JResponse(data=response_data)
 

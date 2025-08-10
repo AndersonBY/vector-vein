@@ -11,10 +11,10 @@ from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.ai_utils import EmbeddingClient
 from utilities.text_processing import split_text, remove_markdown_image
-from background_task.tasks import (
+from celery_tasks import (
     embedding_and_upload,
-    q_delete_point,
-    q_search_point,
+    delete_point,
+    search_point,
 )
 from models import UserObject, UserVectorDatabase
 
@@ -148,7 +148,7 @@ def delete_data(
     object_id = workflow.get_node_field_value(node_id, "object_id")
     database_vid = workflow.get_node_field_value(node_id, "database")
     user_object = UserObject.get(oid=object_id)
-    q_delete_point.delay(vid=database_vid, object_id=object_id)
+    delete_point.delay(vid=database_vid, object_id=object_id)
     user_object.delete_instance(recursive=True)
     workflow.update_node_field_value(node_id, "delete_success", True)
     return workflow.data
@@ -181,7 +181,7 @@ def search_data(
     results = []
     for text in search_texts:
         text_embedding = embedding_client.get(text)
-        task_id = q_search_point.delay(
+        task_id = search_point.delay(
             vid=database_vid,
             text_embedding=text_embedding,
             limit=count,

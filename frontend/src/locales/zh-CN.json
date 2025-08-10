@@ -664,6 +664,15 @@
         "title": "标签管理",
         "color": "颜色",
         "delete_tag_confirm": "确认删除该标签？"
+      },
+      "apiAccessButton": {
+        "api_access": "API 访问",
+        "api_access_document": "API 文档",
+        "workflow_id": "工作流 ID",
+        "node_id": "节点 ID",
+        "field_name": "字段名称",
+        "input_fields": "输入字段",
+        "local_api_note": "本地 API 运行在: {url}。您可以在设置页面中修改 API 配置。"
       }
     },
     "codeEditorModal": {
@@ -1784,7 +1793,7 @@
     }
   },
   "settings": {
-    "endpoints": "API 端点",
+    "endpoints": "大语言模型端点",
     "llms": "远程大语言模型",
     "other": "其他",
     "open": "打开设置",
@@ -1830,6 +1839,17 @@
     "save_model_family": "保存模型系列",
     "output_folder": "输出文件夹",
     "select_folder": "选择文件夹",
+    "api_settings": "API 设置",
+    "api_enabled": "启用 API",
+    "api_host": "API 地址",
+    "api_port": "API 端口",
+    "api_current_url": "当前 API 地址",
+    "api_restart_notice": "API 设置更改后需要重启应用程序才能生效。",
+    "api_usage_examples": "API 使用示例",
+    "run_workflow": "运行工作流",
+    "get_workflow_status": "获取工作流状态",
+    "example_code": "示例代码",
+    "api_documentation": "API 文档",
     "email_settings": "邮件设置",
     "email_user": "邮箱账号",
     "email_password": "邮箱密码",

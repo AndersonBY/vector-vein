@@ -1,7 +1,7 @@
 [project]
 authors = [{ name = "MakerBi", email = "biying@vectorvein.com" }]
 dependencies = [
-  "pywebview>=5.3.2",
+  "pywebview>=6.0.0",
   "httpx>=0.22.0",
   "peewee>=3.16.2",
   "pypdf>=3.8.1",
@@ -42,18 +42,19 @@ dependencies = [
   "deepgram-captions>=1.2.0",
   "vectorvein[vertex,bedrock]>=0.2.68",
   "docx-ea-font>=0.0.1",
+  "celery>=5.3.0",
+  "fastapi>=0.110.0",
+  "uvicorn>=0.28.0",
 ]
 description = ""
 license = { text = "CC BY-NC-SA" }
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.3.7"
+version = "0.4.0"
+
 
 [tool.pdm]
 distribution = false
-
-[project.optional-dependencies]
-mac = ["pyobjc"]
 
 [tool.pdm.scripts]
 build-debug.cmd = "python build.py -t d"
@@ -65,3 +66,11 @@ dev.cmd = "python main.py"
 dev.env_file = ".env"
 fullstack-dev.cmd = "python run_fullstack_dev.py"
 fullstack-dev.env_file = ".env"
+celery-worker.cmd = "celery worker --app=celery_config:app --loglevel=INFO --concurrency=2 --queues=default,general,qdrant"
+celery-worker.env_file = ".env"
+[project.optional-dependencies]
+mac = ["pyobjc"]
+
+
+[dependency-groups]
+dev = ["ruff>=0.12.8"]

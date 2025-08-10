@@ -129,3 +129,33 @@ export function navigateToElementBottom(element) {
     element.scrollTop = element.scrollHeight - element.clientHeight;
   }
 }
+
+export function jsonToPythonDict(jsonObj, indentLevel = 0) {
+  const indentBase = ' '.repeat(4);
+  let currentIndent = indentBase.repeat(indentLevel);
+  let childIndent = indentBase.repeat(indentLevel + 1);
+
+  function convertValue(value, indentLevel) {
+    if (value === null) {
+      return 'None';
+    } else if (value === true) {
+      return 'True';
+    } else if (value === false) {
+      return 'False';
+    } else if (typeof value === 'object') {
+      return jsonToPythonDict(value, indentLevel);
+    } else if (typeof value === 'string') {
+      return `"${value}"`;
+    }
+    return value.toString();
+  }
+
+  if (typeof jsonObj === 'object' && !Array.isArray(jsonObj)) {
+    const entries = Object.entries(jsonObj).map(([key, val]) => {
+      return `${childIndent}"${key}": ${convertValue(val, indentLevel + 1)}`;
+    });
+    return `{\n${entries.join(',\n')}\n${currentIndent}}`;
+  } else if (Array.isArray(jsonObj)) {
+    return '[\n' + jsonObj.map(v => childIndent + convertValue(v, indentLevel + 1)).join(',\n') + '\n' + currentIndent + ']';
+  }
+}

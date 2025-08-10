@@ -16,6 +16,7 @@ import {
   MenuUnfoldOne,
   Communication,
   DatabaseNetworkPoint,
+  Api,
 } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -66,6 +67,24 @@ onBeforeMount(async () => {
   const userData = res.data.data || {}
   settingForm.id = res.data.id
   settingForm.data = { ...defaultSettingsResp.data, ...userData }
+
+  // Merge API settings from response
+  if (res.data.api) {
+    settingForm.data.api = {
+      ...settingForm.data.api,
+      ...res.data.api
+    }
+  }
+
+  // Set default API settings if not present
+  if (!settingForm.data.api) {
+    settingForm.data.api = {
+      enabled: true,
+      host: '127.0.0.1',
+      port: 8787,
+      current_url: ''
+    }
+  }
 
   await refreshMics()
 
@@ -178,6 +197,12 @@ watch(selectedKeys, () => {
               <Search />
             </template>
             {{ t('settings.web_search') }}
+          </a-menu-item>
+          <a-menu-item key="api">
+            <template #icon>
+              <Api />
+            </template>
+            {{ t('settings.api_settings') }}
           </a-menu-item>
           <a-menu-item key="shortcut">
             <template #icon>
@@ -399,6 +424,36 @@ watch(selectedKeys, () => {
               </a-flex>
             </a-tab-pane>
           </a-tabs>
+        </a-card>
+
+        <a-card v-show="selectedKeys == 'api'" :title="t('settings.api_settings')" :loading="loading">
+          <template #extra>
+            <a-button type="primary" @click="saveSetting" :loading="saving">
+              {{ t('settings.save') }}
+            </a-button>
+          </template>
+          <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+            <a-form-item :label="t('settings.api_enabled')">
+              <a-switch v-model:checked="settingForm.data.api.enabled" />
+            </a-form-item>
+
+            <a-form-item :label="t('settings.api_host')">
+              <a-input v-model:value="settingForm.data.api.host" :disabled="!settingForm.data.api.enabled" />
+            </a-form-item>
+
+            <a-form-item :label="t('settings.api_port')">
+              <a-input-number v-model:value="settingForm.data.api.port" :min="1024" :max="65535"
+                :disabled="!settingForm.data.api.enabled" style="width: 100%;" />
+            </a-form-item>
+
+            <a-form-item :label="t('settings.api_current_url')" v-if="settingForm.data.api.current_url">
+              <a-typography-text copyable>
+                {{ settingForm.data.api.current_url }}
+              </a-typography-text>
+            </a-form-item>
+
+            <a-alert :message="t('settings.api_restart_notice')" type="info" show-icon style="margin-top: 16px;" />
+          </a-form>
         </a-card>
 
         <a-card v-show="selectedKeys == 'email'" :title="t('settings.email_settings')" :loading="loading">

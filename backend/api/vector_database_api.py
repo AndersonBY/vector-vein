@@ -16,11 +16,11 @@ from utilities.config import cache
 from utilities.text_processing import split_text
 from utilities.network import crawl_text_from_url
 from utilities.file_processing import get_files_contents
-from background_task.tasks import (
+from celery_tasks import (
     embedding_and_upload,
-    q_delete_point,
-    q_create_collection,
-    q_delete_collection,
+    delete_point,
+    create_collection,
+    delete_collection,
 )
 
 
@@ -32,7 +32,7 @@ class DatabaseAPI:
             UserVectorDatabase,
             vid=payload.get("vid", None),
         )
-        if status != 200:
+        if status != 200 or isinstance(database, dict):
             return JResponse(status=status, msg=msg)
 
         return JResponse(data=model_serializer(database))
@@ -42,7 +42,7 @@ class DatabaseAPI:
             UserVectorDatabase,
             vid=payload.get("vid", None),
         )
-        if status != 200:
+        if status != 200 or isinstance(database, dict):
             return JResponse(status=status, msg=msg)
 
         database.name = payload.get("name", database.name)
@@ -61,7 +61,7 @@ class DatabaseAPI:
             embedding_model=payload.get("embedding_model", "text-embedding-ada-002"),
             embedding_provider=payload.get("embedding_provider", "openai"),
         )
-        q_create_collection.delay(vid=database.vid.hex, size=database.embedding_size)
+        create_collection.delay(vid=database.vid.hex, size=database.embedding_size)
         # TODO: Get create result
         database.status = "VALID"
         database.save()
@@ -72,10 +72,10 @@ class DatabaseAPI:
             UserVectorDatabase,
             vid=payload.get("vid", None),
         )
-        if status != 200:
+        if status != 200 or isinstance(database, dict):
             return JResponse(status=status, msg=msg)
 
-        q_delete_collection.delay(vid=database.vid.hex)
+        delete_collection.delay(vid=database.vid.hex)
         database.delete_instance(recursive=True)
         return JResponse()
 
@@ -88,7 +88,7 @@ class DatabaseObjectAPI:
             UserObject,
             oid=payload.get("oid", None),
         )
-        if status != 200:
+        if status != 200 or isinstance(user_object, dict):
             return JResponse(status=status, msg=msg)
 
         return JResponse(data=model_serializer(user_object))
@@ -208,7 +208,7 @@ class DatabaseObjectAPI:
             UserObject,
             oid=payload.get("oid"),
         )
-        if status != 200:
+        if status != 200 or isinstance(user_object, dict):
             return JResponse(status=status, msg=msg)
 
         user_object.title = payload.get("title", "")
@@ -222,8 +222,8 @@ class DatabaseObjectAPI:
             UserObject,
             oid=payload.get("oid", None),
         )
-        if status != 200:
+        if status != 200 or isinstance(user_object, dict):
             return JResponse(status=status, msg=msg)
-        q_delete_point.delay(vid=user_object.vector_database.vid.hex, object_id=user_object.oid.hex)
+        delete_point.delay(vid=user_object.vector_database.vid.hex, object_id=user_object.oid.hex)
         user_object.delete_instance(recursive=True)
         return JResponse()

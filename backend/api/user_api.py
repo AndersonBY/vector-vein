@@ -120,7 +120,18 @@ class SettingAPI:
         else:
             setting = Setting.select().order_by(Setting.create_time.desc()).first()
         setting = model_serializer(setting)
-        return JResponse(data={**setting, **config})
+        
+        # Add API configuration to the response
+        api_config = {
+            "api": {
+                "host": config.get("api.host", "127.0.0.1"),
+                "port": config.get("api.port", 8787),
+                "enabled": config.get("api.enabled", True),
+                "current_url": cache.get("api_server_url", ""),
+            }
+        }
+        
+        return JResponse(data={**setting, **config, **api_config})
 
     def update(self, payload):
         setting_id = payload.get("id")
@@ -128,6 +139,14 @@ class SettingAPI:
         setting.data = payload.get("data", {})
         setting.save()
         config.save("data_path", setting.data.get("data_path", "./data"))
+        
+        # Save API settings
+        api_settings = setting.data.get("api", {})
+        if api_settings:
+            config.save("api.host", api_settings.get("host", "127.0.0.1"))
+            config.save("api.port", api_settings.get("port", 8787))
+            config.save("api.enabled", api_settings.get("enabled", True))
+        
         if payload.get("update_shortcuts"):
             register_shortcuts(setting.data.get("shortcuts", {}))
         return JResponse(data=model_serializer(setting))

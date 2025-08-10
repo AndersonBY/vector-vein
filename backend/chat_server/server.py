@@ -23,7 +23,7 @@ from tts_server.server import tts_server
 from utilities.config import Settings, cache
 from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
-from background_task.tasks import summarize_conversation_title
+from celery_tasks import summarize_conversation_title
 from .utils import get_tool_call_data, get_tool_related_workflow
 
 

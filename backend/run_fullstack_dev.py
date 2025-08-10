@@ -31,9 +31,7 @@ current_dir = os.getcwd()
 frontend_dir = os.path.join(current_dir, "..", "frontend")
 
 # Start the frontend development
-frontend_proc = subprocess.Popen(
-    ["pnpm", "run", "dev"], cwd=frontend_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-)
+frontend_proc = subprocess.Popen(["pnpm", "run", "dev"], cwd=frontend_dir, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 # Capture the port number from the frontend process output
 vite_port = None
@@ -58,7 +56,7 @@ if not vite_port:
 print(f"Vite is running on port {vite_port}")
 
 # Start the backend development
-backend_dev = subprocess.Popen(["pdm", "run", "python", "main.py"], cwd=current_dir)
+backend_dev = subprocess.Popen(["pdm", "run", "python", "main_fastapi.py"], cwd=current_dir)
 
 
 def signal_handler(sig, frame):

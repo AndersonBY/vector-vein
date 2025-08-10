@@ -8,6 +8,7 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import AgentInvokeDataEdit from "@/components/workspace/workflowActions/AgentInvokeDataEdit.vue"
+import APIAccessButton from "@/components/workspace/APIAccessButton.vue"
 import RelatedWorkflowsModal from "@/components/workspace/RelatedWorkflowsModal.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
 import ModelProviderTag from "@/components/workspace/ModelProviderTag.vue"
@@ -165,6 +166,8 @@ const openEditor = async () => {
               <a-menu-item key="edit" @click="openEditor">
                 {{ t('workspace.workflowSpace.edit') }}
               </a-menu-item>
+              <APIAccessButton :workflow-data="savedWorkflow" appearance-type="menuItem"
+                :key="`APIAccessButton-${saveTime}`" />
               <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
                 :key="`AgentInvokeDataEdit-${saveTime}`" />
               <a-divider style="margin: 8px 0;" />

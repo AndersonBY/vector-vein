@@ -1,8 +1,10 @@
-# -*- coding: utf-8 -*-
 # @Author: Bi Ying
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-25 15:22:18
+import os
+from pathlib import Path
+
 from utilities.general import mprint_with_name
 from utilities.config import Settings, cache
 from utilities.network import new_httpx_client
@@ -27,7 +29,7 @@ def request(method: str, path: str, payload=None):
                 url,
                 headers=headers,
                 timeout=15,
-                **payload_params,
+                **payload_params,  # type: ignore
             )
             return response.json()
         except Exception as e:
@@ -38,6 +40,13 @@ def request(method: str, path: str, payload=None):
 
 class OfficialSiteAPI:
     name = "official_site"
+
+    def __init__(self):
+        self.version = os.environ.get("VECTORVEIN_VERSION", "0.3.7")
+
+        version_file = Path(__file__).parent.parent / "version.txt"
+        if version_file.exists():
+            self.version = version_file.read_text().strip()
 
     def get_update_info(self, payload):
         if cache.get("update_info"):
