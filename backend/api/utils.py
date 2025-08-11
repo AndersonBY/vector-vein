@@ -3,10 +3,7 @@
 # @Date:   2023-05-15 14:21:40
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-07-01 18:34:20
-from pathlib import Path
 from typing import TypeVar, Type, Tuple, Union, Dict, Any
-
-from diskcache import Deque
 
 from models import (
     Message,
@@ -15,7 +12,6 @@ from models import (
     WorkflowRunRecord,
 )
 from models.base import BaseModel
-from utilities.config import config
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -113,6 +109,8 @@ def run_workflow_common(
     run_from=WorkflowRunRecord.RunFromTypes.WEB,
     workflow_version: int | None = None,
 ) -> str:
+    from celery_tasks import run_workflow
+    
     workflow_data["wid"] = workflow.wid.hex
 
     source_message = message.mid.hex if message else message
@@ -127,8 +125,8 @@ def run_workflow_common(
     )
     workflow_data["rid"] = record.rid.hex
 
-    worker_queue = Deque(directory=Path(config.data_path) / "cache" / "workflow_task")
-    worker_queue.appendleft(workflow_data)
+    # Use Celery to run the workflow task
+    run_workflow.delay(workflow_data)
 
     return record.rid.hex
 

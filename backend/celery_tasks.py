@@ -18,6 +18,11 @@ from background_task.qdrant_tasks import (
     embedding_and_upload,
 )
 
+from background_task.workflow_tasks import (
+    run_workflow,
+    batch_tasks,
+)
+
 # Export all tasks
 __all__ = [
     'update_workflow_tool_call_data',
@@ -28,4 +33,6 @@ __all__ = [
     'delete_point',
     'search_point',
     'embedding_and_upload',
+    'run_workflow',
+    'batch_tasks',
 ]

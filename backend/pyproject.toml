@@ -66,11 +66,9 @@ dev.cmd = "python main.py"
 dev.env_file = ".env"
 fullstack-dev.cmd = "python run_fullstack_dev.py"
 fullstack-dev.env_file = ".env"
-celery-worker.cmd = "celery worker --app=celery_config:app --loglevel=INFO --concurrency=2 --queues=default,general,qdrant"
-celery-worker.env_file = ".env"
+
 [project.optional-dependencies]
 mac = ["pyobjc"]
-
 
 [dependency-groups]
 dev = ["ruff>=0.12.8"]

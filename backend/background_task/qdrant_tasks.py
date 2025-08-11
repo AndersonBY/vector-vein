@@ -43,7 +43,7 @@ def q_create_collection(self, vid: str, size: int = 768):
             vectors_config=VectorParams(size=size, distance=Distance.COSINE),
             on_disk_payload=True,
         )
-        
+
         mprint(f"Created Qdrant collection: {vid}_text_collection")
         return True
     except Exception as e:
@@ -59,7 +59,7 @@ def q_delete_collection(self, vid: str):
     try:
         client = get_qdrant_client()
         client.delete_collection(f"{vid}_text_collection")
-        
+
         mprint(f"Deleted Qdrant collection: {vid}_text_collection")
         return True
     except Exception as e:
@@ -89,19 +89,19 @@ def q_add_point(self, vid: str, point: dict):
                 ),
             ],
         )
-        
+
         chunk_count = point.get("chunk_count") or 0
         if point.get("chunk_index") == chunk_count - 1:
             user_object: UserObject = UserObject.get(UserObject.oid == point.get("object_id"))
             user_object.status = "VA"
             user_object.save()
-            
+
         cache.set(
             f"qdrant-point-progress:{vid}:{point.get('object_id')}",
             {"chunk_index": point.get("chunk_index"), "chunk_count": chunk_count},
             expire=60 * 60,
         )
-        
+
         mprint(f"Added point to collection {vid} for object {point.get('object_id')}")
         return True
     except Exception as e:
@@ -120,8 +120,8 @@ def embedding_and_upload(
     embedding_provider: str,
     embedding_model: str,
     embedding_type: str,
-    embedding_dimensions: int = None,
-    extra_data: dict = None,
+    embedding_dimensions: int | None = None,
+    extra_data: dict | None = None,
 ):
     """Generate embeddings and upload to Qdrant"""
     try:
@@ -129,12 +129,8 @@ def embedding_and_upload(
         if extra_data is None:
             extra_data = {}
 
-        embedding_client = EmbeddingClient(
-            provider=embedding_provider, 
-            model_id=embedding_model, 
-            dimensions=embedding_dimensions
-        )
-        
+        embedding_client = EmbeddingClient(provider=embedding_provider, model_id=embedding_model, dimensions=embedding_dimensions)
+
         for index, text in enumerate(input):
             embedding = embedding_client.get(text)
             q_add_point.delay(
@@ -149,7 +145,7 @@ def embedding_and_upload(
                     "chunk_count": len(input),
                 },
             )
-        
+
         mprint(f"Queued embedding tasks for object {object_id} in collection {vid}")
         return True
     except Exception as e:
@@ -177,7 +173,7 @@ def q_delete_point(self, vid: str, object_id: str):
                 )
             ),
         )
-        
+
         mprint(f"Deleted point from collection {vid} for object {object_id}")
         return True
     except Exception as e:
@@ -202,7 +198,7 @@ def q_search_point(
             query_vector=text_embedding,
             limit=limit,
         )
-        
+
         results = [hit.payload for hit in text_hits]
         mprint(f"Searched collection {vid}, found {len(results)} results")
         return results

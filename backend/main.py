@@ -18,7 +18,6 @@ from utilities.shortcuts import shortcuts_listener
 from utilities.network import proxies_for_requests
 from utilities.file_processing import static_file_server
 from models import create_tables, run_migrations
-from worker import WorkflowServer
 from tts_server.server import tts_server
 from chat_server.server import WebSocketServer
 
@@ -64,9 +63,6 @@ class MainServer:
             os.environ["https_proxy"] = _proxies_for_requests["https"]
 
         # Start existing services first
-        self.workflow_server = WorkflowServer()
-        self.workflow_server.start()
-
         self.static_file_server = static_file_server
         self.static_file_server.start()
 

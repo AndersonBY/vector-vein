@@ -22,11 +22,12 @@ mprint = mprint_with_name(name="General Tasks")
 @timer
 def update_workflow_tool_call_data(
     self,
-    workflow_wid: str = None,
-    template_tid: str = None,
+    workflow_wid: str | None = None,
+    template_tid: str | None = None,
     force: bool = False,
 ):
     """Update workflow tool call data"""
+    mprint(f"Updating tool call data for workflow: {workflow_wid} or template: {template_tid}")
     try:
         if workflow_wid:
             workflow = Workflow.get(Workflow.wid == workflow_wid)
@@ -39,7 +40,7 @@ def update_workflow_tool_call_data(
         tool_call_data.update_title(force=force)
         tool_call_data.update_parameters()
         tool_call_data.save()
-        
+
         mprint(f"Updated tool call data for {'workflow' if workflow_wid else 'template'}: {workflow_wid or template_tid}")
         return True
     except Exception as e:
@@ -64,7 +65,7 @@ def summarize_conversation_title(
         if conversation_title:
             conversation_title = conversation_title[:40]
         cache.set(f"conversation-title:{message_id}", conversation_title, expire=60 * 60)
-        
+
         mprint(f"Generated conversation title for message: {message_id}")
         return conversation_title
     except Exception as e:

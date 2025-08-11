@@ -1,21 +1,15 @@
-# -*- coding: utf-8 -*-
 # @Author: Bi Ying
 # @Date:   2023-04-13 18:51:34
-# @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-15 18:44:21
 import uuid
 import time
-from pathlib import Path
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Any, Union
 from functools import cached_property
 
-from diskcache import Deque
-
 from models import Workflow as WorkflowModel
 from models import WorkflowRunRecord, Message
-from utilities.config import config, cache
+from utilities.config import cache
 from utilities.general import mprint_with_name
 
 
@@ -25,8 +19,6 @@ ASYNC_TASKS = [
     "control_flows.workflow_loop",
     "tools.workflow_invoke",
 ]
-
-node_status_queue = Deque(directory=Path(config.data_path) / "cache" / "node_status")
 
 
 class DAG:
@@ -163,6 +155,22 @@ class Node:
 
     def __repr__(self) -> str:
         return f"<Node {self.type} @{self.id}>"
+
+    @property
+    def run_time(self) -> float:
+        """Get node run time stored on node root level.
+
+        Returns
+        -------
+        float
+            The recorded run time in seconds, or -1 if not set.
+        """
+        return self.__node_data.get("run_time", -1)
+
+    @run_time.setter
+    def run_time(self, value: float):
+        """Set node run time on node root level so it persists to workflow data."""
+        self.__node_data["run_time"] = value
 
 
 class Workflow:
@@ -457,9 +465,7 @@ class Workflow:
                     output_contents = workflow_data_obj.output_contents
                     source_message.metadata["workflow_result"] = "\n\n".join(
                         [
-                            f"# {output_content['title']}\n{output_content['value']}"
-                            if output_content["title"]
-                            else f"{output_content['value']}"
+                            f"# {output_content['title']}\n{output_content['value']}" if output_content["title"] else f"{output_content['value']}"
                             for output_content in output_contents
                         ]
                     )
@@ -625,20 +631,12 @@ class WorkflowData:
                 fields.append(new_field)
 
             # 清理unused_fields列表
-            unused_fields[:] = [
-                field
-                for field in unused_fields
-                if not (field.get("nodeId") == new_field["nodeId"] and field["fieldName"] == new_field["fieldName"])
-            ]
+            unused_fields[:] = [field for field in unused_fields if not (field.get("nodeId") == new_field["nodeId"] and field["fieldName"] == new_field["fieldName"])]
 
         def remove_unused_fields(fields, unused_fields):
             for field in unused_fields:
                 if "field_type" not in field or field["field_type"] not in WorkflowData.NON_FORM_TYPES:
-                    fields[:] = [
-                        n
-                        for n in fields
-                        if not (n["nodeId"] == field.get("nodeId") and n["fieldName"] == field["fieldName"])
-                    ]
+                    fields[:] = [n for n in fields if not (n["nodeId"] == field.get("nodeId") and n["fieldName"] == field["fieldName"])]
 
         def remove_unused_nodes(nodes, unused_nodes):
             for node in unused_nodes:

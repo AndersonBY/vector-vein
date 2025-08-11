@@ -85,7 +85,14 @@ class LogServer:
         console = logging.StreamHandler()
         console.setLevel(logging.DEBUG)
         console.setFormatter(formatter)
-        console.stream = open(console.stream.fileno(), "w", encoding="utf-8", closefd=False)
+        
+        # Fix for LoggingProxy issue - only try to reopen if it's a real file object
+        try:
+            if hasattr(console.stream, 'fileno'):
+                console.stream = open(console.stream.fileno(), "w", encoding="utf-8", closefd=False)
+        except (AttributeError, OSError):
+            # If we can't get fileno, just use the stream as is
+            pass
 
         self.logger.addHandler(log_handler)
         self.logger.addHandler(console)

@@ -29,7 +29,26 @@ app = Celery(
     "vectorvein_tasks", 
     broker=broker_url, 
     backend=result_backend, 
-    include=["background_task.general_tasks", "background_task.qdrant_tasks"]
+    include=[
+        "background_task.general_tasks", 
+        "background_task.qdrant_tasks",
+        "background_task.workflow_tasks",
+        # Include all worker task modules to register them
+        "worker.tasks",
+        "worker.tasks.llms",
+        "worker.tasks.tools",
+        "worker.tasks.output",
+        "worker.tasks.triggers",
+        "worker.tasks.vector_db",
+        "worker.tasks.web_crawlers",
+        "worker.tasks.media_editing",
+        "worker.tasks.relational_db",
+        "worker.tasks.control_flows",
+        "worker.tasks.file_processing",
+        "worker.tasks.text_processing",
+        "worker.tasks.image_generation",
+        "worker.tasks.media_processing",
+    ]
 )
 
 # Celery configuration
@@ -45,6 +64,14 @@ app.conf.update(
     worker_max_tasks_per_child=100,  # Restart worker after 100 tasks to prevent memory leaks
     task_soft_time_limit=300,  # 5 minutes soft limit
     task_time_limit=600,  # 10 minutes hard limit
+    # Task routing - ensure all tasks use default queue
+    task_default_queue='celery',
+    task_routes={
+        'background_task.general_tasks.*': {'queue': 'celery'},
+        'background_task.qdrant_tasks.*': {'queue': 'celery'},
+        'background_task.workflow_tasks.*': {'queue': 'celery'},
+        'workflow.*': {'queue': 'celery'},
+    }
 )
 
 # Timer decorator for performance monitoring
@@ -73,18 +100,37 @@ class CeleryWorkerManager:
         if self.celery_worker is None:
             mprint(f"Starting Celery worker with concurrency={self.concurrency}")
             try:
-                # Configure worker for Windows compatibility
+                import platform
+                # Use 'solo' pool for Windows, 'threads' for others
+                if platform.system() == 'Windows':
+                    pool_type = 'solo'  # Windows compatibility
+                    actual_concurrency = 1
+                else:
+                    pool_type = 'threads'  # Better performance on Unix
+                    actual_concurrency = self.concurrency
+                
+                mprint(f"Using pool type: {pool_type} with concurrency: {actual_concurrency}")
+                
+                # Configure worker
                 self.celery_worker = app.Worker(
                     loglevel='INFO',
-                    concurrency=self.concurrency,
-                    pool='solo',  # Use solo pool for Windows compatibility
-                    queues=['default', 'general', 'qdrant'],
+                    concurrency=actual_concurrency,
+                    pool=pool_type,
+                    # Don't specify queues here - let it use all defined queues
                 )
                 self.thread = Thread(target=self.celery_worker.start, daemon=True)
                 self.thread.start()
+                
+                # Give it a moment to start
+                import time
+                time.sleep(1)
+                
                 mprint("Celery worker started successfully")
+                mprint(f"Registered tasks: {list(app.tasks.keys())}")
             except Exception as e:
                 mprint.error(f"Failed to start Celery worker: {e}")
+                import traceback
+                mprint.error(traceback.format_exc())
                 self.celery_worker = None
                 
     def stop(self):

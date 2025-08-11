@@ -1,20 +1,18 @@
-# -*- coding: utf-8 -*-
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
-# @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-25 18:27:50
 import time
 
 from worker.tasks import task, timer
-from utilities.config import cache
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.ai_utils import EmbeddingClient
 from utilities.text_processing import split_text, remove_markdown_image
-from celery_tasks import (
+
+# Import directly from the task modules to avoid circular import
+from background_task.qdrant_tasks import (
     embedding_and_upload,
-    delete_point,
-    search_point,
+    q_delete_point as delete_point,
+    q_search_point as search_point,
 )
 from models import UserObject, UserVectorDatabase
 
@@ -174,22 +172,19 @@ def search_data(
     else:
         raise ValueError(f"Unsupported search_text type: {type(search_text)}")
 
-    embedding_client = EmbeddingClient(
-        provider=vector_database.embedding_provider, model_id=vector_database.embedding_model
-    )
+    embedding_client = EmbeddingClient(provider=vector_database.embedding_provider, model_id=vector_database.embedding_model)
 
     results = []
     for text in search_texts:
         text_embedding = embedding_client.get(text)
-        task_id = search_point.delay(
+        # Use Celery's AsyncResult to get the result
+        task_result = search_point.delay(
             vid=database_vid,
             text_embedding=text_embedding,
             limit=count,
         )
-        search_results = cache.get(f"task_result_{task_id}", None)
-        while search_results is None:
-            time.sleep(0.1)
-            search_results = cache.get(f"task_result_{task_id}", None)
+        # Wait for the result
+        search_results = task_result.get(timeout=30)
 
         if output_type == "text":
             results.append("\n".join([result["text"] for result in search_results]))
