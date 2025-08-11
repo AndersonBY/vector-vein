@@ -56,7 +56,7 @@ if not vite_port:
 print(f"Vite is running on port {vite_port}")
 
 # Start the backend development
-backend_dev = subprocess.Popen(["pdm", "run", "python", "main_fastapi.py"], cwd=current_dir)
+backend_dev = subprocess.Popen(["pdm", "run", "python", "main.py"], cwd=current_dir)
 
 
 def signal_handler(sig, frame):
