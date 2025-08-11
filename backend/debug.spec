@@ -22,6 +22,7 @@ a = Analysis(
         "tiktoken_ext.openai_public",
         "tiktoken_ext",
         "pyecharts",
+        "kombu.transport.sqlalchemy",
     ],
     hookspath=["./hooks"],
     hooksconfig={},
