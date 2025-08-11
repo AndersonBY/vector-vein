@@ -101,6 +101,49 @@ set COMMANDLINE_ARGS=--api
 
 ## 💻 使用方法
 
+### 🔌 API アクセス（v0.4.0 新機能）
+
+VectorVein は、プログラムでワークフローを呼び出すことができるローカル API サービスを提供するようになりました。これにより、他のアプリケーションや自動化ツールとの統合が可能になります。
+
+#### API 機能
+
+- **ローカル FastAPI サーバー**：VectorVein 起動時に自動的に実行
+- **RESTful インターフェース**：ワークフロー操作用の標準 HTTP エンドポイント
+- **ワークフロー実行**：カスタム入力パラメータでワークフローを実行
+- **ステータス監視**：ワークフローの実行状態と結果を確認
+- **OpenAPI ドキュメント**：`/docs` でインタラクティブな API ドキュメントを提供
+
+#### API エンドポイント
+
+API サービスは `http://localhost:8787`（デフォルトポート）で実行され、以下のエンドポイントを提供します：
+
+- `GET /api/info` - API サーバー情報を取得
+- `GET /api/workflow/list` - すべてのワークフローをリスト
+- `GET /api/workflow/{workflow_id}` - ワークフローの詳細を取得
+- `POST /api/workflow/run` - ワークフローを実行
+- `POST /api/workflow/check-status` - ワークフローの実行状態を確認
+- `GET /health` - ヘルスチェックエンドポイント
+
+#### 使用例
+
+```python
+import requests
+
+# ワークフローを実行
+response = requests.post('http://localhost:8787/api/workflow/run', json={
+    'wid': 'your-workflow-id',
+    'input_fields': [
+        {'node_id': 'node1', 'field_name': 'input', 'value': 'Hello World'}
+    ],
+    'wait_for_completion': True
+})
+
+result = response.json()
+print(result['data'])  # ワークフロー出力
+```
+
+VectorVein を起動後、`http://localhost:8787/docs` にアクセスして詳細な API ドキュメントをご覧ください。
+
 ### 📖 基本概念
 
 ワークフローは、入力、出力、および入力がどのように処理されて出力結果に到達するかを含む作業タスクプロセスを表します。

@@ -103,6 +103,49 @@ set COMMANDLINE_ARGS=--api
 
 ## 💻 Usage
 
+### 🔌 API Access (New in v0.4.0)
+
+VectorVein now provides a local API service that allows you to call workflows programmatically. This enables integration with other applications and automation tools.
+
+#### API Features
+
+- **Local FastAPI Server**: Runs automatically when VectorVein starts
+- **RESTful Interface**: Standard HTTP endpoints for workflow operations
+- **Workflow Execution**: Run workflows with custom input parameters
+- **Status Monitoring**: Check workflow execution status and results
+- **OpenAPI Documentation**: Interactive API documentation at `/docs`
+
+#### API Endpoints
+
+The API service runs on `http://localhost:8787` (default port) and provides the following endpoints:
+
+- `GET /api/info` - Get API server information
+- `GET /api/workflow/list` - List all workflows
+- `GET /api/workflow/{workflow_id}` - Get workflow details
+- `POST /api/workflow/run` - Execute a workflow
+- `POST /api/workflow/check-status` - Check workflow execution status
+- `GET /health` - Health check endpoint
+
+#### Example Usage
+
+```python
+import requests
+
+# Run a workflow
+response = requests.post('http://localhost:8787/api/workflow/run', json={
+    'wid': 'your-workflow-id',
+    'input_fields': [
+        {'node_id': 'node1', 'field_name': 'input', 'value': 'Hello World'}
+    ],
+    'wait_for_completion': True
+})
+
+result = response.json()
+print(result['data'])  # Workflow output
+```
+
+For detailed API documentation, visit `http://localhost:8787/docs` after starting VectorVein.
+
 ### 📖 Basic Concepts
 
 A workflow represents a work task process, including input, output, and how input is processed to reach the output result.

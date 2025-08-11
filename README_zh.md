@@ -101,6 +101,49 @@ set COMMANDLINE_ARGS=--api
 
 ## 💻 使用方式
 
+### 🔌 API 访问（v0.4.0 新功能）
+
+向量脉络现在提供本地 API 服务，允许您通过编程方式调用工作流。这使得与其他应用程序和自动化工具的集成成为可能。
+
+#### API 功能特性
+
+- **本地 FastAPI 服务器**：VectorVein 启动时自动运行
+- **RESTful 接口**：标准的 HTTP 端点用于工作流操作
+- **工作流执行**：使用自定义输入参数运行工作流
+- **状态监控**：检查工作流执行状态和结果
+- **OpenAPI 文档**：在 `/docs` 提供交互式 API 文档
+
+#### API 端点
+
+API 服务运行在 `http://localhost:8787`（默认端口），提供以下端点：
+
+- `GET /api/info` - 获取 API 服务器信息
+- `GET /api/workflow/list` - 列出所有工作流
+- `GET /api/workflow/{workflow_id}` - 获取工作流详情
+- `POST /api/workflow/run` - 执行工作流
+- `POST /api/workflow/check-status` - 检查工作流执行状态
+- `GET /health` - 健康检查端点
+
+#### 使用示例
+
+```python
+import requests
+
+# 运行工作流
+response = requests.post('http://localhost:8787/api/workflow/run', json={
+    'wid': 'your-workflow-id',
+    'input_fields': [
+        {'node_id': 'node1', 'field_name': 'input', 'value': 'Hello World'}
+    ],
+    'wait_for_completion': True
+})
+
+result = response.json()
+print(result['data'])  # 工作流输出
+```
+
+启动 VectorVein 后，访问 `http://localhost:8787/docs` 查看详细的 API 文档。
+
 ### 📖 基本概念
 
 一个工作流代表了一个工作任务流程，包含了输入、输出以及工作流的触发方式。你可以任意定义输入是什么，输出是什么，以及输入是如何处理并到达输出结果的。
