@@ -192,10 +192,10 @@ class MainServer:
             vite_url = os.environ.get("VITE_LOCAL")
             if vite_url and vite_url.startswith("http"):
                 # Check if Vite dev server is actually running
-                import requests
+                import httpx
 
                 try:
-                    response = requests.get(vite_url, timeout=1)
+                    response = httpx.get(vite_url, timeout=1)
                     if response.status_code == 200:
                         url = vite_url
                         mprint("Using Vite dev server for frontend")
