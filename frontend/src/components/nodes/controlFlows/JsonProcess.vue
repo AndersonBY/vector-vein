@@ -64,7 +64,7 @@ const addKey = () => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.controlFlows.JsonProcess"
     documentPath="/help/docs/control-flows#node-JsonProcess">
     <template #main>

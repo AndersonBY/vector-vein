@@ -71,7 +71,7 @@ const editorModal = reactive({
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" :debug="props.data.debug"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :debug="props.data.debug" :data="props.data"
     translatePrefix="components.nodes.tools.ProgrammingFunction"
     documentPath="/help/docs/tools#node-ProgrammingFunction">
     <template #main>

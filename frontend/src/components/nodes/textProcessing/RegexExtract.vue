@@ -25,7 +25,7 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :data="props.data" :fieldsData="fieldsData"
     translatePrefix="components.nodes.textProcessing.RegexExtract"
     documentPath="/help/docs/text-processing#node-RegexExtract" />
 </template>

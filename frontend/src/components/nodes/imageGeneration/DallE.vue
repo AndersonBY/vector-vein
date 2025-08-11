@@ -25,6 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.imageGeneration.DallE" documentPath="/help/docs/image-generation#node-DallE" />
 </template>

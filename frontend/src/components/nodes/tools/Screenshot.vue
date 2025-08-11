@@ -25,6 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.tools.Screenshot"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data" translatePrefix="components.nodes.tools.Screenshot"
     :debug="props.data.debug" documentPath="/help/docs/tools#node-Screenshot" />
 </template>

@@ -25,6 +25,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.outputs.Mindmap"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data" translatePrefix="components.nodes.outputs.Mindmap"
     :debug="props.data.debug" documentPath="/help/docs/outputs#node-Mindmap" />
 </template>

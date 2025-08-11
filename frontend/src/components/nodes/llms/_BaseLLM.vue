@@ -260,7 +260,7 @@ const collapseChanged = (data) => {
 </script>
 
 <template>
-  <BaseNode v-if="!loading" :nodeId="id" :fieldsData="fieldsData"
+  <BaseNode v-if="!loading" :nodeId="id" :fieldsData="fieldsData" :data="props.data"
     :title="`${t(`components.nodes.llms.${props.llmName}.title`)}`"
     :description="t(`components.nodes.llms.${props.llmName}.description`)"
     :translatePrefix="`components.nodes.llms.common`" :debug="props.debug"

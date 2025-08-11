@@ -29,6 +29,6 @@ fieldsData.value.button_text.value = fieldsData.value.button_text.value.length >
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.triggers.ButtonTrigger"
-    documentPath="/help/docs/triggers#node-ButtonTrigger" />
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data"
+    translatePrefix="components.nodes.triggers.ButtonTrigger" documentPath="/help/docs/triggers#node-ButtonTrigger" />
 </template>

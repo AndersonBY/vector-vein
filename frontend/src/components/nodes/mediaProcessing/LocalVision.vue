@@ -52,6 +52,6 @@ fieldsData.value.llm_model.options = computed(() => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.mediaProcessing.LocalVision" />
 </template>

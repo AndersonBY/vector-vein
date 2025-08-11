@@ -353,7 +353,18 @@
       "diagnosing_record": "Diagnosing {record}",
       "cannot_save_when_diagnosing": "Cannot save when diagnosing record",
       "layout_graph": "Auto layout",
-      "resume_node_but_edge_already_connected_message": "The other end of the line has other lines, please delete other lines or ignore the nodes corresponding to the lines."
+      "resume_node_but_edge_already_connected_message": "The other end of the line has other lines, please delete other lines or ignore the nodes corresponding to the lines.",
+      "images_helper": "Upload images to show the workflow effect",
+      "visual_assets": "Visual assets",
+      "brief_helper": "Add a brief description explaining the function and purpose of the workflow",
+      "no_image_placeholder": "No previews",
+      "basic_info": "Basic info",
+      "tags_helper": "Add tags to better classify and find your workflows",
+      "statistics": "Statistics",
+      "nodes_count": "Nodes count",
+      "connections": "Connections",
+      "last_updated": "Last updated",
+      "llm_nodes_count": "LLM nodes count"
     },
     "workflowSpaceMain": {
       "my_workflows": "My workflows",
@@ -703,7 +714,8 @@
         "delete_node": "Delete node",
         "run_time": "Run time {time}s",
         "no_run_record": "No run record",
-        "view_node_help_document": "Quickly view node help documents"
+        "view_node_help_document": "Quickly view node help documents",
+        "error_node": "Node run error"
       },
       "baseField": {
         "show_in_use_interface": "Whether to display in the use interface",

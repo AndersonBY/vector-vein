@@ -33,7 +33,7 @@ watch(() => fieldsData.value.images_or_urls, () => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.mediaProcessing.ClaudeVision"
     documentPath="/help/docs/media-processing#node-ClaudeVision" />
 </template>

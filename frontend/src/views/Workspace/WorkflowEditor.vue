@@ -3,7 +3,7 @@ import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTi
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne, ConnectionPoint, Connection, Robot } from '@icon-park/vue-next'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background } from '@vue-flow/background'
@@ -23,7 +23,7 @@ import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import TagManage from '@/components/workspace/TagManage.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
-import { ObjectHasher } from '@/utils/util'
+import { ObjectHasher, formatTime, deepCopy } from '@/utils/util'
 import { nodeCategoryOptions } from "@/utils/common"
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'
@@ -92,18 +92,32 @@ const onVueFlowStyleSettingsSave = () => {
   userSettingsStore.setVueFlowStyleSettings(vueFlowStyleSettings.value)
 }
 
+// 快捷键事件处理函数
+const handleKeyDown = (event) => {
+  // 检查是否按下了 Ctrl+S (Windows/Linux) 或 Cmd+S (macOS)
+  if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+    event.preventDefault() // 阻止浏览器默认的保存行为
+    saveWorkflow() // 调用我们自己的保存操作
+  }
+}
+
 onUnmounted(() => {
+  // 移除键盘事件监听器
+  document.removeEventListener('keydown', handleKeyDown)
   userWorkflowsStore.setDiagnosisRecord(null)
 })
 
 onMounted(async () => {
+  // 添加键盘事件监听器
+  document.addEventListener('keydown', handleKeyDown)
+
   if (diagnosisRecordId.value) {
     if (!diagnosisRecord.value) {
       const res = await workflowRunRecordAPI('get', { rid: diagnosisRecordId.value })
       diagnosisRecord.value = res.data
     }
   }
-  if (route.path.startsWith('/workflow/editor/')) {
+  if (route.name == 'WorkflowEditor') {
     workflowOrTemplate = 'workflow'
     workflowOrTemplateAPI = workflowAPI
     workflowId.value = route.params.workflowId
@@ -134,13 +148,16 @@ onMounted(async () => {
   }
 
   currentWorkflow.value = workflowResponse.data
+  let errorNodes = []
   if (diagnosisRecord.value) {
     currentWorkflow.value.data = diagnosisRecord.value.data
+    errorNodes = (diagnosisRecord.value.data?.error_tasks ?? []).map(task => task.node_id)
   }
   currentWorkflow.value.data.nodes.forEach((node) => {
     if (diagnosisRecord.value) {
       node.data.debug = {
-        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1
+        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1,
+        error: errorNodes.includes(node.id),
       }
     }
     if (node.category == "vectorDb") {
@@ -170,8 +187,12 @@ onMounted(async () => {
         sortedTemplate[key] = node.data.template[key]
       }
       // 对于 llms 的 options 字段，采用 nodeTemplateData.template 中的 options，这样能确保选项和最新模板节点一致
-      if (node.category == 'llms' && nodeTemplateData.template[key]?.options) {
-        sortedTemplate[key].options = nodeTemplateData.template[key].options
+      try {
+        if (['llms', 'mediaProcessing'].includes(node.category) && nodeTemplateData.template[key]?.options?.length > 0) {
+          sortedTemplate[key].options = nodeTemplateData.template[key].options
+        }
+      } catch (error) {
+        console.error(error)
       }
     })
 
@@ -193,10 +214,13 @@ onMounted(async () => {
       addNodeToCanvas('ButtonTrigger', { x: 100, y: 100 })
     }
     elements.value = [...currentWorkflow.value.data.nodes, ...currentWorkflow.value.data.edges]
-    savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
     if (currentWorkflow.value.data.viewport) {
       setViewport(currentWorkflow.value.data.viewport)
     }
+    setTimeout(() => {
+      // 刚给 elements.value 赋值，在 getWorkflowHash 里 getCleanWorkflowData 里的 toObject 还没拿到值，所以需要再等待一下
+      savedWorkflowHash.value = getWorkflowHash(currentWorkflow.value)
+    }, 300)
   })
 })
 
@@ -254,6 +278,16 @@ const saveWorkflowCheck = () => {
   return true
 }
 
+const getWorkflowHash = (workflowObject) => {
+  const uiDesign = deepCopy(workflowObject).data.ui || {}
+  const workflowData = getCleanWorkflowData()
+  const workflow = {
+    ...workflowData,
+    ui: uiDesign,
+  }
+  return hasher.hash(workflow)
+}
+
 const saving = ref(false)
 const saveWorkflow = async () => {
   saving.value = true
@@ -276,7 +310,8 @@ const saveWorkflow = async () => {
           marginTop: '60px',
         },
       })
-      savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
+      savedWorkflowHash.value = getWorkflowHash(currentWorkflow.value)
+      currentWorkflow.value.update_time = response.data.data.update_time
     } else if (response.status == 400) {
       message.error(t('workspace.workflowSpace.workflow_cant_invoke_itself'))
     } else {
@@ -313,13 +348,7 @@ const exitConfirm = () => {
   if (!!diagnosisRecordId.value) {
     routerBack()
   }
-  const uiDesign = currentWorkflow.value.data.ui || {}
-  const workflowData = getCleanWorkflowData()
-  currentWorkflow.value.data = {
-    ...workflowData,
-    ui: uiDesign,
-  }
-  if (savedWorkflowHash.value != hasher.hash(currentWorkflow.value)) {
+  if (savedWorkflowHash.value != getWorkflowHash(currentWorkflow.value)) {
     exitModalOpen.value = true
   } else {
     routerBack()
@@ -435,6 +464,13 @@ const nodeEvents = {
     newNode.position.x += 50
     newNode.position.y -= 50
     addNodes([newNode])
+  },
+  titleChange: (newTitle, nodeId) => {
+    const node = findNode(nodeId)
+    if (!node.data) {
+      node.data = {}
+    }
+    node.data.title = newTitle
   },
   ignore: (ignored, nodeId) => {
     const node = findNode(nodeId)
@@ -652,7 +688,7 @@ const codeEditorModal = reactive({
         })
       }
     })
-    savedWorkflowHash.value = hasher.hash(currentWorkflow.value)
+    savedWorkflowHash.value = getWorkflowHash(currentWorkflow.value)
   },
 })
 
@@ -677,6 +713,13 @@ async function layoutGraph(direction) {
     fitView()
   })
 }
+
+const llmNodesCount = computed(() => {
+  const nodes = currentWorkflow.value.data?.nodes || []
+  const llmCategoryNodesCount = nodes.filter(node => !node.ignored && node.category == 'llms').length
+  const vlmCategoryNodesCount = nodes.filter(node => !node.ignored && node.category == 'mediaProcessing' && node.type != 'SpeechRecognition').length
+  return llmCategoryNodesCount + vlmCategoryNodesCount
+})
 </script>
 
 <template>
@@ -740,8 +783,9 @@ async function layoutGraph(direction) {
                 </template>
                 <a-modal v-model:open="testRunModal.open"
                   :title="`${t('workspace.workflowEditor.test_run')}: ${currentWorkflow.title}`" :footer="null"
-                  width="90vw" :bodyStyle="{ minHeight: '70vh' }">
-                  <WorkflowUse v-if="testRunModal.open" :workflow="currentWorkflow" :isTemplate="false" />
+                  width="90vw" class="test-run-modal">
+                  <WorkflowUse v-if="testRunModal.open" :workflow="currentWorkflow" :isTemplate="false"
+                    style="flex: 1;" />
                 </a-modal>
               </a-button>
             </a-tooltip>
@@ -785,21 +829,121 @@ async function layoutGraph(direction) {
 
     <div v-show="activeTab == 'info'" class="workflow-info-editor">
       <a-row justify="center">
-        <a-col :lg="10" :md="12" :sm="18" :xs="24">
-          <a-divider>
-            {{ t('workspace.workflowEditor.tags') }}
-            <TagManage />
-          </a-divider>
-          <TagInput v-model="currentWorkflow.tags" />
-          <a-divider>
-            {{ t('workspace.workflowEditor.brief_info') }}
-          </a-divider>
-          <MarkdownEditor v-model="currentWorkflow.brief" />
-          <a-divider>
-            {{ t('workspace.workflowEditor.brief_images') }}
-          </a-divider>
-          <div>
-            <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" :supportFileTypes="'image/*'" />
+        <a-col :lg="16" :md="20" :sm="22" :xs="24">
+          <div class="info-section">
+            <div class="section-header">
+              <span class="section-title">{{ t('workspace.workflowEditor.statistics') }}</span>
+              <a-typography-text type="secondary" v-if="currentWorkflow.update_time">
+                {{ t('workspace.workflowEditor.last_updated') }}: {{ formatTime(currentWorkflow.update_time) }}
+              </a-typography-text>
+            </div>
+            <div class="section-content">
+              <a-row :gutter="[24, 16]">
+                <a-col :md="8" :sm="8" :xs="24">
+                  <div class="stat-card">
+                    <div class="stat-icon node-icon">
+                      <ConnectionPoint fill="#1890ff" size="24" />
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{currentWorkflow.data?.nodes?.filter(n => !n.ignored)?.length || 0}}
+                      </div>
+                      <div class="stat-label">{{ t('workspace.workflowEditor.nodes_count') }}</div>
+                    </div>
+                  </div>
+                </a-col>
+
+                <a-col :md="8" :sm="8" :xs="24">
+                  <div class="stat-card">
+                    <div class="stat-icon edge-icon">
+                      <Connection fill="#52c41a" size="24" />
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">{{currentWorkflow.data?.edges?.filter(e => !e.ignored)?.length || 0}}
+                      </div>
+                      <div class="stat-label">{{ t('workspace.workflowEditor.connections') }}</div>
+                    </div>
+                  </div>
+                </a-col>
+
+                <a-col :md="8" :sm="8" :xs="24">
+                  <div class="stat-card">
+                    <div class="stat-icon time-icon">
+                      <Robot fill="#fa8c16" size="24" />
+                    </div>
+                    <div class="stat-info">
+                      <div class="stat-value">
+                        {{ llmNodesCount }}
+                      </div>
+                      <div class="stat-label">{{ t('workspace.workflowEditor.llm_nodes_count') }}</div>
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <div class="section-header">
+              <span class="section-title">{{ t('workspace.workflowEditor.basic_info') }}</span>
+              <div class="section-actions">
+                <TagManage />
+              </div>
+            </div>
+            <div class="section-content">
+              <a-row :gutter="[24, 16]">
+                <a-col :md="24" :lg="24">
+                  <div class="field-item">
+                    <div class="field-label">{{ t('workspace.workflowEditor.tags') }}</div>
+                    <TagInput v-model="currentWorkflow.tags" />
+                    <div class="helper-text">{{ t('workspace.workflowEditor.tags_helper') }}
+                    </div>
+                  </div>
+                </a-col>
+
+                <a-col :md="24" :lg="24">
+                  <div class="field-item">
+                    <div class="field-label">{{ t('workspace.workflowEditor.brief_info') }}</div>
+                    <MarkdownEditor v-model="currentWorkflow.brief" />
+                    <div class="helper-text">{{ t('workspace.workflowEditor.brief_helper') }}
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+            </div>
+          </div>
+
+          <div class="info-section">
+            <div class="section-header">
+              <span class="section-title">{{ t('workspace.workflowEditor.visual_assets') }}</span>
+            </div>
+            <div class="section-content">
+              <a-row :gutter="[24, 24]">
+                <a-col :md="12" :sm="24" :xs="24">
+                  <div class="field-item">
+                    <div class="field-label">{{ t('workspace.workflowEditor.brief_images') }}</div>
+                    <UploaderFieldUse v-model="currentWorkflow.images" :multiple="true" :supportFileTypes="'image/*'" />
+                    <div class="helper-text">{{ t('workspace.workflowEditor.images_helper') }}</div>
+                  </div>
+                </a-col>
+
+                <a-col :md="12" :sm="24" :xs="24">
+                  <div class="field-item">
+                    <div class="field-label">{{ t('common.preview') }}</div>
+                    <div class="preview-container">
+                      <div v-if="currentWorkflow.images && currentWorkflow.images.length > 0" class="image-preview">
+                        <!-- <img :src="currentWorkflow.images[0]" class="preview-image" alt="preview" /> -->
+                        <ImageCarousel :images="currentWorkflow.images" />
+                      </div>
+                      <div v-else class="empty-preview">
+                        <div class="empty-preview-content">
+                          {{ t('workspace.workflowEditor.no_image_placeholder') }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </a-col>
+              </a-row>
+            </div>
           </div>
         </a-col>
       </a-row>
@@ -818,7 +962,9 @@ async function layoutGraph(direction) {
             <a-menu-item :data-node-type="node" :id="node" draggable="true" @touchstart="onTouchStart"
               @touchmove="onTouchMove" @dragend="onNewNodeDragEnd" @touchend="onNewNodeDragEnd"
               v-for="(node, nodeIndex) in nodeCategories[category.name]" :key="`node-${nodeIndex}`">
-              <span :data-node-type="node">{{ t(`components.nodes.${category.name}.${node}.title`) }}</span>
+              <span :data-node-type="node">
+                {{ t(`components.nodes.${category.name}.${node}.title`) }}
+              </span>
             </a-menu-item>
           </a-sub-menu>
           <div class="collapse-button">
@@ -909,7 +1055,178 @@ async function layoutGraph(direction) {
 }
 
 .workflow-info-editor {
-  height: calc(100vh - 60px);
+  padding: 16px 24px 40px;
+  background-color: var(--component-background);
+}
+
+.info-section {
+  margin-bottom: 24px;
+  padding: 24px;
+  background: #fff;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: rgba(24, 144, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+}
+
+.section-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.field-item {
+  margin-bottom: 8px;
+}
+
+.field-label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+  color: #333;
+}
+
+.helper-text {
+  margin-top: 8px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+/* 预览相关样式 */
+.preview-container {
+  min-height: 200px;
+  border: 1px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  align-items: center;
+}
+
+.preview-image {
+  max-width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.empty-preview {
+  width: 100%;
+  height: 200px;
+  background: rgba(0, 0, 0, 0.02);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 0, 0, 0.25);
+}
+
+.empty-preview-content {
+  font-size: 14px;
+}
+
+/* 统计卡片样式 */
+.stat-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  background: #fafafa;
+  border-radius: 8px;
+  transition: all 0.3s;
+
+  &:hover {
+    background: #f0f5ff;
+  }
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  margin-right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.node-icon {
+  background-color: rgba(24, 144, 255, 0.1);
+}
+
+.node-icon :deep(svg) {
+  fill: #1890ff;
+  font-size: 24px;
+}
+
+.edge-icon {
+  background-color: rgba(82, 196, 26, 0.1);
+}
+
+.time-icon {
+  background-color: rgba(250, 140, 22, 0.1);
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.2;
+}
+
+.stat-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+/* 针对上传区域的样式调整 */
+:deep(.upload-field-container) {
+  border: 2px dashed rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.01);
+  transition: all 0.3s ease;
+
+  &:hover {
+    border-color: #1890ff;
+    background: rgba(24, 144, 255, 0.02);
+  }
+}
+
+@media (max-width: 768px) {
+  .workflow-info-editor {
+    padding: 12px;
+  }
+
+  .info-section {
+    padding: 16px;
+  }
 }
 
 .vue-flow-toolbar {
@@ -929,5 +1246,28 @@ async function layoutGraph(direction) {
 .vue-flow .shadow-edge,
 .vue-flow .ignored-edge {
   opacity: 0.5;
+}
+
+.test-run-modal .ant-modal-body {
+  height: 75vh;
+  overflow-x: hidden;
+  overflow-y: scroll;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+}
+
+.test-run-modal .ant-modal-body::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.test-run-modal .ant-modal-body::-webkit-scrollbar-thumb {
+  background: #CCCCCC;
+  border-radius: 6px;
+}
+
+.test-run-modal .ant-modal-body::-webkit-scrollbar-track {
+  background: transparent;
 }
 </style>

@@ -74,7 +74,7 @@ const loadTables = async (rid) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.relationalDb.GetTableInfo"
     documentPath="/help/docs/relational-db#node-GetTableInfo">
     <template #main>

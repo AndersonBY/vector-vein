@@ -32,6 +32,6 @@ watch(() => fieldsData.value.tts_provider.value, (value) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.outputs.Audio"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data" translatePrefix="components.nodes.outputs.Audio"
     :debug="props.data.debug" documentPath="/help/docs/outputs#node-Audio" />
 </template>

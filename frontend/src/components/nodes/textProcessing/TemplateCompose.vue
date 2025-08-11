@@ -132,7 +132,7 @@ const openTemplateEditor = ref(false)
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :width="300" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :width="300" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.textProcessing.TemplateCompose"
     documentPath="/help/docs/text-processing#node-TemplateCompose">
     <template #main>

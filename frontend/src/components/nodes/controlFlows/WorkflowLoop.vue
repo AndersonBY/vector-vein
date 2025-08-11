@@ -258,8 +258,9 @@ const openTemplateEditor = ref(false)
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.controlFlows.WorkflowLoop"
-    :debug="props.data.debug" documentPath="/help/docs/control-flows#node-WorkflowLoop">
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data"
+    translatePrefix="components.nodes.controlFlows.WorkflowLoop" :debug="props.data.debug"
+    documentPath="/help/docs/control-flows#node-WorkflowLoop">
     <template #main>
       <a-flex vertical gap="small">
         <div style="padding: 5px 10px;">

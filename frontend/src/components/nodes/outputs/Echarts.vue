@@ -26,6 +26,6 @@ Object.entries(templateData.template).forEach(([key, value]) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.outputs.Echarts"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data" translatePrefix="components.nodes.outputs.Echarts"
     :debug="props.data.debug" documentPath="/help/docs/outputs#node-Echarts" />
 </template>

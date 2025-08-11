@@ -53,7 +53,7 @@ watch(() => fieldsData.value.field_type.value, () => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.controlFlows.Conditional"
     documentPath="/help/docs/control-flows#node-Conditional" />
 </template>

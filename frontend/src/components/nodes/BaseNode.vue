@@ -1,6 +1,6 @@
 <script setup>
 import { watch, ref } from 'vue'
-import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen, LinkInterrupt, LinkFour } from '@icon-park/vue-next'
+import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen, LinkInterrupt, LinkFour, Edit } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import { useVueFlow } from '@vue-flow/core'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
@@ -42,6 +42,11 @@ const props = defineProps({
     default: '',
   },
   fieldsData: {
+    type: Object,
+    required: false,
+    default: () => ({}),
+  },
+  data: {
     type: Object,
     required: false,
     default: () => ({}),
@@ -90,8 +95,13 @@ const pushMessage = (action, data) => {
 }
 
 const { t } = useI18n()
-const title = props.title.length == 0 ? t(`${props.translatePrefix}.title`) : props.title
+const title = ref(props.data?.title ? props.data.title : (props.title.length == 0 ? t(`${props.translatePrefix}.title`) : props.title))
 const description = props.description.length == 0 ? t(`${props.translatePrefix}.description`) : props.description
+
+const onTitleChange = (string) => {
+  title.value = string
+  pushMessage('titleChange', title.value)
+}
 
 let style = {}
 if (props.width) {
@@ -226,11 +236,16 @@ const collapseChanged = (data) => {
         </div>
       </a-flex>
       <div style="width: 100%;">
-        <div v-if="debug" :class="['debug-info', debug.run_time > 0 ? 'executed-node' : 'not-executed-node']">
+        <div v-if="debug"
+          :class="['debug-info', debug.run_time >= 0 ? 'executed-node' : 'not-executed-node', debug.error ? 'error-node' : '']">
           <a-flex justify="space-between">
-            <a-typography-text v-if="debug.run_time > 0">
+            <a-typography-text v-if="debug.run_time >= 0">
               <CheckOne theme="filled" fill="#52c41a" />
               {{ t('components.nodes.baseNode.run_time', { time: debug.run_time.toFixed(2) }) }}
+            </a-typography-text>
+            <a-typography-text v-else-if="debug.error">
+              <CloseOne theme="filled" fill="#f5222d" />
+              {{ t('components.nodes.baseNode.error_node') }}
             </a-typography-text>
             <a-typography-text v-else>
               <Help theme="filled" fill="#faad14" />
@@ -240,8 +255,11 @@ const collapseChanged = (data) => {
         </div>
         <div class="title-container">
           <a-flex justify="space-between" align="center" gap="10">
-            <a-typography-title class="title" :level="3" style="flex-grow: 1;">
-              {{ title }}
+            <a-typography-title class="title" :level="3" style="flex-grow: 1;"
+              :editable="{ onChange: onTitleChange, triggerType: ['icon'] }" v-model:content="title">
+              <template #editableIcon>
+                <Edit class="title-edit-button" />
+              </template>
             </a-typography-title>
           </a-flex>
         </div>
@@ -337,6 +355,10 @@ const collapseChanged = (data) => {
 
 .node .debug-info.not-executed-node {
   background-color: #fffbe6;
+}
+
+.node .debug-info.error-node {
+  background-color: #ffe6e6;
 }
 
 .node .debug-info span {
@@ -490,6 +512,16 @@ const collapseChanged = (data) => {
   opacity: 1;
   transform: translateX(-50%) translateY(-120%);
   z-index: 2;
+}
+
+.title-edit-button {
+  font-size: 16px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.title:hover .title-edit-button {
+  opacity: 1;
 }
 
 .hover-button {

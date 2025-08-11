@@ -38,6 +38,6 @@ fieldsData.value.database.options = userDatabases.value.filter((database) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.vectorDb.AddData"
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data" translatePrefix="components.nodes.vectorDb.AddData"
     :debug="props.data.debug" documentPath="/help/docs/vector-db#node-AddData" />
 </template>

@@ -33,7 +33,7 @@ watch(() => fieldsData.value.files_or_urls, () => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.mediaProcessing.SpeechRecognition"
     documentPath="/help/docs/media-processing#node-SpeechRecognition" />
 </template>

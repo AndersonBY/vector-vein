@@ -31,7 +31,7 @@ watch(() => fieldsData.value.size.value, (value) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.imageGeneration.StableDiffusion"
     documentPath="/help/docs/image-generation#node-StableDiffusion" />
 </template>

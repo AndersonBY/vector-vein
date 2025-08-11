@@ -38,6 +38,7 @@ fieldsData.value.database.options = userRelationalDatabases.value.filter((databa
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.relationalDb.RunSql"
-    :debug="props.data.debug" documentPath="/help/docs/relational-db#node-RunSql" />
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data"
+    translatePrefix="components.nodes.relationalDb.RunSql" :debug="props.data.debug"
+    documentPath="/help/docs/relational-db#node-RunSql" />
 </template>

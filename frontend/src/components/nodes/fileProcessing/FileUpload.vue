@@ -31,7 +31,7 @@ const showEditField = ref(false)
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
+  <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.fileProcessing.FileUpload"
     documentPath="/help/docs/file-processing#node-FileUpload">
     <template #main>

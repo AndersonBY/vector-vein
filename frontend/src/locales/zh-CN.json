@@ -353,7 +353,18 @@
       "diagnosing_record": "正在诊断记录 {record}",
       "cannot_save_when_diagnosing": "诊断记录时无法保存",
       "layout_graph": "自动布局",
-      "resume_node_but_edge_already_connected_message": "连线另一端有其他连线，请先删除其他连线或忽略对应连线的节点。"
+      "resume_node_but_edge_already_connected_message": "连线另一端有其他连线，请先删除其他连线或忽略对应连线的节点。",
+      "images_helper": "上传图片展示工作流的效果",
+      "visual_assets": "视觉资源",
+      "brief_helper": "添加简短描述，说明工作流的功能和用途",
+      "no_image_placeholder": "暂无预览图",
+      "basic_info": "基本信息",
+      "tags_helper": "添加标签以便更好地分类和查找您的工作流",
+      "statistics": "统计信息",
+      "nodes_count": "节点数量",
+      "connections": "连接数量",
+      "last_updated": "最近更新",
+      "llm_nodes_count": "大语言模型节点数量"
     },
     "workflowSpaceMain": {
       "my_workflows": "我的工作流",
@@ -703,7 +714,8 @@
         "delete_node": "删除节点",
         "run_time": "运行时间 {time}s",
         "no_run_record": "无运行记录",
-        "view_node_help_document": "快速查看节点帮助文档"
+        "view_node_help_document": "快速查看节点帮助文档",
+        "error_node": "节点运行出错"
       },
       "baseField": {
         "show_in_use_interface": "是否在使用界面显示",

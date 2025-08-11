@@ -38,8 +38,9 @@ const removeReplaceItem = (index) => {
 </script>
 
 <template>
-  <BaseNode :nodeId="id" :fieldsData="fieldsData" translatePrefix="components.nodes.textProcessing.TextReplace"
-    :debug="props.data.debug" documentPath="/help/docs/text-processing#node-TextReplace">
+  <BaseNode :nodeId="id" :fieldsData="fieldsData" :data="props.data"
+    translatePrefix="components.nodes.textProcessing.TextReplace" :debug="props.data.debug"
+    documentPath="/help/docs/text-processing#node-TextReplace">
     <template #main>
       <a-flex vertical gap="small">
         <BaseField :name="t('components.nodes.textProcessing.TextReplace.text')" required type="target"
