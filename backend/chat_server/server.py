@@ -35,6 +35,26 @@ TOOL_CALL_INCREMENTAL_BACKENDS = (
     BackendType.MiniMax,
 )
 
+TOOL_CALL_INCREMENTAL_MODELS = (
+    "qwen3-235b-a22b",
+    "qwen3-235b-a22b-thinking",
+    "qwen3-32b",
+    "qwen3-32b-thinking",
+    "qwen3-30b-a3b",
+    "qwen3-30b-a3b-thinking",
+    "qwen3-14b",
+    "qwen3-14b-thinking",
+    "qwen3-8b",
+    "qwen3-8b-thinking",
+    "qwen3-4b",
+    "qwen3-4b-thinking",
+    "qwen3-1.7b",
+    "qwen3-1.7b-thinking",
+    "qwen3-0.6b",
+    "qwen3-0.6b-thinking",
+    "mixtral-8x7b",
+)
+
 mprint = mprint_with_name(name="WebSocket Server")
 
 
@@ -119,6 +139,11 @@ class WebSocketServer:
             thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             temperature = 1.0
             max_tokens = 20000
+        elif model in ("claude-opus-4-20250514-thinking", "claude-sonnet-4-20250514-thinking"):
+            model = model.removesuffix("-thinking")
+            thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
+            temperature = 1.0
+            max_tokens = 20000
         elif model == "deepseek-reasoner":
             thinking = NOT_GIVEN
             temperature = 0.6
@@ -128,10 +153,18 @@ class WebSocketServer:
             temperature = NOT_GIVEN
             max_tokens = None
 
-        if model == "o3-mini-high":
+        if model == "o3-mini-high" or model == "o4-mini-high":
             reasoning_effort = "high"
         else:
             reasoning_effort = NOT_GIVEN
+
+        extra_body: dict[str, bool | int] = {}
+        if model.startswith("qwen3"):
+            if model.endswith("-thinking"):
+                model = model.rstrip("-thinking")
+                extra_body = {"enable_thinking": True}
+            else:
+                extra_body = {"enable_thinking": False}
 
         model_settings = vectorvein_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
@@ -149,9 +182,7 @@ class WebSocketServer:
         else:
             system_message = []
 
-        user_messages = format_messages(
-            messages=history_messages, backend=backend, native_multimodal=native_multimodal
-        )
+        user_messages = format_messages(messages=history_messages, backend=backend, native_multimodal=native_multimodal)
         messages = [*system_message, *user_messages]
 
         if need_title:
@@ -174,6 +205,7 @@ class WebSocketServer:
                 max_tokens=max_tokens,
                 thinking=thinking,
                 reasoning_effort=reasoning_effort,
+                extra_body=extra_body,
             )
         else:
             response = await client.create_stream(
@@ -183,6 +215,7 @@ class WebSocketServer:
                 max_tokens=max_tokens,
                 thinking=thinking,
                 reasoning_effort=reasoning_effort,
+                extra_body=extra_body,
             )
         mprint("Agent chat response created")
         full_content = ""
@@ -204,18 +237,13 @@ class WebSocketServer:
                 index = piece.index
                 if index is None:
                     index = 0
-                tool_calls[index] = tool_calls.get(
-                    index, {"id": None, "function": {"arguments": "", "name": ""}, "type": "function"}
-                )
+                tool_calls[index] = tool_calls.get(index, {"id": None, "function": {"arguments": "", "name": ""}, "type": "function"})
                 if piece.id:
                     tool_calls[index]["id"] = piece.id
                 if piece.function:
                     if piece.function.name:
                         tool_calls[index]["function"]["name"] = piece.function.name
-                    if (
-                        backend in TOOL_CALL_INCREMENTAL_BACKENDS
-                        and model_settings.models[model].function_call_available
-                    ):
+                    if (backend in TOOL_CALL_INCREMENTAL_BACKENDS or model in TOOL_CALL_INCREMENTAL_MODELS) and model_settings.models[model].function_call_available:
                         # OpenAI/Moonshot/Anthropic/DeepSeek/Minimax is incremental and needs to be concatenated
                         if piece.function.arguments:
                             tool_calls[index]["function"]["arguments"] += piece.function.arguments

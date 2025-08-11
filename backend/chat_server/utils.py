@@ -1,6 +1,9 @@
 # @Author: Bi Ying
 # @Date:   2024-06-07 00:04:13
-def get_tool_call_data(tool_call_data: dict, simple: bool = False):
+from vectorvein.types.llm_parameters import ToolParam
+
+
+def get_tool_call_data(tool_call_data: dict, simple: bool = False) -> list[ToolParam]:
     tools = tool_call_data.get("workflows", []) + tool_call_data.get("templates", [])
     if simple:
         return [

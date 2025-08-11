@@ -102,7 +102,7 @@ class BaseLLMTask:
         user_settings = Settings()
         vectorvein_settings.load(user_settings.llm_settings)
 
-        if self.model in ("o1-mini", "o1-preview", "o1"):
+        if self.model.startswith(("o1", "o3-mini", "o4-mini", "gpt-5")):
             self.temperature = 1.0
             self.top_p = 1
             self.stream = False
@@ -111,21 +111,33 @@ class BaseLLMTask:
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
 
-        if self.model == "claude-3-7-sonnet-thinking":
-            self.model = "claude-3-7-sonnet"
+        if self.model in ("claude-3-7-sonnet-thinking", "claude-opus-4-20250514-thinking", "claude-opus-4-1-20250805-thinking", "claude-sonnet-4-20250514-thinking"):
+            self.original_model = self.model = self.model.removesuffix("-thinking")
             self.thinking: ThinkingConfigEnabledParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             self.temperature = 1.0
         else:
             self.thinking = NOT_GIVEN
 
-        if self.model.startswith("o3-mini"):
+        if self.model and self.model.startswith(("o3-mini", "o4-mini")):
             self.top_p = NOT_GIVEN
 
+        self.reasoning_effort: NotGiven | str = NOT_GIVEN
         if self.model == "o3-mini-high":
-            self.model = "o3-mini"
+            self.original_model = self.model = "o3-mini"
             self.reasoning_effort = "high"
-        else:
-            self.reasoning_effort = NOT_GIVEN
+
+        if self.model == "o4-mini-high":
+            self.original_model = self.model = "o4-mini"
+            self.reasoning_effort = "high"
+
+        self.extra_body: dict[str, bool | int] = {}
+        if self.model.startswith("qwen3"):
+            self.stream = True  # 百炼上思考模式只支持流式输出
+            if self.model.endswith("-thinking"):
+                self.model = self.model.removesuffix("-thinking")
+                self.extra_body = {"enable_thinking": True}
+            else:
+                self.extra_body = {"enable_thinking": False}
 
         self.model = self.MODEL_MAPPING.get(self.model, self.model)
 
@@ -260,6 +272,7 @@ class BaseLLMTask:
                             skip_cutoff=True,
                             thinking=self.thinking,
                             reasoning_effort=self.reasoning_effort,  # type: ignore
+                            extra_body=self.extra_body,
                         )
                     else:
                         response = _chat_client.create_completion(
@@ -275,6 +288,7 @@ class BaseLLMTask:
                             skip_cutoff=True,
                             thinking=self.thinking,
                             reasoning_effort=self.reasoning_effort,  # type: ignore
+                            extra_body=self.extra_body,
                         )
                     request_success = True
                     self.add_endpoint_request_record(endpoint)
@@ -349,9 +363,7 @@ class BaseLLMTask:
                     break
 
             if response.usage is None:
-                prompt_tokens = get_token_counts(
-                    json.dumps(messages) + json.dumps(function_call_arguments), self.model, True
-                )
+                prompt_tokens = get_token_counts(json.dumps(messages) + json.dumps(function_call_arguments), self.model, True)
                 completion = content_output or "" + json.dumps(function_call_arguments)
                 completion_tokens = get_token_counts(completion, self.model, True)
             else:
@@ -372,9 +384,7 @@ class BaseLLMTask:
     def run(self):
         max_concurrent = self.get_max_concurrent_requests()
         with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
-            future_to_index = {
-                executor.submit(self.process_prompt, prompt, index): index for index, prompt in enumerate(self.prompts)
-            }
+            future_to_index = {executor.submit(self.process_prompt, prompt, index): index for index, prompt in enumerate(self.prompts)}
 
             for future in as_completed(future_to_index):
                 index = future_to_index[future]
@@ -393,29 +403,18 @@ class BaseLLMTask:
         content_output = self.content_outputs[0] if isinstance(self.input_prompt, str) else self.content_outputs
         self.workflow.update_node_field_value(self.node_id, "output", content_output)
 
-        reasoning_content = (
-            self.reasoning_content_outputs[0] if isinstance(self.input_prompt, str) else self.reasoning_content_outputs
-        )
+        reasoning_content = self.reasoning_content_outputs[0] if isinstance(self.input_prompt, str) else self.reasoning_content_outputs
         self.workflow.update_node_field_value(self.node_id, "reasoning_content", reasoning_content)
 
         if self.use_function_call and self.model_settings.function_call_available:
-            function_call_output = (
-                self.function_call_outputs[0] if isinstance(self.input_prompt, str) else self.function_call_outputs
-            )
+            function_call_output = self.function_call_outputs[0] if isinstance(self.input_prompt, str) else self.function_call_outputs
             self.workflow.update_node_field_value(self.node_id, "function_call_output", function_call_output)
             if isinstance(self.input_prompt, str):
-                self.workflow.update_node_field_value(
-                    self.node_id, "function_call_arguments", self.function_call_arguments_batches[0]
-                )
+                self.workflow.update_node_field_value(self.node_id, "function_call_arguments", self.function_call_arguments_batches[0])
             else:
-                self.workflow.update_node_field_value(
-                    self.node_id, "function_call_arguments", self.function_call_arguments_batches
-                )
+                self.workflow.update_node_field_value(self.node_id, "function_call_arguments", self.function_call_arguments_batches)
 
         return self.workflow.data
 
     def get_max_concurrent_requests(self):
-        return max(
-            vectorvein_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests
-            for endpoint in self.model_settings.endpoints
-        )
+        return max(vectorvein_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)
