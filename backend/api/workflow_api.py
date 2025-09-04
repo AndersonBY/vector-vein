@@ -140,12 +140,18 @@ class WorkflowAPI:
 
     def list(self, payload):
         tags = payload.get("tags", [])
+        # Ensure tags is always a list, never None
+        if tags is None:
+            tags = []
         page_num = payload.get("page", 1)
         page_size = min(payload.get("page_size", 10), 100)
         sort_field = payload.get("sort_field", "update_time")
         sort_order = payload.get("sort_order", "descend")
         sort_field = getattr(Workflow, sort_field)
         search_text = payload.get("search_text", "")
+        # Ensure search_text is always a string, never None
+        if search_text is None:
+            search_text = ""
         workflow_related = payload.get("workflow_related", "")
         if workflow_related:
             status, msg, workflow = get_user_object_general(Workflow, wid=workflow_related)
@@ -155,9 +161,9 @@ class WorkflowAPI:
             workflows = Workflow.select().where(Workflow.wid.in_(related_workflow_ids))
         else:
             workflows = Workflow.select()
-        if tags is not None and len(tags) > 0:
+        if tags and len(tags) > 0:
             workflows = workflows.join(Workflow.tags.get_through_model()).where(Workflow.tags.get_through_model().workflowtag_id.in_(tags)).distinct()
-        if len(search_text) > 0:
+        if search_text and len(search_text) > 0:
             workflows = workflows.select().where((fn.Lower(Workflow.title).contains(search_text.lower())) | (fn.Lower(Workflow.brief).contains(search_text.lower())))
         workflows_count = workflows.count()
         offset = (page_num - 1) * page_size
