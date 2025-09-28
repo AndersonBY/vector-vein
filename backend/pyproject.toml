@@ -1,5 +1,5 @@
 [project]
-authors = [{ name = "MakerBi", email = "biying@vectorvein.com" }]
+authors = [{name = "MakerBi", email = "biying@vectorvein.com"}]
 dependencies = [
   "pywebview>=6.0.0",
   "httpx>=0.22.0",
@@ -47,11 +47,10 @@ dependencies = [
   "uvicorn>=0.28.0",
 ]
 description = ""
-license = { text = "CC BY-NC-SA" }
+license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.0"
-
+version = "0.4.1"
 
 [tool.pdm]
 distribution = false
