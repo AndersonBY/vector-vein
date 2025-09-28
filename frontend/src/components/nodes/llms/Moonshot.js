@@ -19,8 +19,16 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "moonshot-v1-8k",
+        "value": "kimi-k2-0905-preview",
         "options": [
+          {
+            "value": "kimi-k2-0905-preview",
+            "label": "kimi-k2-0905-preview"
+          },
+          {
+            "value": "kimi-latest",
+            "label": "kimi-latest"
+          },
           {
             "value": "moonshot-v1-8k",
             "label": "moonshot-v1-8k"

@@ -19,11 +19,11 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "MiniMax-Text-01",
+        "value": "MiniMax-M1",
         "options": [
           {
-            "value": "abab6.5s-chat",
-            "label": "abab6.5s-chat"
+            "value": "MiniMax-M1",
+            "label": "MiniMax-M1"
           },
           {
             "value": "MiniMax-Text-01",

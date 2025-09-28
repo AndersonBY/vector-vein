@@ -19,36 +19,16 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "gemini-1.5-flash",
+        "value": "gemini-2.5-pro",
         "options": [
           {
-            "value": "gemini-1.5-flash",
-            "label": "gemini-1.5-flash"
+            "label": "gemini-2.5-pro",
+            "value": "gemini-2.5-pro",
           },
           {
-            "value": "gemini-1.5-pro",
-            "label": "gemini-1.5-pro"
-          },
-          {
-            "value": "gemini-2.0-flash",
-            "label": "gemini-2.0-flash"
-          },
-          {
-            "value": "gemini-2.0-flash-thinking-exp-01-21",
-            "label": "gemini-2.0-flash-thinking-exp-01-21"
-          },
-          {
-            "value": "gemini-2.0-pro-exp-02-05",
-            "label": "gemini-2.0-pro-exp-02-05"
-          },
-          {
-            "value": "gemini-2.0-flash-lite-preview-02-05",
-            "label": "gemini-2.0-flash-lite-preview-02-05"
-          },
-          {
-            "value": "gemini-exp-1206",
-            "label": "gemini-exp-1206"
-          },
+            "label": "gemini-2.5-flash",
+            "value": "gemini-2.5-flash",
+          }
         ],
         "name": "llm_model",
         "display_name": "llm_model",

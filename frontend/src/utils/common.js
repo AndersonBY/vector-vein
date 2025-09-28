@@ -82,6 +82,10 @@ export const nonLocalChatModelOptions = [
         value: "gpt-5",
       },
       {
+        label: "gpt-5-high",
+        value: "gpt-5-high",
+      },
+      {
         label: "gpt-5-mini",
         value: "gpt-5-mini",
       },
@@ -92,6 +96,10 @@ export const nonLocalChatModelOptions = [
       {
         label: "gpt-5-chat-latest",
         value: "gpt-5-chat-latest",
+      },
+      {
+        label: "gpt-5-codex",
+        value: "gpt-5-codex",
       },
     ]
   },
@@ -156,6 +164,10 @@ export const nonLocalChatModelOptions = [
     value: "Qwen",
     children: [
       {
+        "value": "qwen3-max",
+        "label": "qwen3-max",
+      },
+      {
         "value": "qwen3-235b-a22b-instruct-2507",
         "label": "qwen3-235b-a22b-instruct-2507",
       },
@@ -170,6 +182,26 @@ export const nonLocalChatModelOptions = [
       {
         "value": "qwen3-235b-a22b-thinking",
         "label": "qwen3-235b-a22b-thinking",
+      },
+      {
+        "value": "qwen3-next-80b-a3b-thinking",
+        "label": "qwen3-next-80b-a3b-thinking",
+      },
+      {
+        "value": "qwen3-next-80b-a3b-instruct",
+        "label": "qwen3-next-80b-a3b-instruct",
+      },
+      {
+        "value": "qwen3-vl-plus",
+        "label": "qwen3-vl-plus",
+      },
+      {
+        "value": "qwen3-coder-plus",
+        "label": "qwen3-coder-plus",
+      },
+      {
+        "value": "qwen3-coder-flash",
+        "label": "qwen3-coder-flash",
       },
       {
         "value": "qwen3-32b",
@@ -274,8 +306,8 @@ export const nonLocalChatModelOptions = [
         value: "kimi-latest",
       },
       {
-        label: "kimi-k2-0711-preview",
-        value: "kimi-k2-0711-preview",
+        label: "kimi-k2-0905-preview",
+        value: "kimi-k2-0905-preview",
       },
       {
         label: "kimi-k2-turbo-preview",

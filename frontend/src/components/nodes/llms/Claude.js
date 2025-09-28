@@ -19,8 +19,24 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-3-5-haiku",
+        "value": "claude-sonnet-4-20250514",
         "options": [
+          {
+            "value": "claude-opus-4-20250514-thinking",
+            "label": "claude-opus-4-20250514-thinking"
+          },
+          {
+            "value": "claude-opus-4-20250514",
+            "label": "claude-opus-4-20250514"
+          },
+          {
+            "value": "claude-sonnet-4-20250514-thinking",
+            "label": "claude-sonnet-4-20250514-thinking"
+          },
+          {
+            "value": "claude-sonnet-4-20250514",
+            "label": "claude-sonnet-4-20250514"
+          },
           {
             "value": "claude-3-7-sonnet-thinking",
             "label": "claude-3-7-sonnet-thinking"
