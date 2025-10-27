@@ -34,52 +34,16 @@ export const nonLocalChatModelOptions = [
     value: "OpenAI",
     children: [
       {
-        label: "gpt-35-turbo",
-        value: "gpt-35-turbo",
-      },
-      {
-        label: "gpt-4",
-        value: "gpt-4",
-      },
-      {
-        label: "gpt-4o",
-        value: "gpt-4o",
-      },
-      {
-        label: "gpt-4o-mini",
-        value: "gpt-4o-mini",
-      },
-      {
-        label: "gpt-4.1",
-        value: "gpt-4.1",
-      },
-      {
-        label: "o1-mini",
-        value: "o1-mini",
-      },
-      {
-        label: "o1-preview",
-        value: "o1-preview",
-      },
-      {
-        label: "o3-mini",
-        value: "o3-mini",
-      },
-      {
-        label: "o3-mini-high",
-        value: "o3-mini-high",
-      },
-      {
-        label: "o4-mini",
-        value: "o4-mini",
-      },
-      {
-        label: "o4-mini-high",
-        value: "o4-mini-high",
+        label: "gpt-5-codex",
+        value: "gpt-5-codex",
       },
       {
         label: "gpt-5",
         value: "gpt-5",
+      },
+      {
+        label: "gpt-5-pro",
+        value: "gpt-5-pro",
       },
       {
         label: "gpt-5-high",
@@ -98,8 +62,48 @@ export const nonLocalChatModelOptions = [
         value: "gpt-5-chat-latest",
       },
       {
-        label: "gpt-5-codex",
-        value: "gpt-5-codex",
+        label: "o4-mini",
+        value: "o4-mini",
+      },
+      {
+        label: "o4-mini-high",
+        value: "o4-mini-high",
+      },
+      {
+        label: "o3-mini",
+        value: "o3-mini",
+      },
+      {
+        label: "o3-mini-high",
+        value: "o3-mini-high",
+      },
+      {
+        label: "o1-mini",
+        value: "o1-mini",
+      },
+      {
+        label: "o1-preview",
+        value: "o1-preview",
+      },
+      {
+        label: "gpt-4.1",
+        value: "gpt-4.1",
+      },
+      {
+        label: "gpt-4o",
+        value: "gpt-4o",
+      },
+      {
+        label: "gpt-4o-mini",
+        value: "gpt-4o-mini",
+      },
+      {
+        label: "gpt-4",
+        value: "gpt-4",
+      },
+      {
+        label: "gpt-35-turbo",
+        value: "gpt-35-turbo",
       },
     ]
   },
@@ -108,16 +112,20 @@ export const nonLocalChatModelOptions = [
     value: "MiniMax",
     children: [
       {
+        label: "MiniMax-M2",
+        value: "MiniMax-M2",
+      },
+      {
+        label: "MiniMax-M1",
+        value: "MiniMax-M1",
+      },
+      {
         label: "abab6.5s-chat",
         value: "abab6.5s-chat",
       },
       {
         label: "MiniMax-Text-01",
         value: "MiniMax-Text-01",
-      },
-      {
-        label: "MiniMax-M1",
-        value: "MiniMax-M1",
       },
     ]
   },
@@ -126,8 +134,20 @@ export const nonLocalChatModelOptions = [
     value: "ZhiPuAI",
     children: [
       {
+        "value": "glm-4.6",
+        "label": "glm-4.6"
+      },
+      {
+        "value": "glm-4.6-thinking",
+        "label": "glm-4.6-thinking"
+      },
+      {
         "value": "glm-4.5",
         "label": "glm-4.5"
+      },
+      {
+        "value": "glm-4.5-thinking",
+        "label": "glm-4.5-thinking"
       },
       {
         "value": "glm-4.5-x",
@@ -320,20 +340,16 @@ export const nonLocalChatModelOptions = [
     value: "Anthropic",
     children: [
       {
-        label: "claude-3-5-sonnet",
-        value: "claude-3-5-sonnet-20241022",
+        label: "claude-sonnet-4-5-20250929",
+        value: "claude-sonnet-4-5-20250929",
       },
       {
-        label: "claude-3-5-haiku",
-        value: "claude-3-5-haiku-20241022",
+        label: "claude-sonnet-4-5-20250929-thinking",
+        value: "claude-sonnet-4-5-20250929-thinking",
       },
       {
-        label: "claude-3-7-sonnet",
-        value: "claude-3-7-sonnet-20250219",
-      },
-      {
-        label: "claude-3-7-sonnet-thinking",
-        value: "claude-3-7-sonnet-thinking",
+        label: "claude-haiku-4-5-20251001",
+        value: "claude-haiku-4-5-20251001",
       },
       {
         label: "claude-sonnet-4-20250514",
@@ -350,6 +366,22 @@ export const nonLocalChatModelOptions = [
       {
         label: "claude-opus-4-20250514-thinking",
         value: "claude-opus-4-20250514-thinking",
+      },
+      {
+        label: "claude-3-7-sonnet",
+        value: "claude-3-7-sonnet-20250219",
+      },
+      {
+        label: "claude-3-7-sonnet-thinking",
+        value: "claude-3-7-sonnet-thinking",
+      },
+      {
+        label: "claude-3-5-sonnet",
+        value: "claude-3-5-sonnet-20241022",
+      },
+      {
+        label: "claude-3-5-haiku",
+        value: "claude-3-5-haiku-20241022",
       },
     ]
   },
@@ -411,6 +443,10 @@ export const nonLocalChatModelOptions = [
         label: "gemini-2.5-flash",
         value: "gemini-2.5-flash",
       },
+      {
+        label: "gemini-2.5-flash-lite",
+        value: "gemini-2.5-flash-lite",
+      }
     ]
   },
 ]
