@@ -25,31 +25,15 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "gemini-1.5-pro",
+        "value": "gemini-2.5-pro",
         "options": [
           {
-            "value": "gemini-2.0-flash-exp",
-            "label": "gemini-2.0-flash-exp"
+            "label": "gemini-2.5-pro",
+            "value": "gemini-2.5-pro",
           },
           {
-            "value": "gemini-2.0-flash-thinking-exp-1219",
-            "label": "gemini-2.0-flash-thinking-exp-1219"
-          },
-          {
-            "value": "gemini-exp-1206",
-            "label": "gemini-exp-1206"
-          },
-          {
-            "value": "gemini-1.5-flash",
-            "label": "gemini-1.5-flash"
-          },
-          {
-            "value": "gemini-1.0-pro",
-            "label": "gemini-1.0-pro"
-          },
-          {
-            "value": "gemini-1.5-pro",
-            "label": "gemini-1.5-pro"
+            "label": "gemini-2.5-flash",
+            "value": "gemini-2.5-flash",
           }
         ],
         "name": "llm_model",
@@ -58,6 +42,18 @@ export function createTemplateData() {
         "clear_after_run": false,
         "list": true,
         "field_type": "select"
+      },
+      "multiple_input": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": false,
+        "name": "multiple_input",
+        "display_name": "multiple_input",
+        "type": "bool",
+        "list": false,
+        "field_type": "checkbox",
+        "has_tooltip": true,
       },
       "images_or_urls": {
         "required": false,

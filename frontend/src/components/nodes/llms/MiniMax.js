@@ -19,8 +19,12 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "MiniMax-M1",
+        "value": "MiniMax-M2",
         "options": [
+          {
+            "value": "MiniMax-M2",
+            "label": "MiniMax-M2"
+          },
           {
             "value": "MiniMax-M1",
             "label": "MiniMax-M1"

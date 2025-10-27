@@ -28,6 +28,10 @@ export function createTemplateData() {
           {
             "label": "gemini-2.5-flash",
             "value": "gemini-2.5-flash",
+          },
+          {
+            "label": "gemini-2.5-flash-lite",
+            "value": "gemini-2.5-flash-lite",
           }
         ],
         "name": "llm_model",

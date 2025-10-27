@@ -26,6 +26,10 @@ export function createTemplateData() {
             "label": "gpt-5"
           },
           {
+            "value": "gpt-5-pro",
+            "label": "gpt-5-pro"
+          },
+          {
             "value": "gpt-5-mini",
             "label": "gpt-5-mini"
           },
@@ -54,12 +58,12 @@ export function createTemplateData() {
             "label": "gpt-4.1"
           },
           {
-            "value": "o3-mini-high",
-            "label": "o3-mini-high"
-          },
-          {
             "value": "o3-mini",
             "label": "o3-mini"
+          },
+          {
+            "value": "o3-mini-high",
+            "label": "o3-mini-high"
           },
           {
             "value": "o1-mini",
@@ -70,10 +74,6 @@ export function createTemplateData() {
             "label": "o1-preview"
           },
           {
-            "value": "gpt-4o-mini",
-            "label": "gpt-4o-mini"
-          },
-          {
             "value": "gpt-4o",
             "label": "gpt-4o"
           },
@@ -81,7 +81,10 @@ export function createTemplateData() {
             "value": "gpt-4",
             "label": "gpt-4-turbo"
           },
-
+          {
+            "value": "gpt-4o-mini",
+            "label": "gpt-4o-mini"
+          },
           {
             "value": "gpt-3.5",
             "label": "gpt-3.5-turbo"

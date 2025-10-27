@@ -19,11 +19,23 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "glm-4.5",
+        "value": "glm-4.6",
         "options": [
+          {
+            "value": "glm-4.6",
+            "label": "glm-4.6"
+          },
+          {
+            "value": "glm-4.6-thinking",
+            "label": "glm-4.6-thinking"
+          },
           {
             "value": "glm-4.5",
             "label": "glm-4.5"
+          },
+          {
+            "value": "glm-4.5-thinking",
+            "label": "glm-4.5-thinking"
           },
           {
             "value": "glm-4.5-x",

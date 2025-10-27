@@ -19,8 +19,20 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-sonnet-4-20250514",
+        "value": "claude-sonnet-4-5-20250929",
         "options": [
+          {
+            "value": "claude-sonnet-4-5-20250929-thinking",
+            "label": "claude-sonnet-4-5-20250929-thinking"
+          },
+          {
+            "value": "claude-sonnet-4-5-20250929",
+            "label": "claude-sonnet-4-5-20250929"
+          },
+          {
+            "value": "claude-haiku-4-5-20251001",
+            "label": "claude-haiku-4-5-20251001",
+          },
           {
             "value": "claude-opus-4-20250514-thinking",
             "label": "claude-opus-4-20250514-thinking"

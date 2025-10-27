@@ -21,6 +21,31 @@ export function createTemplateData() {
         "list": false,
         "field_type": "textarea"
       },
+      "llm_model": {
+        "required": false,
+        "placeholder": "",
+        "show": false,
+        "value": "glm-4.5v",
+        "options": [
+          {
+            "value": "glm-4.5v",
+            "label": "glm-4.5v",
+          },
+          {
+            "value": "glm-4v-plus",
+            "label": "glm-4v-plus",
+          },
+          {
+            "value": "glm-4v-flash",
+            "label": "glm-4v-flash",
+          },
+        ],
+        "name": "llm_model",
+        "display_name": "llm_model",
+        "type": "str",
+        "list": true,
+        "field_type": "select"
+      },
       "images_or_urls": {
         "required": false,
         "placeholder": "",
@@ -39,7 +64,6 @@ export function createTemplateData() {
         "name": "images_or_urls",
         "display_name": "images_or_urls",
         "type": "str",
-        "clear_after_run": false,
         "list": true,
         "field_type": "radio"
       },
@@ -71,28 +95,6 @@ export function createTemplateData() {
         "condition": (fieldsData) => {
           return fieldsData.images_or_urls.value == 'urls'
         },
-      },
-      "model": {
-        "required": false,
-        "placeholder": "",
-        "show": false,
-        "value": "glm-4v",
-        "options": [
-          {
-            "value": "glm-4v",
-            "label": "glm-4v"
-          },
-          {
-            "value": "glm-4v-plus",
-            "label": "glm-4v-plus"
-          },
-        ],
-        "name": "model",
-        "display_name": "model",
-        "type": "str",
-        "clear_after_run": false,
-        "list": true,
-        "field_type": "select"
       },
       "output": {
         "required": true,
