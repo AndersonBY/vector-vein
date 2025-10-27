@@ -134,37 +134,69 @@ class WebSocketServer:
         else:
             backend = BackendType(backend)
 
-        if model == "claude-3-7-sonnet-thinking":
-            model = "claude-3-7-sonnet-20250219"
-            thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
-            temperature = 1.0
-            max_tokens = 20000
-        elif model in ("claude-opus-4-20250514-thinking", "claude-sonnet-4-20250514-thinking"):
+        thinking = NOT_GIVEN
+        temperature = NOT_GIVEN
+        max_tokens = None
+
+        if model in ("deepseek-reasoner", "deepseek-r1-tools"):
+            thinking = NOT_GIVEN
+            temperature = 0.6
+        elif model in (
+            "claude-3-7-sonnet-thinking",
+            "claude-opus-4-20250514-thinking",
+            "claude-opus-4-1-20250805-thinking",
+            "claude-sonnet-4-20250514-thinking",
+            "claude-sonnet-4-5-20250929-thinking",
+        ):
             model = model.removesuffix("-thinking")
             thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             temperature = 1.0
             max_tokens = 20000
-        elif model == "deepseek-reasoner":
-            thinking = NOT_GIVEN
-            temperature = 0.6
-            max_tokens = None
-        else:
-            thinking = NOT_GIVEN
-            temperature = NOT_GIVEN
-            max_tokens = None
 
-        if model == "o3-mini-high" or model == "o4-mini-high":
+        reasoning_effort: NotGiven | str = NOT_GIVEN
+        if model in ("o3-mini-high", "o4-mini-high"):
             reasoning_effort = "high"
-        else:
-            reasoning_effort = NOT_GIVEN
+            model = model.removesuffix("-high")
 
-        extra_body: dict[str, bool | int] = {}
+        if model.startswith("gpt-5") and model.endswith("-high"):
+            reasoning_effort = "high"
+            model = model.removesuffix("-high")
+
+        extra_body: dict[str, bool | dict] = {}
         if model.startswith("qwen3"):
             if model.endswith("-thinking"):
-                model = model.rstrip("-thinking")
+                if model not in [
+                    "qwen3-next-80b-a3b-thinking",
+                    "qwen3-vl-235b-a22b-thinking",
+                    "qwen3-vl-32b-thinking",
+                    "qwen3-vl-30b-a3b-thinking",
+                    "qwen3-vl-8b-thinking",
+                ]:
+                    model = model.removesuffix("-thinking")
                 extra_body = {"enable_thinking": True}
             else:
                 extra_body = {"enable_thinking": False}
+
+        if model.startswith("glm-4.") and model.endswith("-thinking"):
+            model = model.removesuffix("-thinking")
+            extra_body = {
+                "thinking": {
+                    "type": "enabled",
+                },
+            }
+
+        if model.startswith("gemini-2.5"):
+            reasoning_effort = NOT_GIVEN
+            extra_body = {
+                "extra_body": {
+                    "google": {
+                        "thinking_config": {
+                            "thinkingBudget": -1,
+                            "include_thoughts": True,
+                        }
+                    }
+                }
+            }
 
         model_settings = vectorvein_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
