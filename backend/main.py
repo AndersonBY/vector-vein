@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 
 import webview
+from webview.window import Window
 from webview.dom import DOMEventHandler
 
 # Set up environment
@@ -146,13 +147,50 @@ class MainServer:
             api.add_apis(api_class)
 
         # Add additional API methods like original main.py
+        # Ensure these methods are available to JS before the window is created.
         API.get_drop_file_path = staticmethod(api.get_drop_file_path)
+
+        # Expose native file/folder dialogs to JS early, using the active window when invoked.
+        def _open_file_dialog(self, multiple=False):
+            try:
+                wnd = webview.windows[0] if webview.windows else None
+            except Exception:
+                wnd = None
+            if wnd:
+                result = wnd.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=multiple)
+                if result:
+                    return result if multiple else result[0]
+            return [] if multiple else ""
+
+        def _open_folder_dialog(self, initial_directory=""):
+            try:
+                wnd = webview.windows[0] if webview.windows else None
+            except Exception:
+                wnd = None
+            if wnd:
+                result = wnd.create_file_dialog(webview.FileDialog.FOLDER, directory=initial_directory)
+                if result:
+                    return result[0]
+            return ""
+
+        # # Register as instance methods (not static) so pywebview detects them
+        API.open_file_dialog = _open_file_dialog  # type: ignore
+        API.open_folder_dialog = _open_folder_dialog  # type: ignore
 
         # Debug: Print all registered methods
         if self.DEBUG:
             all_api_methods = [attr for attr in dir(API) if "__" in attr and not attr.startswith("_")]
-            mprint(f"Total API methods registered: {len(all_api_methods)}")
-            mprint("First 10 methods:", all_api_methods[:10])
+            mprint(f"Total API methods registered (namespaced): {len(all_api_methods)}")
+            mprint("First 10 namespaced methods:", all_api_methods[:10])
+            # Verify open_file_dialog exposure on the api instance
+            has_ofd = hasattr(api, "open_file_dialog")
+            has_ofldr = hasattr(api, "open_folder_dialog")
+            ofd_type = type(getattr(api, "open_file_dialog", None)).__name__
+            ofldr_type = type(getattr(api, "open_folder_dialog", None)).__name__
+            # List callable public methods on instance for sanity check
+            public_callables = [name for name in dir(api) if not name.startswith("_") and callable(getattr(api, name))]
+            mprint(f"open_file_dialog present: {has_ofd} ({ofd_type}), open_folder_dialog present: {has_ofldr} ({ofldr_type})")
+            mprint(f"First 15 public callables on api instance: {public_callables[:15]}")
 
         mprint("API registration complete")
 
@@ -271,33 +309,12 @@ class MainServer:
         config.save("window.width", width)
         config.save("window.height", height)
 
-    def bind(self, window):
+    def bind(self, window: Window):
         """Bind event handlers to window"""
-        window.dom.document.events.drop += DOMEventHandler(MainServer.on_drop)
+        window.dom.document.events.drop += DOMEventHandler(MainServer.on_drop)  # type: ignore
         window.events.closed += self.terminate
         window.events.resized += MainServer.on_resized
         window.events.moved += MainServer.on_moved
-
-        # Now that window is created, we can override the file dialog methods
-        # to use the actual window dialogs
-        def open_file_dialog(multiple=False):
-            if window:
-                result = window.create_file_dialog(webview.FileDialog.OPEN, allow_multiple=multiple)
-                if result:
-                    return result if multiple else result[0]
-            return [] if multiple else ""
-
-        def open_folder_dialog(initial_directory=""):
-            if window:
-                result = window.create_file_dialog(webview.FileDialog.FOLDER, directory=initial_directory)
-                if result:
-                    return result[0]
-            return ""
-
-        # Set the methods on the api instance rather than the class
-        # This will make them available to the JavaScript side through PyWebView
-        self.api.open_file_dialog = open_file_dialog
-        self.api.open_folder_dialog = open_folder_dialog
 
     def start(self):
         """Start the application"""
