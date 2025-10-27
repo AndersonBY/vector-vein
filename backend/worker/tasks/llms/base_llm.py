@@ -111,12 +111,21 @@ class BaseLLMTask:
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
 
-        if self.model in ("claude-3-7-sonnet-thinking", "claude-opus-4-20250514-thinking", "claude-opus-4-1-20250805-thinking", "claude-sonnet-4-20250514-thinking"):
+        if self.model in (
+            "claude-3-7-sonnet-thinking",
+            "claude-opus-4-20250514-thinking",
+            "claude-opus-4-1-20250805-thinking",
+            "claude-sonnet-4-20250514-thinking",
+            "claude-sonnet-4-5-20250929-thinking",
+        ):
             self.original_model = self.model = self.model.removesuffix("-thinking")
             self.thinking: ThinkingConfigEnabledParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             self.temperature = 1.0
         else:
             self.thinking = NOT_GIVEN
+
+        if self.model.startswith(("claude-opus-4", "claude-sonnet-4")):
+            self.stream = True
 
         if self.model and self.model.startswith(("o3-mini", "o4-mini")):
             self.top_p = NOT_GIVEN
@@ -130,7 +139,7 @@ class BaseLLMTask:
             self.original_model = self.model = "o4-mini"
             self.reasoning_effort = "high"
 
-        self.extra_body: dict[str, bool | int] = {}
+        self.extra_body: dict[str, bool | int | dict] = {}
         if self.model.startswith("qwen3"):
             self.stream = True  # 百炼上思考模式只支持流式输出
             if self.model.endswith("-thinking"):
@@ -138,6 +147,14 @@ class BaseLLMTask:
                 self.extra_body = {"enable_thinking": True}
             else:
                 self.extra_body = {"enable_thinking": False}
+
+        if self.model.startswith("glm-4.") and self.model.endswith("-thinking"):
+            self.model = self.model.removesuffix("-thinking")
+            self.extra_body = {
+                "thinking": {
+                    "type": "enabled",
+                },
+            }
 
         self.model = self.MODEL_MAPPING.get(self.model, self.model)
 
