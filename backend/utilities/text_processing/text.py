@@ -5,7 +5,6 @@ import io
 import csv
 from typing import List, Union, overload, Literal, TypedDict
 
-from markdownify import MarkdownConverter, chomp
 from langchain_text_splitters import (
     TokenTextSplitter,
     MarkdownTextSplitter,
@@ -20,6 +19,7 @@ email_pattern = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b
 
 markdown_image_pattern = re.compile(r"!\[.*\]\(.*\)")
 markdown_image_url_pattern = re.compile(r"!\[.*?\]\((.*?)\)")
+markdown_link_pattern = re.compile(r"\[.*?\]\((.*?)\)")
 
 local_image_re = re.compile(r"http://localhost:\d+/images/(.*)")
 
@@ -172,28 +172,7 @@ def split_text(text: str, rules: dict, flat: bool = False) -> Union[List[Paragra
     if flat:
         return paragraphs
     else:
-        return [
-            {"index": index, "text": paragraph, "word_counts": len(paragraph)}
-            for index, paragraph in enumerate(paragraphs)
-        ]
-
-
-class CustomMarkdownConverter(MarkdownConverter):
-    def convert_b(self, el, text, convert_as_inline):
-        return self.custom_bold_conversion(el, text, convert_as_inline)
-
-    convert_strong = convert_b
-
-    def custom_bold_conversion(self, el, text, convert_as_inline):
-        markup = 2 * self.options["strong_em_symbol"]
-        prefix, suffix, text = chomp(text)
-        if not text:
-            return ""
-        return "%s%s%s%s%s " % (prefix, markup, text, markup, suffix)
-
-
-def markdownify(html, **options):
-    return CustomMarkdownConverter(**options).convert(html)
+        return [{"index": index, "text": paragraph, "word_counts": len(paragraph)} for index, paragraph in enumerate(paragraphs)]
 
 
 def clean_markdown(text: str):
@@ -201,3 +180,21 @@ def clean_markdown(text: str):
     content = content.replace("![]()", "").replace("*\n", "")
     content = "\n\n".join([s.strip() for s in content.split("\n") if s.strip()])
     return content
+
+
+@overload
+def extract_url(text: str) -> str: ...
+
+
+@overload
+def extract_url(text: list[str]) -> list[str]: ...
+
+
+def extract_url(text: str | list):
+    if isinstance(text, list):
+        return [extract_url(item) for item in text]
+    match = markdown_link_pattern.search(text)
+    if match:
+        return match.group(1)
+    else:
+        return text

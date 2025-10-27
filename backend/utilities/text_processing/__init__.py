@@ -2,7 +2,7 @@
 # @Date:   2024-06-09 12:24:24
 from .text import (
     split_text,
-    markdownify,
+    extract_url,
     clean_markdown,
     extract_image_url,
     remove_url_and_email,
@@ -12,7 +12,7 @@ from .text import (
 
 __all__ = [
     "split_text",
-    "markdownify",
+    "extract_url",
     "clean_markdown",
     "extract_image_url",
     "remove_url_and_email",

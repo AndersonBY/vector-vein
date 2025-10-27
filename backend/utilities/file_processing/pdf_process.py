@@ -3,7 +3,6 @@
 from pathlib import Path
 
 import pymupdf
-from pymupdf.utils import get_pixmap
 
 
 def calculate_zoom(page, min_dimension=1920):
@@ -23,7 +22,7 @@ def pdf_to_images(pdf_path, output_folder):
         page = pdf_document.load_page(page_num)
         zoom_x, zoom_y = calculate_zoom(page, 1920)
         mat = pymupdf.Matrix(zoom_x, zoom_y)
-        pix = get_pixmap(page, matrix=mat)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
         image_path = Path(output_folder) / Path(f"page_{page_num + 1}.png")
         pix.save(str(image_path.absolute()))
         images.append(str(image_path.absolute()))

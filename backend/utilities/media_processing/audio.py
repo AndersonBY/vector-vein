@@ -18,10 +18,12 @@ import pyaudio
 import numpy as np
 from openai import OpenAI
 from openai._types import FileTypes
-from deepgram.clients.common import FileSource
 from deepgram_captions import DeepgramConverter, srt
-from deepgram import DeepgramClient, PrerecordedOptions
-from deepgram.clients.prerecorded import PrerecordedResponse
+from deepgram import DeepgramClient
+from deepgram.types.listen_v1response import ListenV1Response
+from deepgram.types.listen_v1accepted_response import ListenV1AcceptedResponse
+from deepgram.listen.client import ListenClient
+from deepgram.listen.v1.client import V1Client
 
 from utilities.config import Settings, config
 from utilities.general import mprint_with_name
@@ -212,7 +214,8 @@ class TTSClient:
             stream = p.open(format=8, channels=1, rate=self.audio_sample_rate, output=True)
             headers = {"content-type": "text/plain"}
             http_client = new_httpx_client(is_async=False)
-            with http_client.stream("POST", self.api_base, headers=headers, data=text) as response:
+            # httpx typing: use `content` for raw string/bytes bodies (not `data`)
+            with http_client.stream("POST", self.api_base, headers=headers, content=text) as response:
                 for chunk in response.iter_bytes():
                     if self._stop_flag:
                         break
@@ -374,7 +377,7 @@ class OpenAIProvider(ASRProvider):
                 response_format="verbose_json",
                 # timestamp_granularities=["segment"],
             )
-            return [segment["text"] for segment in transcription.segments]
+            return [segment.text for segment in transcription.segments or []]
         elif output_type == "srt":
             transcription = self.client.audio.transcriptions.create(
                 model=self.model_id, file=file, response_format="srt"
@@ -390,38 +393,78 @@ class DeepgramProvider(ASRProvider):
         self.client = client
 
     def transcribe(self, file: FileTypes, output_type: str):
+        # Deepgram SDK v5: use listen.v1.media.transcribe_file/url with kwargs
+        # Help Pylance with dynamic router types using explicit casts
+        listen_v1 = cast(V1Client, cast(ListenClient, self.client.listen).v1)
+        response: ListenV1Response | ListenV1AcceptedResponse
         if isinstance(file, IOBase):
-            payload: FileSource = {"buffer": file.read()}
+            payload_bytes = file.read()
+            response = listen_v1.media.transcribe_file(
+                request=payload_bytes,
+                model=self.model_id,
+                language=self.language,
+                smart_format=True,
+                paragraphs=True,
+                punctuate=True,
+            )
         elif isinstance(file, bytes):
-            payload: FileSource = {"buffer": file}
+            response = listen_v1.media.transcribe_file(
+                request=file,
+                model=self.model_id,
+                language=self.language,
+                smart_format=True,
+                paragraphs=True,
+                punctuate=True,
+            )
         elif isinstance(file, (str, PathLike)):
-            payload: FileSource = {"text": str(file)}
+            file_str = str(file)
+            if file_str.startswith("http://") or file_str.startswith("https://"):
+                response = listen_v1.media.transcribe_url(
+                    url=file_str,
+                    model=self.model_id,
+                    language=self.language,
+                    smart_format=True,
+                    paragraphs=True,
+                    punctuate=True,
+                )
+            else:
+                with open(file_str, "rb") as f:
+                    payload_bytes = f.read()
+                response = listen_v1.media.transcribe_file(
+                    request=payload_bytes,
+                    model=self.model_id,
+                    language=self.language,
+                    smart_format=True,
+                    paragraphs=True,
+                    punctuate=True,
+                )
         else:
             raise TypeError("Unsupported source type")
-        options = PrerecordedOptions(
-            punctuate=True,
-            model=self.model_id,
-            language=self.language,
-            smart_format=True,
-            paragraphs=True,
-        )
-        response: PrerecordedResponse = self.client.listen.rest.v("1").transcribe_file(source=payload, options=options)
+        # Narrow union to completed response with results
+        if isinstance(response, ListenV1AcceptedResponse):
+            raise RuntimeError(
+                "Deepgram returned an accepted response without results. "
+                "Remove callback/async options or poll for completion."
+            )
+        resp = cast(ListenV1Response, response)
         if (
-            response.results is None
-            or response.results.channels is None
-            or response.results.channels[0].alternatives is None
+            resp.results is None
+            or resp.results.channels is None
+            or resp.results.channels[0].alternatives is None
         ):
             return ""
 
         if output_type == "text":
-            return response.results.channels[0].alternatives[0].transcript
+            return resp.results.channels[0].alternatives[0].transcript or ""
         elif output_type == "list":
             words = []
-            for word in response.results.channels[0].alternatives[0].words:
-                words.append(word.to_dict())
+            for word in resp.results.channels[0].alternatives[0].words or []:
+                # Deepgram v5 response objects are Pydantic models
+                words.append(getattr(word, "model_dump", getattr(word, "dict"))())
             return words
         elif output_type == "srt":
-            transcription = DeepgramConverter(response)
+            # Convert to a plain dict for the captions helper
+            transcription = DeepgramConverter(getattr(resp, "model_dump", resp.dict)())
             return srt(transcription)
         else:
             raise ValueError(f"Unsupported ASR output type: {output_type}")
