@@ -12,6 +12,11 @@ from models import (
     WorkflowRunRecord,
 )
 from models.base import BaseModel
+from utilities.general import mprint_with_name
+from utilities.config import cache
+
+
+mprint = mprint_with_name(name="Workflow Runner")
 
 
 T = TypeVar("T", bound=BaseModel)
@@ -125,8 +130,20 @@ def run_workflow_common(
     )
     workflow_data["rid"] = record.rid.hex
 
+    # Pre-mark status so UI can reflect queued state immediately
+    try:
+        cache.set(f"workflow:record:{record.rid.hex}", 202, 60 * 60)
+        cache.set(f"workflow:record:finished_nodes:{record.rid.hex}", [], 60 * 60)
+    except Exception:
+        pass
+
     # Use Celery to run the workflow task
-    run_workflow.delay(workflow_data)
+    try:
+        async_res = run_workflow.delay(workflow_data)
+        mprint(f"Queued workflow.run rid={record.rid.hex} task_id={getattr(async_res, 'id', 'unknown')}")
+    except Exception as e:
+        mprint.error(f"Failed to enqueue workflow task: {e}")
+        raise
 
     return record.rid.hex
 

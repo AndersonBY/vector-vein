@@ -239,24 +239,40 @@ class FastAPIServer:
 
         @self.fastapi_app.post("/api/workflow/check-status")
         async def check_workflow_status(request: CheckStatusRequest):
-            """Check the status of a workflow run"""
+            """Check the status of a workflow run, including finished node updates for UI."""
             try:
+                # Prefer fast cache path to provide incremental progress
+                from utilities.config import cache as _cache
+
+                finished_nodes = _cache.get(f"workflow:record:finished_nodes:{request.rid}", [])
+                cached_status = _cache.get(f"workflow:record:{request.rid}")
+                if cached_status == 202:
+                    return StandardResponse(status=202, msg="RUNNING", data={"finished_nodes": finished_nodes})
+                if cached_status == 404:
+                    return StandardResponse(status=404, msg="Record not found", data={})
+
+                # Fall back to DB lookup
                 record_result = self.workflow_run_record_api.get({"rid": request.rid})
                 if record_result.get("status") != 200:
+                    # Cache 404 for a while to reduce DB pressure
+                    _cache.set(f"workflow:record:{request.rid}", 404, 60 * 60)
                     return StandardResponse(status=404, msg="Record not found", data={})
 
                 record = record_result["data"]
                 status = record.get("status", "RUNNING")
 
-                if status == "RUNNING" or status == "QUEUED":
-                    return StandardResponse(status=202, msg="RUNNING", data={})
+                if status in ("RUNNING", "QUEUED"):
+                    # Keep returning partial progress
+                    return StandardResponse(status=202, msg=status, data={"finished_nodes": finished_nodes})
                 elif status == "FINISHED":
                     # Format output data
                     output_data = self._format_workflow_output(record.get("data", {}))
+                    _cache.set(f"workflow:record:{request.rid}", 200, 60 * 60)
                     return StandardResponse(status=200, msg="FINISHED", data=output_data)
                 elif status == "FAILED":
                     error_info = record.get("error_message", "Unknown error")
                     error_task = record.get("error_task", "")
+                    _cache.set(f"workflow:record:{request.rid}", 500, 60 * 60)
                     return StandardResponse(status=500, msg="FAILED", data={"error_task": error_task, "error": error_info})
                 else:
                     return StandardResponse(status=500, msg=f"Unknown status: {status}", data={})

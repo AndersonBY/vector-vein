@@ -51,8 +51,25 @@ class Task:
         module_name = func.__module__.split(".")[-1] if hasattr(func, "__module__") else "unknown"
         celery_task_name = f"tasks.{module_name}.{func.__name__}"
 
+        # Wrap original function to always report node status after execution
+        def _wrapped(*args, **kwargs):
+            result = func(*args, **kwargs)
+            try:
+                # Try best-effort to report node finished for UI progress
+                node_id = kwargs.get("node_id")
+                if node_id is None and len(args) >= 2 and isinstance(args[1], str):
+                    node_id = args[1]
+                if node_id:
+                    from utilities.workflow import Workflow
+                    wf = Workflow(result if isinstance(result, dict) else (args[0] if args else {}))
+                    wf.report_node_status(node_id)
+            except Exception as _e:
+                # Do not break task result on progress reporting failures
+                mprint.error(f"report_node_status failed after task {celery_task_name}: {_e}")
+            return result
+
         # Create the actual Celery task
-        self.celery_task = app.task(name=celery_task_name)(func)
+        self.celery_task = app.task(name=celery_task_name)(_wrapped)
 
     def __call__(self, *args, **kwargs):
         # Direct call - use the Celery task synchronously

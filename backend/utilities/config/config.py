@@ -35,13 +35,27 @@ class Config(Mapping):
         self._save_interval = 5
         self._save_timer = None
 
+        # Ensure config file exists; if not, write defaults
         if not self.config_path.is_file():
             with open(self.config_path, "w", encoding="utf8") as config_file:
-                json.dump(DEFAULT_CONFIG, config_file)
+                json.dump(DEFAULT_CONFIG, config_file, indent=4, ensure_ascii=False)
 
-        self.config = DEFAULT_CONFIG
-        with open(self.config_path, "r") as config_file:
-            self.config.update(json.load(config_file))
+        # Load config with robustness: if file is empty/corrupted, rewrite defaults
+        self.config = DEFAULT_CONFIG.copy()
+        try:
+            with open(self.config_path, "r", encoding="utf8") as config_file:
+                content = config_file.read().strip()
+                if content:
+                    self.config.update(json.loads(content))
+                else:
+                    # Empty file; rewrite defaults
+                    with open(self.config_path, "w", encoding="utf8") as w:
+                        json.dump(DEFAULT_CONFIG, w, indent=4, ensure_ascii=False)
+        except Exception:
+            # Corrupted JSON or other IO error: restore defaults
+            with open(self.config_path, "w", encoding="utf8") as config_file:
+                json.dump(DEFAULT_CONFIG, config_file, indent=4, ensure_ascii=False)
+            self.config = DEFAULT_CONFIG.copy()
 
     def get(self, key, default=None) -> Any:
         keys = key.split(".")

@@ -111,13 +111,34 @@ class CeleryWorkerManager:
                 
                 mprint(f"Using pool type: {pool_type} with concurrency: {actual_concurrency}")
                 
+                # Explicitly set a logfile to avoid Celery passing None into
+                # logging handlers in some environments (e.g. PyInstaller builds)
+                try:
+                    # Prefer user-configured log path when available
+                    from utilities.config import Settings  # Local import to avoid DB before migrations
+                    log_dir = Path(Settings().get("log_path", "./log"))
+                except Exception:
+                    log_dir = data_path  # Fallback to data path
+                log_dir.mkdir(parents=True, exist_ok=True)
+                logfile_path = (log_dir / "celery_worker.log").resolve()
                 # Configure worker
-                self.celery_worker = app.Worker(
-                    loglevel='INFO',
-                    concurrency=actual_concurrency,
-                    pool=pool_type,
-                    # Don't specify queues here - let it use all defined queues
-                )
+                try:
+                    self.celery_worker = app.Worker(
+                        loglevel='INFO',
+                        concurrency=actual_concurrency,
+                        pool=pool_type,
+                        logfile=str(logfile_path),
+                        # Don't specify queues here - let it use all defined queues
+                    )
+                except Exception as e:
+                    # Fallback to stdout logging if file logging fails for any reason
+                    mprint.warning(f"Celery file logging unavailable ({e}), falling back to stdout")
+                    self.celery_worker = app.Worker(
+                        loglevel='INFO',
+                        concurrency=actual_concurrency,
+                        pool=pool_type,
+                        logfile='-',
+                    )
                 self.thread = Thread(target=self.celery_worker.start, daemon=True)
                 self.thread.start()
                 
