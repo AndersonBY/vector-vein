@@ -192,120 +192,123 @@ const checkWorkflowRunningStatus = async () => {
     return
   }
   checkingStatus.value = true
-  const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
-  if (statusResponse.status == 200) {
-    message.success(t('workspace.workflowSpace.run_workflow_success'))
-    clearInterval(checkStatusTimer.value)
-    running.value = false
-    recordStatus.value = 'FINISHED'
-    currentWorkflow.value = statusResponse.data
-    currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || currentWorkflow.value.data?.ui_design
-    if (currentWorkflow.value.data?.ui_design) {
-      // currentWorkflow.value.data?.ui_design 里的是运行结果的ui_design
-      // currentWorkflow.value.ui_design 里的是原本工作流的ui_design
-      const uiDesign = currentWorkflow.value.data.ui_design
-      outputNodes.value = uiDesign.output_nodes
-      triggerNodes.value = uiDesign.trigger_nodes
-      humanFeedbackNodes.value = uiDesign.human_feedback_nodes
-    } else {
-      const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
-      const reactiveUIDesign = reactive(uiDesign)
-      inputFields.value = reactiveUIDesign.inputFields
-      outputNodes.value = reactiveUIDesign.outputNodes
-      triggerNodes.value = reactiveUIDesign.triggerNodes
-      humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
-    }
-    showingRecord.value = true
-
-  } else if (statusResponse.status == 202) {
-    const finishedNodes = statusResponse.data.finished_nodes ?? []
-    outputNodes.value.forEach((node) => {
-      const finishedNode = finishedNodes.find((item) => {
-        return item.id == node.id
-      })
-      if (finishedNode) {
-        node.data = finishedNode.data
-        node.finished = true
+  try {
+    const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
+    if (statusResponse.status == 200) {
+      message.success(t('workspace.workflowSpace.run_workflow_success'))
+      clearInterval(checkStatusTimer.value)
+      running.value = false
+      recordStatus.value = 'FINISHED'
+      currentWorkflow.value = statusResponse.data
+      currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || currentWorkflow.value.data?.ui_design
+      if (currentWorkflow.value.data?.ui_design) {
+        // currentWorkflow.value.data?.ui_design 里的是运行结果的ui_design
+        // currentWorkflow.value.ui_design 里的是原本工作流的ui_design
+        const uiDesign = currentWorkflow.value.data.ui_design
+        outputNodes.value = uiDesign.output_nodes
+        triggerNodes.value = uiDesign.trigger_nodes
+        humanFeedbackNodes.value = uiDesign.human_feedback_nodes
+      } else {
+        const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+        const reactiveUIDesign = reactive(uiDesign)
+        inputFields.value = reactiveUIDesign.inputFields
+        outputNodes.value = reactiveUIDesign.outputNodes
+        triggerNodes.value = reactiveUIDesign.triggerNodes
+        humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
       }
-    })
-    finishedNodes.forEach(async (node) => {
-      if (node.category == 'llms') {
-        const isExist = streamableNodes.value.some((item) => item.id == node.id)
-        if (!isExist) {
-          streamableNodes.value.push(node)
-          const connectedOutputNodes = getNodeConnectedNodes(node.id, 'output', edges.value)
-          // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
-          const outputTextNodeIds = connectedOutputNodes.filter((item) => {
-            return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
-          })
-          const outputTextNodes = outputNodes.value.filter((item) => outputTextNodeIds.includes(item.id))
-          outputTextNodes.forEach((textNode) => {
-            textNode.data.template.text.value = ''
-            textNode.finished = true
-          })
+      showingRecord.value = true
 
-          const connectedReasoningContentNodes = getNodeConnectedNodes(node.id, 'reasoning_content', edges.value)
-          const reasoningContentNodes = outputNodes.value.filter((item) => connectedReasoningContentNodes.includes(item.id))
-          reasoningContentNodes.forEach((reasoningContentNode) => {
-            reasoningContentNode.data.template.text.value = ''
-            reasoningContentNode.finished = true
-          })
+    } else if (statusResponse.status == 202) {
+      const finishedNodes = statusResponse.data.finished_nodes ?? []
+      outputNodes.value.forEach((node) => {
+        const finishedNode = finishedNodes.find((item) => {
+          return item.id == node.id
+        })
+        if (finishedNode) {
+          node.data = finishedNode.data
+          node.finished = true
+        }
+      })
+      finishedNodes.forEach(async (node) => {
+        if (node.category == 'llms') {
+          const isExist = streamableNodes.value.some((item) => item.id == node.id)
+          if (!isExist) {
+            streamableNodes.value.push(node)
+            const connectedOutputNodes = getNodeConnectedNodes(node.id, 'output', edges.value)
+            // 找出 connectedNodes 中在 outputNodes 中且是 Text 的Type的节点，获取 node 对象
+            const outputTextNodeIds = connectedOutputNodes.filter((item) => {
+              return outputNodes.value.some((outputNode) => outputNode.id == item && outputNode.type == 'Text')
+            })
+            const outputTextNodes = outputNodes.value.filter((item) => outputTextNodeIds.includes(item.id))
+            outputTextNodes.forEach((textNode) => {
+              textNode.data.template.text.value = ''
+              textNode.finished = true
+            })
 
-          if (wsPort.value === null) {
-            const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
-            wsPort.value = res.data.port
-          }
-
-          const chatSocket = new ReconnectingWebSocket(
-            `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
-            null,
-            { maxReconnectAttempts: 5 }
-          );
-
-          chatSocket.onopen = () => {
-            chatSocket.send('start')
-            console.log('连接成功')
-          }
-          chatSocket.onmessage = async (e) => {
-            const data = JSON.parse(e.data)
-            if (data.end) {
-              chatSocket.close()
-              return
-            }
-            outputTextNodes.forEach((outputTextNode) => {
-              outputTextNode.data.template.text.value += data.content ?? ''
-            });
+            const connectedReasoningContentNodes = getNodeConnectedNodes(node.id, 'reasoning_content', edges.value)
+            const reasoningContentNodes = outputNodes.value.filter((item) => connectedReasoningContentNodes.includes(item.id))
             reasoningContentNodes.forEach((reasoningContentNode) => {
-              reasoningContentNode.data.template.text.value += data.reasoning_content ?? ''
-            });
+              reasoningContentNode.data.template.text.value = ''
+              reasoningContentNode.finished = true
+            })
+
+            if (wsPort.value === null) {
+              const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
+              wsPort.value = res.data.port
+            }
+
+            const chatSocket = new ReconnectingWebSocket(
+              `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
+              null,
+              { maxReconnectAttempts: 5 }
+            );
+
+            chatSocket.onopen = () => {
+              chatSocket.send('start')
+              console.log('连接成功')
+            }
+            chatSocket.onmessage = async (e) => {
+              const data = JSON.parse(e.data)
+              if (data.end) {
+                chatSocket.close()
+                return
+              }
+              outputTextNodes.forEach((outputTextNode) => {
+                outputTextNode.data.template.text.value += data.content ?? ''
+              });
+              reasoningContentNodes.forEach((reasoningContentNode) => {
+                reasoningContentNode.data.template.text.value += data.reasoning_content ?? ''
+              });
+            }
           }
         }
+      })
+    } else if (statusResponse.status == 500) {
+      running.value = false
+      recordStatus.value = 'FAILED'
+      currentWorkflow.value = statusResponse.data
+      currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
+      if (currentWorkflow.value.data?.ui_design) {
+        const uiDesign = currentWorkflow.value.data.ui_design
+        outputNodes.value = uiDesign.output_nodes
+        triggerNodes.value = uiDesign.trigger_nodes
+        humanFeedbackNodes.value = uiDesign.human_feedback_nodes
+      } else {
+        const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
+        const reactiveUIDesign = reactive(uiDesign)
+        inputFields.value = reactiveUIDesign.inputFields
+        outputNodes.value = reactiveUIDesign.outputNodes
+        triggerNodes.value = reactiveUIDesign.triggerNodes
+        humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
       }
-    })
-  } else if (statusResponse.status == 500) {
-    running.value = false
-    recordStatus.value = 'FAILED'
-    currentWorkflow.value = statusResponse.data
-    currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
-    if (currentWorkflow.value.data?.ui_design) {
-      const uiDesign = currentWorkflow.value.data.ui_design
-      outputNodes.value = uiDesign.output_nodes
-      triggerNodes.value = uiDesign.trigger_nodes
-      humanFeedbackNodes.value = uiDesign.human_feedback_nodes
-    } else {
-      const uiDesign = getUIDesignFromWorkflow(currentWorkflow.value)
-      const reactiveUIDesign = reactive(uiDesign)
-      inputFields.value = reactiveUIDesign.inputFields
-      outputNodes.value = reactiveUIDesign.outputNodes
-      triggerNodes.value = reactiveUIDesign.triggerNodes
-      humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
+      message.error(t('workspace.workflowSpace.run_workflow_failed'))
+      clearInterval(checkStatusTimer.value)
+      rawErrorTask.value = statusResponse.data?.data?.error_task
+      showingRecord.value = true
     }
-    message.error(t('workspace.workflowSpace.run_workflow_failed'))
-    clearInterval(checkStatusTimer.value)
-    rawErrorTask.value = statusResponse.data?.data?.error_task
-    showingRecord.value = true
+  } finally {
+    checkingStatus.value = false
   }
-  checkingStatus.value = false
 }
 
 const runWorkflowVersionModal = ref(false)

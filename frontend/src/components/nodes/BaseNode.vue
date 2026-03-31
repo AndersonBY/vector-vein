@@ -237,9 +237,17 @@ const collapseChanged = (data) => {
       </a-flex>
       <div style="width: 100%;">
         <div v-if="debug"
-          :class="['debug-info', debug.run_time >= 0 ? 'executed-node' : 'not-executed-node', debug.error ? 'error-node' : '']">
+          :class="[
+            'debug-info',
+            debug.skipped ? 'skipped-node' : (debug.run_time >= 0 ? 'executed-node' : 'not-executed-node'),
+            debug.error ? 'error-node' : ''
+          ]">
           <a-flex justify="space-between">
-            <a-typography-text v-if="debug.run_time >= 0">
+            <a-typography-text v-if="debug.skipped">
+              <CloseOne theme="filled" fill="#8c8c8c" />
+              {{ t('components.nodes.baseNode.skipped_node') }}
+            </a-typography-text>
+            <a-typography-text v-else-if="debug.run_time >= 0">
               <CheckOne theme="filled" fill="#52c41a" />
               {{ t('components.nodes.baseNode.run_time', { time: debug.run_time.toFixed(2) }) }}
             </a-typography-text>
@@ -355,6 +363,10 @@ const collapseChanged = (data) => {
 
 .node .debug-info.not-executed-node {
   background-color: #fffbe6;
+}
+
+.node .debug-info.skipped-node {
+  background-color: #f5f5f5;
 }
 
 .node .debug-info.error-node {

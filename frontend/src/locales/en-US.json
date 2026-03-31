@@ -895,6 +895,7 @@
         "delete_node": "Delete node",
         "run_time": "Run time {time}s",
         "no_run_record": "No run record",
+        "skipped_node": "Node skipped",
         "view_node_help_document": "Quickly view node help documents",
         "error_node": "Node run error"
       },
@@ -1795,7 +1796,7 @@
         },
         "Conditional": {
           "title": "Conditional",
-          "description": "Used to execute different modules according to different conditions.",
+          "description": "Used to evaluate multiple conditions in order and execute only the first matched branch; if none match, the default branch runs.",
           "field_type": "Data type",
           "field_type_string": "String",
           "field_type_number": "Number",
@@ -1814,8 +1815,19 @@
           "operator_is_not_empty": "Is not empty",
           "operator_starts_with": "Left starts with right",
           "operator_ends_with": "Left ends with right",
-          "true_output": "Output when the condition is met",
-          "false_output": "Output when the condition is not met",
+          "true_value": "Value when condition is true",
+          "false_value": "Value when condition is false",
+          "true_output": "True branch",
+          "false_output": "False branch",
+          "case_name": "Branch name",
+          "case_name_placeholder": "Case {index}",
+          "case_label": "Case {index}",
+          "case_output_value": "Value for this branch",
+          "add_case": "Add case",
+          "branch_order_tip": "Cases are checked in order, and the first matched branch is selected immediately.",
+          "default_value": "Default branch value",
+          "default_output": "Default branch",
+          "default_output_tip": "This branch is used when none of the conditions match.",
           "output": "Output"
         },
         "RandomChoice": {

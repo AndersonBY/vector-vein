@@ -895,6 +895,7 @@
         "delete_node": "删除节点",
         "run_time": "运行时间 {time}s",
         "no_run_record": "无运行记录",
+        "skipped_node": "节点已跳过",
         "view_node_help_document": "快速查看节点帮助文档",
         "error_node": "节点运行出错"
       },
@@ -1795,7 +1796,7 @@
         },
         "Conditional": {
           "title": "条件判断",
-          "description": "用于根据条件判断执行不同的操作。",
+          "description": "用于按顺序判断多个条件，并只执行第一个满足条件的分支；如果都不满足则执行默认分支。",
           "field_type": "数据类型",
           "field_type_string": "字符串",
           "field_type_number": "数字",
@@ -1814,8 +1815,19 @@
           "operator_is_not_empty": "不为空",
           "operator_starts_with": "左边以右边开头",
           "operator_ends_with": "左边以右边结尾",
-          "true_output": "满足条件时的输出",
-          "false_output": "不满足条件时的输出",
+          "true_value": "条件成立时的值",
+          "false_value": "条件不成立时的值",
+          "true_output": "条件成立",
+          "false_output": "条件不成立",
+          "case_name": "分支名称",
+          "case_name_placeholder": "条件 {index}",
+          "case_label": "条件 {index}",
+          "case_output_value": "命中该条件时的值",
+          "add_case": "添加条件",
+          "branch_order_tip": "所有条件会按顺序判断，命中后立即输出对应分支。",
+          "default_value": "默认分支的值",
+          "default_output": "默认分支",
+          "default_output_tip": "当所有条件都不满足时，输出这个分支。",
           "output": "输出"
         },
         "RandomChoice": {

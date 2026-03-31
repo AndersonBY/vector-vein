@@ -247,8 +247,6 @@ class FastAPIServer:
 
                 finished_nodes = _cache.get(f"workflow:record:finished_nodes:{request.rid}", [])
                 cached_status = _cache.get(f"workflow:record:{request.rid}")
-                if cached_status == 202:
-                    return StandardResponse(status=202, msg="RUNNING", data={"finished_nodes": finished_nodes})
                 if cached_status == 404:
                     return StandardResponse(status=404, msg="Record not found", data={})
 

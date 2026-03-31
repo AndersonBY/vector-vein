@@ -165,6 +165,7 @@ onMounted(async () => {
 
   currentWorkflow.value = workflowResponse.data
   let errorNodes = []
+  const skippedNodes = diagnosisRecord.value?.data?.skipped_nodes ?? []
   if (diagnosisRecord.value) {
     currentWorkflow.value.data = diagnosisRecord.value.data
     errorNodes = (diagnosisRecord.value.data?.error_tasks ?? []).map(task => task.node_id)
@@ -172,8 +173,9 @@ onMounted(async () => {
   currentWorkflow.value.data.nodes.forEach((node) => {
     if (diagnosisRecord.value) {
       node.data.debug = {
-        run_time: diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1,
+        run_time: skippedNodes.includes(node.id) ? -1 : (diagnosisRecord.value.data?.node_run_time?.[node.id] ?? -1),
         error: errorNodes.includes(node.id),
+        skipped: skippedNodes.includes(node.id),
       }
     }
     if (node.category == "vectorDb") {

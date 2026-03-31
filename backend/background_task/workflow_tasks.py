@@ -145,6 +145,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
         nonlocal has_failed_task
         module, function = task["task_name"].split(".")
         node_id = task["node_id"]
+        is_skipped = node_id in workflow_data.get("skipped_nodes", [])
 
         # Record start time
         start_time = time.time()
@@ -157,7 +158,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
             elapsed_time = end_time - start_time
 
             # Add node_run_time to the result
-            if isinstance(task_result, dict):
+            if isinstance(task_result, dict) and not is_skipped:
                 if "node_run_time" not in task_result:
                     task_result["node_run_time"] = {}
                 task_result["node_run_time"][node_id] = elapsed_time
@@ -169,7 +170,10 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
                     node.run_time = elapsed_time
                     task_result = workflow_obj.data
 
-            mprint(f"<Node:{node_id}> Task {function} in batch took {elapsed_time:.2f} seconds")
+            if is_skipped:
+                mprint(f"<Node:{node_id}> Task {function} skipped in batch.")
+            else:
+                mprint(f"<Node:{node_id}> Task {function} in batch took {elapsed_time:.2f} seconds")
 
             with result_lock:
                 results[node_id] = task_result
@@ -241,6 +245,8 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
         node_id = _task["node_id"]
         node = merged_workflow.get_node(node_id=node_id)
         if node and node_id in results:
+            if node_id in merged_result.get("skipped_nodes", []):
+                continue
             # Get run time from the node_run_time dict if available
             if "node_run_time" in merged_result and node_id in merged_result["node_run_time"]:
                 node.run_time = merged_result["node_run_time"][node_id]

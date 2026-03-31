@@ -282,9 +282,7 @@ class WorkflowAPI:
 
         record_status = cache.get(f"workflow:record:{rid}")
         finished_nodes = cache.get(f"workflow:record:finished_nodes:{rid}", [])
-        if record_status == 202:
-            return JResponse(status=202, data={"finished_nodes": finished_nodes})
-        elif record_status == 404:
+        if record_status == 404:
             return JResponse(status=404, msg="record not found")
 
         record_qs = WorkflowRunRecord.select().join(Workflow).where(WorkflowRunRecord.rid == rid)

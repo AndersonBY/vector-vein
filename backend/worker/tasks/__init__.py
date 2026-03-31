@@ -62,12 +62,24 @@ class Task:
 
         # Wrap original function to always report node status after execution
         def _wrapped(*args, **kwargs):
-            result = func(*args, **kwargs)
+            workflow_data = kwargs.get("workflow_data")
+            if workflow_data is None and args and isinstance(args[0], dict):
+                workflow_data = args[0]
+
+            node_id = kwargs.get("node_id")
+            if node_id is None and len(args) >= 2 and isinstance(args[1], str):
+                node_id = args[1]
+
+            skipped = False
+            if workflow_data is not None and node_id and node_id in workflow_data.get("skipped_nodes", []):
+                skipped = True
+                mprint(f"<Node:{node_id}> Skip task {celery_task_name} due to conditional branch.")
+                result = workflow_data
+            else:
+                result = func(*args, **kwargs)
+
             try:
                 # Try best-effort to report node finished for UI progress
-                node_id = kwargs.get("node_id")
-                if node_id is None and len(args) >= 2 and isinstance(args[1], str):
-                    node_id = args[1]
                 if node_id:
                     from utilities.workflow import Workflow
                     wf = Workflow(result if isinstance(result, dict) else (args[0] if args else {}))

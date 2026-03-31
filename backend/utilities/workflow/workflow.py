@@ -447,6 +447,67 @@ class Workflow:
             return False
         return node.get_field(field).get("is_output", False)
 
+    def mark_branch_skipped(self, node_id: str, skipped_handle: str):
+        if "skipped_nodes" not in self.workflow_data:
+            self.workflow_data["skipped_nodes"] = []
+
+        direct_targets = []
+        for edge in self.edges:
+            if edge["source"] == node_id and edge["sourceHandle"] == skipped_handle:
+                direct_targets.append(edge["target"])
+
+        marking_nodes = set()
+        for target_id in direct_targets:
+            self._mark_node_and_descendants_skipped(target_id, node_id, skipped_handle, marking_nodes)
+
+    def _mark_node_and_descendants_skipped(
+        self,
+        node_id: str,
+        conditional_node_id: str,
+        skipped_handle: str,
+        marking_nodes: set[str],
+    ):
+        if node_id in self.workflow_data.get("skipped_nodes", []):
+            return
+
+        if node_id in marking_nodes:
+            return
+
+        if self._has_active_branch_input(node_id, conditional_node_id, skipped_handle):
+            return
+
+        marking_nodes.add(node_id)
+        self.workflow_data["skipped_nodes"].append(node_id)
+
+        for edge in self.edges:
+            if edge["source"] == node_id:
+                self._mark_node_and_descendants_skipped(
+                    edge["target"],
+                    conditional_node_id,
+                    skipped_handle,
+                    marking_nodes,
+                )
+
+    def _has_active_branch_input(
+        self,
+        node_id: str,
+        conditional_node_id: str,
+        skipped_handle: str,
+    ) -> bool:
+        for edge in self.edges:
+            if edge["target"] != node_id:
+                continue
+
+            source_id = edge["source"]
+            source_handle = edge["sourceHandle"]
+            if source_id == conditional_node_id and source_handle != skipped_handle:
+                return True
+
+        return False
+
+    def is_node_skipped(self, node_id: str) -> bool:
+        return node_id in self.workflow_data.get("skipped_nodes", [])
+
     def report_workflow_status(self, status: int, error_task: str = ""):
         try:
             workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
@@ -474,6 +535,7 @@ class Workflow:
                     source_message.save()
 
             workflow_record.save()
+            cache.set(f"workflow:record:{self.record_id}", status, 60 * 60)
             return True
         except Exception as e:
             mprint.error(f"report_workflow_status failed: {e}")

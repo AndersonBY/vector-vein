@@ -15,6 +15,7 @@ from vv_llm.settings import settings as vv_llm_settings
 from vv_llm.types.llm_parameters import ChatCompletionMessage
 
 from worker.tasks import task, timer
+from worker.tasks.condition_logic import resolve_conditional_branch
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from api.utils import run_workflow_common
@@ -38,50 +39,14 @@ def conditional(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    field_type = workflow.get_node_field_value(node_id, "field_type")
-    left_field = workflow.get_node_field_value(node_id, "left_field")
-    right_field = workflow.get_node_field_value(node_id, "right_field")
-    operator = workflow.get_node_field_value(node_id, "operator")
-    true_output = workflow.get_node_field_value(node_id, "true_output")
-    false_output = workflow.get_node_field_value(node_id, "false_output")
-    if field_type == "string":
-        left_field = str(left_field)
-        right_field = str(right_field)
-    elif field_type == "number":
-        left_field = float(left_field)
-        right_field = float(right_field)
+    selected_handle, selected_value, active_handles = resolve_conditional_branch(workflow, node_id)
 
-    if operator == "equal":
-        result = left_field == right_field
-    elif operator == "not_equal":
-        result = left_field != right_field
-    elif operator == "greater_than":
-        result = float(left_field) > float(right_field)
-    elif operator == "less_than":
-        result = float(left_field) < float(right_field)
-    elif operator == "greater_than_or_equal":
-        result = float(left_field) >= float(right_field)
-    elif operator == "less_than_or_equal":
-        result = float(left_field) <= float(right_field)
-    elif operator == "include":
-        result = str(right_field) in str(left_field)
-    elif operator == "not_include":
-        result = str(right_field) not in str(left_field)
-    elif operator == "is_empty":
-        result = left_field == ""
-    elif operator == "is_not_empty":
-        result = left_field != ""
-    elif operator == "starts_with":
-        result = str(left_field).startswith(str(right_field))
-    elif operator == "ends_with":
-        result = str(left_field).endswith(str(right_field))
-    else:
-        result = False
+    for handle in active_handles:
+        workflow.update_node_field_value(node_id, handle, selected_value if handle == selected_handle else "")
+        if handle != selected_handle:
+            workflow.mark_branch_skipped(node_id, handle)
 
-    if result:
-        workflow.update_node_field_value(node_id, "output", true_output)
-    else:
-        workflow.update_node_field_value(node_id, "output", false_output)
+    workflow.update_node_field_value(node_id, "output", selected_value)
 
     return workflow.data
 
