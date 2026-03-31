@@ -268,6 +268,17 @@ pdm run build
 
 パッケージングが完了すると、**backend/dist**ディレクトリに実行可能ファイルが生成されます。
 
+### GitHub 自動リリース
+
+このリポジトリには、タグ付きリリース用の GitHub Actions ワークフロー `.github/workflows/release.yml` が追加されました。
+
+1. `backend/pyproject.toml` の `project.version` を公開したいバージョンに更新します。
+2. その変更をコミットします。
+3. `v0.4.3` のようなタグを作成して push します。
+4. GitHub Actions が Windows、macOS、Linux の ZIP パッケージを自動ビルドし、同じタグの GitHub Release に添付します。
+
+タグのバージョンと `backend/pyproject.toml` のバージョンが一致しない場合、ワークフローはパッケージング前に失敗します。
+
 ## 📄 ライセンス
 
 ベクトル静脈はオープンソースソフトウェアであり、個人の非商用利用をサポートしています。具体的な契約については、[LICENSE](LICENSE.md)を参照してください。

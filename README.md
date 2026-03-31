@@ -278,6 +278,17 @@ pdm run build
 
 After packaging, the executable file will be generated in the**backend/dist** directory.
 
+### Automated GitHub Releases
+
+The repository now includes a GitHub Actions workflow at `.github/workflows/release.yml` for tagged releases.
+
+1. Update `backend/pyproject.toml` so `project.version` matches the release version you want to publish.
+2. Commit the version change.
+3. Create and push a tag like `v0.4.3`.
+4. GitHub Actions will automatically build Windows, macOS, and Linux ZIP packages and attach them to the matching GitHub Release.
+
+If the tag version and `backend/pyproject.toml` version do not match, the workflow will fail fast before packaging.
+
 ## 📄 License
 
 VectorVein is an open-source software that supports personal non-commercial use. Please refer to [LICENSE](LICENSE.md) for specific agreements.

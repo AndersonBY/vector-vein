@@ -1,0 +1,169 @@
+name: Release Desktop Packages
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ matrix.label }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: Windows
+            platform: windows
+            python_version: "3.11"
+            pdm_install_command: pdm install
+          - os: macos-13
+            label: macOS
+            platform: mac
+            python_version: "3.11"
+            pdm_install_command: pdm install -G mac
+          - os: ubuntu-24.04
+            label: Ubuntu
+            platform: linux
+            python_version: "3.11"
+            pdm_install_command: pdm install
+
+    defaults:
+      run:
+        shell: bash
+
+    env:
+      PDM_CHECK_UPDATE: "false"
+      PDM_IGNORE_SAVED_PYTHON: "1"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python_version }}
+
+      - name: Validate tag version
+        id: meta
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          PROJECT_VERSION="$(python - <<'PY'
+          import tomllib
+
+          with open("backend/pyproject.toml", "rb") as f:
+              print(tomllib.load(f)["project"]["version"])
+          PY
+          )"
+
+          if [ "${VERSION}" != "${PROJECT_VERSION}" ]; then
+            echo "Tag version v${VERSION} does not match backend/pyproject.toml version ${PROJECT_VERSION}" >&2
+            exit 1
+          fi
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+          echo "asset_name=vector-vein-${{ matrix.platform }}-v${VERSION}.zip" >> "${GITHUB_OUTPUT}"
+
+      - name: Install PDM
+        run: python -m pip install --upgrade pip pdm
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            patchelf \
+            portaudio19-dev \
+            libdbus-1-3 \
+            libegl1 \
+            libgl1 \
+            libnss3 \
+            libxcb-cursor0 \
+            libxkbcommon-x11-0
+
+      - name: Install macOS system dependencies
+        if: runner.os == 'macOS'
+        run: brew install portaudio
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: pnpm install --frozen-lockfile
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: ${{ matrix.pdm_install_command }}
+
+      - name: Build frontend bundle
+        working-directory: backend
+        run: pdm run python build.py -t f
+
+      - name: Build desktop package
+        working-directory: backend
+        run: pdm run python build.py -t p -v "${{ steps.meta.outputs.version }}"
+
+      - name: Upload packaged artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}
+          path: backend/dist/${{ steps.meta.outputs.asset_name }}
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Create or update GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          shopt -s nullglob
+          assets=(release-assets/*.zip)
+
+          if [ "${#assets[@]}" -eq 0 ]; then
+            echo "No release assets were downloaded." >&2
+            exit 1
+          fi
+
+          if gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "${assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
+              --repo "${GITHUB_REPOSITORY}" \
+              --title "${GITHUB_REF_NAME}" \
+              --verify-tag \
+              --generate-notes
+          fi

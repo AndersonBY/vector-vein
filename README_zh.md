@@ -276,6 +276,17 @@ pdm run build
 
 打包完成后会在 **backend/dist** 目录下生成可执行文件。
 
+### GitHub 自动发布
+
+仓库现在新增了 `.github/workflows/release.yml`，用于在推送版本标签后自动发布 Release。
+
+1. 先把 `backend/pyproject.toml` 里的 `project.version` 更新为目标版本号。
+2. 提交版本号修改。
+3. 创建并推送类似 `v0.4.3` 的 tag。
+4. GitHub Actions 会自动构建 Windows、macOS、Linux 三个平台的 ZIP 包，并挂到同名 GitHub Release 下。
+
+如果 tag 版本号和 `backend/pyproject.toml` 里的版本号不一致，工作流会在打包前直接失败。
+
 ## 📄 协议
 
 向量脉络是一个开源的软件，支持个人非商业使用，具体协议请参考 [LICENSE](LICENSE.md) 。
