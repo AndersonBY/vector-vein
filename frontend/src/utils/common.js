@@ -7,22 +7,6 @@
 import { h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { TypographyText, Tag, Flex } from 'ant-design-vue'
-import {
-  Tool,
-  Data,
-  Robot,
-  EditOne,
-  Printer,
-  Effects,
-  Picture,
-  ClickTap,
-  DocDetail,
-  FourArrows,
-  Helpcenter,
-  RadarThree,
-  CircleFourLine,
-  CoordinateSystem,
-} from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from "@/stores/userSettings"
 
@@ -473,9 +457,64 @@ const flattenModelOptions = (options, showProvider = true, valueType = 'String')
   return flattenedOptions;
 }
 
+const CHAT_PROVIDER_LABEL_MAP = {
+  anthropic: 'Anthropic',
+  baichuan: 'Baichuan',
+  deepseek: 'DeepSeek',
+  ernie: 'Ernie',
+  gemini: 'Gemini',
+  groq: 'Groq',
+  minimax: 'MiniMax',
+  mistral: 'Mistral',
+  moonshot: 'Moonshot',
+  openai: 'OpenAI',
+  qwen: 'Qwen',
+  stepfun: 'StepFun',
+  xai: 'xAI',
+  xiaomi: 'Xiaomi',
+  yi: 'Yi',
+  zhipuai: 'ZhiPuAI',
+}
+
+const getDynamicChatModelOptions = (settingData) => {
+  const backends = settingData?.llm_settings?.backends
+  if (!backends || typeof backends !== 'object' || Array.isArray(backends)) {
+    return []
+  }
+
+  return Object.entries(backends)
+    .filter(([providerKey]) => providerKey !== 'local')
+    .map(([providerKey, providerValue]) => {
+      const models = providerValue?.models
+      if (!models || typeof models !== 'object' || Array.isArray(models)) {
+        return null
+      }
+
+      const children = Object.entries(models)
+        .reverse()
+        .map(([modelKey, modelValue]) => ({
+          value: modelKey,
+          label: modelValue?.id || modelKey,
+        }))
+
+      if (children.length === 0) {
+        return null
+      }
+
+      const providerLabel = CHAT_PROVIDER_LABEL_MAP[providerKey] || providerKey
+      return {
+        value: providerLabel,
+        label: providerLabel,
+        children,
+      }
+    })
+    .filter(Boolean)
+}
+
 export const getChatModelOptions = (flat = false) => {
   const userSettings = useUserSettingsStore()
   const { setting } = storeToRefs(userSettings)
+  const nonLocalModels = getDynamicChatModelOptions(setting.value.data)
   const customModels = Object.entries(setting.value.data?.custom_llms).map(([family, models]) => {
     const children = models.map((model) => ({
       value: model,
@@ -493,7 +532,7 @@ export const getChatModelOptions = (flat = false) => {
       children: children,
     }
   })
-  const chatModels = nonLocalChatModelOptions.concat(customModels)
+  const chatModels = (nonLocalModels.length > 0 ? nonLocalModels : nonLocalChatModelOptions).concat(customModels)
   if (flat) {
     return flattenModelOptions(chatModels, true)
   } else {
@@ -598,65 +637,6 @@ export const modelProviderTagBgColorMap = {
   'OpenAI': '#000',
   'XAi': '#000000',
 }
-
-export const nodeCategoryOptions = [
-  {
-    name: 'assistedNodes',
-    icon: h(Helpcenter),
-  },
-  {
-    name: 'controlFlows',
-    icon: h(CircleFourLine),
-  },
-  {
-    name: 'fileProcessing',
-    icon: h(DocDetail),
-  },
-  {
-    name: 'imageGeneration',
-    icon: h(Picture),
-  },
-  {
-    name: 'mediaEditing',
-    icon: h(Effects),
-  },
-  {
-    name: 'llms',
-    icon: h(Robot),
-  },
-  {
-    name: 'mediaProcessing',
-    icon: h(FourArrows),
-  },
-  {
-    name: 'outputs',
-    icon: h(Printer),
-  },
-  {
-    name: 'textProcessing',
-    icon: h(EditOne),
-  },
-  {
-    name: 'tools',
-    icon: h(Tool),
-  },
-  {
-    name: 'triggers',
-    icon: h(ClickTap),
-  },
-  {
-    name: 'vectorDb',
-    icon: h(CoordinateSystem),
-  },
-  {
-    name: 'relationalDb',
-    icon: h(Data),
-  },
-  {
-    name: 'webCrawlers',
-    icon: h(RadarThree),
-  },
-]
 
 export const databaseColumnTypes = [
   'INTEGER',

@@ -107,6 +107,16 @@ class ShortcutsListener:
         mprint("Stopping...")
         if self.hotkeys_listener:
             self.hotkeys_listener.stop()
+            if hasattr(self.hotkeys_listener, "join"):
+                self.hotkeys_listener.join(timeout=2)
+            self.hotkeys_listener = None
+        if self.keyboard_listener:
+            self.keyboard_listener.stop()
+            if hasattr(self.keyboard_listener, "join"):
+                self.keyboard_listener.join(timeout=2)
+            self.keyboard_listener = None
+        self.waiting_for_setting = False
+        self.current_keys.clear()
         mprint("Stopped.")
 
     def restart(self):

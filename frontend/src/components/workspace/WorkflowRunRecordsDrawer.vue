@@ -7,6 +7,7 @@ import {
   Time,
   Login,
   Delete,
+  Redo,
   Control,
   Timeline,
   ListNumbers,
@@ -60,6 +61,13 @@ const statusOptions = [
   { text: t('components.workspace.workflowRunRecordsDrawer.status_stopping'), value: 'STOPPING' },
   { text: t('components.workspace.workflowRunRecordsDrawer.status_stopped'), value: 'STOPPED' },
 ]
+const runFromOptions = [
+  { text: t('components.workspace.workflowRunRecordsDrawer.run_from_web'), value: 'WEB' },
+  { text: t('components.workspace.workflowRunRecordsDrawer.run_from_schedule'), value: 'SCHEDULE' },
+  { text: t('components.workspace.workflowRunRecordsDrawer.run_from_api'), value: 'API' },
+  { text: t('components.workspace.workflowRunRecordsDrawer.run_from_workflow'), value: 'WORKFLOW' },
+  { text: t('components.workspace.workflowRunRecordsDrawer.run_from_chat'), value: 'CHAT' },
+]
 const columns = ref([
   {
     title: t('components.workspace.workflowRunRecordsDrawer.start_time'),
@@ -89,6 +97,13 @@ const columns = ref([
     dataIndex: 'status',
     filters: statusOptions,
     width: '100px',
+  },
+  {
+    title: t('components.workspace.workflowRunRecordsDrawer.run_from'),
+    key: 'run_from',
+    dataIndex: 'run_from',
+    filters: runFromOptions,
+    width: '110px',
   },
   {
     title: t('components.workspace.workflowRunRecordsDrawer.version'),
@@ -122,6 +137,7 @@ const workflowRunRecords = reactive({
   sort_order: 'descend',
   filters: {
     status: [],
+    run_from: [],
   },
   pagination: computed(() => ({
     total: workflowRunRecords.total,
@@ -132,13 +148,14 @@ const workflowRunRecords = reactive({
     workflowRunRecords.sort_field = sorter.field
     workflowRunRecords.sort_order = sorter.order
     workflowRunRecords.filters.status = filters.status
-    workflowRunRecords.filters.shared = filters.shared
+    workflowRunRecords.filters.run_from = filters.run_from
     workflowRunRecords.load({
       page_size: page.pageSize,
       page: page.current,
       sort_field: sorter.field,
       sort_order: sorter.order,
       status: filters.status,
+      run_from: filters.run_from,
       need_workflow: props.showWorkflowTitle,
     })
   },
@@ -155,6 +172,7 @@ const workflowRunRecords = reactive({
         } else {
           item.run_time = '-'
         }
+        item.run_from_label = runFromOptions.find((option) => option.value === item.run_from)?.text || item.run_from
         item.start_time = item.start_time ? formatTime(item.start_time) : '-'
         item.end_time = item.end_time ? formatTime(item.end_time) : '-'
         return item
@@ -177,7 +195,7 @@ const showDrawer = async () => {
     sort_field: workflowRunRecords.sort_field,
     sort_order: workflowRunRecords.sort_order,
     status: workflowRunRecords.filters.status,
-    shared: workflowRunRecords.filters.shared,
+    run_from: workflowRunRecords.filters.run_from,
     need_workflow: props.showWorkflowTitle,
   })
   loading.value = false
@@ -211,10 +229,46 @@ const deleteWorkflowRunRecord = async (rid) => {
       sort_field: workflowRunRecords.sort_field,
       sort_order: workflowRunRecords.sort_order,
       status: workflowRunRecords.filters.status,
+      run_from: workflowRunRecords.filters.run_from,
       need_workflow: props.showWorkflowTitle,
     })
   } else {
     message.error(res.msg)
+  }
+  loading.value = false
+}
+
+const rerunWorkflowRunRecord = async (record) => {
+  loading.value = true
+  const rerunResponse = await workflowRunRecordAPI('rerun', { rid: record.rid, run_from: 'WEB' })
+  if (rerunResponse.status !== 200) {
+    message.error(rerunResponse.msg || t('components.workspace.workflowRunRecordsDrawer.rerun_failed'))
+    loading.value = false
+    return
+  }
+
+  message.success(t('components.workspace.workflowRunRecordsDrawer.rerun_success'))
+  await workflowRunRecords.load({
+    page_size: workflowRunRecords.pageSize,
+    page: workflowRunRecords.current,
+    sort_field: workflowRunRecords.sort_field,
+    sort_order: workflowRunRecords.sort_order,
+    status: workflowRunRecords.filters.status,
+    run_from: workflowRunRecords.filters.run_from,
+    need_workflow: props.showWorkflowTitle,
+  })
+
+  const rerunRecord = await workflowRunRecordAPI('get', { rid: rerunResponse.data.rid })
+  if (rerunRecord.status === 200) {
+    if (props.openType === 'detail') {
+      emit('open-record', rerunRecord.data)
+    } else {
+      emit('open-record', {
+        rid: rerunResponse.data.rid,
+        wid: record.workflow?.wid || record.workflow || props.workflowId,
+      })
+    }
+    open.value = false
   }
   loading.value = false
 }
@@ -255,6 +309,9 @@ const deleteWorkflowRunRecord = async (rid) => {
                   <Tag />
                 </a-tooltip>
               </template>
+              <template v-else-if="column.key === 'run_from'">
+                {{ t('components.workspace.workflowRunRecordsDrawer.run_from') }}
+              </template>
               <template v-else-if="column.key === 'version'">
                 <a-tooltip :title="t('components.workspace.workflowRunRecordsDrawer.version')">
                   <Timeline />
@@ -273,6 +330,11 @@ const deleteWorkflowRunRecord = async (rid) => {
               <template v-else-if="column.key === 'status'">
                 <WorkflowRecordsStatusTag :status="record.status" />
               </template>
+              <template v-else-if="column.key === 'run_from'">
+                <a-tag>
+                  {{ record.run_from_label }}
+                </a-tag>
+              </template>
               <template v-else-if="column.key === 'version'">
                 v{{ record.workflow_version }}
               </template>
@@ -282,6 +344,13 @@ const deleteWorkflowRunRecord = async (rid) => {
                     <a-button type="text" @click.prevent="getWorkflowRunRecordDetail(record.rid, record.workflow)">
                       <template #icon>
                         <Login />
+                      </template>
+                    </a-button>
+                  </a-tooltip>
+                  <a-tooltip :title="t('components.workspace.workflowRunRecordsDrawer.rerun_record')">
+                    <a-button type="text" @click.prevent="rerunWorkflowRunRecord(record)">
+                      <template #icon>
+                        <Redo />
                       </template>
                     </a-button>
                   </a-tooltip>

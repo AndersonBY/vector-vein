@@ -163,3 +163,4 @@ log/
 data/
 web/
 config.json
+.python-version

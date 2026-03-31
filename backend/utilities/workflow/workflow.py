@@ -17,6 +17,7 @@ mprint = mprint_with_name(name="Workflow")
 
 ASYNC_TASKS = [
     "control_flows.workflow_loop",
+    "control_flows.workflow_selector",
     "tools.workflow_invoke",
 ]
 

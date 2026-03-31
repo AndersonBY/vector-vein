@@ -16,6 +16,7 @@ import TextOutput from "@/components/TextOutput.vue"
 import { formatTime } from "@/utils/util"
 import { getUIDesignFromWorkflow, extractModels } from '@/utils/workflow'
 import { workflowAPI, workflowRunRecordAPI } from "@/api/workflow"
+import { FEATURE_FLAGS, isFeatureEnabled } from '@/config/featureFlags'
 
 const { t } = useI18n()
 const loading = ref(true)
@@ -77,6 +78,8 @@ const saveTime = ref(0)
 
 const checkStatusTimer = ref(null)
 const workflowUseRef = ref()
+const scheduleFeatureEnabled = isFeatureEnabled(FEATURE_FLAGS.schedule)
+
 const setWorkflowRecord = (record) => {
   workflowUseRef.value.setWorkflowRecord(record)
 }
@@ -95,12 +98,12 @@ const deleteWorkflow = async () => {
     async onOk() {
       const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })
       if (response.status == 200) {
-        message.success(t('workspace.workflowSpace.delete_success'))
+        message.success(t('workspace.workflowSpace.move_to_trash_success'))
         userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid)
         userWorkflowsStore.deleteUserWorkflow(currentWorkflow.value.wid, true)
         await router.push({ name: 'WorkflowSpaceMain' })
       } else {
-        message.error(t('workspace.workflowSpace.delete_failed'))
+        message.error(t('workspace.workflowSpace.move_to_trash_failed'))
       }
     },
     onCancel() {
@@ -110,6 +113,10 @@ const deleteWorkflow = async () => {
 
 const openEditor = async () => {
   await router.push({ name: 'WorkflowEditor', params: { workflowId: workflowId } })
+}
+
+const openScheduleManager = async () => {
+  await router.push({ name: 'WorkflowScheduleManager', query: { wid: workflowId } })
 }
 </script>
 
@@ -170,10 +177,13 @@ const openEditor = async () => {
                 :key="`APIAccessButton-${saveTime}`" />
               <AgentInvokeDataEdit :workflow-data="savedWorkflow" type="menuItem"
                 :key="`AgentInvokeDataEdit-${saveTime}`" />
+              <a-menu-item v-if="scheduleFeatureEnabled" key="schedule" @click="openScheduleManager">
+                {{ t('workspace.workflowSpace.manage_schedule') }}
+              </a-menu-item>
               <a-divider style="margin: 8px 0;" />
               <a-menu-item key="delete" @click="deleteWorkflow">
                 <a-typography-text type="danger">
-                  {{ t('workspace.workflowSpace.delete') }}
+                  {{ t('workspace.workflowSpace.move_to_trash') }}
                 </a-typography-text>
               </a-menu-item>
             </a-menu>

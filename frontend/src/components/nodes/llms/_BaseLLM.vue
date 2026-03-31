@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount } from 'vue'
+import { computed, ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
@@ -7,6 +7,7 @@ import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
+import { hydrateTemplateModelField, LLM_NODE_PROVIDER_MAP, mergeTemplateIntoFields } from '@/utils/modelCatalog'
 
 const props = defineProps({
   id: {
@@ -21,6 +22,11 @@ const props = defineProps({
     type: [Object, null],
     required: false,
     default: null,
+  },
+  data: {
+    type: Object,
+    required: false,
+    default: () => ({}),
   },
   llmName: {
     type: String,
@@ -44,17 +50,18 @@ const props = defineProps({
 })
 
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const loading = ref(true)
 const fieldsData = defineModel('templateData')
 onBeforeMount(async () => {
   const templateData = await props.createTemplateData()
-  Object.entries(templateData.template).forEach(([key, value]) => {
-    fieldsData.value[key] = fieldsData.value[key] || value
-    if (value.is_output) {
-      fieldsData.value[key].is_output = true
-    }
-  })
+  mergeTemplateIntoFields(fieldsData, templateData)
+
+  const modelProvider = LLM_NODE_PROVIDER_MAP[props.llmName]
+  if (modelProvider) {
+    await hydrateTemplateModelField(fieldsData, modelProvider)
+  }
+
   loading.value = false
 })
 
@@ -257,12 +264,22 @@ const collapseChanged = (data) => {
     }
   }
 }
+
+const nodeTitle = computed(() => {
+  const key = `components.nodes.llms.${props.llmName}.title`
+  return te(key) ? t(key) : props.llmName
+})
+
+const nodeDescription = computed(() => {
+  const key = `components.nodes.llms.${props.llmName}.description`
+  return te(key) ? t(key) : `${props.llmName} model`
+})
 </script>
 
 <template>
   <BaseNode v-if="!loading" :nodeId="id" :fieldsData="fieldsData" :data="props.data"
-    :title="`${t(`components.nodes.llms.${props.llmName}.title`)}`"
-    :description="t(`components.nodes.llms.${props.llmName}.description`)"
+    :title="nodeTitle"
+    :description="nodeDescription"
     :translatePrefix="`components.nodes.llms.common`" :debug="props.debug"
     :documentPath="props.documentPath ? props.documentPath : `/help/docs/language-models#node-${props.llmName}`">
     <template #main>
@@ -273,11 +290,13 @@ const collapseChanged = (data) => {
             :showCount="true" :placeholder="fieldsData.prompt.placeholder" />
         </BaseField>
 
-        <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target"
-          v-model:data="fieldsData.llm_model">
-          <a-select style="width: 100%;" v-model:value="fieldsData.llm_model.value"
-            :options="fieldsData.llm_model.options" />
-        </BaseField>
+        <slot name="modelSelection">
+          <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target"
+            v-model:data="fieldsData.llm_model">
+            <a-select style="width: 100%;" v-model:value="fieldsData.llm_model.value"
+              :options="fieldsData.llm_model.options" />
+          </BaseField>
+        </slot>
 
         <BaseField :name="t('components.nodes.llms.common.stream')" name-only type="target"
           v-model:data="fieldsData.stream">

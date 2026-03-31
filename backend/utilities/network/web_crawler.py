@@ -15,7 +15,7 @@ from typing import overload, Literal, Mapping
 import httpx
 from bs4 import BeautifulSoup
 from readability import Document
-from markdownify import MarkdownConverter, chomp
+from markdownify import MarkdownConverter
 
 from utilities.config import Settings
 from utilities.general import mprint_with_name
@@ -28,6 +28,14 @@ headers = {
 }
 
 http_proxy_host_re = re.compile(r"http.*://(.*?)$")
+
+
+def _chomp(text: str) -> tuple[str, str, str]:
+    prefix_len = len(text) - len(text.lstrip())
+    suffix_len = len(text) - len(text.rstrip())
+    prefix = text[:prefix_len]
+    suffix = text[len(text) - suffix_len :] if suffix_len else ""
+    return prefix, suffix, text.strip()
 
 
 @overload
@@ -103,8 +111,9 @@ class CustomMarkdownConverter(MarkdownConverter):
     convert_strong = convert_b
 
     def custom_bold_conversion(self, node, text, parent_tags):
-        markup = 2 * self.options["strong_em_symbol"]
-        prefix, suffix, text = chomp(text)
+        options = getattr(self, "options", {})
+        markup = 2 * str(options.get("strong_em_symbol", "*"))
+        prefix, suffix, text = _chomp(text)
         if not text:
             return ""
         return f"{prefix}{markup}{text}{markup}{suffix} "

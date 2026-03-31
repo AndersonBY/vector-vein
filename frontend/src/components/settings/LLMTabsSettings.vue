@@ -71,9 +71,24 @@ const { t } = useI18n()
         <LLMStandardSettings v-model="backends.baichuan" :endpoints="endpoints" />
       </a-form>
     </a-tab-pane>
-    <a-tab-pane key="ernie" tab="Groq">
+    <a-tab-pane key="groq" tab="Groq">
       <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <LLMStandardSettings v-model="backends.groq" :endpoints="endpoints" />
+      </a-form>
+    </a-tab-pane>
+    <a-tab-pane key="ernie" tab="Ernie">
+      <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+        <LLMStandardSettings v-model="backends.ernie" :endpoints="endpoints" />
+      </a-form>
+    </a-tab-pane>
+    <a-tab-pane key="stepfun" tab="StepFun">
+      <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+        <LLMStandardSettings v-model="backends.stepfun" :endpoints="endpoints" />
+      </a-form>
+    </a-tab-pane>
+    <a-tab-pane key="xai" tab="xAI">
+      <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+        <LLMStandardSettings v-model="backends.xai" :endpoints="endpoints" />
       </a-form>
     </a-tab-pane>
   </a-tabs>

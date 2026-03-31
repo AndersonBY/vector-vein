@@ -1,11 +1,12 @@
 <script setup>
-import { ref, reactive, onBeforeMount } from 'vue'
+import { computed, ref, reactive, onBeforeMount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
 import { LoadingFour, Delete, Add } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
+import { useModelCatalogStore } from '@/stores/modelCatalog'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import { statusColorMap } from '@/utils/common'
 import { databaseAPI } from '@/api/database'
@@ -15,7 +16,14 @@ const loading = ref(true)
 const router = useRouter()
 
 const userDatabasesStore = useUserDatabasesStore()
+const modelCatalogStore = useModelCatalogStore()
 const { userDatabases } = storeToRefs(userDatabasesStore)
+
+const fallbackEmbeddingSelection = {
+  embedding_provider: 'openai',
+  embedding_model: 'text-embedding-3-small',
+  embedding_size: 1536,
+}
 
 const databases = reactive({
   columns: [
@@ -69,7 +77,8 @@ const getDatabases = async () => {
 }
 
 onBeforeMount(async () => {
-  await getDatabases()
+  await Promise.all([getDatabases(), modelCatalogStore.ensureLoaded()])
+  syncEmbeddingSelection(true)
 })
 
 const createNewDatabaseModal = reactive({
@@ -77,9 +86,7 @@ const createNewDatabaseModal = reactive({
   creating: false,
   form: {
     name: '',
-    embedding_provider: 'openai',
-    embedding_size: 1536,
-    embedding_model: 'text-embedding-ada-002',
+    ...fallbackEmbeddingSelection,
   },
   create: async () => {
     createNewDatabaseModal.creating = true
@@ -102,6 +109,85 @@ const createNewDatabaseModal = reactive({
   },
 })
 
+const embeddingProviderOptions = computed(() => {
+  return modelCatalogStore.embeddingProviders.map((provider) => ({
+    label: provider.label,
+    value: provider.key,
+  }))
+})
+
+const embeddingModelOptions = computed(() => {
+  const optionGroup = modelCatalogStore.embeddingModelOptions.find(
+    (item) => item.value === createNewDatabaseModal.form.embedding_provider
+  )
+  return optionGroup?.children || []
+})
+
+const syncEmbeddingSelection = (resetDimensions = false) => {
+  const providerOptions = embeddingProviderOptions.value
+  if (providerOptions.length === 0) {
+    createNewDatabaseModal.form.embedding_provider = fallbackEmbeddingSelection.embedding_provider
+    createNewDatabaseModal.form.embedding_model = fallbackEmbeddingSelection.embedding_model
+    if (resetDimensions) {
+      createNewDatabaseModal.form.embedding_size = fallbackEmbeddingSelection.embedding_size
+    }
+    return
+  }
+
+  const providerValid = providerOptions.some(
+    (item) => item.value === createNewDatabaseModal.form.embedding_provider
+  )
+  if (!providerValid) {
+    createNewDatabaseModal.form.embedding_provider = providerOptions[0].value
+  }
+
+  const modelOptions = embeddingModelOptions.value
+  if (modelOptions.length === 0) {
+    createNewDatabaseModal.form.embedding_model = ''
+    if (resetDimensions) {
+      createNewDatabaseModal.form.embedding_size = fallbackEmbeddingSelection.embedding_size
+    }
+    return
+  }
+
+  const modelValid = modelOptions.some(
+    (item) => item.value === createNewDatabaseModal.form.embedding_model
+  )
+  if (!modelValid) {
+    createNewDatabaseModal.form.embedding_model = modelOptions[0].value
+  }
+
+  if (resetDimensions) {
+    const selectedModel = modelOptions.find(
+      (item) => item.value === createNewDatabaseModal.form.embedding_model
+    )
+    if (selectedModel?.dimensions) {
+      createNewDatabaseModal.form.embedding_size = selectedModel.dimensions
+    }
+  }
+}
+
+watch(embeddingProviderOptions, () => {
+  syncEmbeddingSelection(true)
+})
+
+watch(
+  () => createNewDatabaseModal.form.embedding_provider,
+  () => {
+    syncEmbeddingSelection(true)
+  }
+)
+
+watch(
+  () => createNewDatabaseModal.form.embedding_model,
+  (model) => {
+    const selectedModel = embeddingModelOptions.value.find((item) => item.value === model)
+    if (selectedModel?.dimensions) {
+      createNewDatabaseModal.form.embedding_size = selectedModel.dimensions
+    }
+  }
+)
+
 const deleteDatabase = async (vid) => {
   const response = await databaseAPI('delete', { vid: vid })
   if (response.status === 200) {
@@ -112,20 +198,9 @@ const deleteDatabase = async (vid) => {
   await getDatabases()
 }
 
-const embeddingProviders = [
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'text-embeddings-inference', value: 'text-embeddings-inference' },
-]
-
-const openaiEmbeddingModels = [
-  { label: 'text-embedding-ada-002', value: 'text-embedding-ada-002' },
-  { label: 'text-embedding-3-small', value: 'text-embedding-3-small' },
-  { label: 'text-embedding-3-large', value: 'text-embedding-3-large' },
-]
-
 const embeddingProviderTips = [
-  t('workspace.dataSpace.embedding_provider_azure_tip'),
-  t('workspace.dataSpace.embedding_provider_text_embeddings_inference_tip'),
+  t('workspace.dataSpace.embedding_provider_settings_tip'),
+  t('workspace.dataSpace.embedding_provider_custom_tip'),
   {
     type: 'link',
     url: 'https://github.com/huggingface/text-embeddings-inference',
@@ -163,15 +238,11 @@ const embeddingProviderTips = [
                   <QuestionPopover :contents="embeddingProviderTips" />
                 </a-flex>
               </template>
-              <a-select v-model:value="createNewDatabaseModal.form.embedding_provider" :options="embeddingProviders" />
+              <a-select v-model:value="createNewDatabaseModal.form.embedding_provider" :options="embeddingProviderOptions" />
             </a-form-item>
-            <a-form-item v-if="createNewDatabaseModal.form.embedding_provider == 'openai'"
-              :label="t('workspace.dataSpace.embedding_models')">
-              <a-select v-model:value="createNewDatabaseModal.form.embedding_model" :options="openaiEmbeddingModels" />
-            </a-form-item>
-            <a-form-item v-else-if="createNewDatabaseModal.form.embedding_provider == 'text-embeddings-inference'"
-              :label="t('workspace.dataSpace.embedding_models')">
-              <a-input v-model:value="createNewDatabaseModal.form.embedding_model" />
+            <a-form-item :label="t('workspace.dataSpace.embedding_models')">
+              <a-select v-model:value="createNewDatabaseModal.form.embedding_model" :options="embeddingModelOptions"
+                :disabled="embeddingModelOptions.length === 0" />
             </a-form-item>
             <a-form-item :label="t('workspace.dataSpace.embedding_size')">
               <a-input-number v-model:value="createNewDatabaseModal.form.embedding_size" />

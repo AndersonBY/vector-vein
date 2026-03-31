@@ -12,7 +12,7 @@ from utilities.text_processing import split_text, remove_markdown_image
 from background_task.qdrant_tasks import (
     embedding_and_upload,
     q_delete_point as delete_point,
-    q_search_point as search_point,
+    search_points_sync,
 )
 from models import UserObject, UserVectorDatabase
 
@@ -177,14 +177,11 @@ def search_data(
     results = []
     for text in search_texts:
         text_embedding = embedding_client.get(text)
-        # Use Celery's AsyncResult to get the result
-        task_result = search_point.delay(
+        search_results = search_points_sync(
             vid=database_vid,
             text_embedding=text_embedding,
             limit=count,
         )
-        # Wait for the result
-        search_results = task_result.get(timeout=30)
 
         if output_type == "text":
             results.append("\n".join([result["text"] for result in search_results]))

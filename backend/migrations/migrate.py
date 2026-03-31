@@ -1,10 +1,10 @@
 import peewee
 from peewee_migrate import Router
-from playhouse.sqlite_ext import SqliteExtDatabase
+from peewee import SqliteDatabase
 
 
 def custom_run_migrations(db_path):
-    database = SqliteExtDatabase(db_path)
+    database = SqliteDatabase(db_path)
     router = Router(database, migrate_dir="./migrations")
 
     print("Current migration status:")

@@ -73,13 +73,13 @@
 
 #### 语音识别配置
 
-目前支持使用 OpenAI/Deepgram 的语音识别服务。对于 OpenAI 服务，可以采用与大语言模型相同的配置，也可以设置与 OpenAI 接口兼容的语音识别服务（如 Groq）。
+目前语音识别统一走 OpenAI 兼容路径。可以直接复用大语言模型配置，也可以接入与 OpenAI API 兼容的语音识别服务（如 Groq）。
 
 ![语音识别配置](resources/images/asr-settings1-zh.jpg)
 
 #### 嵌入配置
 
-当您需要使用向量数据的向量搜索时，您可以选择使用 OpenAI 提供的嵌入（Embedding）服务，也可以在设置的 `嵌入模型` 中配置本地的嵌入服务。目前支持的本地嵌入服务需要您自行搭建 [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference) 来提供。
+当您需要使用向量数据进行向量搜索时，可以在设置的 `嵌入模型` 中通过 `vv-llm` 的 `embedding_backends` 方案来配置嵌入后端。当前支持内置 OpenAI Embedding，也支持通过自定义 request/response mapping 接入本地服务，例如自行部署的 [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference)。
 
 ![本地嵌入设置](resources/images/embedding-settings1-zh.jpg)
 
@@ -215,10 +215,25 @@ pdm install -G mac
 pdm run dev
 ```
 
+后端质量检查命令也统一放在 `backend` 目录下：
+
+```bash
+pdm run test
+pdm run lint
+pdm run typecheck
+```
+
 如果需要修改前端代码，需要在 **frontend** 目录下运行以下命令安装依赖：
 
 ```bash
 pnpm install
+```
+
+提交前端改动前，建议在 **frontend** 目录下先运行以下质量检查命令：
+
+```bash
+pnpm run lint
+pnpm exec vite build
 ```
 
 > 初次拉取项目代码也需要运行 `pnpm install` 安装前端依赖。

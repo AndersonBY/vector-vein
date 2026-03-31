@@ -5,6 +5,7 @@
 # @Last Modified time: 2024-06-15 01:39:23
 import uuid
 import datetime
+from typing import Any, cast
 
 from peewee import (
     UUIDField,
@@ -14,7 +15,7 @@ from peewee import (
     ForeignKeyField,
 )
 
-from models.base import BaseModel, JSONField
+from models.base import BaseModel, JSONField, ModelField
 from models.user_models import User
 
 
@@ -29,8 +30,8 @@ class DatabaseStatus:
 
 
 class UserVectorDatabase(BaseModel):
-    vid = UUIDField(default=uuid.uuid4, unique=True)
-    user = ForeignKeyField(User, null=True, on_delete="SET NULL")
+    vid = cast(ModelField[uuid.UUID], UUIDField(default=uuid.uuid4, unique=True))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, on_delete="SET NULL"))
     STATUS_CHOICES = (
         (DatabaseStatus.INVALID, "无效"),
         (DatabaseStatus.EXPIRED, "已过期"),
@@ -40,16 +41,16 @@ class UserVectorDatabase(BaseModel):
         (DatabaseStatus.ERROR, "错误"),
         (DatabaseStatus.CREATING, "创建中"),
     )
-    status = CharField(choices=STATUS_CHOICES, default=DatabaseStatus.CREATING)
-    name = CharField()
-    info = JSONField(default=dict)
-    embedding_size = IntegerField(default=1536)
-    embedding_model = CharField(default="text-embedding-ada-002")
-    embedding_provider = CharField(default="openai")
+    status = cast(ModelField[str], CharField(choices=STATUS_CHOICES, default=DatabaseStatus.CREATING))
+    name = cast(ModelField[str], CharField())
+    info = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    embedding_size = cast(ModelField[int], IntegerField(default=1536))
+    embedding_model = cast(ModelField[str], CharField(default="text-embedding-ada-002"))
+    embedding_provider = cast(ModelField[str], CharField(default="openai"))
 
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
-    expire_time = DateTimeField(null=True)
+    create_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    update_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    expire_time = cast(ModelField[datetime.datetime | None], DateTimeField(null=True))
 
     def __str__(self):
         return str(self.vid)
@@ -59,11 +60,11 @@ class UserVectorDatabase(BaseModel):
 
 
 class UserObject(BaseModel):
-    oid = UUIDField(default=uuid.uuid4, unique=True)
-    user = ForeignKeyField(User, null=True, on_delete="SET NULL")
-    title = CharField()
-    info = JSONField(default=dict)
-    slug_url = CharField(null=True)
+    oid = cast(ModelField[uuid.UUID], UUIDField(default=uuid.uuid4, unique=True))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, on_delete="SET NULL"))
+    title = cast(ModelField[str], CharField())
+    info = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    slug_url = cast(ModelField[str | None], CharField(null=True))
     TYPE_CHOICES = (
         ("TEXT", "文本"),
         ("IMAGE", "图片"),
@@ -71,21 +72,21 @@ class UserObject(BaseModel):
         ("VIDEO", "视频"),
         ("OTHER", "其他"),
     )
-    data_type = CharField(choices=TYPE_CHOICES)
+    data_type = cast(ModelField[str], CharField(choices=TYPE_CHOICES))
     STATUS_CHOICES = (
         ("IN", "无效"),
         ("PR", "处理中"),
         ("VA", "有效"),
     )
-    status = CharField(choices=STATUS_CHOICES, default="VA")
-    vector_database = ForeignKeyField(UserVectorDatabase, on_delete="CASCADE")
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    status = cast(ModelField[str], CharField(choices=STATUS_CHOICES, default="VA"))
+    vector_database = cast(ModelField[UserVectorDatabase], ForeignKeyField(UserVectorDatabase, on_delete="CASCADE"))
+    create_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    update_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
 
-    source_url = CharField(null=True)
-    suffix = CharField(null=True)
-    raw_data = JSONField(default=dict)
-    embeddings = JSONField(default=list)
+    source_url = cast(ModelField[str | None], CharField(null=True))
+    suffix = cast(ModelField[str | None], CharField(null=True))
+    raw_data = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    embeddings = cast(ModelField[list[Any]], JSONField(default=list))
 
     def __str__(self):
         return str(self.oid)
@@ -95,8 +96,8 @@ class UserObject(BaseModel):
 
 
 class UserRelationalDatabase(BaseModel):
-    rid = UUIDField(primary_key=True, default=uuid.uuid4)
-    user = ForeignKeyField(User, null=True, on_delete="SET NULL")
+    rid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, on_delete="SET NULL"))
 
     STATUS_CHOICES = (
         (DatabaseStatus.INVALID, "无效"),
@@ -107,17 +108,17 @@ class UserRelationalDatabase(BaseModel):
         (DatabaseStatus.ERROR, "错误"),
         (DatabaseStatus.CREATING, "创建中"),
     )
-    status = CharField(choices=STATUS_CHOICES, default=DatabaseStatus.CREATING)
+    status = cast(ModelField[str], CharField(choices=STATUS_CHOICES, default=DatabaseStatus.CREATING))
 
-    name = CharField(max_length=512)
-    info = JSONField(default=dict)
+    name = cast(ModelField[str], CharField(max_length=512))
+    info = cast(ModelField[dict[str, Any]], JSONField(default=dict))
 
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
-    expire_time = DateTimeField(null=True)
+    create_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    update_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    expire_time = cast(ModelField[datetime.datetime | None], DateTimeField(null=True))
 
-    database_path = CharField(max_length=1024, null=True)
-    database_file_last_modified = DateTimeField(null=True)
+    database_path = cast(ModelField[str | None], CharField(max_length=1024, null=True))
+    database_file_last_modified = cast(ModelField[datetime.datetime | None], DateTimeField(null=True))
 
     def __str__(self):
         return str(self.rid)
@@ -135,11 +136,11 @@ class Status:
 
 
 class UserRelationalTable(BaseModel):
-    tid = UUIDField(primary_key=True, default=uuid.uuid4)
-    database = ForeignKeyField(UserRelationalDatabase, on_delete="CASCADE")
-    user = ForeignKeyField(User, null=True, on_delete="SET NULL")
-    name = CharField(max_length=512)
-    info = JSONField(default=dict)
+    tid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4))
+    database = cast(ModelField[UserRelationalDatabase], ForeignKeyField(UserRelationalDatabase, on_delete="CASCADE"))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, on_delete="SET NULL"))
+    name = cast(ModelField[str], CharField(max_length=512))
+    info = cast(ModelField[dict[str, Any]], JSONField(default=dict))
 
     STATUS_CHOICES = (
         (Status.INVALID, "无效"),
@@ -148,14 +149,14 @@ class UserRelationalTable(BaseModel):
         (Status.DELETED, "已删除"),
         (Status.EXPIRED, "已过期"),
     )
-    status = CharField(choices=STATUS_CHOICES, default=Status.VALID)
+    status = cast(ModelField[str], CharField(choices=STATUS_CHOICES, default=Status.VALID))
 
-    schema = JSONField(default=dict)
-    current_rows = IntegerField(default=0)
-    max_rows = IntegerField(default=20000)
+    schema = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    current_rows = cast(ModelField[int], IntegerField(default=0))
+    max_rows = cast(ModelField[int], IntegerField(default=20000))
 
-    create_time = DateTimeField(default=datetime.datetime.now)
-    update_time = DateTimeField(default=datetime.datetime.now)
+    create_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
+    update_time = cast(ModelField[datetime.datetime], DateTimeField(default=datetime.datetime.now))
 
     def __str__(self):
         return str(self.tid)

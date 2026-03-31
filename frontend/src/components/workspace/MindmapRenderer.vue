@@ -6,7 +6,7 @@ import { Transformer } from 'markmap-lib/no-plugins'
 import { pluginFrontmatter } from 'markmap-lib/plugins'
 import { Markmap, loadCSS, loadJS } from 'markmap-view'
 import { saveAs } from 'file-saver'
-import { Topic, RootTopic, Workbook } from 'xmind-generator'
+import { Topic, RootTopic, Workbook } from '@makerbi/xmind-generator'
 
 const { t } = useI18n()
 

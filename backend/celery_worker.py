@@ -48,6 +48,7 @@ app = Celery(
         "worker.tasks.text_processing",
         "worker.tasks.image_generation",
         "worker.tasks.media_processing",
+        "worker.tasks.local_extensions",
     ]
 )
 

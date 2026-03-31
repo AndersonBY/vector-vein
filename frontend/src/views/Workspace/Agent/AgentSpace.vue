@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from "vue"
+import { ref, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { ExpandLeft, ExpandRight } from '@icon-park/vue-next'
@@ -8,13 +8,24 @@ import { useUserSettingsStore } from '@/stores/userSettings'
 
 const { t } = useI18n()
 const route = useRoute()
-const selectedKeys = ref([route.name])
-const openKeys = ref([route.name])
+const getMenuKey = (routeName) => {
+  if (['publicAgents'].includes(routeName)) {
+    return ['publicAgents']
+  }
+  return ['myAgents']
+}
+const selectedKeys = ref(getMenuKey(route.name))
+const openKeys = ref(getMenuKey(route.name))
 const collapsed = ref(false)
 
 const userSettingsStore = useUserSettingsStore()
 const { theme } = storeToRefs(userSettingsStore)
 const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
+
+watch(() => route.name, (routeName) => {
+  selectedKeys.value = getMenuKey(routeName)
+  openKeys.value = getMenuKey(routeName)
+})
 </script>
 
 <template>

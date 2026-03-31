@@ -9,6 +9,8 @@ import { useUserSettingsStore } from '@/stores/userSettings'
 import AvatarUpload from '@/components/workspace/AvatarUpload.vue'
 import AgentCard from "@/components/workspace/agent/AgentCard.vue"
 import InputSearch from "@/components/InputSearch.vue"
+import WorkspacePageHero from '@/components/workspace/WorkspacePageHero.vue'
+import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState.vue'
 import { defaultSettings } from '@/utils/common'
 import { agentAPI } from '@/api/chat'
 
@@ -147,11 +149,14 @@ const agentActions = reactive({
 
 <template>
   <div class="main-container">
-    <a-flex class="header" wrap="wrap" justify="space-between" align="flex-end">
-      <a-typography-title :level="2">
-        {{ t('workspace.agentSpace.my_agents') }}
-      </a-typography-title>
-      <a-space>
+    <WorkspacePageHero
+      :title="t('workspace.agentSpace.my_agents')"
+      :description="t('workspace.agentSpace.hero_description')"
+      :stats="[
+        { label: t('workspace.agentSpace.hero_agent_count'), value: myAgents.length, tip: t('workspace.agentSpace.hero_agent_count_tip') },
+        { label: t('workspace.agentSpace.hero_search_ready'), value: searchText ? 1 : 0, tip: t('workspace.agentSpace.hero_search_ready_tip') },
+      ]">
+      <template #actions>
         <InputSearch v-model="searchText" @search="searchAgents" @clear-search="clearSearch" />
         <a-button type="primary" @click="createAgentModal.open = true">
           <template #icon>
@@ -159,42 +164,37 @@ const agentActions = reactive({
           </template>
           {{ t('workspace.agentSpace.create_agent') }}
         </a-button>
-        <a-modal :title="t('workspace.agentSpace.create_agent')" @ok="createAgentModal.ok"
-          :confirm-loading="createAgentModal.createLoading" v-model:open="createAgentModal.open">
-          <a-flex justify="center" style="margin: 24px 0;">
-            <AvatarUpload v-model="createAgentModal.createForm.avatar" />
-          </a-flex>
-          <a-form ref="createFormRef" :model="createAgentModal.createForm" layout="vertical">
-            <a-form-item :label="t('workspace.agentSpace.agent_name')" name="name"
-              :rules="[{ required: true, message: t('workspace.agentSpace.agent_name_required') }]">
-              <a-input v-model:value="createAgentModal.createForm.name"
-                :placeholder="t('workspace.agentSpace.agent_name_placeholder')" />
-            </a-form-item>
-            <a-form-item :label="t('workspace.agentSpace.agent_description')" name="description">
-              <a-textarea :autoSize="{ minRows: 3, maxRows: 10 }"
-                v-model:value="createAgentModal.createForm.description"
-                :placeholder="t('workspace.agentSpace.agent_description_placeholder')" />
-            </a-form-item>
-          </a-form>
-        </a-modal>
-      </a-space>
-    </a-flex>
+      </template>
+    </WorkspacePageHero>
+    <a-modal :title="t('workspace.agentSpace.create_agent')" @ok="createAgentModal.ok"
+      :confirm-loading="createAgentModal.createLoading" v-model:open="createAgentModal.open">
+      <a-flex justify="center" style="margin: 24px 0;">
+        <AvatarUpload v-model="createAgentModal.createForm.avatar" />
+      </a-flex>
+      <a-form ref="createFormRef" :model="createAgentModal.createForm" layout="vertical">
+        <a-form-item :label="t('workspace.agentSpace.agent_name')" name="name"
+          :rules="[{ required: true, message: t('workspace.agentSpace.agent_name_required') }]">
+          <a-input v-model:value="createAgentModal.createForm.name"
+            :placeholder="t('workspace.agentSpace.agent_name_placeholder')" />
+        </a-form-item>
+        <a-form-item :label="t('workspace.agentSpace.agent_description')" name="description">
+          <a-textarea :autoSize="{ minRows: 3, maxRows: 10 }"
+            v-model:value="createAgentModal.createForm.description"
+            :placeholder="t('workspace.agentSpace.agent_description_placeholder')" />
+        </a-form-item>
+      </a-form>
+    </a-modal>
     <a-row :gutter="[24, 24]">
       <a-col :span="24" v-if="loading" style="display: flex; justify-content: center;">
         <a-spin />
       </a-col>
       <a-col :span="24" v-else-if="myAgents.length == 0">
-        <a-flex vertical gap="middle" align="center">
-          <a-typography-paragraph type="secondary">
-            {{ t('workspace.agentSpace.no_agents_1') }}
-          </a-typography-paragraph>
-          <a-typography-paragraph type="secondary">
-            {{ t('workspace.agentSpace.no_agents_2') }}
-          </a-typography-paragraph>
+        <WorkspaceEmptyState :title="t('workspace.agentSpace.no_agents_1')"
+          :description="t('workspace.agentSpace.no_agents_2')">
           <router-link :to="{ name: 'publicAgents' }">
             {{ t('workspace.agentSpace.public_agents') }}
           </router-link>
-        </a-flex>
+        </WorkspaceEmptyState>
       </a-col>
       <a-col :xs="24" :md="12" :lg="8" :xl="6" v-for="agent in myAgents" :key="agent.aid">
         <AgentCard :aid="agent.aid" :avatar="agent.avatar" :name="agent.name" :description="agent.description"

@@ -73,13 +73,13 @@ v0.2.10から、VectorVeinはAPIエンドポイントと大規模言語モデル
 
 #### 音声認識の設定
 
-現在、OpenAI/Deepgramの音声認識サービスがサポートされています。OpenAIサービスの場合、大規模言語モデルと同じ設定を使用するか、OpenAI API互換の音声認識サービス（Groqなど）を設定できます。
+現在、音声認識は OpenAI 互換の経路に統一されています。大規模言語モデルと同じ設定を使うか、OpenAI API 互換の音声認識サービス（Groq など）を設定できます。
 
 ![音声認識設定](resources/images/asr-settings1-en.jpg)
 
 ### 埋め込み設定
 
-ベクトルデータを使用してベクトル検索を実行する必要がある場合、OpenAIが提供する埋め込み（Embedding）サービスを使用するか、「埋め込みモデル」設定でローカルの埋め込みサービスを設定できます。現在、サポートされているローカル埋め込みサービスは、[text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference)を自分でセットアップする必要があります。
+ベクトルデータでベクトル検索を行う場合は、「埋め込みモデル」設定で `vv-llm` の `embedding_backends` 方式を使って埋め込みバックエンドを構成できます。OpenAI Embedding を標準で扱えるほか、request/response mapping を使って、[text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference) のようなローカルサービスも接続できます。
 
 ![ローカル埋め込み設定](resources/images/embedding-settings1-en.jpg)
 
@@ -219,6 +219,13 @@ pdm run dev
 
 ```bash
 pnpm install
+```
+
+フロントエンドの変更を提出する前に、**frontend**ディレクトリで次の品質チェックを実行してください：
+
+```bash
+pnpm run lint
+pnpm exec vite build
 ```
 
 > プロジェクトコードを初めてプルする場合も、`pnpm install`を実行してフロントエンド依存関係をインストールする必要があります。

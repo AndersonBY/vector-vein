@@ -20,10 +20,6 @@ export function createTemplateData() {
             "value": "openai",
             "label": "OpenAI"
           },
-          {
-            "value": "deepgram",
-            "label": "Deepgram"
-          },
         ],
         "name": "engine",
         "display_name": "engine",

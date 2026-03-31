@@ -23,14 +23,10 @@ def request(method: str, path: str, payload=None):
     try_times = 0
     while try_times < 3:
         try:
-            payload_params = {"json": payload} if method == "POST" and payload else {"params": payload}
-            response = client.request(
-                method,
-                url,
-                headers=headers,
-                timeout=15,
-                **payload_params,  # type: ignore
-            )
+            if method == "POST" and payload:
+                response = client.request(method, url, headers=headers, timeout=15, json=payload)
+            else:
+                response = client.request(method, url, headers=headers, timeout=15, params=payload)
             return response.json()
         except Exception as e:
             mprint.error(e)

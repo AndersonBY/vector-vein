@@ -3,39 +3,42 @@
 # Integrated FastAPI + PyWebView main application
 
 import os
+import sys
 from pathlib import Path
 
 import webview
-from webview.window import Window
 from webview.dom import DOMEventHandler
+from webview.window import Window
 
-# Set up environment
-os.environ["TIKTOKEN_CACHE_DIR"] = (Path(__file__).parent / Path("./assets/tiktoken_cache")).absolute().as_posix()
+from bootstrap import APP_ROOT
 
-# Import existing components
 from utilities.config import config, cache
-from utilities.general import LogServer, mprint
-from utilities.shortcuts import shortcuts_listener
-from utilities.network import proxies_for_requests
-from utilities.file_processing import static_file_server
 from models import create_tables, run_migrations
-from tts_server.server import tts_server
-from chat_server.server import WebSocketServer
-
-# Import new server components
-from fastapi_server import FastAPIServer
 from celery_worker import CeleryWorkerManager
+from chat_server.server import WebSocketServer
+from fastapi_server import FastAPIServer
+from background_task.qdrant_tasks import close_qdrant_client
+from tts_server.server import tts_server
+from utilities.file_processing import static_file_server
+from utilities.general import LogServer, mprint
+from utilities.network import proxies_for_requests
+from utilities.shortcuts import shortcuts_listener
+from utilities.workflow import workflow_scheduler
 
 
 class MainServer:
     def __init__(self):
+        self._terminating = False
         # Initialize debug and version info
-        if Path("./DEBUG").exists():
-            self.DEBUG = Path("./DEBUG").read_text() == "1"
+        debug_flag_path = APP_ROOT / "DEBUG"
+        version_path = APP_ROOT / "version.txt"
+
+        if debug_flag_path.exists():
+            self.DEBUG = debug_flag_path.read_text() == "1"
         else:
             self.DEBUG = os.environ.get("VECTORVEIN_DEBUG", "0") == "1"
-        if Path("./version.txt").exists():
-            VERSION = Path("./version.txt").read_text()
+        if version_path.exists():
+            VERSION = version_path.read_text().strip()
         else:
             VERSION = os.environ.get("VECTORVEIN_VERSION", "0.0.1")
 
@@ -70,6 +73,9 @@ class MainServer:
         # Start Celery worker using new manager
         self.celery_worker_manager = CeleryWorkerManager(concurrency=2)
         self.celery_worker_manager.start()
+
+        self.workflow_scheduler = workflow_scheduler
+        self.workflow_scheduler.start()
 
         self.ws_server = WebSocketServer(host="localhost", start_port=8765)
         self.ws_server.start()
@@ -148,7 +154,7 @@ class MainServer:
 
         # Add additional API methods like original main.py
         # Ensure these methods are available to JS before the window is created.
-        API.get_drop_file_path = staticmethod(api.get_drop_file_path)
+        setattr(API, "get_drop_file_path", staticmethod(api.get_drop_file_path))
 
         # Expose native file/folder dialogs to JS early, using the active window when invoked.
         def _open_file_dialog(self, multiple=False):
@@ -174,8 +180,8 @@ class MainServer:
             return ""
 
         # # Register as instance methods (not static) so pywebview detects them
-        API.open_file_dialog = _open_file_dialog  # type: ignore
-        API.open_folder_dialog = _open_folder_dialog  # type: ignore
+        setattr(API, "open_file_dialog", _open_file_dialog)
+        setattr(API, "open_folder_dialog", _open_folder_dialog)
 
         # Debug: Print all registered methods
         if self.DEBUG:
@@ -264,26 +270,35 @@ class MainServer:
 
     def terminate(self):
         """Terminate all services"""
+        if self._terminating:
+            return
+
+        self._terminating = True
         mprint("Terminating...")
+        try:
+            # Stop FastAPI server
+            self.api_server.stop()
 
-        # Stop FastAPI server
-        self.api_server.stop()
+            # Stop Celery worker manager
+            if hasattr(self, "celery_worker_manager"):
+                self.celery_worker_manager.stop()
 
-        # Stop Celery worker manager
-        if hasattr(self, "celery_worker_manager"):
-            self.celery_worker_manager.stop()
+            if hasattr(self, "workflow_scheduler"):
+                self.workflow_scheduler.stop()
 
-        # Stop other services
-        config.close()
-        self.static_file_server.shutdown()
-        self.shortcuts_listener.stop()
-        self.ws_server.stop()
-        self.log_server.stop()
-        self.tts_server.terminate()
-        if self.window:
-            self.window.destroy()
+            # Stop other services
+            config.close()
+            self.static_file_server.shutdown()
+            self.shortcuts_listener.stop()
+            self.ws_server.stop()
+            self.log_server.stop()
+            self.tts_server.terminate()
+            close_qdrant_client()
+            self.window = None
 
-        mprint("Terminated.")
+            mprint("Terminated.")
+        finally:
+            self._terminating = False
 
     @staticmethod
     def on_drop(e):
@@ -311,14 +326,16 @@ class MainServer:
 
     def bind(self, window: Window):
         """Bind event handlers to window"""
-        window.dom.document.events.drop += DOMEventHandler(MainServer.on_drop)  # type: ignore
+        drop_event = getattr(window.dom.document.events, "drop")
+        drop_event += DOMEventHandler(MainServer.on_drop)
         window.events.closed += self.terminate
         window.events.resized += MainServer.on_resized
         window.events.moved += MainServer.on_moved
 
     def start(self):
         """Start the application"""
-        webview.start(self.bind, [self.window], debug=self.DEBUG, http_server=False)
+        gui_backend = "qt" if sys.platform.startswith("linux") else None
+        webview.start(self.bind, [self.window], gui=gui_backend, debug=self.DEBUG, http_server=False)
 
 
 if __name__ == "__main__":

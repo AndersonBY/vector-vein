@@ -2,9 +2,9 @@
 # @Date:   2024-06-07 12:59:42
 import re
 
-from vectorvein.types import BackendType
-from vectorvein.chat_clients import create_chat_client
-from vectorvein.settings import settings as vectorvein_settings
+from vv_llm.types import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.settings import settings as vv_llm_settings
 
 from utilities.config import Settings
 from models import Workflow, WorkflowTemplate
@@ -27,7 +27,7 @@ class ToolCallData:
         self.parameters = self.tool_call_data.get("parameters", {})
         self.parameter_sources = self.tool_call_data.get("parameter_sources", {})
         user_settings = Settings()
-        vectorvein_settings.load(user_settings.get("llm_settings"))
+        vv_llm_settings.load(user_settings.get("llm_settings"))
         backend, model = user_settings.get("agent.tool_call_data_generate_model")
         if backend.lower().startswith("_local__"):
             backend = BackendType.Local

@@ -15,11 +15,11 @@ def kill_process_tree(pid, including_parent=True):
         if os.name == "nt":  # Windows
             subprocess.call(["taskkill", "/F", "/T", "/PID", str(pid)])
         else:  # Unix-like system
-            pids = subprocess.check_output(["pgrep", "-P", str(pid)]).split()
-            for pid in pids:
-                kill_process_tree(int(pid))
+            child_pids = subprocess.check_output(["pgrep", "-P", str(pid)]).split()
+            for child_pid in child_pids:
+                kill_process_tree(int(child_pid))
             if including_parent:
-                os.kill(pid, signal.SIGKILL)
+                os.kill(int(pid), signal.SIGKILL)
     except subprocess.CalledProcessError:
         pass
 

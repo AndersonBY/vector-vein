@@ -69,7 +69,7 @@ class TTSServer:
             self.tts_client.stream(text=text, voice=voice, non_block=False, skip_code_block=skip_code_block)
             self.playing = False
 
-        stream_thread = Thread(target=_stream)
+        stream_thread = Thread(target=_stream, daemon=True)
         stream_thread.start()
 
     @property

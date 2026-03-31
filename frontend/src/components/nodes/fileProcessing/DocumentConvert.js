@@ -1,0 +1,53 @@
+export function createTemplateData() {
+  return {
+    description: "Convert local documents into desktop-friendly output files.",
+    task_name: "file_processing.document_convert",
+    has_inputs: true,
+    template: {
+      files: {
+        required: true,
+        placeholder: "",
+        show: true,
+        value: [],
+        name: "files",
+        display_name: "files",
+        type: "list",
+        list: false,
+        field_type: "file",
+        support_file_types: ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf,.txt,.md,.html,.json,.csv,.zip",
+      },
+      output_format: {
+        required: true,
+        placeholder: "",
+        show: true,
+        value: "txt",
+        options: [
+          { label: "TXT", value: "txt" },
+          { label: "MD", value: "md" },
+          { label: "HTML", value: "html" },
+          { label: "JSON", value: "json" },
+          { label: "CSV", value: "csv" },
+          { label: "PDF", value: "pdf" },
+          { label: "DOCX", value: "docx" },
+        ],
+        name: "output_format",
+        display_name: "output_format",
+        type: "str",
+        list: false,
+        field_type: "select",
+      },
+      output: {
+        required: true,
+        placeholder: "",
+        show: false,
+        value: "",
+        name: "output",
+        display_name: "output",
+        type: "str",
+        list: false,
+        field_type: "",
+        is_output: true,
+      },
+    },
+  }
+}

@@ -18,24 +18,32 @@ const tabChange = async (key) => {
 </script>
 
 <template>
-  <a-tabs v-model:activeKey="activeKey" @change="tabChange">
-    <a-tab-pane key="my-workflows">
-      <template #tab>
-        <span>
-          <User />
-          {{ t('workspace.workflowSpaceMain.my_workflows') }}
-        </span>
-      </template>
-      <MyWorkflows v-model="activeKey" />
-    </a-tab-pane>
-    <a-tab-pane key="official-workflow-templates">
-      <template #tab>
-        <span>
-          <MoreApp theme="filled" />
-          {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
-        </span>
-      </template>
-      <WorkflowTemplatesMarket />
-    </a-tab-pane>
-  </a-tabs>
+  <a-flex vertical gap="large" class="workflow-home">
+    <a-tabs v-model:activeKey="activeKey" @change="tabChange">
+      <a-tab-pane key="my-workflows">
+        <template #tab>
+          <span>
+            <User />
+            {{ t('workspace.workflowSpaceMain.my_workflows') }}
+          </span>
+        </template>
+        <MyWorkflows v-model="activeKey" />
+      </a-tab-pane>
+      <a-tab-pane key="official-workflow-templates">
+        <template #tab>
+          <span>
+            <MoreApp theme="filled" />
+            {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
+          </span>
+        </template>
+        <WorkflowTemplatesMarket />
+      </a-tab-pane>
+    </a-tabs>
+  </a-flex>
 </template>
+
+<style scoped>
+.workflow-home {
+  padding-bottom: 24px;
+}
+</style>

@@ -20,9 +20,11 @@ import {
 } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
+import { useModelCatalogStore } from '@/stores/modelCatalog'
 import EndpointSettings from "@/components/settings/EndpointSettings.vue"
 import ShortcutSettings from '@/components/settings/ShortcutSettings.vue'
 import LLMTabsSettings from "@/components/settings/LLMTabsSettings.vue"
+import EmbeddingTabsSettings from "@/components/settings/EmbeddingTabsSettings.vue"
 import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
 import { hashObject } from "@/utils/util"
@@ -34,6 +36,7 @@ const { t } = useI18n()
 const loading = ref(true)
 
 const userSettings = useUserSettingsStore()
+const modelCatalogStore = useModelCatalogStore()
 const { theme } = storeToRefs(userSettings)
 const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
 
@@ -112,6 +115,7 @@ const saveSetting = async (updateShortcuts = false) => {
   saving.value = true
   userSettings.setSetting(toRaw(settingForm))
   await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts })
+  modelCatalogStore.setPayloadFromSettings({ data: toRaw(settingForm.data) })
   message.success(t('settings.save_success'))
   saving.value = false
   chatModelOptions.value = getChatModelOptions()
@@ -273,29 +277,22 @@ watch(selectedKeys, () => {
               {{ t('settings.save') }}
             </a-button>
           </template>
-          <a-tabs tab-position="left">
-            <a-tab-pane key="text-embeddings-inference" tab="text-embeddings-inference">
-              <a-flex vertical justify="center" gap="middle">
-                <a-alert message="text-embeddings-inference deployment" type="info">
-                  <template #description>
-                    <a-typography-link style="text-align: center;" target="_blank"
-                      href="https://github.com/huggingface/text-embeddings-inference">
-                      https://github.com/huggingface/text-embeddings-inference
-                    </a-typography-link>
-                  </template>
-                </a-alert>
-                <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                  <a-form-item label="API Base">
-                    <a-input v-model:value="settingForm.data.embedding_models.text_embeddings_inference.api_base" />
-                  </a-form-item>
-                  <a-form-item label="API Key">
-                    <a-input-password
-                      v-model:value="settingForm.data.embedding_models.text_embeddings_inference.api_key" />
-                  </a-form-item>
-                </a-form>
-              </a-flex>
-            </a-tab-pane>
-          </a-tabs>
+          <a-flex vertical gap="middle">
+            <a-alert :message="t('settings.embedding_models')" type="info">
+              <template #description>
+                <a-typography-paragraph style="margin-bottom: 8px;">
+                  {{ t('settings.embedding_settings_tip') }}
+                </a-typography-paragraph>
+                <a-typography-link target="_blank" href="https://github.com/huggingface/text-embeddings-inference">
+                  text-embeddings-inference
+                </a-typography-link>
+              </template>
+            </a-alert>
+            <EmbeddingTabsSettings
+              v-if="settingForm.data.llm_settings?.embedding_backends && settingForm.data.llm_settings?.endpoints"
+              v-model="settingForm.data.llm_settings.embedding_backends"
+              :endpoints="settingForm.data.llm_settings.endpoints" />
+          </a-flex>
         </a-card>
 
         <a-card v-show="selectedKeys == 'asr'" :title="t('settings.asr')" :loading="loading">
@@ -318,7 +315,7 @@ watch(selectedKeys, () => {
             </a-form-item>
             <a-form-item :label="t('settings.provider_for_asr')">
               <a-select v-model:value="settingForm.data.asr.provider"
-                :options="[{ label: 'OpenAI', value: 'openai' }, { label: 'Deepgram', value: 'deepgram' }]" />
+                :options="[{ label: 'OpenAI', value: 'openai' }]" />
             </a-form-item>
           </a-form>
           <a-tabs tab-position="left">
@@ -341,29 +338,6 @@ watch(selectedKeys, () => {
                   </a-form-item>
                   <a-form-item v-if="!settingForm.data.asr.openai.same_as_llm" :label="t('common.model')">
                     <a-input v-model:value="settingForm.data.asr.openai.model" />
-                  </a-form-item>
-                </a-form>
-              </a-flex>
-            </a-tab-pane>
-            <a-tab-pane key="deepgram" tab="Deepgram">
-              <a-flex vertical justify="center" gap="middle">
-                <a-alert message="Deepgram" type="info">
-                  <template #description>
-                    <a-typography-link style="text-align: center;" target="_blank"
-                      href="https://developers.deepgram.com/docs">
-                      https://developers.deepgram.com/docs
-                    </a-typography-link>
-                  </template>
-                </a-alert>
-                <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
-                  <a-form-item label="API Key">
-                    <a-input-password v-model:value="settingForm.data.asr.deepgram.api_key" />
-                  </a-form-item>
-                  <a-form-item :label="t('common.model')">
-                    <a-input v-model:value="settingForm.data.asr.deepgram.speech_to_text.model" />
-                  </a-form-item>
-                  <a-form-item :label="t('common.language')">
-                    <a-input v-model:value="settingForm.data.asr.deepgram.speech_to_text.language" />
                   </a-form-item>
                 </a-form>
               </a-flex>

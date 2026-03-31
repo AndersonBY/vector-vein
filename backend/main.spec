@@ -1,5 +1,20 @@
 # -*- mode: python ; coding: utf-8 -*-
 
+import sys
+from pathlib import Path
+
+qt_extra_trees = []
+if sys.platform.startswith("linux"):
+    try:
+        import PySide6
+
+        pyside6_qt_dir = Path(PySide6.__file__).resolve().parent / "Qt"
+        for subdir in ("lib", "plugins", "qml"):
+            qt_path = pyside6_qt_dir / subdir
+            if qt_path.exists():
+                qt_extra_trees.append(Tree(str(qt_path), prefix=f"PySide6/Qt/{subdir}"))
+    except ImportError:
+        pass
 
 block_cipher = None
 
@@ -24,6 +39,11 @@ a = Analysis(
         "tiktoken_ext",
         "pyecharts",
         "kombu.transport.sqlalchemy",
+        "webview.platforms.qt",
+        "qtpy",
+        "PySide6.QtQml",
+        "PySide6.QtQuick",
+        "PySide6.QtQuickWidgets",
     ],
     hookspath=["./hooks"],
     hooksconfig={},
@@ -34,6 +54,9 @@ a = Analysis(
     cipher=block_cipher,
     noarchive=False,
 )
+for qt_tree in qt_extra_trees:
+    a.datas += qt_tree
+
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(

@@ -3,17 +3,21 @@
 import json
 import time
 import random
-from typing import Any, Iterable
+from collections.abc import Generator
 from traceback import format_exc
+from typing import Any, Iterable, Literal, Protocol, TypeGuard, cast, overload
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from vectorvein.chat_clients import create_chat_client
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.chat_clients.utils import get_token_counts, format_messages
-from vectorvein.types import (
-    BackendType,
-    ModelSetting,
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.chat_clients.base_client import BaseChatClient
+from vv_llm.chat_clients.utils import get_token_counts, format_messages
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.types import (
     APIStatusError,
+    BackendType,
+    ChatCompletionDeltaMessage,
+    ChatCompletionMessage,
+    ModelSetting,
     EndpointSetting,
     EndpointOptionDict,
     NotGiven,
@@ -22,6 +26,7 @@ from vectorvein.types import (
     ToolChoice,
     ResponseFormat,
     ThinkingConfigEnabledParam,
+    ThinkingConfigParam,
 )
 
 from utilities.config import Settings
@@ -34,6 +39,62 @@ from .types.output import ModelOutput
 
 
 mprint = mprint_with_name(name="LLM Tasks")
+
+ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
+
+
+class _ChatCompletionCreator(Protocol):
+    @overload
+    def __call__(
+        self,
+        *,
+        messages: list[Any],
+        model: str | None = None,
+        stream: Literal[True],
+        temperature: float | None | NotGiven = NOT_GIVEN,
+        max_tokens: int | None | NotGiven = None,
+        tools: Iterable[ToolParam] | NotGiven = NOT_GIVEN,
+        tool_choice: ToolChoice | NotGiven = NOT_GIVEN,
+        response_format: ResponseFormat | NotGiven = NOT_GIVEN,
+        top_p: float | NotGiven | None = NOT_GIVEN,
+        skip_cutoff: bool = False,
+        thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
+        reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN,
+        extra_body: object | None = None,
+    ) -> Generator[ChatCompletionDeltaMessage, Any, None]: ...
+
+    @overload
+    def __call__(
+        self,
+        *,
+        messages: list[Any],
+        model: str | None = None,
+        stream: Literal[False] = False,
+        temperature: float | None | NotGiven = NOT_GIVEN,
+        max_tokens: int | None | NotGiven = None,
+        tools: Iterable[ToolParam] | NotGiven = NOT_GIVEN,
+        tool_choice: ToolChoice | NotGiven = NOT_GIVEN,
+        response_format: ResponseFormat | NotGiven = NOT_GIVEN,
+        top_p: float | NotGiven | None = NOT_GIVEN,
+        skip_cutoff: bool = False,
+        thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
+        reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN,
+        extra_body: object | None = None,
+    ) -> ChatCompletionMessage: ...
+
+
+def _enabled_thinking_config(
+    thinking: ThinkingConfigParam | None | NotGiven,
+) -> ThinkingConfigEnabledParam | None:
+    if _is_enabled_thinking_config(thinking):
+        return thinking
+    return None
+
+
+def _is_enabled_thinking_config(value: object) -> TypeGuard[ThinkingConfigEnabledParam]:
+    if not isinstance(value, dict):
+        return False
+    return cast(dict[str, object], value).get("type") == "enabled"
 
 
 def get_endpoint_id(endpoint_option: EndpointOptionDict | str) -> str:
@@ -100,7 +161,7 @@ class BaseLLMTask:
         self.system_prompt: str = self.workflow.get_node_field_value(node_id, "system_prompt", "")
 
         user_settings = Settings()
-        vectorvein_settings.load(user_settings.llm_settings)
+        vv_llm_settings.load(user_settings.llm_settings)
 
         if self.model.startswith(("o1", "o3-mini", "o4-mini", "gpt-5")):
             self.temperature = 1.0
@@ -119,7 +180,7 @@ class BaseLLMTask:
             "claude-sonnet-4-5-20250929-thinking",
         ):
             self.original_model = self.model = self.model.removesuffix("-thinking")
-            self.thinking: ThinkingConfigEnabledParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
+            self.thinking: ThinkingConfigParam | None | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             self.temperature = 1.0
         else:
             self.thinking = NOT_GIVEN
@@ -130,7 +191,7 @@ class BaseLLMTask:
         if self.model and self.model.startswith(("o3-mini", "o4-mini")):
             self.top_p = NOT_GIVEN
 
-        self.reasoning_effort: NotGiven | str = NOT_GIVEN
+        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
         if self.model == "o3-mini-high":
             self.original_model = self.model = "o3-mini"
             self.reasoning_effort = "high"
@@ -139,7 +200,7 @@ class BaseLLMTask:
             self.original_model = self.model = "o4-mini"
             self.reasoning_effort = "high"
 
-        self.extra_body: dict[str, bool | int | dict] = {}
+        self.extra_body: object | None = None
         if self.model.startswith("qwen3"):
             self.stream = True  # 百炼上思考模式只支持流式输出
             if self.model.endswith("-thinking"):
@@ -199,6 +260,54 @@ class BaseLLMTask:
         self.total_completion_tokens = 0
         mprint(f"Prompts count: {self.prompts_count}")
 
+    def _create_stream_completion(
+        self,
+        chat_client: BaseChatClient,
+        messages: list[Any],
+        backend_type: BackendType,
+        max_tokens: int,
+    ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
+        create_completion = cast(_ChatCompletionCreator, chat_client.create_completion)
+        return create_completion(
+            model=self.model,
+            messages=format_messages(messages, backend=backend_type),
+            temperature=self.temperature,
+            max_tokens=max_tokens,
+            stream=True,
+            response_format=self.response_format,
+            tools=self.tools,
+            tool_choice=self.tool_choice,
+            top_p=self.top_p,
+            skip_cutoff=True,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
+            extra_body=self.extra_body,
+        )
+
+    def _create_completion_response(
+        self,
+        chat_client: BaseChatClient,
+        messages: list[Any],
+        backend_type: BackendType,
+        max_tokens: int,
+    ) -> ChatCompletionMessage:
+        create_completion = cast(_ChatCompletionCreator, chat_client.create_completion)
+        return create_completion(
+            model=self.model,
+            messages=format_messages(messages, backend=backend_type),
+            temperature=self.temperature,
+            max_tokens=max_tokens,
+            stream=False,
+            response_format=self.response_format,
+            tools=self.tools,
+            tool_choice=self.tool_choice,
+            top_p=self.top_p,
+            skip_cutoff=True,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
+            extra_body=self.extra_body,
+        )
+
     def endpoint_available(self, endpoint: EndpointSetting, add_record: bool = True) -> bool:
         """
         Check if the endpoint is available under the current rate limits.
@@ -248,16 +357,18 @@ class BaseLLMTask:
         else:
             max_tokens = self.model_settings.max_output_tokens
 
-        if self.thinking:
+        thinking_config = _enabled_thinking_config(self.thinking)
+        if thinking_config is not None:
             max_tokens = 16000
-            self.thinking["budget_tokens"] = max_tokens - 1000
+            thinking_config["budget_tokens"] = max_tokens - 1000
 
         request_success = False
-        stream_response = response = None
+        stream_response: Generator[ChatCompletionDeltaMessage, Any, None] | None = None
+        response: ChatCompletionMessage | None = None
         start_time = time.time()
         endpoints = self.model_settings.endpoints.copy()
         random.shuffle(endpoints)
-        _chat_client = create_chat_client(
+        _chat_client: BaseChatClient = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
             temperature=self.temperature,
@@ -266,7 +377,7 @@ class BaseLLMTask:
             # 遍历所有端点，找到一个可用的
             for endpoint_option in endpoints:
                 endpoint_id = get_endpoint_id(endpoint_option)
-                endpoint = vectorvein_settings.get_endpoint(endpoint_id)
+                endpoint = vv_llm_settings.get_endpoint(endpoint_id)
                 if not self.endpoint_available(endpoint):
                     continue
                 _chat_client.endpoint = endpoint
@@ -276,36 +387,18 @@ class BaseLLMTask:
                     backend_type = self.MODEL_TYPE
                 try:
                     if self.stream:
-                        stream_response = _chat_client.create_completion(
-                            model=self.model,
-                            messages=format_messages(messages, backend=backend_type),
-                            temperature=self.temperature,
-                            max_tokens=max_tokens,
-                            stream=True,
-                            response_format=self.response_format,
-                            tools=self.tools,
-                            tool_choice=self.tool_choice,
-                            top_p=self.top_p,
-                            skip_cutoff=True,
-                            thinking=self.thinking,
-                            reasoning_effort=self.reasoning_effort,  # type: ignore
-                            extra_body=self.extra_body,
+                        stream_response = self._create_stream_completion(
+                            _chat_client,
+                            messages,
+                            backend_type,
+                            max_tokens,
                         )
                     else:
-                        response = _chat_client.create_completion(
-                            model=self.model,
-                            messages=format_messages(messages, backend=backend_type),
-                            temperature=self.temperature,
-                            max_tokens=max_tokens,
-                            stream=False,
-                            response_format=self.response_format,
-                            tools=self.tools,
-                            tool_choice=self.tool_choice,
-                            top_p=self.top_p,
-                            skip_cutoff=True,
-                            thinking=self.thinking,
-                            reasoning_effort=self.reasoning_effort,  # type: ignore
-                            extra_body=self.extra_body,
+                        response = self._create_completion_response(
+                            _chat_client,
+                            messages,
+                            backend_type,
+                            max_tokens,
                         )
                     request_success = True
                     self.add_endpoint_request_record(endpoint)
@@ -434,4 +527,4 @@ class BaseLLMTask:
         return self.workflow.data
 
     def get_max_concurrent_requests(self):
-        return max(vectorvein_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)
+        return max(vv_llm_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)

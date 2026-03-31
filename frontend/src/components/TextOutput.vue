@@ -3,7 +3,9 @@ import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount, h, render }
 import { Copy } from '@icon-park/vue-next'
 import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'
-import markdownItKatex from '@vscode/markdown-it-katex'
+import markdownItKatexModule from '@vscode/markdown-it-katex'
+
+const markdownItKatex = markdownItKatexModule.default || markdownItKatexModule
 import MarkdownItGitHubAlerts from 'markdown-it-github-alerts'
 import MarkdownItLinkAttributes from 'markdown-it-link-attributes'
 import MermaidRenderer from '@/components/workspace/MermaidRenderer.vue'

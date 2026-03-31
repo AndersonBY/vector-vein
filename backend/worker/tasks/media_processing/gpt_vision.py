@@ -1,4 +1,4 @@
-from vectorvein.types.enums import BackendType
+from vv_llm.types.enums import BackendType
 
 from .base_vlm import BaseVLMTask
 

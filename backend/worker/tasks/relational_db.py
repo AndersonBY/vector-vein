@@ -5,9 +5,9 @@ import csv
 from io import StringIO
 
 import sqlparse
-from vectorvein.types import BackendType
-from vectorvein.chat_clients import create_chat_client
-from vectorvein.settings import settings as vectorvein_settings
+from vv_llm.types import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.settings import settings as vv_llm_settings
 
 from models import (
     UserRelationalTable,
@@ -216,7 +216,7 @@ def smart_query(
         ]
 
     user_settings = Settings()
-    vectorvein_settings.load(user_settings.get("llm_settings"))
+    vv_llm_settings.load(user_settings.get("llm_settings"))
     client = create_chat_client(backend=BackendType(backend.lower()), model=model.lower(), stream=False)
     system_message = {
         "role": "system",

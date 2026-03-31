@@ -19,12 +19,14 @@ import TagInput from '@/components/workspace/TagInput.vue'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 import CodeEditorModal from '@/components/CodeEditorModal.vue'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
+import ImageCarousel from '@/components/ImageCarousel.vue'
 import UIDesign from '@/components/workspace/UIDesign.vue'
 import VueFlowStyleSettings from '@/components/workspace/VueFlowStyleSettings.vue'
 import TagManage from '@/components/workspace/TagManage.vue'
 import WorkflowUse from '@/components/workspace/WorkflowUse.vue'
 import { ObjectHasher, formatTime, deepCopy } from '@/utils/util'
-import { nodeCategoryOptions } from "@/utils/common"
+import { nodeCategoryOptions, plannedNodeManifest } from "@/config/nodeManifest"
+import { isFeatureEnabled } from '@/config/featureFlags'
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'
 import { workflowAPI, workflowTemplateAPI, workflowRunRecordAPI } from "@/api/workflow"
@@ -75,6 +77,20 @@ const useNodeMessages = useNodeMessagesStore()
 const { nodeMessagesCount, nodeMessages } = storeToRefs(useNodeMessages)
 
 const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark')
+const NODE_RECENT_STORAGE_KEY = 'workflow-editor:recent-node-types'
+const prettifyNodeType = (nodeType) => nodeType.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+const getStoredRecentNodes = () => {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(NODE_RECENT_STORAGE_KEY) || '[]')
+    return Array.isArray(parsed) ? parsed : []
+  } catch (error) {
+    return []
+  }
+}
+const nodeSearchKeyword = ref('')
+const selectedNodeCategory = ref('all')
+const selectedNodeTag = ref('all')
+const recentNodeTypes = ref(getStoredRecentNodes())
 
 const savedWorkflowHash = ref('')
 const hasher = new ObjectHasher(['data.viewport', 'data.related_workflows'])
@@ -598,6 +614,21 @@ const addNodeToCanvas = (nodeType, position, updateTemplateData = {}, extraData 
   }
 
   addNodes([newNode])
+  recentNodeTypes.value = [nodeType, ...recentNodeTypes.value.filter((item) => item !== nodeType)].slice(0, 10)
+  localStorage.setItem(NODE_RECENT_STORAGE_KEY, JSON.stringify(recentNodeTypes.value))
+}
+
+const addNodeToViewportCenter = (nodeType) => {
+  const canvasRect = vueFlowRef.value?.getBoundingClientRect?.()
+  if (!canvasRect) {
+    addNodeToCanvas(nodeType, { x: 120, y: 120 })
+    return
+  }
+  const { x, y, zoom } = viewport.value
+  addNodeToCanvas(nodeType, {
+    x: (canvasRect.width / 2 - x) / zoom,
+    y: (canvasRect.height / 2 - y) / zoom,
+  })
 }
 
 const onNewNodeDragEnd = (event) => {
@@ -633,11 +664,13 @@ const onNewNodeDragEnd = (event) => {
 
 const nodeFiles = import.meta.glob([
   '@/components/nodes/*/*.vue',
+  '@/extensions/nodes/*/*.vue',
   '!@/components/nodes/*/_*.vue'
 ], { eager: true })
 
 const nodeTemplateFiles = import.meta.glob([
   '@/components/nodes/*/*.js',
+  '@/extensions/nodes/*/*.js',
   '!@/components/nodes/*/_*.js'
 ], { eager: true })
 const nodeTypes = {}
@@ -651,7 +684,10 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
   nodeTypes[name] = markRaw(component.default)
 
   const nodeTemplate = nodeTemplateFiles[path.replace(/\.vue$/, '.js')]
-  nodeTemplateCreators[name] = nodeTemplate?.createTemplateData
+  if (typeof nodeTemplate?.createTemplateData !== 'function') {
+    return
+  }
+  nodeTemplateCreators[name] = nodeTemplate.createTemplateData
   if (nodeTemplateCreators[name]().deprecated) return
   if (!nodeCategories[categoryName]) {
     nodeCategories[categoryName] = []
@@ -659,6 +695,109 @@ Object.entries(nodeFiles).forEach(([path, component]) => {
   nodeCategories[categoryName].push(name)
   nodeCategoriesReverse[name] = categoryName
 })
+
+const getNodeTitle = (categoryName, nodeType) => {
+  const translationKey = `components.nodes.${categoryName}.${nodeType}.title`
+  return te(translationKey) ? t(translationKey) : prettifyNodeType(nodeType)
+}
+
+const getNodeDescription = (categoryName, nodeType) => {
+  const translationKey = `components.nodes.${categoryName}.${nodeType}.description`
+  return te(translationKey) ? t(translationKey) : ''
+}
+
+const getNodeCategoryTitle = (categoryName) => {
+  const translationKey = `components.nodes.${categoryName}.title`
+  return te(translationKey) ? t(translationKey) : categoryName
+}
+
+const isNodeEnabled = (nodeType) => {
+  const nodeMeta = plannedNodeManifest[nodeType]
+  if (!nodeMeta?.featureFlag) {
+    return true
+  }
+  return isFeatureEnabled(nodeMeta.featureFlag)
+}
+
+const getNodeSearchMeta = (nodeType, categoryName = nodeCategoriesReverse[nodeType]) => {
+  const manifestMeta = plannedNodeManifest[nodeType] || {}
+  return {
+    nodeType,
+    categoryName,
+    title: getNodeTitle(categoryName, nodeType),
+    description: getNodeDescription(categoryName, nodeType),
+    tags: [categoryName, ...(manifestMeta.tags || [])],
+  }
+}
+
+const nodeCategoryFilterOptions = computed(() => [
+  { label: t('common.all'), value: 'all' },
+  ...nodeCategoryOptions.map((category) => ({
+    label: getNodeCategoryTitle(category.name),
+    value: category.name,
+  })),
+])
+
+const nodeTagFilterOptions = computed(() => {
+  const tags = new Set()
+  Object.entries(nodeCategoriesReverse).forEach(([nodeType, categoryName]) => {
+    if (!isNodeEnabled(nodeType)) {
+      return
+    }
+    getNodeSearchMeta(nodeType, categoryName).tags.forEach((tag) => tags.add(tag))
+  })
+  return [
+    { label: t('common.all_tags'), value: 'all' },
+    ...Array.from(tags).sort().map((tag) => ({ label: tag, value: tag })),
+  ]
+})
+
+const filteredNodeCategories = computed(() => {
+  const keyword = nodeSearchKeyword.value.trim().toLowerCase()
+  const result = {}
+  Object.entries(nodeCategories).forEach(([categoryName, categoryNodes]) => {
+    if (selectedNodeCategory.value !== 'all' && selectedNodeCategory.value !== categoryName) {
+      return
+    }
+    const filtered = categoryNodes.filter((nodeType) => {
+      if (!isNodeEnabled(nodeType)) {
+        return false
+      }
+      const meta = getNodeSearchMeta(nodeType, categoryName)
+      if (selectedNodeTag.value !== 'all' && !meta.tags.includes(selectedNodeTag.value)) {
+        return false
+      }
+      if (!keyword) {
+        return true
+      }
+      return [meta.title, meta.description, ...meta.tags]
+        .filter(Boolean)
+        .some((item) => item.toLowerCase().includes(keyword))
+    })
+    if (filtered.length > 0) {
+      result[categoryName] = filtered
+    }
+  })
+  return result
+})
+
+const visibleNodeCategoryOptions = computed(() => nodeCategoryOptions.filter((category) => filteredNodeCategories.value[category.name]?.length))
+const recentNodeEntries = computed(() => recentNodeTypes.value
+  .filter((nodeType) => nodeCategoriesReverse[nodeType] && isNodeEnabled(nodeType))
+  .map((nodeType) => getNodeSearchMeta(nodeType))
+  .filter((item) => {
+    if (selectedNodeCategory.value !== 'all' && selectedNodeCategory.value !== item.categoryName) {
+      return false
+    }
+    if (selectedNodeTag.value !== 'all' && !item.tags.includes(selectedNodeTag.value)) {
+      return false
+    }
+    const keyword = nodeSearchKeyword.value.trim().toLowerCase()
+    if (!keyword) {
+      return true
+    }
+    return [item.title, item.description, ...item.tags].some((value) => value.toLowerCase().includes(keyword))
+  }))
 
 const codeEditorModal = reactive({
   open: false,
@@ -954,19 +1093,42 @@ const llmNodesCount = computed(() => {
         :trigger="null" :width="220" collapsible :collapsedWidth="48" @collapse="onCollapse" breakpoint="lg"
         :theme="componentTheme" :style="{ overflowY: sidebarHover ? 'auto' : 'hidden' }"
         @mouseover="sidebarHover = true" @mouseleave="sidebarHover = false">
+        <div v-if="!collapsed" class="node-sidebar-tools">
+          <a-input-search v-model:value="nodeSearchKeyword" allow-clear
+            :placeholder="t('workspace.workflowEditor.search_nodes_placeholder')" />
+          <a-select v-model:value="selectedNodeCategory" :options="nodeCategoryFilterOptions" />
+          <a-select v-model:value="selectedNodeTag" :options="nodeTagFilterOptions" />
+          <div v-if="recentNodeEntries.length > 0" class="recent-node-section">
+            <a-typography-text strong>
+              {{ t('workspace.workflowEditor.recent_nodes') }}
+            </a-typography-text>
+            <a-flex wrap gap="small">
+              <a-tag v-for="node in recentNodeEntries" :key="`recent-${node.nodeType}`" class="recent-node-tag"
+                @click="addNodeToViewportCenter(node.nodeType)">
+                {{ node.title }}
+              </a-tag>
+            </a-flex>
+          </div>
+        </div>
         <a-menu :theme="componentTheme" mode="inline">
-          <a-sub-menu v-for="category in nodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
+          <a-sub-menu v-for="category in visibleNodeCategoryOptions" :key="`category-${category.name}`" :icon="category.icon">
             <template #title>
-              {{ t(`components.nodes.${category.name}.title`) }}
+              {{ getNodeCategoryTitle(category.name) }}
             </template>
             <a-menu-item :data-node-type="node" :id="node" draggable="true" @touchstart="onTouchStart"
               @touchmove="onTouchMove" @dragend="onNewNodeDragEnd" @touchend="onNewNodeDragEnd"
-              v-for="(node, nodeIndex) in nodeCategories[category.name]" :key="`node-${nodeIndex}`">
+              @click="addNodeToViewportCenter(node)"
+              v-for="(node, nodeIndex) in filteredNodeCategories[category.name]" :key="`node-${nodeIndex}`">
               <span :data-node-type="node">
-                {{ t(`components.nodes.${category.name}.${node}.title`) }}
+                {{ getNodeTitle(category.name, node) }}
               </span>
             </a-menu-item>
           </a-sub-menu>
+          <div v-if="visibleNodeCategoryOptions.length === 0 && !collapsed" class="empty-node-search-state">
+            <a-typography-text type="secondary">
+              {{ t('workspace.workflowEditor.no_nodes_found') }}
+            </a-typography-text>
+          </div>
           <div class="collapse-button">
             <a-button type="text" @click="onCollapse(!collapsed)">
               <MenuFoldOne v-if="collapsed" class="trigger" />
@@ -1046,6 +1208,29 @@ const llmNodesCount = computed(() => {
 
 .editor-container .ant-layout-sider {
   height: calc(100vh - 40px - 40px);
+}
+
+.node-sidebar-tools {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+}
+
+.recent-node-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.recent-node-tag {
+  cursor: pointer;
+  user-select: none;
+}
+
+.empty-node-search-state {
+  padding: 16px 12px 0;
 }
 
 .editor-canvas {
@@ -1168,7 +1353,7 @@ const llmNodesCount = computed(() => {
   background-color: rgba(24, 144, 255, 0.1);
 }
 
-.node-icon :deep(svg) {
+:deep(.node-icon svg) {
   fill: #1890ff;
   font-size: 24px;
 }

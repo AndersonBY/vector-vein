@@ -35,6 +35,7 @@ class FastAPIServer:
         self.actual_port = None
         self.setup_fastapi_app()
         self.thread = None
+        self.server = None
         self.server_started_event = Event()
 
     def setup_fastapi_app(self):
@@ -382,23 +383,26 @@ class FastAPIServer:
                 port=self.actual_port,
                 log_level="warning",  # Reduce log noise for desktop app
             )
-            server = uvicorn.Server(config)
+            self.server = uvicorn.Server(config)
 
             # Set up startup callback
-            original_startup = server.startup
+            original_startup = self.server.startup
 
             async def new_startup(sockets=None):
                 await original_startup(sockets)
                 self.server_started_event.set()  # Signal that server has started
 
-            server.startup = new_startup
-            server.run()
+            setattr(self.server, "startup", new_startup)
+            self.server.run()
         except Exception as e:
             mprint.error(f"FastAPI server failed to start: {e}")
             self.server_started_event.set()  # Set event to prevent infinite waiting
+        finally:
+            self.server = None
 
     def start(self):
         """Start FastAPI server in background thread"""
+        self.server_started_event.clear()
         self.thread = Thread(target=self._run_server, daemon=True)
         self.thread.start()
 
@@ -417,8 +421,19 @@ class FastAPIServer:
 
     def stop(self):
         """Stop FastAPI server"""
-        self.server_started_event.set()
+        if self.server is not None:
+            self.server.should_exit = True
         if self.thread:
             self.thread.join(timeout=5)
-            self.thread = None
+            if self.thread.is_alive():
+                if self.server is not None:
+                    self.server.force_exit = True
+                self.thread.join(timeout=1)
+                if self.thread.is_alive():
+                    mprint.warning("FastAPI server thread did not stop within timeout")
+                else:
+                    self.thread = None
+            else:
+                self.thread = None
+        self.server_started_event.clear()
         mprint("FastAPI server stopped")

@@ -3,12 +3,13 @@ import { ref, nextTick, watch, onBeforeMount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { Home, Star, More, Delete, ExpandLeft, ExpandRight } from '@icon-park/vue-next'
+import { Home, Star, More, Delete, ExpandLeft, ExpandRight, AlarmClock } from '@icon-park/vue-next'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { formatTime } from '@/utils/util'
 import { workflowAPI } from "@/api/workflow"
+import { FEATURE_FLAGS, isFeatureEnabled } from '@/config/featureFlags'
 
 const { t } = useI18n()
 const loading = ref(false)
@@ -22,10 +23,15 @@ const workflowId = ref(route.params.workflowId)
 const selectedKeys = ref([workflowId.value])
 const openKeys = ref(['user-workflows'])
 const collapsed = ref(false)
+const scheduleFeatureEnabled = isFeatureEnabled(FEATURE_FLAGS.schedule)
 
 const setSelectedKeys = (route) => {
   if (route.name == 'WorkflowSpaceMain') {
     selectedKeys.value = ['my_index']
+  } else if (route.name == 'WorkflowScheduleManager') {
+    selectedKeys.value = ['schedule_manager']
+  } else if (route.name == 'WorkflowTrash') {
+    selectedKeys.value = ['trash']
   } else if (route.name == 'WorkflowUse') {
     workflowId.value = route.params.workflowId
     selectedKeys.value = [route.params.workflowId]
@@ -97,6 +103,18 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
             <router-link :to="{ name: 'WorkflowSpaceMain' }">
               <Home theme="filled" />
               {{ t('workspace.workflowSpace.workflow_index') }}
+            </router-link>
+          </a-menu-item>
+          <a-menu-item v-if="scheduleFeatureEnabled" key="schedule_manager">
+            <router-link :to="{ name: 'WorkflowScheduleManager' }">
+              <AlarmClock theme="filled" />
+              {{ t('workspace.workflowSpace.manage_schedule') }}
+            </router-link>
+          </a-menu-item>
+          <a-menu-item key="trash">
+            <router-link :to="{ name: 'WorkflowTrash' }">
+              <Delete theme="filled" />
+              {{ t('workspace.workflowSpace.trash') }}
             </router-link>
           </a-menu-item>
           <a-sub-menu key="user-workflows">

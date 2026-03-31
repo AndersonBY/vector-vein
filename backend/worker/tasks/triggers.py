@@ -14,3 +14,12 @@ def button_trigger(
 ):
     workflow = Workflow(workflow_data)
     return workflow.data
+
+
+@task
+def schedule_trigger(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    return workflow.data

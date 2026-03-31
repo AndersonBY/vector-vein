@@ -3,6 +3,7 @@
 # @Date:   2023-05-15 02:02:39
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-07-01 18:31:32
+from copy import deepcopy
 from datetime import datetime
 
 from peewee import fn
@@ -21,7 +22,7 @@ from api.utils import (
     get_user_object_general,
 )
 from utilities.config import cache
-from utilities.workflow import WorkflowData
+from utilities.workflow import WorkflowData, validate_cron_expression, get_next_run_time
 from utilities.file_processing import static_file_server
 from celery_tasks import update_workflow_tool_call_data
 
@@ -35,6 +36,35 @@ def copy_images(images):
         image_url = static_file_server.get_static_file_url(image, "images")
         copied_images.append(image_url)
     return copied_images
+
+
+def _serialize_workflow_summary(workflow: Workflow | None):
+    if workflow is None:
+        return None
+    return {
+        "wid": workflow.wid.hex,
+        "title": workflow.title,
+        "status": workflow.status,
+        "version": workflow.version,
+        "update_time": int(workflow.update_time.timestamp() * 1000) if workflow.update_time else None,
+    }
+
+
+def _latest_schedule_record(workflow: Workflow | None):
+    if workflow is None:
+        return None
+    record = (
+        WorkflowRunRecord.select()
+        .where(
+            WorkflowRunRecord.workflow == workflow,
+            WorkflowRunRecord.run_from == WorkflowRunRecord.RunFromTypes.SCHEDULE,
+        )
+        .order_by(WorkflowRunRecord.start_time.desc())
+        .first()
+    )
+    if record is None:
+        return None
+    return model_serializer(record)
 
 
 class WorkflowAPI:
@@ -120,7 +150,7 @@ class WorkflowAPI:
         workflow.images = copy_images(images)
         workflow.data = data
         workflow.update_time = datetime.now()
-        workflow.version = str(int(workflow.version or "1") + 1)
+        workflow.version = int(workflow.version or 1) + 1
         workflow.save()
 
         update_workflow_tool_call_data.delay(workflow_wid=workflow.wid.hex, force=title_changed)
@@ -135,8 +165,17 @@ class WorkflowAPI:
         if status != 200 or not isinstance(workflow, Workflow):
             return JResponse(status=status, msg=msg)
 
-        workflow.delete_instance()
-        return JResponse()
+        workflow.status = "DELETED"
+        workflow.is_fast_access = False
+        workflow.update_time = datetime.now()
+        workflow.save()
+
+        (
+            WorkflowRunSchedule.update(status="DELETED", update_time=datetime.now())
+            .where(WorkflowRunSchedule.workflow == workflow)
+            .execute()
+        )
+        return JResponse(data={"wid": workflow.wid.hex})
 
     def list(self, payload):
         tags = payload.get("tags", [])
@@ -147,12 +186,13 @@ class WorkflowAPI:
         page_size = min(payload.get("page_size", 10), 100)
         sort_field = payload.get("sort_field", "update_time")
         sort_order = payload.get("sort_order", "descend")
-        sort_field = getattr(Workflow, sort_field)
+        sort_field = getattr(Workflow, sort_field, Workflow.update_time)
         search_text = payload.get("search_text", "")
         # Ensure search_text is always a string, never None
         if search_text is None:
             search_text = ""
         workflow_related = payload.get("workflow_related", "")
+        only_deleted = payload.get("only_deleted", False)
         if workflow_related:
             status, msg, workflow = get_user_object_general(Workflow, wid=workflow_related)
             if status != 200 or not isinstance(workflow, Workflow):
@@ -161,6 +201,10 @@ class WorkflowAPI:
             workflows = Workflow.select().where(Workflow.wid.in_(related_workflow_ids))
         else:
             workflows = Workflow.select()
+        if only_deleted:
+            workflows = workflows.where(Workflow.status == "DELETED")
+        else:
+            workflows = workflows.where(Workflow.status != "DELETED")
         if tags and len(tags) > 0:
             workflows = workflows.join(Workflow.tags.get_through_model()).where(Workflow.tags.get_through_model().workflowtag_id.in_(tags)).distinct()
         if search_text and len(search_text) > 0:
@@ -177,12 +221,40 @@ class WorkflowAPI:
             "total": workflows_count,
             "page_size": page_size,
             "page": page_num,
+            "fast_access_workflows": [],
         }
         if payload.get("need_fast_access", False):
-            fast_access_workflows = Workflow.select().where(Workflow.is_fast_access).order_by(sort_field)
+            fast_access_workflows = Workflow.select().where(Workflow.is_fast_access, Workflow.status == "VALID").order_by(sort_field)
             response_data["fast_access_workflows"] = model_serializer(fast_access_workflows, many=True, manytomany=True)
 
         return JResponse(data=response_data)
+
+    def trash_list(self, payload):
+        payload = {**payload, "only_deleted": True, "need_fast_access": False}
+        return self.list(payload)
+
+    def trash_restore(self, payload):
+        status, msg, workflow = get_user_object_general(Workflow, wid=payload.get("wid", None))
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
+        workflow.status = "VALID"
+        workflow.update_time = datetime.now()
+        workflow.save()
+        (
+            WorkflowRunSchedule.update(status="VALID", update_time=datetime.now())
+            .where(WorkflowRunSchedule.workflow == workflow)
+            .execute()
+        )
+        return JResponse(data=model_serializer(workflow, manytomany=True))
+
+    def trash_purge(self, payload):
+        status, msg, workflow = get_user_object_general(Workflow, wid=payload.get("wid", None))
+        if status != 200 or not isinstance(workflow, Workflow):
+            return JResponse(status=status, msg=msg)
+
+        workflow.tags.clear()
+        workflow.delete_instance(recursive=True, delete_nullable=True)
+        return JResponse()
 
     def run(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -351,9 +423,10 @@ class WorkflowRunRecordAPI:
         page_size = min(payload.get("page_size", 10), 100)
         sort_field = payload.get("sort_field", "start_time")
         sort_order = payload.get("sort_order", "descend")
-        sort_field = getattr(WorkflowRunRecord, sort_field)
+        sort_field = getattr(WorkflowRunRecord, sort_field, WorkflowRunRecord.start_time)
         wid = payload.get("wid", "")
         status = payload.get("status", [])
+        run_from = payload.get("run_from", [])
         need_workflow = payload.get("need_workflow", False)
         if sort_order == "descend":
             sort_field = sort_field.desc()
@@ -361,7 +434,12 @@ class WorkflowRunRecordAPI:
         if len(wid) > 0:
             records = records.where(WorkflowRunRecord.workflow == wid)
         if status:
-            records = records.filter(status__in=status)
+            records = records.where(WorkflowRunRecord.status.in_(status))
+        if run_from:
+            if isinstance(run_from, list):
+                records = records.where(WorkflowRunRecord.run_from.in_(run_from))
+            else:
+                records = records.where(WorkflowRunRecord.run_from == run_from)
         records_count = records.count()
         offset = (page_num - 1) * page_size
         limit = page_size
@@ -370,11 +448,8 @@ class WorkflowRunRecordAPI:
 
         if need_workflow:
             for record in records_list:
-                workflow = Workflow.get(Workflow.wid == record["workflow"])
-                record["workflow"] = {
-                    "title": workflow.title,
-                    "wid": workflow.wid.hex,
-                }
+                workflow = Workflow.get_or_none(Workflow.wid == record["workflow"])
+                record["workflow"] = _serialize_workflow_summary(workflow)
 
         return JResponse(
             data={
@@ -395,6 +470,25 @@ class WorkflowRunRecordAPI:
 
         record.delete_instance()
         return JResponse()
+
+    def rerun(self, payload):
+        status, msg, record = get_user_object_general(
+            WorkflowRunRecord,
+            rid=payload.get("rid", None),
+        )
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+        workflow = record.workflow
+        if workflow is None or workflow.status == "DELETED":
+            return JResponse(status=404, msg="workflow not found")
+
+        record_rid = run_workflow_common(
+            workflow_data=deepcopy(record.data),
+            workflow=workflow,
+            run_from=payload.get("run_from", WorkflowRunRecord.RunFromTypes.WEB),
+            workflow_version=payload.get("version", record.workflow_version),
+        )
+        return JResponse(data={"rid": record_rid})
 
 
 class WorkflowTagAPI:
@@ -467,55 +561,160 @@ class WorkflowTagAPI:
         return JResponse(data=model_serializer(all_tags, many=True))
 
 
-# TODO: Implement this
 class WorkflowRunScheduleAPI:
     name = "workflow_schedule_trigger"
 
-    def update(self, payload):
-        status, msg, workflow = get_user_object_general(
-            Workflow,
-            wid=payload.get("wid", None),
-        )
-        if status != 200 or not isinstance(workflow, Workflow):
+    def get(self, payload):
+        sid = payload.get("sid")
+        if sid:
+            status, msg, run_schedule = get_user_object_general(WorkflowRunSchedule, sid=sid)
+        else:
+            status, msg, workflow = get_user_object_general(Workflow, wid=payload.get("wid"))
+            if status != 200 or not isinstance(workflow, Workflow):
+                return JResponse(status=status, msg=msg)
+            run_schedule = (
+                WorkflowRunSchedule.select()
+                .where(WorkflowRunSchedule.workflow == workflow, WorkflowRunSchedule.status != "DELETED")
+                .first()
+            )
+            if run_schedule is None:
+                return JResponse(status=404, msg="run schedule not found")
+            status, msg = 200, ""
+        if status != 200 or not isinstance(run_schedule, WorkflowRunSchedule):
             return JResponse(status=status, msg=msg)
 
-        workflow_data = payload.get("data", {})
-        workflow.data = workflow_data
-        workflow.save()
-        workflow_data["wid"] = workflow.wid.hex
-        cron_expression = ""
-
-        run_schedule_qs = WorkflowRunSchedule.select().join(Workflow).where(Workflow.id == workflow.id)
-        if run_schedule_qs.exists():
-            run_schedule = run_schedule_qs.first()
-            run_schedule.cron_expression = cron_expression
-            run_schedule.data = workflow_data
-            run_schedule.save()
-        else:
-            run_schedule = WorkflowRunSchedule.create(
-                workflow=workflow,
-                cron_expression=cron_expression,
-                data=workflow_data,
+        data = model_serializer(run_schedule)
+        data["workflow"] = _serialize_workflow_summary(run_schedule.workflow)
+        data["latest_record"] = _latest_schedule_record(run_schedule.workflow)
+        data["next_run_at"] = None
+        if run_schedule.cron_expression:
+            next_run_at = get_next_run_time(
+                run_schedule.cron_expression,
+                run_schedule.data.get("timezone", "Asia/Shanghai") if isinstance(run_schedule.data, dict) else "Asia/Shanghai",
             )
-        # minute, hour, day_of_month, month_of_year, day_of_week = cron_expression.split(" ")
-        # timezone = pytz.timezone(payload.get("timezone", "Asia/Shanghai"))
-        # TODO: Add to scheduler
-        return JResponse()
+            if next_run_at is not None:
+                data["next_run_at"] = int(next_run_at.timestamp() * 1000)
+        return JResponse(data=data)
+
+    def list(self, payload):
+        page_num = payload.get("page", 1)
+        page_size = min(payload.get("page_size", 10), 100)
+        sort_field_name = payload.get("sort_field", "update_time")
+        sort_field = getattr(WorkflowRunSchedule, sort_field_name, WorkflowRunSchedule.update_time)
+        sort_order = payload.get("sort_order", "descend")
+        wid = payload.get("wid", "")
+
+        schedules = (
+            WorkflowRunSchedule.select(WorkflowRunSchedule, Workflow)
+            .join(Workflow)
+            .where(WorkflowRunSchedule.status != "DELETED", Workflow.status != "DELETED")
+        )
+        if wid:
+            schedules = schedules.where(WorkflowRunSchedule.workflow == wid)
+        if sort_order == "descend":
+            sort_field = sort_field.desc()
+
+        total = schedules.count()
+        schedules = schedules.order_by(sort_field).offset((page_num - 1) * page_size).limit(page_size)
+
+        schedule_list = []
+        for schedule in schedules:
+            item = model_serializer(schedule)
+            item["workflow"] = _serialize_workflow_summary(schedule.workflow)
+            item["latest_record"] = _latest_schedule_record(schedule.workflow)
+            item["next_run_at"] = None
+            if schedule.cron_expression:
+                next_run_at = get_next_run_time(
+                    schedule.cron_expression,
+                    schedule.data.get("timezone", "Asia/Shanghai") if isinstance(schedule.data, dict) else "Asia/Shanghai",
+                )
+                if next_run_at is not None:
+                    item["next_run_at"] = int(next_run_at.timestamp() * 1000)
+            schedule_list.append(item)
+
+        return JResponse(
+            data={
+                "schedules": schedule_list,
+                "total": total,
+                "page_size": page_size,
+                "page": page_num,
+            }
+        )
+
+    def update(self, payload):
+        sid = payload.get("sid")
+        wid = payload.get("wid")
+        cron_expression = (payload.get("cron_expression") or payload.get("schedule") or "").strip()
+        if not validate_cron_expression(cron_expression):
+            return JResponse(status=400, msg="invalid cron expression")
+
+        if sid:
+            status, msg, run_schedule = get_user_object_general(WorkflowRunSchedule, sid=sid)
+            if status != 200 or not isinstance(run_schedule, WorkflowRunSchedule):
+                return JResponse(status=status, msg=msg)
+            workflow = run_schedule.workflow
+            if workflow is None:
+                return JResponse(status=404, msg="workflow not found")
+        else:
+            status, msg, workflow = get_user_object_general(Workflow, wid=wid)
+            if status != 200 or not isinstance(workflow, Workflow):
+                return JResponse(status=status, msg=msg)
+            run_schedule = (
+                WorkflowRunSchedule.select()
+                .where(WorkflowRunSchedule.workflow == workflow)
+                .order_by(WorkflowRunSchedule.create_time.desc())
+                .first()
+            )
+            if run_schedule is None:
+                run_schedule = WorkflowRunSchedule.create(workflow=workflow)
+
+        schedule_data = run_schedule.data if isinstance(run_schedule.data, dict) else {}
+        schedule_data.update(
+            {
+                "timezone": payload.get("timezone", schedule_data.get("timezone", "Asia/Shanghai")),
+                "source": "desktop",
+            }
+        )
+
+        if payload.get("data"):
+            schedule_data["workflow_data"] = payload.get("data")
+
+        run_schedule.workflow = workflow
+        run_schedule.status = "VALID"
+        run_schedule.cron_expression = cron_expression
+        run_schedule.data = schedule_data
+        run_schedule.update_time = datetime.now()
+        run_schedule.save()
+
+        return JResponse(
+            data={
+                "sid": run_schedule.sid.hex,
+                "workflow": _serialize_workflow_summary(workflow),
+                "cron_expression": cron_expression,
+            }
+        )
 
     def delete(self, payload):
-        status, msg, workflow = get_user_object_general(
-            Workflow,
-            wid=payload.data.get("wid", None),
-        )
-        if status != 200:
+        sid = payload.get("sid")
+        if sid:
+            status, msg, run_schedule = get_user_object_general(WorkflowRunSchedule, sid=sid)
+        else:
+            status, msg, workflow = get_user_object_general(Workflow, wid=payload.get("wid", None))
+            if status != 200 or not isinstance(workflow, Workflow):
+                return JResponse(status=status, msg=msg)
+            run_schedule = (
+                WorkflowRunSchedule.select()
+                .where(WorkflowRunSchedule.workflow == workflow, WorkflowRunSchedule.status != "DELETED")
+                .first()
+            )
+            if run_schedule is None:
+                return JResponse(status=404, msg="run schedule not found")
+            status, msg = 200, ""
+        if status != 200 or not isinstance(run_schedule, WorkflowRunSchedule):
             return JResponse(status=status, msg=msg)
 
-        run_schedule_qs = WorkflowRunSchedule.select().join(Workflow).where(Workflow.id == workflow.id)
-        if not run_schedule_qs.exists():
-            response = {"status": 404, "msg": "run schedule not found", "data": {}}
-            return response
-
-        run_schedule = run_schedule_qs.first()
-        # TODO: Remove from scheduler
-        run_schedule.delete()
+        run_schedule.status = "DELETED"
+        run_schedule.update_time = datetime.now()
+        run_schedule.save()
+        return JResponse()
         return JResponse()

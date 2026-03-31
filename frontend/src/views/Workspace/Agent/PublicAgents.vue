@@ -1,21 +1,16 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount } from "vue"
+import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
-import { message } from 'ant-design-vue'
-import { storeToRefs } from 'pinia'
-import { useUserSettingsStore } from '@/stores/userSettings'
 import AgentCard from "@/components/workspace/agent/AgentCard.vue"
 import InputSearch from "@/components/InputSearch.vue"
-import { defaultSettings } from '@/utils/common'
+import WorkspacePageHero from '@/components/workspace/WorkspacePageHero.vue'
+import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState.vue'
 import { officialSiteAPI } from '@/api/remote'
 
 const { t } = useI18n()
 const loading = ref(true)
 const router = useRouter()
-
-const userSettingsStore = useUserSettingsStore()
-const { language } = storeToRefs(userSettingsStore)
 
 const agentsPagination = reactive({
   total: 0,
@@ -77,51 +72,37 @@ const clearSearch = () => {
   searchAgents()
 }
 
-const createFormRef = ref()
-const createAgentModal = reactive({
-  open: false,
-  createLoading: false,
-  createForm: {
-    avatar: '',
-    name: '',
-    description: '',
-    settings: defaultSettings[language.value],
+const heroStats = computed(() => ([
+  {
+    label: t('workspace.agentSpace.hero_agent_count'),
+    value: officialAgents.value.length,
+    tip: t('workspace.agentSpace.hero_agent_count_tip'),
   },
-  ok: async () => {
-    createAgentModal.createLoading = true
-    try {
-      createFormRef.value.validate()
-      const response = await agentAPI('create', createAgentModal.createForm)
-      createAgentModal.createLoading = false
-      if (response.status == 200) {
-        message.success(t('workspace.agentSpace.create_agent_success'))
-        createAgentModal.open = false
-        router.push({ name: 'agentDetail', params: { agentId: response.data.aid } })
-      } else {
-        message.error(response.msg)
-      }
-    } catch (error) {
-      console.error(error)
-      return
-    }
-    createAgentModal.open = false
+  {
+    label: t('workspace.agentSpace.hero_search_ready'),
+    value: searchText.value ? 1 : 0,
+    tip: t('workspace.agentSpace.hero_search_ready_tip'),
   },
-})
+]))
 </script>
 
 <template>
   <div class="main-container">
-    <a-flex wrap="wrap" justify="space-between" align="flex-end">
-      <a-typography-title :level="2">
-        {{ t('workspace.agentSpace.public_agents') }}
-      </a-typography-title>
-      <div>
+    <WorkspacePageHero
+      :title="t('workspace.agentSpace.public_agents')"
+      :description="t('workspace.agentSpace.hero_description')"
+      :stats="heroStats">
+      <template #actions>
         <InputSearch v-model="searchText" @search="searchAgents" @clear-search="clearSearch" />
-      </div>
-    </a-flex>
+      </template>
+    </WorkspacePageHero>
     <a-row :gutter="[24, 24]">
       <a-col :span="24" v-if="loading" style="display: flex; justify-content: center;">
         <a-spin />
+      </a-col>
+      <a-col :span="24" v-else-if="officialAgents.length === 0">
+        <WorkspaceEmptyState :title="t('workspace.agentSpace.no_agents_1')"
+          :description="t('workspace.agentSpace.no_agents_2')" />
       </a-col>
       <a-col :xs="24" :md="12" :lg="8" :xl="6" v-for="agent in officialAgents" :key="agent.aid">
         <AgentCard :aid="agent.aid" :avatar="agent.avatar ? `${agent.avatar}?x-oss-process=style/thumbnail` : ''"

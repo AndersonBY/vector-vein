@@ -73,13 +73,13 @@ First, add a custom model family, then add a custom model. Don't forget to click
 
 #### Speech Recognition Configuration
 
-Currently, the speech recognition services of OpenAI/Deepgram are supported. For OpenAI services, you can use the same configuration as the large language model or set up a speech recognition service compatible with the OpenAI API (such as Groq).
+Currently, speech recognition uses the OpenAI-compatible path. You can use the same configuration as the large language model or set up a speech recognition service compatible with the OpenAI API (such as Groq).
 
 ![Speech Recognition Configuration](resources/images/asr-settings1-en.jpg)
 
 ### Embedding Configuration
 
-When you need to perform vector searches using vector data, you have the option to use embedding services provided by OpenAI or configure local embedding services in the `Embedding Model` settings. Currently, supported local embedding services require you to set up [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference) yourself.
+When you need to perform vector searches using vector data, configure embedding backends in the `Embedding models` settings through the `vv-llm` `embedding_backends` scheme. Built-in OpenAI embeddings and custom request/response mappings are supported, so local services such as [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference) can be connected by configuring endpoints plus request/response mappings.
 
 ![Local Embedding Settings](resources/images/embedding-settings1-en.jpg)
 
@@ -217,10 +217,25 @@ After installation, run the following command to start the backend development s
 pdm run dev
 ```
 
+For backend quality checks, you can run the following commands in the `backend` directory:
+
+```bash
+pdm run test
+pdm run lint
+pdm run typecheck
+```
+
 If you need to modify the frontend code, you need to run the following command in the **frontend** directory to install dependencies:
 
 ```bash
 pnpm install
+```
+
+Before submitting frontend changes, run the following quality checks in the **frontend** directory:
+
+```bash
+pnpm run lint
+pnpm exec vite build
 ```
 
 > When pulling the project code for the first time, you also need to run `pnpm install` to install the front-end dependencies.

@@ -10,9 +10,19 @@ const shortcuts = defineModel()
 const loading = ref(true)
 const myAgents = ref([])
 const selectedAgent = ref('')
+const ensureGlobalShortcuts = () => {
+  if (!shortcuts.value.__global__) {
+    shortcuts.value.__global__ = {
+      open_workflow_space: '',
+      open_schedule_manager: '',
+      open_data_space: '',
+    }
+  }
+}
 
 onBeforeMount(async () => {
   loading.value = true
+  ensureGlobalShortcuts()
   const response = await agentAPI('list', { limit: null, offset: 0 })
   myAgents.value = response.data.agents
   for (const agent of myAgents.value) {
@@ -25,9 +35,7 @@ onBeforeMount(async () => {
       }
     }
   }
-  if (myAgents.value.length > 0) {
-    selectedAgent.value = myAgents.value[0].aid
-  }
+  selectedAgent.value = '__global__'
   loading.value = false
 })
 
@@ -82,6 +90,16 @@ watch(shortcuts, (newVal) => {
         </template>
       </a-alert>
       <a-tabs v-model:activeKey="selectedAgent" tab-position="left">
+        <a-tab-pane key="__global__" :tab="t('settings.global_shortcuts')">
+          <a-form :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
+            <ShortcutFormItem :name="t('settings.open_workflow_space')"
+              v-model="shortcuts.__global__.open_workflow_space" />
+            <ShortcutFormItem :name="t('settings.open_schedule_manager')"
+              v-model="shortcuts.__global__.open_schedule_manager" />
+            <ShortcutFormItem :name="t('settings.open_data_space')"
+              v-model="shortcuts.__global__.open_data_space" />
+          </a-form>
+        </a-tab-pane>
         <a-tab-pane v-for="agent in myAgents" :key="agent.aid" :tab="agent.name">
           <a-form v-if="shortcuts[agent.aid]" :label-col="{ span: 12 }" :wrapper-col="{ span: 12 }">
             <ShortcutFormItem :name="t('settings.new_chat_with_agent')"

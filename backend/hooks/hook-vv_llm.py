@@ -1,9 +1,9 @@
 from PyInstaller.utils.hooks import collect_all, collect_submodules
 
-# 收集vectorvein的所有内容
-datas, binaries, hiddenimports = collect_all("vectorvein")
+# Collect all vv_llm package data for PyInstaller.
+datas, binaries, hiddenimports = collect_all("vv_llm")
 
-# 添加vectorvein的直接依赖
+# Add vv_llm direct dependencies that PyInstaller may miss.
 additional_imports = [
     "openai",
     "tiktoken",

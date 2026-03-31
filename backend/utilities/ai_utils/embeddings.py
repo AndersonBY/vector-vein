@@ -1,51 +1,43 @@
 # -*- coding: utf-8 -*-
 # @Author: Bi Ying
 # @Date:   2023-05-16 18:15:11
-# @Last Modified by:   Bi Ying
-# @Last Modified time: 2024-06-24 15:32:02
+from collections.abc import Sequence
+
+from vv_llm.embedding_clients import create_embedding_client
+from vv_llm.settings import settings as vv_llm_settings
+
 from utilities.config import Settings
-from utilities.network import new_httpx_client
-from .client import get_openai_client_and_model_id
+
+
+LEGACY_TEI_PROVIDER = "text-embeddings-inference"
+LEGACY_TEI_MODEL = "text-embeddings-inference"
 
 
 class EmbeddingClient:
     def __init__(self, provider: str, model_id: str, dimensions: int | None = None) -> None:
-        self.provider = provider
-        self.model_id = model_id
+        self.provider, self.model_id = self._normalize_provider_and_model(provider, model_id)
         self.dimensions = dimensions
 
-        setting = Settings()
-        if provider == "openai":
-            self.client, self.model_id = get_openai_client_and_model_id(is_async=False, model_id=model_id)
-        elif provider == "text-embeddings-inference":
-            # https://github.com/huggingface/text-embeddings-inference
-            self.api_base = setting.get(
-                "embedding_models.text_embeddings_inference.api_base", "http://localhost:8080/embed"
-            )
-            self.api_key = setting.get("embedding_models.text_embeddings_inference.api_key")
+        user_settings = Settings()
+        vv_llm_settings.load(user_settings.get("llm_settings"))
+        self.client = create_embedding_client(
+            backend=self.provider,
+            model=self.model_id or None,
+            settings=vv_llm_settings,
+        )
 
-    def get(self, input: str | list) -> list:
-        if self.provider == "openai":
-            if self.dimensions and self.model_id != "text-embedding-ada-002":
-                response = self.client.embeddings.create(input=input, model=self.model_id, dimensions=self.dimensions)
-            else:
-                response = self.client.embeddings.create(input=input, model=self.model_id)
-            if isinstance(input, str):
-                return response.data[0].embedding
-            else:
-                return [item.embedding for item in response.data]
-        elif self.provider == "text-embeddings-inference":
-            if self.api_key:
-                headers = {"Authorization": f"Bearer {self.api_key}"}
-            else:
-                headers = None
-            response = new_httpx_client(is_async=False).post(
-                self.api_base, headers=headers, json={"inputs": input}, timeout=60 * 60
-            )
-            result = response.json()
-            if isinstance(input, str):
-                return result[0]
-            else:
-                return result
-        else:
-            raise ValueError(f"Invalid provider: {self.provider}")
+    @staticmethod
+    def _normalize_provider_and_model(provider: str, model_id: str) -> tuple[str, str]:
+        normalized_provider = provider.strip().lower()
+        normalized_model = model_id.strip()
+
+        if normalized_provider == LEGACY_TEI_PROVIDER:
+            return "custom", LEGACY_TEI_MODEL
+
+        return normalized_provider, normalized_model
+
+    def get(self, input: str | Sequence[str]) -> list[float] | list[list[float]]:
+        if isinstance(input, str):
+            return self.client.embed(input, dimensions=self.dimensions)
+
+        return self.client.embed_batch(list(input), dimensions=self.dimensions)

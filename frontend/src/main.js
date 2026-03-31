@@ -8,8 +8,6 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import Antd from 'ant-design-vue'
-import cronAnt from '@vue-js-cron/ant'
-import '@vue-js-cron/ant/dist/ant.css'
 
 import App from "./App.vue"
 import router from "./router"
@@ -25,13 +23,11 @@ app.use(createPinia())
 app.use(router)
 app.use(Antd)
 app.use(i18n)
-app.use(cronAnt)
 
 app.mount('#app')
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to) => {
   if (to.meta.title) {
     document.title = getPageTitle(i18n.global.te, i18n.global.t, to.meta.title)
   }
-  next()
 })

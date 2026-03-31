@@ -21,6 +21,7 @@ import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"
 import InputSearch from "@/components/InputSearch.vue"
 import WorkflowCard from '@/components/workspace/WorkflowCard.vue'
+import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState.vue'
 import { formatTime } from '@/utils/util'
 import { workflowAPI, workflowTagAPI } from "@/api/workflow"
 
@@ -186,11 +187,11 @@ const deleteWorkflow = async (wid) => {
     async onOk() {
       const response = await workflowAPI('delete', { wid: wid })
       if (response.status == 200) {
-        message.success(t('workspace.workflowSpace.delete_success'))
+        message.success(t('workspace.workflowSpace.move_to_trash_success'))
         userWorkflowsStore.deleteUserWorkflow(wid)
         workflowRecords.load({})
       } else {
-        message.error(t('workspace.workflowSpace.delete_failed'))
+        message.error(t('workspace.workflowSpace.move_to_trash_failed'))
       }
     },
     onCancel() {
@@ -290,8 +291,10 @@ const navigateToOfficialWorkflowTemplates = async () => {
 <template>
   <a-flex vertical gap="middle">
     <a-flex wrap="wrap" align="middle" justify="space-between" gap="small">
-      <InputSearch v-model="workflowRecords.searchText" @search="workflowRecords.searchWorkflows"
-        @clear-search="workflowRecords.clearSearch" />
+      <a-flex wrap="wrap" gap="small">
+        <InputSearch v-model="workflowRecords.searchText" @search="workflowRecords.searchWorkflows"
+          @clear-search="workflowRecords.clearSearch" />
+      </a-flex>
       <a-flex justify="flex-end">
         <a-space>
           <a-segmented size="middle" v-model:value="workflowDisplayPreference"
@@ -321,7 +324,7 @@ const navigateToOfficialWorkflowTemplates = async () => {
 
     <a-row v-if="workflowDisplayPreference == 'card'" :gutter="[16, 16]" style="margin-bottom: 80px;">
       <a-col :xxl="6" :xl="8" :lg="8" :md="12" :sm="24" :xs="24" v-for="record in workflowRecords.data"
-        :key="record.pid">
+        :key="record.wid">
         <router-link :to="{ name: 'WorkflowUse', params: { workflowId: record.wid } }">
           <WorkflowCard :title="record.title" :tags="record.tags" :images="record.images" :brief="record.brief"
             :author="false" :datetime="record.update_time" :forks="false" :extra="true" :loading="record.loading"
@@ -330,15 +333,12 @@ const navigateToOfficialWorkflowTemplates = async () => {
         </router-link>
       </a-col>
       <a-col v-if="workflowRecords.data.length == 0" :span="24">
-        <a-typography-paragraph type="secondary">
-          {{ t('components.workspace.myWorkflows.no_workflows_1') }}
-        </a-typography-paragraph>
-        <a-typography-paragraph type="secondary">
-          {{ t('components.workspace.myWorkflows.no_workflows_2') }}
+        <WorkspaceEmptyState :title="t('components.workspace.myWorkflows.no_workflows_1')"
+          :description="t('components.workspace.myWorkflows.no_workflows_2')">
           <a-typography-link @click="navigateToOfficialWorkflowTemplates">
             {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
           </a-typography-link>
-        </a-typography-paragraph>
+        </WorkspaceEmptyState>
       </a-col>
       <a-col :span="24">
         <a-flex justify="flex-end">
@@ -416,15 +416,12 @@ const navigateToOfficialWorkflowTemplates = async () => {
       </template>
 
       <template #emptyText>
-        <a-typography-paragraph type="secondary">
-          {{ t('components.workspace.myWorkflows.no_workflows_1') }}
-        </a-typography-paragraph>
-        <a-typography-paragraph type="secondary">
-          {{ t('components.workspace.myWorkflows.no_workflows_2') }}
+        <WorkspaceEmptyState :title="t('components.workspace.myWorkflows.no_workflows_1')"
+          :description="t('components.workspace.myWorkflows.no_workflows_2')">
           <router-link :to="{ name: 'WorkflowSpaceMain', query: { tab: 'official-workflow-templates' } }">
             {{ t('workspace.workflowSpaceMain.official_workflow_template') }}
           </router-link>
-        </a-typography-paragraph>
+        </WorkspaceEmptyState>
       </template>
     </a-table>
   </a-flex>

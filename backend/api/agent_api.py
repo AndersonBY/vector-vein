@@ -2,6 +2,7 @@
 # @Date:   2024-06-06 11:38:21
 import json
 from datetime import datetime
+from typing import Any
 
 from models import (
     Agent,
@@ -20,6 +21,27 @@ from api.utils import (
 from utilities.config import cache
 from utilities.file_processing import static_file_server
 from utilities.media_processing import SpeechRecognitionClient
+
+
+def _trim_leading_assistant_messages(history_messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    while history_messages and history_messages[0].get("author_type") == Message.AuthorTypes.ASSISTANT:
+        history_messages = history_messages[1:]
+    return history_messages
+
+
+def _serialize_conversation_state(conversation: Conversation) -> dict[str, Any]:
+    conversation_data = model_serializer(conversation)
+    conversation_data["related_workflows"] = model_serializer(
+        conversation.related_workflows, many=True, fields=["wid", "title", "brief"]
+    )
+    conversation_data["related_templates"] = model_serializer(
+        conversation.related_templates, many=True, fields=["wid", "title", "brief"]
+    )
+    conversation_data["tool_call_data"] = {
+        "workflows": [workflow.tool_call_data for workflow in conversation.related_workflows],
+        "templates": [template.tool_call_data for template in conversation.related_templates],
+    }
+    return conversation_data
 
 
 class ConversationAPI:
@@ -51,6 +73,8 @@ class ConversationAPI:
         status, msg, conversation = get_user_object_general(Conversation, cid=cid)
         if status != 200 or not isinstance(conversation, Conversation):
             return JResponse(status=status, msg=msg)
+        if conversation.agent is None:
+            return JResponse(status=404, msg="Conversation agent not found")
 
         if conversation.agent_version != conversation.agent.version:
             conversation.settings = conversation.agent.settings
@@ -66,7 +90,7 @@ class ConversationAPI:
         conversation_serializer = model_serializer(conversation, manytomany=True)
         conversation_serializer["agent"] = model_serializer(conversation.agent)
         _, _, start_message = get_user_object_general(Message, mid=conversation.current_message)
-        history_messages = get_history_messages(start_message, count=None)
+        history_messages = get_history_messages(start_message, count=None) if start_message is not None else []
         return JResponse(
             data={
                 "conversation": conversation_serializer,
@@ -81,12 +105,16 @@ class ConversationAPI:
             return JResponse(status=400)
 
         status, msg, agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or agent is None:
             return JResponse(status=status, msg=msg)
+
+        conversation_settings = conversation_data.get("settings", agent.settings)
+        if not isinstance(conversation_settings, dict):
+            conversation_settings = agent.settings
 
         conversation = Conversation.create(
             title=conversation_data.get("title", "New"),
-            settings=conversation_data.get("settings", agent.settings),
+            settings=conversation_settings,
             agent=agent,
             agent_version=agent.version,
             model=conversation_data.get("model", agent.model),
@@ -144,10 +172,11 @@ class ConversationAPI:
     def update_settings(self, payload):
         cid = payload.get("cid")
         status, msg, conversation = get_user_object_general(Conversation, cid=cid)
-        if status != 200:
+        if status != 200 or conversation is None:
             return JResponse(status=status, msg=msg)
 
-        conversation.settings = payload.get("settings", {})
+        settings = payload.get("settings", {})
+        conversation.settings = settings if isinstance(settings, dict) else {}
         conversation.save()
         return JResponse()
 
@@ -206,22 +235,10 @@ class MessageAPI:
             count=None,
             all_children=False,
         )
-        while len(history_messages) > 0 and history_messages[0]["author_type"] == Message.AuthorTypes.ASSISTANT:
-            history_messages = history_messages[1:]
+        history_messages = _trim_leading_assistant_messages(history_messages)
 
         need_title = payload.get("need_title", False)
-
-        conversation_data = model_serializer(conversation)
-        conversation_data["related_workflows"] = model_serializer(
-            conversation.related_workflows, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["related_templates"] = model_serializer(
-            conversation.related_templates, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["tool_call_data"] = {
-            "workflows": [workflow.tool_call_data for workflow in conversation.related_workflows],
-            "templates": [template.tool_call_data for template in conversation.related_templates],
-        }
+        conversation_data = _serialize_conversation_state(conversation)
 
         return JResponse(
             data={
@@ -267,21 +284,10 @@ class MessageAPI:
             count=None,
             all_children=False,
         )
-        while len(history_messages) > 0 and history_messages[0]["author_type"] == Message.AuthorTypes.ASSISTANT:
-            history_messages = history_messages[1:]
+        history_messages = _trim_leading_assistant_messages(history_messages)
         need_title = False
 
-        conversation_data = model_serializer(conversation)
-        conversation_data["related_workflows"] = model_serializer(
-            conversation.related_workflows, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["related_templates"] = model_serializer(
-            conversation.related_templates, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["tool_call_data"] = {
-            "workflows": [workflow.tool_call_data for workflow in conversation.related_workflows],
-            "templates": [template.tool_call_data for template in conversation.related_templates],
-        }
+        conversation_data = _serialize_conversation_state(conversation)
 
         return JResponse(
             data={
@@ -324,7 +330,7 @@ class MessageAPI:
             return JResponse(status=400, msg="Missing 'mid' in payload")
 
         status, msg, message = get_user_object_general(Message, mid=mid)
-        if status != 200:
+        if status != 200 or message is None:
             return JResponse(status=status, msg=msg)
 
         return JResponse(data=model_serializer(message))
@@ -335,15 +341,15 @@ class MessageAPI:
             return JResponse(status=400, msg="Missing 'mid' in payload")
 
         status, msg, message = get_user_object_general(Message, mid=mid)
-        if status != 200:
+        if status != 200 or message is None:
             return JResponse(status=status, msg=msg)
 
         content_type = payload.get("content_type")
-        if content_type is not None:
+        if isinstance(content_type, str):
             message.content_type = content_type
-        status = payload.get("status")
-        if status is not None:
-            message.status = status
+        message_status = payload.get("status")
+        if isinstance(message_status, str):
+            message.status = message_status
 
         message.save()
 
@@ -355,7 +361,7 @@ class MessageAPI:
             return JResponse(status=400, msg="Missing 'wid' in payload")
 
         status, msg, workflow = get_user_object_general(Workflow, wid=wid)
-        if status != 200:
+        if status != 200 or workflow is None:
             return JResponse(status=status, msg=msg)
 
         mid = payload.get("mid")
@@ -363,14 +369,21 @@ class MessageAPI:
             return JResponse(status=400, msg="Missing 'mid' in payload")
 
         status, msg, message = get_user_object_general(Message, mid=mid)
-        if status != 200:
+        if status != 200 or message is None:
             return JResponse(status=status, msg=msg)
 
         params = payload.get("params", {})
-        parameter_sources = workflow.tool_call_data.get("parameter_sources", {})
+        if not isinstance(params, dict):
+            params = {}
+        tool_call_data = workflow.tool_call_data if isinstance(workflow.tool_call_data, dict) else {}
+        parameter_sources = tool_call_data.get("parameter_sources", {})
+        if not isinstance(parameter_sources, dict):
+            parameter_sources = {}
 
-        nodes = {}
+        nodes: dict[str, dict[str, Any]] = {}
         for key, value in parameter_sources.items():
+            if not isinstance(value, dict):
+                continue
             node_id = value["node"]
             field = value["field"]
 
@@ -379,7 +392,7 @@ class MessageAPI:
             if params.get(key):
                 nodes[node_id][field] = params[key]
 
-        workflow_data = workflow.data
+        workflow_data = workflow.data if isinstance(workflow.data, dict) else {}
         for node_id, node_data in nodes.items():
             for original_node in workflow_data["nodes"]:
                 if original_node["id"] == node_id:
@@ -436,23 +449,12 @@ class MessageAPI:
             start_message=original_message.parent,
             count=None,
             all_children=False,
-        )
+        ) if original_message.parent is not None else []
 
-        while len(history_messages) > 0 and history_messages[0]["author_type"] == Message.AuthorTypes.ASSISTANT:
-            history_messages = history_messages[1:]
+        history_messages = _trim_leading_assistant_messages(history_messages)
 
         # 准备对话数据
-        conversation_data = model_serializer(conversation)
-        conversation_data["related_workflows"] = model_serializer(
-            conversation.related_workflows, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["related_templates"] = model_serializer(
-            conversation.related_templates, many=True, fields=["wid", "title", "brief"]
-        )
-        conversation_data["tool_call_data"] = {
-            "workflows": [workflow.tool_call_data for workflow in conversation.related_workflows],
-            "templates": [template.tool_call_data for template in conversation.related_templates],
-        }
+        conversation_data = _serialize_conversation_state(conversation)
 
         return JResponse(
             data={
@@ -522,7 +524,7 @@ class AgentAPI:
             return JResponse(status=400, msg="Missing 'aid' in payload")
 
         status, msg, agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or agent is None:
             return JResponse(status=status, msg=msg)
 
         return JResponse(data={**model_serializer(agent, manytomany=True), "is_owner": True})
@@ -590,7 +592,7 @@ class AgentAPI:
             return JResponse(status=400, msg="Missing 'aid' in payload")
 
         status, msg, agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or agent is None:
             return JResponse(status=status, msg=msg)
 
         agent.delete_instance(recursive=True)
@@ -601,7 +603,7 @@ class AgentAPI:
         aid = payload.get("aid")
 
         status, msg, original_agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or original_agent is None:
             return JResponse(status=status, msg=msg)
 
         new_agent = Agent.create(**{k: v for k, v in original_agent.__data__.items() if k != "aid"})
@@ -614,7 +616,7 @@ class AgentAPI:
         aid = payload.get("aid")
 
         status, msg, agent = get_user_object_general(Agent, aid=aid)
-        if status != 200:
+        if status != 200 or agent is None:
             return JResponse(status=status, msg=msg)
 
         avatar = payload.get("avatar", "")
@@ -623,7 +625,8 @@ class AgentAPI:
 
         agent.name = payload.get("name", agent.name)
         agent.description = payload.get("description", agent.description)
-        agent.settings = payload.get("settings", agent.settings)
+        settings = payload.get("settings", agent.settings)
+        agent.settings = settings if isinstance(settings, dict) else agent.settings
         agent.model = payload.get("model", agent.model)
         agent.model_provider = payload.get("model_provider", agent.model_provider)
 

@@ -27,6 +27,13 @@ const defaultParams = {
 }
 const endpointForm = reactive(deepCopy(defaultParams))
 const originalFormHash = ref(0)
+const testingEndpoint = ref(false)
+const endpointPresets = [
+  { key: 'ollama', label: 'Ollama', api_base: 'http://127.0.0.1:11434/v1', endpoint_type: 'openai' },
+  { key: 'lmstudio', label: 'LM Studio', api_base: 'http://127.0.0.1:1234/v1', endpoint_type: 'openai' },
+  { key: 'vllm', label: 'vLLM', api_base: 'http://127.0.0.1:8000/v1', endpoint_type: 'openai' },
+  { key: 'openai', label: 'OpenAI Compatible', api_base: 'https://api.openai.com/v1', endpoint_type: 'openai' },
+]
 
 const endpointFormRemove = (index) => {
   endpoints.value.splice(index, 1)
@@ -128,6 +135,37 @@ const resetForm = () => {
   originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
 }
 
+const applyPreset = (preset) => {
+  if (!endpointFormStatus.value) {
+    resetForm()
+  }
+  endpointForm.api_base = preset.api_base
+  endpointForm.endpoint_type = preset.endpoint_type
+  if (endpointForm.id === 'new-endpoint') {
+    endpointForm.id = preset.key
+  }
+  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
+}
+
+const testEndpoint = async () => {
+  if (!endpointForm.api_base) {
+    message.error(t('settings.api_base_empty'))
+    return
+  }
+  testingEndpoint.value = true
+  const response = await settingAPI('list_models', {
+    api_key: endpointForm.api_key,
+    base_url: endpointForm.api_base,
+  })
+  if (response.status === 200) {
+    const modelCount = response?.data?.models?.data?.length || 0
+    message.success(t('settings.test_endpoint_success', { count: modelCount }))
+  } else {
+    message.error(response.msg || t('settings.test_endpoint_failed'))
+  }
+  testingEndpoint.value = false
+}
+
 const availableModelsState = reactive({
   listing: false,
   list: async () => {
@@ -218,6 +256,11 @@ const availableModelsState = reactive({
       </a-flex>
     </a-col>
     <a-col v-show="['edit', 'add'].includes(endpointFormStatus)" :sm="24" :md="16">
+      <a-flex wrap gap="small" style="margin-bottom: 12px;">
+        <a-tag v-for="preset in endpointPresets" :key="preset.key" class="endpoint-preset-tag" @click="applyPreset(preset)">
+          {{ preset.label }}
+        </a-tag>
+      </a-flex>
       <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <a-form-item :label="t('settings.endpoint_id')" :required="true">
           <a-input v-model:value="endpointForm.id" />
@@ -258,6 +301,9 @@ const availableModelsState = reactive({
         </a-form-item>
       </a-form>
       <a-flex justify="space-between" gap="small">
+        <a-button @click="testEndpoint" :loading="testingEndpoint">
+          {{ t('settings.test_endpoint') }}
+        </a-button>
         <a-button block @click="availableModelsState.list" :loading="availableModelsState.listing">
           {{ t('settings.list_models') }}
         </a-button>
@@ -291,3 +337,9 @@ const availableModelsState = reactive({
     </a-col>
   </a-row>
 </template>
+
+<style scoped>
+.endpoint-preset-tag {
+  cursor: pointer;
+}
+</style>

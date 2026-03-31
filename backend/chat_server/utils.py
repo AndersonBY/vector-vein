@@ -1,6 +1,6 @@
 # @Author: Bi Ying
 # @Date:   2024-06-07 00:04:13
-from vectorvein.types.llm_parameters import ToolParam
+from vv_llm.types.llm_parameters import ToolParam
 
 
 def get_tool_call_data(tool_call_data: dict, simple: bool = False) -> list[ToolParam]:

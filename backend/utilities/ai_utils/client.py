@@ -2,9 +2,9 @@ from typing import overload, Tuple, Literal, Union
 
 from openai import AsyncOpenAI, OpenAI, AsyncAzureOpenAI, AzureOpenAI
 
-from vectorvein.types import BackendType
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.chat_clients import create_chat_client, create_async_chat_client
+from vv_llm.types import BackendType
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.chat_clients import create_chat_client, create_async_chat_client
 
 from utilities.config import Settings
 
@@ -26,7 +26,7 @@ def get_openai_client_and_model_id(
     model_id: str = "",
 ) -> Tuple[Union[OpenAI, AsyncOpenAI, AzureOpenAI, AsyncAzureOpenAI], str]:
     user_settings = Settings()
-    vectorvein_settings.load(user_settings.get("llm_settings"))
+    vv_llm_settings.load(user_settings.get("llm_settings"))
     if is_async:
         client = create_async_chat_client(backend=BackendType.OpenAI, model=model_id, stream=False)
     else:

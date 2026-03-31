@@ -3,29 +3,30 @@
 import json
 import time
 import random
-from typing import Any, cast
-from traceback import format_exc
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from traceback import format_exc
+from typing import Any, Literal, Protocol, TypeGuard, cast, overload
 
-from openai._types import NotGiven as OpenAINotGiven
 from openai.types.chat import ChatCompletionMessageParam
 from openai.types.chat.chat_completion_content_part_text_param import ChatCompletionContentPartTextParam
 from openai.types.chat.chat_completion_content_part_image_param import ChatCompletionContentPartImageParam
-from vectorvein.types.enums import BackendType
-from vectorvein.types.exception import APIStatusError
-from vectorvein.chat_clients import create_chat_client
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.chat_clients.utils import get_token_counts, format_messages
-from vectorvein.types import (
+from vv_llm.types.enums import BackendType
+from vv_llm.types.exception import APIStatusError
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.chat_clients.base_client import BaseChatClient
+from vv_llm.chat_clients.utils import get_token_counts, format_messages
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.types import (
+    ChatCompletionDeltaMessage,
+    ChatCompletionMessage,
     EndpointSetting,
     EndpointOptionDict,
     NotGiven,
     NOT_GIVEN,
     ResponseFormat,
     ThinkingConfigEnabledParam,
-    ChatCompletionDeltaMessage,
-    ChatCompletionMessage,
+    ThinkingConfigParam,
 )
 
 from utilities.config import Settings
@@ -39,6 +40,38 @@ from utilities.media_processing import ImageProcessor
 
 mprint = mprint_with_name(name="Media Processing Tasks")
 
+ReasoningEffort = Literal["none", "minimal", "low", "medium", "high", "xhigh"]
+
+
+class _ChatCompletionCreator(Protocol):
+    @overload
+    def __call__(
+        self,
+        *,
+        messages: list[ChatCompletionMessageParam],
+        model: str | None = None,
+        stream: Literal[True],
+        max_tokens: int | None | NotGiven = None,
+        response_format: ResponseFormat | NotGiven = NOT_GIVEN,
+        skip_cutoff: bool = False,
+        thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
+        reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN,
+    ) -> Generator[ChatCompletionDeltaMessage, Any, None]: ...
+
+    @overload
+    def __call__(
+        self,
+        *,
+        messages: list[ChatCompletionMessageParam],
+        model: str | None = None,
+        stream: Literal[False] = False,
+        max_tokens: int | None | NotGiven = None,
+        response_format: ResponseFormat | NotGiven = NOT_GIVEN,
+        skip_cutoff: bool = False,
+        thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN,
+        reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN,
+    ) -> ChatCompletionMessage: ...
+
 
 def get_endpoint_id(endpoint_option: EndpointOptionDict | str) -> str:
     if isinstance(endpoint_option, str):
@@ -47,6 +80,30 @@ def get_endpoint_id(endpoint_option: EndpointOptionDict | str) -> str:
         return endpoint_option["endpoint_id"]
     else:
         raise ValueError(f"Invalid endpoint option: {endpoint_option}")
+
+
+def _require_string_list(value: object, field_name: str) -> list[str]:
+    if not _is_string_list(value):
+        raise TypeError(f"{field_name} must be list[str]")
+    return value
+
+
+def _enabled_thinking_config(
+    thinking: ThinkingConfigParam | None | NotGiven,
+) -> ThinkingConfigEnabledParam | None:
+    if _is_enabled_thinking_config(thinking):
+        return thinking
+    return None
+
+
+def _is_enabled_thinking_config(value: object) -> TypeGuard[ThinkingConfigEnabledParam]:
+    if not isinstance(value, dict):
+        return False
+    return cast(dict[str, object], value).get("type") == "enabled"
+
+
+def _is_string_list(value: object) -> TypeGuard[list[str]]:
+    return isinstance(value, list) and all(isinstance(item, str) for item in value)
 
 
 class BaseVLMTask:
@@ -71,7 +128,7 @@ class BaseVLMTask:
         image_urls = []
 
         user_settings = Settings()
-        vectorvein_settings.load(user_settings.llm_settings)
+        vv_llm_settings.load(user_settings.llm_settings)
 
         if images_or_urls == "images":
             images = input_images
@@ -81,10 +138,10 @@ class BaseVLMTask:
                 if not self.multiple_input:
                     raise Exception("list[list[str]] format is only supported when multiple_input=True")
                 image_urls = []
-                for img_batch in images:  # type: ignore[arg-type]
+                for img_batch in images:
                     batch_urls = [
                         ImageProcessor(image_source=img_path, max_size=1024 * 1024 * 5).data_url
-                        for img_path in cast(list[str], img_batch)
+                        for img_path in _require_string_list(img_batch, "images")
                     ]
                     image_urls.append(batch_urls)
             else:
@@ -102,15 +159,15 @@ class BaseVLMTask:
                 if not self.multiple_input:
                     raise Exception("list[list[str]] format is only supported when multiple_input=True")
                 image_urls = []
-                for url_batch in urls:  # type: ignore[arg-type]
-                    extracted_urls = cast(list[str], extract_url(url_batch))
+                for url_batch in urls:
+                    extracted_urls = extract_url(_require_string_list(url_batch, "urls"))
                     batch_urls = [
                         ImageProcessor(image_source=u, max_size=1024 * 1024 * 5).data_url
                         for u in extracted_urls
                     ]
                     image_urls.append(batch_urls)
             else:
-                extracted_urls = cast(list[str], extract_url(urls))  # type: ignore[arg-type]
+                extracted_urls = extract_url(urls)
                 image_urls = [
                     ImageProcessor(image_source=u, max_size=1024 * 1024 * 5).data_url
                     for u in extracted_urls
@@ -123,7 +180,7 @@ class BaseVLMTask:
             _image_urls = image_urls[0]
 
         if self.multiple_input and not (isinstance(_image_urls, list) and len(_image_urls) > 0 and isinstance(_image_urls[0], list)):
-            _image_urls = [_image_urls]  # type: ignore
+            _image_urls = [_image_urls]
 
         self.has_list, (self.prompts, self.images) = align_elements((self.input_prompt, _image_urls))
 
@@ -145,7 +202,7 @@ class BaseVLMTask:
             "claude-sonnet-4-5-20250929-thinking",
         ):
             self.original_model = self.model = self.model.removesuffix("-thinking")
-            self.thinking: ThinkingConfigEnabledParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
+            self.thinking: ThinkingConfigParam | None | NotGiven = {"type": "enabled", "budget_tokens": 16000}
             self.temperature = 1.0
         else:
             self.thinking = NOT_GIVEN
@@ -153,7 +210,7 @@ class BaseVLMTask:
         if self.model.startswith(("claude-opus-4", "claude-sonnet-4")):
             self.stream = True
 
-        self.reasoning_effort: OpenAINotGiven | str = NOT_GIVEN
+        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
         if self.model == "o3-mini-high":
             self.original_model = self.model = "o3-mini"
             self.reasoning_effort = "high"
@@ -187,7 +244,7 @@ class BaseVLMTask:
             }
 
         self.model = self.MODEL_MAPPING.get(self.model, self.model)
-        self.model_settings = vectorvein_settings.get_backend(self.MODEL_TYPE).models[self.model]
+        self.model_settings = vv_llm_settings.get_backend(self.MODEL_TYPE).models[self.model]
 
         self.response_format: ResponseFormat | NotGiven = NOT_GIVEN
         if response_format == "json_object" and self.model_settings.response_format_available:
@@ -198,6 +255,42 @@ class BaseVLMTask:
         self.reasoning_content_outputs = [""] * self.prompts_count
         self.total_prompt_tokens = 0
         self.total_completion_tokens = 0
+
+    def _create_stream_completion(
+        self,
+        chat_client: BaseChatClient,
+        messages: list[ChatCompletionMessageParam],
+        max_tokens: int,
+    ) -> Generator[ChatCompletionDeltaMessage, Any, None]:
+        create_completion = cast(_ChatCompletionCreator, chat_client.create_completion)
+        return create_completion(
+            model=self.model,
+            messages=format_messages(messages, backend=self.MODEL_TYPE, native_multimodal=True),
+            max_tokens=max_tokens,
+            stream=True,
+            response_format=self.response_format,
+            skip_cutoff=True,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
+        )
+
+    def _create_completion_response(
+        self,
+        chat_client: BaseChatClient,
+        messages: list[ChatCompletionMessageParam],
+        max_tokens: int,
+    ) -> ChatCompletionMessage:
+        create_completion = cast(_ChatCompletionCreator, chat_client.create_completion)
+        return create_completion(
+            model=self.model,
+            messages=format_messages(messages, backend=self.MODEL_TYPE, native_multimodal=True),
+            max_tokens=max_tokens,
+            stream=False,
+            response_format=self.response_format,
+            skip_cutoff=True,
+            thinking=self.thinking,
+            reasoning_effort=self.reasoning_effort,
+        )
 
     def endpoint_available(self, endpoint: EndpointSetting, add_record: bool = True) -> bool:
         """
@@ -280,15 +373,17 @@ class BaseVLMTask:
         else:
             max_tokens = max(1, self.model_settings.max_output_tokens)
 
-        if self.thinking:
-            self.thinking["budget_tokens"] = max_tokens - 10
+        thinking_config = _enabled_thinking_config(self.thinking)
+        if thinking_config is not None:
+            thinking_config["budget_tokens"] = max_tokens - 10
 
         request_success = False
-        stream_response = response = None
+        stream_response: Generator[ChatCompletionDeltaMessage, Any, None] | None = None
+        response: ChatCompletionMessage | None = None
         start_time = time.time()
         endpoints = self.model_settings.endpoints.copy()
         random.shuffle(endpoints)
-        _chat_client = create_chat_client(
+        _chat_client: BaseChatClient = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
         )  # 单独创建一个 chat_client 对象，避免赋值 endpoint 时产生冲突
@@ -296,7 +391,7 @@ class BaseVLMTask:
             # 遍历所有端点，找到一个可用的
             for endpoint_option in endpoints:
                 endpoint_id = get_endpoint_id(endpoint_option)
-                endpoint = vectorvein_settings.get_endpoint(endpoint_id)
+                endpoint = vv_llm_settings.get_endpoint(endpoint_id)
                 if not self.endpoint_available(endpoint):
                     continue
                 if self.thinking and endpoint.endpoint_type and endpoint.endpoint_type.startswith("openai"):  # TODO: openrouter 不支持 claude-3-7-sonnet 的 thinking 参数
@@ -304,32 +399,16 @@ class BaseVLMTask:
                 _chat_client.endpoint = endpoint
                 try:
                     if self.stream:
-                        stream_response = cast(
-                            Generator[ChatCompletionDeltaMessage, Any, None],
-                            _chat_client.create_completion(
-                                model=self.model,
-                                messages=format_messages(messages, backend=self.MODEL_TYPE, native_multimodal=True),
-                                max_tokens=max_tokens,
-                                stream=True,
-                                response_format=self.response_format,
-                                skip_cutoff=True,
-                                thinking=self.thinking,
-                                reasoning_effort=self.reasoning_effort,  # type: ignore
-                            ),
+                        stream_response = self._create_stream_completion(
+                            _chat_client,
+                            messages,
+                            max_tokens,
                         )
                     else:
-                        response = cast(
-                            ChatCompletionMessage,
-                            _chat_client.create_completion(
-                                model=self.model,
-                                messages=format_messages(messages, backend=self.MODEL_TYPE, native_multimodal=True),
-                                max_tokens=max_tokens,
-                                stream=False,
-                                response_format=self.response_format,
-                                skip_cutoff=True,
-                                thinking=self.thinking,
-                                reasoning_effort=self.reasoning_effort,  # type: ignore
-                            ),
+                        response = self._create_completion_response(
+                            _chat_client,
+                            messages,
+                            max_tokens,
                         )
                     request_success = True
                     self.add_endpoint_request_record(endpoint)
@@ -448,4 +527,4 @@ class BaseVLMTask:
             return self.workflow.data
 
     def get_max_concurrent_requests(self):
-        return max(vectorvein_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)
+        return max(vv_llm_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)

@@ -6,6 +6,7 @@
  */
 'use strict';
 import { message } from 'ant-design-vue'
+import i18n from '@/locales'
 
 export function hasShowFields(node) {
   let hasShow = false
@@ -294,6 +295,7 @@ export const getUIDesignFromWorkflow = (workflowData) => {
 }
 
 export function checkFieldsValid(inputFields) {
+  const t = i18n.global.t
   let checkFieldsValid = true
   try {
     inputFields.forEach((field) => {
@@ -316,7 +318,7 @@ export function checkFieldsValid(inputFields) {
         currentFieldValid = false
       }
       if (!currentFieldValid) {
-        message.error(t('workspace.workflowSpace.field_is_empty', { field: field.display_name }))
+        message.error(t('workspace.workflowSpace.field_is_empty', { field: field.display_name || field.name }))
         checkFieldsValid = false
       }
     })

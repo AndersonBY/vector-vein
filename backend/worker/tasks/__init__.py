@@ -4,6 +4,7 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2025-08-05
 import time
+from importlib import import_module
 from functools import wraps
 from typing import Callable, TypeVar, Optional, overload, Any, Union
 
@@ -18,6 +19,13 @@ mprint = mprint_with_name(name="Workflow Task Server")
 
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+
+def _callable_name(func: Callable[..., object]) -> str:
+    name = getattr(func, "__name__", None)
+    if isinstance(name, str) and name:
+        return name
+    return func.__class__.__name__
 
 
 class TaskError(Exception):
@@ -42,14 +50,15 @@ class Task:
 
     def __init__(self, func: Callable, max_retries: int = 300, retry_delay: int = 1):
         self.func: Callable = func
-        self.func_name: str = func.__name__
+        self.func_name: str = _callable_name(func)
         self.max_retries: int = max_retries
         self.retry_delay: int = retry_delay
         self.retry_count: int = 0
 
         # Get module name for Celery task naming
         module_name = func.__module__.split(".")[-1] if hasattr(func, "__module__") else "unknown"
-        celery_task_name = f"tasks.{module_name}.{func.__name__}"
+        callable_name = _callable_name(func)
+        celery_task_name = f"tasks.{module_name}.{callable_name}"
 
         # Wrap original function to always report node status after execution
         def _wrapped(*args, **kwargs):
@@ -253,19 +262,26 @@ __all__ = [
     "on_error",
 ]
 
-# Import all task modules to register them with Celery
-from . import (
-    llms,
-    tools,
-    output,
-    triggers,
-    vector_db,
-    web_crawlers,
-    media_editing,
-    relational_db,
-    control_flows,
-    file_processing,
-    text_processing,
-    image_generation,
-    media_processing,
+_TASK_MODULES = (
+    "llms",
+    "tools",
+    "output",
+    "triggers",
+    "vector_db",
+    "web_crawlers",
+    "media_editing",
+    "relational_db",
+    "control_flows",
+    "file_processing",
+    "text_processing",
+    "image_generation",
+    "media_processing",
 )
+
+
+def register_builtin_task_modules() -> None:
+    for module_name in _TASK_MODULES:
+        import_module(f"{__name__}.{module_name}")
+
+
+register_builtin_task_modules()

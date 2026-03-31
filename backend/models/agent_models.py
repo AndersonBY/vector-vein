@@ -2,6 +2,7 @@
 # @Date:   2024-06-06 11:18:35
 import uuid
 from datetime import datetime
+from typing import Any, cast
 
 from peewee import (
     UUIDField,
@@ -14,52 +15,58 @@ from peewee import (
     ManyToManyField,
 )
 
-from models.base import BaseModel, JSONField
+from models.base import BaseModel, JSONField, ManyToManyDescriptor, ModelField
 from models.user_models import User
 from models.workflow_models import Workflow, WorkflowTemplate
 
 
 class Agent(BaseModel):
-    aid = UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    name = CharField(max_length=512)
-    description = TextField(default="")
-    avatar = CharField(max_length=512, default="")
-    has_published = BooleanField(default=False)
-    shared = BooleanField(default=False)
-    is_public = BooleanField(default=False)
-    version = IntegerField(default=1)
-    user = ForeignKeyField(User, null=True, backref="agents")
-    settings = JSONField(default=dict)
-    model_provider = CharField(max_length=12)
-    model = CharField(max_length=30)
-    related_workflows = ManyToManyField(Workflow, backref="agents")
-    related_templates = ManyToManyField(WorkflowTemplate, backref="agents")
-    create_time = DateTimeField(default=datetime.now)
-    update_time = DateTimeField(default=datetime.now)
+    aid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4, unique=True))
+    name = cast(ModelField[str], CharField(max_length=512))
+    description = cast(ModelField[str], TextField(default=""))
+    avatar = cast(ModelField[str], CharField(max_length=512, default=""))
+    has_published = cast(ModelField[bool], BooleanField(default=False))
+    shared = cast(ModelField[bool], BooleanField(default=False))
+    is_public = cast(ModelField[bool], BooleanField(default=False))
+    version = cast(ModelField[int], IntegerField(default=1))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, backref="agents"))
+    settings = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    model_provider = cast(ModelField[str], CharField(max_length=12))
+    model = cast(ModelField[str], CharField(max_length=30))
+    related_workflows = cast(ManyToManyDescriptor[Workflow], ManyToManyField(Workflow, backref="agents"))
+    related_templates = cast(
+        ManyToManyDescriptor[WorkflowTemplate],
+        ManyToManyField(WorkflowTemplate, backref="agents"),
+    )
+    create_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
+    update_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
 
     def __str__(self):
         return f"{self.name}-{self.aid.hex[:8]}"
 
 
 class Conversation(BaseModel):
-    cid = UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    user = ForeignKeyField(User, null=True, backref="conversations")
-    title = CharField(max_length=512)
-    settings = JSONField(default=dict)
-    brief = TextField(default="")
-    shared = BooleanField(default=False)
-    shared_meta = JSONField(default=dict)
-    is_public = BooleanField(default=False)
-    shared_at_message = UUIDField(null=True)
-    model_provider = CharField(max_length=12)
-    model = CharField(max_length=30)
-    agent = ForeignKeyField(Agent, null=True, backref="conversations")
-    agent_version = IntegerField(default=1)
-    create_time = DateTimeField(default=datetime.now)
-    update_time = DateTimeField(default=datetime.now)
-    current_message = UUIDField(null=True)
-    related_workflows = ManyToManyField(Workflow, backref="conversations")
-    related_templates = ManyToManyField(WorkflowTemplate, backref="conversations")
+    cid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4, unique=True))
+    user = cast(ModelField[User | None], ForeignKeyField(User, null=True, backref="conversations"))
+    title = cast(ModelField[str], CharField(max_length=512))
+    settings = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    brief = cast(ModelField[str], TextField(default=""))
+    shared = cast(ModelField[bool], BooleanField(default=False))
+    shared_meta = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    is_public = cast(ModelField[bool], BooleanField(default=False))
+    shared_at_message = cast(ModelField[uuid.UUID | None], UUIDField(null=True))
+    model_provider = cast(ModelField[str], CharField(max_length=12))
+    model = cast(ModelField[str], CharField(max_length=30))
+    agent = cast(ModelField[Agent | None], ForeignKeyField(Agent, null=True, backref="conversations"))
+    agent_version = cast(ModelField[int], IntegerField(default=1))
+    create_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
+    update_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
+    current_message = cast(ModelField[uuid.UUID | None], UUIDField(null=True))
+    related_workflows = cast(ManyToManyDescriptor[Workflow], ManyToManyField(Workflow, backref="conversations"))
+    related_templates = cast(
+        ManyToManyDescriptor[WorkflowTemplate],
+        ManyToManyField(WorkflowTemplate, backref="conversations"),
+    )
 
     def __str__(self):
         return self.cid.hex
@@ -92,17 +99,20 @@ class Message(BaseModel):
         WORKFLOW_SUCCESS = "A"
         WORKFLOW_FAILED = "Z"
 
-    mid = UUIDField(primary_key=True, default=uuid.uuid4, unique=True)
-    parent = ForeignKeyField("self", null=True, backref="child_messages")
-    conversation = ForeignKeyField(Conversation, backref="messages")
-    author_type = CharField(max_length=1, choices=AuthorTypes.__dict__.items())
-    content_type = CharField(max_length=3, choices=ContentTypes.__dict__.items())
-    status = CharField(max_length=1, choices=StatusTypes.__dict__.items(), default=StatusTypes.PENDING)
-    create_time = DateTimeField(default=datetime.now)
-    update_time = DateTimeField(default=datetime.now)
-    metadata = JSONField(default=dict)
-    content = JSONField(default=dict)
-    attachments = JSONField(default=list)
+    mid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4, unique=True))
+    parent = cast(ModelField["Message | None"], ForeignKeyField("self", null=True, backref="child_messages"))
+    conversation = cast(ModelField[Conversation], ForeignKeyField(Conversation, backref="messages"))
+    author_type = cast(ModelField[str], CharField(max_length=1, choices=AuthorTypes.__dict__.items()))
+    content_type = cast(ModelField[str], CharField(max_length=3, choices=ContentTypes.__dict__.items()))
+    status = cast(
+        ModelField[str],
+        CharField(max_length=1, choices=StatusTypes.__dict__.items(), default=StatusTypes.PENDING),
+    )
+    create_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
+    update_time = cast(ModelField[datetime], DateTimeField(default=datetime.now))
+    metadata = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    content = cast(ModelField[dict[str, Any]], JSONField(default=dict))
+    attachments = cast(ModelField[list[Any]], JSONField(default=list))
 
     def __str__(self):
         return self.mid.hex

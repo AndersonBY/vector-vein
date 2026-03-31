@@ -27,9 +27,9 @@ import {
   getNodeConnectedNodes,
   getUIDesignFromWorkflow,
 } from '@/utils/workflow'
-import { deepCopy } from '@/utils/util'
+import { deepCopy, formatTime } from '@/utils/util'
 import { settingAPI } from '@/api/user'
-import { workflowAPI } from '@/api/workflow'
+import { workflowAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 
 const props = defineProps({
@@ -60,6 +60,8 @@ const triggerNodes = ref([])
 const humanFeedbackNodes = ref([])
 const streamableNodes = ref([])
 const edges = ref([])
+const scheduleInfo = ref(null)
+const scheduleLoading = ref(false)
 
 const currentWorkflow = ref({})
 const savedWorkflow = ref({}) // 
@@ -171,6 +173,10 @@ onBeforeMount(async () => {
   setCurrentWorkflow(currentWorkflow.value)
 
   savedWorkflow.value = deepCopy(currentWorkflow.value)
+
+  if (!props.isTemplate && currentWorkflow.value?.wid) {
+    await loadScheduleInfo(currentWorkflow.value.wid)
+  }
 
   loading.value = false
 })
@@ -307,6 +313,46 @@ const runWorkflowVersionModal = ref(false)
 const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
+const hasButtonTrigger = computed(() => triggerNodes.value.some((node) => node.type === 'ButtonTrigger'))
+const hasScheduleTrigger = computed(() => triggerNodes.value.some((node) => node.type === 'ScheduleTrigger'))
+const scheduleSummary = computed(() => {
+  if (!scheduleInfo.value) {
+    return t('workspace.workflowSpace.schedule_not_configured')
+  }
+  const items = [
+    `${t('workspace.workflowSpace.schedule_expression')}: ${scheduleInfo.value.cron_expression || '-'}`,
+  ]
+  if (scheduleInfo.value.next_run_display) {
+    items.push(`${t('workspace.workflowSpace.schedule_next_run')}: ${scheduleInfo.value.next_run_display}`)
+  }
+  if (scheduleInfo.value.last_run_display) {
+    items.push(`${t('workspace.workflowSpace.schedule_last_run')}: ${scheduleInfo.value.last_run_display}`)
+  }
+  return items.join(' · ')
+})
+
+const loadScheduleInfo = async (wid) => {
+  scheduleLoading.value = true
+  const response = await workflowScheduleTriggerAPI('get', { wid })
+  if (response.status === 200) {
+    scheduleInfo.value = {
+      ...response.data,
+      next_run_display: response.data?.next_run_at ? formatTime(response.data.next_run_at) : '',
+      last_run_display: response.data?.latest_record?.start_time ? formatTime(response.data.latest_record.start_time) : '',
+    }
+  } else if (response.status === 404) {
+    scheduleInfo.value = null
+  }
+  scheduleLoading.value = false
+}
+
+const openScheduleManager = async () => {
+  await router.push({
+    name: 'WorkflowScheduleManager',
+    query: currentWorkflow.value?.wid ? { wid: currentWorkflow.value.wid } : {},
+  })
+}
+
 const runWorkflow = async (workflowVersion = null) => {
   let workflowDataForRun = deepCopy(savedWorkflow.value)
   if (savedWorkflow.value.version !== null && currentWorkflow.value.version !== null && savedWorkflow.value.version !== currentWorkflow.value.version) {
@@ -334,6 +380,11 @@ const runWorkflow = async (workflowVersion = null) => {
   if (!checkFieldsValid(inputFields.value)) {
     return
   }
+  const invalidHumanFeedbackNode = humanFeedbackNodes.value.find((node) => !node.data?.template?.human_input?.value)
+  if (invalidHumanFeedbackNode) {
+    message.error(t('workspace.workflowSpace.human_feedback_required'))
+    return
+  }
   // Iterate all nodes from workflowDataForRun, update the value of fields that are shown from currentWorkflow
   // 这样做的目的是如果每次都直接提交currentWorkflow的话，由于currentWorkflow是会被运行结果更新的，如果一旦更新后再次提交
   // 有些字段的类型就直接发生改变了，运行会报错
@@ -346,6 +397,14 @@ const runWorkflow = async (workflowVersion = null) => {
             if (inputField) {
               node.data.template[field].value = inputField.value
             }
+          }
+        })
+      }
+      const feedbackNode = humanFeedbackNodes.value.find((item) => item.id === node.id)
+      if (feedbackNode?.data?.template) {
+        Object.keys(feedbackNode.data.template).forEach((field) => {
+          if (node.data.template?.[field]) {
+            node.data.template[field].value = feedbackNode.data.template[field].value
           }
         })
       }
@@ -484,6 +543,36 @@ function clearWorkflow() {
         <a-divider />
 
         <a-flex vertical gap="small">
+          <a-card v-if="hasScheduleTrigger" size="small" class="schedule-overview-card" :loading="scheduleLoading">
+            <a-flex justify="space-between" align="start" gap="middle">
+              <div>
+                <a-typography-text strong>
+                  {{ t('workspace.workflowSpace.schedule_overview') }}
+                </a-typography-text>
+                <a-typography-paragraph type="secondary" style="margin: 8px 0 0;">
+                  {{ scheduleSummary }}
+                </a-typography-paragraph>
+              </div>
+              <a-button size="small" @click="openScheduleManager">
+                {{ t('workspace.workflowSpace.manage_schedule') }}
+              </a-button>
+            </a-flex>
+          </a-card>
+
+          <a-flex v-if="humanFeedbackNodes.length > 0" vertical gap="small" class="human-feedback-nodes-container">
+            <a-typography-title :level="5" style="margin-bottom: 0;">
+              {{ t('workspace.workflowSpace.human_feedback') }}
+            </a-typography-title>
+            <a-card v-for="node in humanFeedbackNodes" :key="node.id" size="small">
+              <a-typography-paragraph v-if="node.data?.template?.hint_message?.value" type="secondary">
+                {{ node.data.template.hint_message.value }}
+              </a-typography-paragraph>
+              <a-textarea v-model:value="node.data.template.human_input.value"
+                :autoSize="{ minRows: 3, maxRows: 10 }"
+                :placeholder="t('workspace.workflowSpace.human_feedback_placeholder')" />
+            </a-card>
+          </a-flex>
+
           <template v-for="(node) in triggerNodes" :key="`node-${node.id}`">
             <a-button type="primary" block @click="runWorkflow(null)" :loading="running"
               v-if="node.type == 'ButtonTrigger'">
@@ -493,6 +582,12 @@ function clearWorkflow() {
               {{ node.data.template.button_text.value }}
             </a-button>
           </template>
+          <a-button v-if="!hasButtonTrigger" type="primary" ghost block @click="runWorkflow(null)" :loading="running">
+            <template #icon>
+              <PlayOne />
+            </template>
+            {{ t('workspace.workflowSpace.run_once') }}
+          </a-button>
         </a-flex>
       </a-flex>
     </a-col>
@@ -622,5 +717,10 @@ function clearWorkflow() {
   border: 3px solid #28c5e5;
   border-radius: 10px;
   padding: 16px;
+  background: rgba(40, 197, 229, 0.04);
+}
+
+.schedule-overview-card {
+  border-radius: 14px;
 }
 </style>

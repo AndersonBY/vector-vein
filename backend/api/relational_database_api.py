@@ -85,6 +85,8 @@ class RelationalDatabaseAPI:
         if status != 200 or not isinstance(database, UserRelationalDatabase):
             return {"status": status, "msg": msg, "data": {}}
 
+        if not database.database_path:
+            return {"status": 404, "msg": "database file not found", "data": {}}
         database_path = Path(database.database_path)
         if database_path.exists():
             database_path.unlink()

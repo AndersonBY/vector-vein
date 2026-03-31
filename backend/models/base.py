@@ -5,9 +5,10 @@
 # @Last Modified time: 2024-06-15 01:45:12
 import json
 import uuid
+from collections.abc import Iterable, Iterator
 from pathlib import Path
 from datetime import date, datetime
-from typing import overload, List, Dict, Union, Optional
+from typing import Any, Protocol, TypeAlias, TypeVar, overload, List, Optional
 
 from playhouse.shortcuts import model_to_dict
 from peewee import (
@@ -21,6 +22,52 @@ from utilities.config import config
 
 
 database = SqliteDatabase(Path(config.data_path) / "my_database.db")
+
+SerializedModel: TypeAlias = dict[str, Any]
+SerializedModelList: TypeAlias = list[SerializedModel]
+
+_RelatedModel = TypeVar("_RelatedModel")
+_FieldValue = TypeVar("_FieldValue")
+
+
+class ModelField(Protocol[_FieldValue]):
+    @overload
+    def __get__(self, instance: None, owner: type[Any] | None = None) -> Any: ...
+
+    @overload
+    def __get__(self, instance: object, owner: type[Any] | None = None) -> _FieldValue: ...
+
+    def __set__(self, instance: object, value: _FieldValue) -> None: ...
+
+    def asc(self) -> Any: ...
+
+    def desc(self) -> Any: ...
+
+    def contains(self, value: Any) -> Any: ...
+
+    def in_(self, value: Any) -> Any: ...
+
+    def __eq__(self, other: Any) -> Any: ...
+
+    def __ne__(self, other: Any) -> Any: ...
+
+
+class ManyToManyRelation(Protocol[_RelatedModel]):
+    def clear(self) -> Any: ...
+
+    def add(self, value: _RelatedModel | Iterable[_RelatedModel]) -> Any: ...
+
+    def __iter__(self) -> Iterator[_RelatedModel]: ...
+
+
+class ManyToManyDescriptor(Protocol[_RelatedModel]):
+    @overload
+    def __get__(self, instance: None, owner: type[Any] | None = None) -> Any: ...
+
+    @overload
+    def __get__(self, instance: object, owner: type[Any] | None = None) -> ManyToManyRelation[_RelatedModel]: ...
+
+    def get_through_model(self) -> Any: ...
 
 
 class JSONField(TextField):
@@ -59,34 +106,38 @@ def get_model_fields(model, field_names):
 @overload
 def model_serializer(
     obj: BaseModel, many: bool = False, manytomany: bool = False, fields: Optional[List[str]] = None
-) -> Dict: ...
+) -> SerializedModel: ...
 
 
 @overload
 def model_serializer(
-    obj: Union[List[BaseModel], ModelSelect],
+    obj: Iterable[BaseModel] | ModelSelect,
     many: bool = True,
     manytomany: bool = False,
     fields: Optional[List[str]] = None,
-) -> List[Dict]: ...
+) -> SerializedModelList: ...
 
 
 def model_serializer(
-    obj: Union[BaseModel, List[BaseModel], ModelSelect],
+    obj: BaseModel | Iterable[BaseModel] | ModelSelect,
     many: bool = False,
     manytomany: bool = False,
     fields: Optional[List[str]] = None,
-) -> Union[Dict, List[Dict]]:
+) -> SerializedModel | SerializedModelList:
+    iterable_obj = obj
     if fields:
-        if many and obj:
-            model_class = obj[0].__class__
+        if many:
+            iterable_obj = list(obj)
+            if not iterable_obj:
+                return []
+            model_class = iterable_obj[0].__class__
         else:
             model_class = obj.__class__
         fields = get_model_fields(model_class, fields)
 
     if many:
         results = []
-        for o in obj:
+        for o in iterable_obj:
             dict_obj = model_to_dict(o, manytomany=manytomany, recurse=False, only=fields)
             serialized_obj = json.dumps(dict_obj, default=json_serializer)
             results.append(json.loads(serialized_obj))

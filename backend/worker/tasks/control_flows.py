@@ -6,12 +6,13 @@
 import re
 import json
 import random
+from copy import deepcopy
 from typing import Any
 
-from vectorvein.types import BackendType
-from vectorvein.chat_clients import create_chat_client
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.types.llm_parameters import ChatCompletionMessage
+from vv_llm.types import BackendType
+from vv_llm.chat_clients import create_chat_client
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.types.llm_parameters import ChatCompletionMessage
 
 from worker.tasks import task, timer
 from utilities.config import Settings
@@ -185,6 +186,208 @@ def json_process(
     return workflow.data
 
 
+WORKFLOW_SELECTOR_PROVIDER_MAP = {
+    "openai": BackendType.OpenAI,
+    "anthropic": BackendType.Anthropic,
+    "deepseek": BackendType.DeepSeek,
+    "gemini": BackendType.Gemini,
+    "groq": BackendType.Groq,
+    "minimax": BackendType.MiniMax,
+    "mistral": BackendType.Mistral,
+    "moonshot": BackendType.Moonshot,
+    "qwen": BackendType.Qwen,
+    "yi": BackendType.Yi,
+    "zhipuai": BackendType.ZhiPuAI,
+    "baichuan": BackendType.Baichuan,
+    "ernie": BackendType.Ernie,
+    "stepfun": BackendType.StepFun,
+    "xai": BackendType.XAI,
+}
+
+
+def _selector_backend_and_model(model_selector: str) -> tuple[BackendType | None, str]:
+    if "/" in model_selector:
+        provider, model = model_selector.split("/", 1)
+    elif "⋄" in model_selector:
+        provider, model = model_selector.split("⋄", 1)
+    else:
+        return None, model_selector
+    return WORKFLOW_SELECTOR_PROVIDER_MAP.get(provider.strip().lower()), model.strip()
+
+
+def _best_effort_select_workflow(workflows: list[WorkflowModel], selector_input: str, selector_template: str):
+    if not workflows:
+        return None, "no workflow candidates"
+    if len(workflows) == 1:
+        workflow = workflows[0]
+        return workflow, f"selected the only candidate: {workflow.title}"
+
+    normalized_query = f"{selector_template}\n{selector_input}".lower()
+    best_workflow = workflows[0]
+    best_score = -1
+    for workflow in workflows:
+        score = 0
+        for token in (workflow.title, workflow.brief):
+            if token and token.lower() in normalized_query:
+                score += max(len(token), 8)
+        if workflow.wid.hex.lower() in normalized_query:
+            score += 100
+        if score > best_score:
+            best_workflow = workflow
+            best_score = score
+    return best_workflow, f"heuristic match score={best_score}"
+
+
+def _select_workflow_with_model(
+    workflows: list[WorkflowModel],
+    selector_input: str,
+    selector_template: str,
+    llm_model: str,
+) -> tuple[WorkflowModel | None, str]:
+    backend_type, model_name = _selector_backend_and_model(llm_model)
+    if backend_type is None or not model_name:
+        return _best_effort_select_workflow(workflows, selector_input, selector_template)
+
+    user_settings = Settings()
+    vv_llm_settings.load(user_settings.get("llm_settings"))
+    client = create_chat_client(backend=backend_type, model=model_name, stream=False)
+    workflow_candidates = [
+        {
+            "wid": workflow.wid.hex,
+            "title": workflow.title,
+            "brief": workflow.brief,
+        }
+        for workflow in workflows
+    ]
+    prompt = (
+        "Select the best workflow candidate.\n"
+        "Return JSON with keys selected_workflow_id and reason only.\n\n"
+        f"Selection guide:\n{selector_template}\n\n"
+        f"User input:\n{selector_input}\n\n"
+        f"Candidates:\n{json.dumps(workflow_candidates, ensure_ascii=False, indent=2)}"
+    )
+    response = client.create_completion(messages=[{"role": "user", "content": prompt}])
+    content = response.content or ""
+    try:
+        parsed = json.loads(content)
+        selected_workflow_id = parsed.get("selected_workflow_id", "")
+        reason = parsed.get("reason", "")
+    except Exception:
+        selected_workflow_id = ""
+        reason = content
+
+    for workflow in workflows:
+        if workflow.wid.hex == selected_workflow_id:
+            return workflow, reason or f"selected by {llm_model}"
+    return _best_effort_select_workflow(workflows, selector_input, selector_template)
+
+
+def _apply_selector_input(workflow_data: dict, selector_input: str):
+    if not selector_input:
+        return workflow_data
+    for node in workflow_data.get("nodes", []):
+        template = node.get("data", {}).get("template", {})
+        for field_name in ("input", "prompt", "query", "text", "topic", "requirement"):
+            field_data = template.get(field_name)
+            if field_data is None or field_data.get("is_output"):
+                continue
+            if field_data.get("value"):
+                continue
+            field_data["value"] = selector_input
+            return workflow_data
+    return workflow_data
+
+
+@task
+@timer
+def workflow_selector(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    async_task_data = workflow.get_async_task(node_id)
+
+    if async_task_data is None:
+        selector_input = workflow.get_node_field_value(node_id, "input", "")
+        selector_template = workflow.get_node_field_value(node_id, "template", "")
+        llm_model = workflow.get_node_field_value(node_id, "llm_model", "")
+        workflow_candidates = workflow.get_node_field_value(node_id, "workflow_ids", []) or []
+        candidate_ids = [item.get("id") for item in workflow_candidates if item.get("id")]
+        workflows = list(
+            WorkflowModel.select().where(WorkflowModel.wid.in_(candidate_ids), WorkflowModel.status == "VALID")
+        )
+        workflows = [item for item in workflows if item.wid.hex != workflow.workflow_id]
+        selected_workflow, selection_reason = _select_workflow_with_model(
+            workflows,
+            selector_input,
+            selector_template,
+            llm_model,
+        )
+        if selected_workflow is None:
+            raise Exception("No workflow candidate selected")
+
+        selected_workflow_data = _apply_selector_input(deepcopy(selected_workflow.data), selector_input)
+        record_rid = run_workflow_common(
+            workflow_data=selected_workflow_data,
+            workflow=selected_workflow,
+            run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+            workflow_version=selected_workflow.version,
+        )
+        workflow.add_async_task(
+            node_id,
+            {
+                "record_id": record_rid,
+                "selected_workflow_id": selected_workflow.wid.hex,
+                "selected_workflow_title": selected_workflow.title,
+                "selection_reason": selection_reason,
+            },
+        )
+        workflow_selector.retry(workflow.data, node_id, retry_delay=1)
+
+    async_task_data = workflow.get_async_task(node_id)
+    if async_task_data is None:
+        raise Exception("Async workflow selector task not found")
+    record = (
+        WorkflowRunRecord.select()
+        .join(WorkflowModel)
+        .where(WorkflowRunRecord.rid == async_task_data["record_id"])
+        .first()
+    )
+    if record is None:
+        raise Exception("Selected workflow run record not found")
+    if record.status in ("RUNNING", "QUEUED"):
+        workflow_selector.retry(workflow.data, node_id, retry_delay=1)
+    if record.status != "FINISHED":
+        raise Exception("Selected workflow run failed")
+
+    workflow.update_node_field_value(node_id, "selected_workflow_id", async_task_data["selected_workflow_id"])
+    workflow.update_node_field_value(node_id, "selection_reason", async_task_data["selection_reason"])
+    workflow.update_node_field_value(
+        node_id,
+        "output",
+        {
+            "workflow_id": async_task_data["selected_workflow_id"],
+            "workflow_title": async_task_data["selected_workflow_title"],
+            "record_id": record.rid.hex,
+            "workflow_version": record.workflow_version,
+            "data": record.data,
+        },
+    )
+    return workflow.data
+
+
+@task
+@timer
+def human_feedback(
+    workflow_data: dict,
+    node_id: str,
+):
+    workflow = Workflow(workflow_data)
+    human_input = workflow.get_node_field_value(node_id, "human_input", "")
+    workflow.update_node_field_value(node_id, "output", human_input)
+    return workflow.data
+
+
 @task
 @timer
 def workflow_loop(
@@ -225,7 +428,7 @@ def workflow_loop(
 
     def call_ai_model(backend: str, model: str, prompt: str) -> ChatCompletionMessage:
         user_settings = Settings()
-        vectorvein_settings.load(user_settings.get("llm_settings"))
+        vv_llm_settings.load(user_settings.get("llm_settings"))
         client = create_chat_client(backend=BackendType(backend.lower()), model=model.lower(), stream=False)
         response = client.create_completion(messages=[{"role": "user", "content": prompt}])
         return response

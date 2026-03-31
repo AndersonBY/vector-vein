@@ -3,10 +3,10 @@
 # @Date:   2023-12-12 15:38:43
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-24 14:59:24
-from vectorvein.types import BackendType
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.chat_clients import create_chat_client, create_async_chat_client
-from vectorvein.chat_clients.utils import get_token_counts, format_messages, cutoff_messages, ToolCallContentProcessor
+from vv_llm.types import BackendType
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.chat_clients import create_chat_client, create_async_chat_client
+from vv_llm.chat_clients.utils import get_token_counts, format_messages, cutoff_messages, ToolCallContentProcessor
 
 from utilities.config import Settings
 from .agent import ToolCallData
@@ -18,7 +18,7 @@ def conversation_title_generator(
     messages: list, max_input_length: int = 512, backend: BackendType = BackendType.OpenAI, model: str = "gpt-4o-mini"
 ):
     user_settings = Settings()
-    vectorvein_settings.load(user_settings.get("llm_settings"))
+    vv_llm_settings.load(user_settings.get("llm_settings"))
     client = create_chat_client(backend=backend, model=model, stream=False)
     conversation_text = ""
     for message in messages:

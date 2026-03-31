@@ -26,6 +26,7 @@ import os
 import re
 import argparse
 import urllib.request
+from typing import Any
 from urllib.error import URLError
 from urllib.parse import urlparse
 from html.parser import HTMLParser
@@ -191,7 +192,7 @@ class HtmlToDocx(HTMLParser):
         self.table_style = DEFAULT_TABLE_STYLE
 
     def set_initial_attrs(self, document=None):
-        self.tags: dict[str, list[dict] | dict] = {
+        self.tags: dict[str, Any] = {
             "span": [],
             "list": [],
         }

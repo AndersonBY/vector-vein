@@ -182,9 +182,9 @@ def dall_e(
             style=style,
         )
 
-        image_base64 = response.data[0].b64_json
-        if image_base64 is None:
+        if not response.data or response.data[0].b64_json is None:
             raise Exception("Failed to generate image")
+        image_base64 = response.data[0].b64_json
         image_bytes = base64.decodebytes(bytes(image_base64, "utf-8"))
         image_name = f"{uuid.uuid4().hex}.png"
         local_file = image_folder / image_name

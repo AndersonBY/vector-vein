@@ -3,7 +3,8 @@
 # @Date:   2023-05-15 14:21:40
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-07-01 18:34:20
-from typing import TypeVar, Type, Tuple, Union, Dict, Any
+from datetime import datetime
+from typing import Any, Literal, Type, TypeVar, cast, overload
 
 from models import (
     Message,
@@ -11,7 +12,7 @@ from models import (
     model_serializer,
     WorkflowRunRecord,
 )
-from models.base import BaseModel
+from models.base import BaseModel, SerializedModelList
 from utilities.general import mprint_with_name
 from utilities.config import cache
 
@@ -22,21 +23,37 @@ mprint = mprint_with_name(name="Workflow Runner")
 T = TypeVar("T", bound=BaseModel)
 
 
-def get_user_object_general(ObjectClass: Type[T], **kwargs) -> Tuple[int, str, Union[T, Dict[str, Any]]]:
+def get_user_object_general(ObjectClass: Type[T], **kwargs) -> tuple[int, str, T | None]:
     if len(kwargs) == 0:
-        return 500, "wrong args", {}
+        return 500, "wrong args", None
     try:
         object = ObjectClass.get(*[getattr(ObjectClass, key) == value for key, value in kwargs.items()])
-    except ObjectClass.DoesNotExist:  # type: ignore
-        return 404, "not exist", {}
+    except ObjectClass.DoesNotExist:
+        return 404, "not exist", None
     return 200, "", object
+
+
+@overload
+def get_history_messages(
+    start_message: Message,
+    count: int | None = 10,
+    all_children: Literal[True] = True,
+) -> list[SerializedModelList]: ...
+
+
+@overload
+def get_history_messages(
+    start_message: Message,
+    count: int | None = 10,
+    all_children: Literal[False] = False,
+) -> SerializedModelList: ...
 
 
 def get_history_messages(
     start_message: Message,
     count: int | None = 10,
     all_children: bool = True,
-) -> list[dict] | list[list[dict]]:
+) -> SerializedModelList | list[SerializedModelList]:
     """_summary_
 
     Args:
@@ -52,19 +69,21 @@ def get_history_messages(
     Returns:
         list[dict] | list[list[dict]]: _description_
     """
+    history: SerializedModelList | list[SerializedModelList]
     history = []
+    current_message: Message | None = start_message
 
-    while start_message:
+    while current_message:
         if all_children:
-            if start_message.parent is not None:
+            if current_message.parent is not None:
                 siblings = model_serializer(
-                    Message.select().where(Message.parent == start_message.parent).order_by(Message.create_time.asc()),
+                    Message.select().where(Message.parent == current_message.parent).order_by(Message.create_time.asc()),
                     many=True,
                 )
             else:
-                siblings = [model_serializer(start_message)]
+                siblings = [model_serializer(current_message)]
 
-            valid_siblings = []
+            valid_siblings: SerializedModelList = []
             for sibling in siblings:
                 if any(
                     (
@@ -77,18 +96,18 @@ def get_history_messages(
                     sibling["update_time"] = int(sibling["update_time"])
                     valid_siblings.append(sibling)
             if valid_siblings:
-                history.insert(0, valid_siblings)
-            start_message = start_message.parent
+                cast(list[SerializedModelList], history).insert(0, valid_siblings)
+            current_message = cast(Message | None, current_message.parent)
         else:
-            if start_message.parent is not None:
+            if current_message.parent is not None:
                 latest_child = model_serializer(
                     Message.select()
-                    .where(Message.parent == start_message.parent)
+                    .where(Message.parent == current_message.parent)
                     .order_by(Message.create_time.desc())
                     .first()
                 )
             else:
-                latest_child = model_serializer(start_message)
+                latest_child = model_serializer(current_message)
             if any(
                 (
                     latest_child["content_type"] != Message.ContentTypes.TEXT,
@@ -99,7 +118,7 @@ def get_history_messages(
                 latest_child["create_time"] = int(latest_child["create_time"])
                 latest_child["update_time"] = int(latest_child["update_time"])
                 history.insert(0, latest_child)
-            start_message = start_message.parent
+            current_message = cast(Message | None, current_message.parent)
 
         if count is not None and len(history) >= count:
             break
@@ -108,23 +127,24 @@ def get_history_messages(
 
 
 def run_workflow_common(
-    workflow_data: dict,
+    workflow_data: dict[str, Any],
     workflow: Workflow,
-    message=None,
+    message: Message | None = None,
     run_from=WorkflowRunRecord.RunFromTypes.WEB,
-    workflow_version: int | None = None,
+    workflow_version: str | int | None = None,
 ) -> str:
     from celery_tasks import run_workflow
     
     workflow_data["wid"] = workflow.wid.hex
 
-    source_message = message.mid.hex if message else message
+    source_message = message.mid.hex if message is not None else None
 
     record: WorkflowRunRecord = WorkflowRunRecord.create(
         workflow=workflow,
         data=workflow_data,
         status="RUNNING",
         run_from=run_from,
+        schedule_time=datetime.now() if run_from == WorkflowRunRecord.RunFromTypes.SCHEDULE else None,
         source_message=source_message,
         workflow_version=workflow_version or workflow.version,
     )

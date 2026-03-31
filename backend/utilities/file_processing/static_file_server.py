@@ -19,6 +19,10 @@ from utilities.network import new_httpx_client
 mprint = mprint_with_name(name="Static File Server")
 
 
+class ReusableHTTPServer(HTTPServer):
+    allow_reuse_address = True
+
+
 class StaticFileServer:
     host = "localhost"
     port = 13286
@@ -41,7 +45,8 @@ class StaticFileServer:
                 super().do_GET()
 
         self.static_folder_path = Path(static_folder_path)
-        self.static_file_server = HTTPServer((StaticFileServer.host, StaticFileServer.port), MyRequestHandler)
+        self.request_handler_class = MyRequestHandler
+        self.static_file_server = None
         self.static_file_server_thread = None
 
     @staticmethod
@@ -49,6 +54,10 @@ class StaticFileServer:
         return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{file_path}"
 
     def start(self, block: bool = False):
+        if self.static_file_server is None:
+            self.static_file_server = ReusableHTTPServer(
+                (StaticFileServer.host, StaticFileServer.port), self.request_handler_class
+            )
         mprint(f"Starting at http://{StaticFileServer.host}:{StaticFileServer.port}")
         if block:
             self.static_file_server.serve_forever()
@@ -60,9 +69,14 @@ class StaticFileServer:
 
     def shutdown(self):
         mprint("Shutting down...")
+        if self.static_file_server is None:
+            return
         self.static_file_server.shutdown()
+        self.static_file_server.server_close()
         if self.static_file_server_thread:
-            self.static_file_server_thread.join()
+            self.static_file_server_thread.join(timeout=5)
+            self.static_file_server_thread = None
+        self.static_file_server = None
 
     def restart(self):
         self.shutdown()

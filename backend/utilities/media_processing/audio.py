@@ -7,8 +7,6 @@ import wave
 import platform
 import threading
 import subprocess
-from io import IOBase
-from os import PathLike
 from pathlib import Path
 from datetime import datetime
 from typing import Literal, cast
@@ -18,12 +16,6 @@ import pyaudio
 import numpy as np
 from openai import OpenAI
 from openai._types import FileTypes
-from deepgram_captions import DeepgramConverter, srt
-from deepgram import DeepgramClient
-from deepgram.types.listen_v1response import ListenV1Response
-from deepgram.types.listen_v1accepted_response import ListenV1AcceptedResponse
-from deepgram.listen.client import ListenClient
-from deepgram.listen.v1.client import V1Client
 
 from utilities.config import Settings, config
 from utilities.general import mprint_with_name
@@ -265,12 +257,13 @@ class TTSClient:
             ]
 
             try:
+                create_no_window = getattr(subprocess, "CREATE_NO_WINDOW", 0)
                 if platform.system() == "Windows":
                     ffmpeg_process = subprocess.Popen(
                         ffmpeg_command,
                         stdout=subprocess.PIPE,
                         stderr=subprocess.DEVNULL,
-                        creationflags=subprocess.CREATE_NO_WINDOW,
+                        creationflags=create_no_window,
                     )
                 else:
                     ffmpeg_process = subprocess.Popen(
@@ -338,7 +331,7 @@ class TTSClient:
             text = re.sub(r"```.*?```", "", text, flags=re.DOTALL)
 
         if non_block:
-            thread = threading.Thread(target=self._stream_audio, args=(text, voice))
+            thread = threading.Thread(target=self._stream_audio, args=(text, voice), daemon=True)
             thread.start()
             return thread
         else:
@@ -387,93 +380,10 @@ class OpenAIProvider(ASRProvider):
             raise ValueError(f"Unsupported ASR output type: {output_type}")
 
 
-class DeepgramProvider(ASRProvider):
-    def __init__(self, client: DeepgramClient, model_id: str, language: str):
-        super().__init__(model_id, language)
-        self.client = client
-
-    def transcribe(self, file: FileTypes, output_type: str):
-        # Deepgram SDK v5: use listen.v1.media.transcribe_file/url with kwargs
-        # Help Pylance with dynamic router types using explicit casts
-        listen_v1 = cast(V1Client, cast(ListenClient, self.client.listen).v1)
-        response: ListenV1Response | ListenV1AcceptedResponse
-        if isinstance(file, IOBase):
-            payload_bytes = file.read()
-            response = listen_v1.media.transcribe_file(
-                request=payload_bytes,
-                model=self.model_id,
-                language=self.language,
-                smart_format=True,
-                paragraphs=True,
-                punctuate=True,
-            )
-        elif isinstance(file, bytes):
-            response = listen_v1.media.transcribe_file(
-                request=file,
-                model=self.model_id,
-                language=self.language,
-                smart_format=True,
-                paragraphs=True,
-                punctuate=True,
-            )
-        elif isinstance(file, (str, PathLike)):
-            file_str = str(file)
-            if file_str.startswith("http://") or file_str.startswith("https://"):
-                response = listen_v1.media.transcribe_url(
-                    url=file_str,
-                    model=self.model_id,
-                    language=self.language,
-                    smart_format=True,
-                    paragraphs=True,
-                    punctuate=True,
-                )
-            else:
-                with open(file_str, "rb") as f:
-                    payload_bytes = f.read()
-                response = listen_v1.media.transcribe_file(
-                    request=payload_bytes,
-                    model=self.model_id,
-                    language=self.language,
-                    smart_format=True,
-                    paragraphs=True,
-                    punctuate=True,
-                )
-        else:
-            raise TypeError("Unsupported source type")
-        # Narrow union to completed response with results
-        if isinstance(response, ListenV1AcceptedResponse):
-            raise RuntimeError(
-                "Deepgram returned an accepted response without results. "
-                "Remove callback/async options or poll for completion."
-            )
-        resp = cast(ListenV1Response, response)
-        if (
-            resp.results is None
-            or resp.results.channels is None
-            or resp.results.channels[0].alternatives is None
-        ):
-            return ""
-
-        if output_type == "text":
-            return resp.results.channels[0].alternatives[0].transcript or ""
-        elif output_type == "list":
-            words = []
-            for word in resp.results.channels[0].alternatives[0].words or []:
-                # Deepgram v5 response objects are Pydantic models
-                words.append(getattr(word, "model_dump", getattr(word, "dict"))())
-            return words
-        elif output_type == "srt":
-            # Convert to a plain dict for the captions helper
-            transcription = DeepgramConverter(getattr(resp, "model_dump", resp.dict)())
-            return srt(transcription)
-        else:
-            raise ValueError(f"Unsupported ASR output type: {output_type}")
-
-
 class SpeechRecognitionClient:
     def __init__(
         self,
-        provider: Literal["openai", "deepgram"] | None = None,
+        provider: Literal["openai"] | None = None,
         model: str | None = None,
         language: str | None = None,
     ):
@@ -483,22 +393,16 @@ class SpeechRecognitionClient:
             provider = settings.get("asr.provider", "openai")
 
         if model is None:
-            if provider == "openai":
-                _model = "whisper-1"
-            elif provider == "deepgram":
-                _model = settings.get("asr.deepgram.speech_to_text.model", "nova-2")
-            else:
+            if provider != "openai":
                 raise ValueError(f"Unsupported ASR provider: {provider}")
+            _model = "whisper-1"
         else:
             _model = model
 
         if language is None:
-            if provider == "openai":
-                _language = "en"
-            elif provider == "deepgram":
-                _language = settings.get("asr.deepgram.speech_to_text.language", "en")
-            else:
+            if provider != "openai":
                 raise ValueError(f"Unsupported ASR provider: {provider}")
+            _language = "en"
         else:
             _language = language
 
@@ -515,9 +419,6 @@ class SpeechRecognitionClient:
                 )
                 model_id = settings.get("asr.openai.model", "whisper-1")
             self.provider = OpenAIProvider(client, model_id, _language)
-        elif provider == "deepgram":
-            client = DeepgramClient(settings.get("asr.deepgram.api_key"))
-            self.provider = DeepgramProvider(client, _model, _language)
         else:
             raise ValueError(f"Unsupported ASR provider: {provider}")
 
@@ -574,7 +475,7 @@ class Microphone:
                 input_device_index=self.device_index,
             )
             self._sound_player.play("recording-start.wav")
-            self.thread = threading.Thread(target=self._record)
+            self.thread = threading.Thread(target=self._record, daemon=True)
             self.thread.start()
 
     def stop(self):
@@ -679,7 +580,7 @@ class SoundPlayer:
             return
 
         if non_block:
-            thread = threading.Thread(target=self._play_sound, args=(sound_path,))
+            thread = threading.Thread(target=self._play_sound, args=(sound_path,), daemon=True)
             thread.start()
             return thread
         else:

@@ -41,7 +41,7 @@ class Config(Mapping):
                 json.dump(DEFAULT_CONFIG, config_file, indent=4, ensure_ascii=False)
 
         # Load config with robustness: if file is empty/corrupted, rewrite defaults
-        self.config = DEFAULT_CONFIG.copy()
+        self.config: dict[str, Any] = DEFAULT_CONFIG.copy()
         try:
             with open(self.config_path, "r", encoding="utf8") as config_file:
                 content = config_file.read().strip()
@@ -69,11 +69,13 @@ class Config(Mapping):
 
     def save(self, key, value):
         keys = key.split(".")
-        config = self.config
+        config: dict[str, Any] = self.config
         for k in keys[:-1]:
-            if k not in config or not isinstance(config[k], dict):
-                config[k] = {}
-            config = config[k]
+            child_config = config.get(k)
+            if not isinstance(child_config, dict):
+                child_config = {}
+                config[k] = child_config
+            config = child_config
         config[keys[-1]] = value
         self._dirty = True
 

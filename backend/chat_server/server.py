@@ -9,15 +9,15 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from websockets.asyncio.server import serve, ServerConnection
-from vectorvein.types import (
+from vv_llm.types import (
     NotGiven,
     NOT_GIVEN,
     BackendType,
     ThinkingConfigParam,
 )
-from vectorvein.chat_clients import create_async_chat_client
-from vectorvein.settings import settings as vectorvein_settings
-from vectorvein.chat_clients.utils import ToolCallContentProcessor, format_messages
+from vv_llm.chat_clients import create_async_chat_client
+from vv_llm.settings import settings as vv_llm_settings
+from vv_llm.chat_clients.utils import ToolCallContentProcessor, format_messages
 
 from tts_server.server import tts_server
 from utilities.config import Settings, cache
@@ -64,6 +64,7 @@ class WebSocketServer:
         self.port = self.find_available_port(start_port)
         self.server = None
         self.thread = None
+        self.loop = None
         self.handlers = {
             "/ws/chat": self.handle_chat,
             "/ws/workflow_node": self.handle_workflow_node,
@@ -117,7 +118,7 @@ class WebSocketServer:
 
     async def process_message(self, websocket: ServerConnection, message: str | bytes, param: str):
         user_settings = Settings()
-        vectorvein_settings.load(user_settings.get("llm_settings"))
+        vv_llm_settings.load(user_settings.get("llm_settings"))
 
         request_data = json.loads(message)
         settings = request_data["conversation"]["settings"]
@@ -198,7 +199,7 @@ class WebSocketServer:
                 }
             }
 
-        model_settings = vectorvein_settings.get_backend(backend=backend)
+        model_settings = vv_llm_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
 
         system_prompt = settings.get("system_prompt") or ""
@@ -360,19 +361,45 @@ class WebSocketServer:
         self.thread.start()
 
     def _run_server(self):
-        mprint(f"Started at ws://{self.host}:{self.port}")
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(self._serve())
-        loop.run_forever()
+        self.loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(self.loop)
 
-    async def _serve(self):
-        async with serve(self.handler, self.host, self.port) as server:
-            await server.serve_forever()
+        try:
+            self.loop.run_until_complete(self._start_server())
+            mprint(f"Started at ws://{self.host}:{self.port}")
+            self.loop.run_forever()
+        finally:
+            pending = [task for task in asyncio.all_tasks(self.loop) if not task.done()]
+            for task in pending:
+                task.cancel()
+            if pending:
+                self.loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+            self.loop.close()
+            self.loop = None
+            self.server = None
+
+    async def _start_server(self):
+        self.server = await serve(self.handler, self.host, self.port)
+
+    async def _shutdown_server(self):
+        if self.server is not None:
+            self.server.close()
+            await self.server.wait_closed()
+            self.server = None
 
     def stop(self):
         mprint("Stopping...")
+        if self.loop is not None:
+            shutdown_future = asyncio.run_coroutine_threadsafe(self._shutdown_server(), self.loop)
+            try:
+                shutdown_future.result(timeout=5)
+            except Exception as e:
+                mprint.warning(f"WebSocket server shutdown timed out: {e}")
+            self.loop.call_soon_threadsafe(self.loop.stop)
         if self.thread:
-            self.thread.join()
-            self.thread = None
+            self.thread.join(timeout=5)
+            if self.thread.is_alive():
+                mprint.warning("WebSocket server thread did not stop within timeout")
+            else:
+                self.thread = None
         mprint("Stopped.")

@@ -16,6 +16,13 @@ from utilities.general import mprint_with_name
 mprint = mprint_with_name(name="Relational Database")
 
 
+def _require_database_path(database: UserRelationalDatabase) -> str:
+    database_path = database.database_path
+    if not database_path:
+        raise ValueError("Database path is not configured")
+    return database_path
+
+
 def get_table_names(conn: sqlite3.Connection):
     cursor = conn.execute("SELECT name FROM sqlite_master WHERE type='table';")
     tables = [row[0] for row in cursor.fetchall()]
@@ -209,24 +216,25 @@ def create_relational_database_table(
 
     created = False
     try:
+        database_path = _require_database_path(database)
         if file is not None:
             if not file.endswith(".sql"):
                 is_excel = file.endswith((".xlsx", ".xls"))
-                create_from_table(file, table_name, database.database_path, columns_info, is_excel)
+                create_from_table(file, table_name, database_path, columns_info, is_excel)
                 created = True
             else:
                 sql_statement = Path(file).read_text()
-                create_from_sql(database.database_path, sql_statement)
+                create_from_sql(database_path, sql_statement)
                 created = True
         elif sql_statement is not None:
-            create_from_sql(database.database_path, sql_statement)
+            create_from_sql(database_path, sql_statement)
             created = True
 
         if created:
             database.database_file_last_modified = datetime.now()
             database.save()
 
-            conn = sqlite3.connect(database.database_path)
+            conn = sqlite3.connect(database_path)
             table_names = get_table_names(conn)
             for table_name in table_names:
                 table_qs = UserRelationalTable.select().where(
@@ -269,12 +277,15 @@ class UserDatabaseControl:
         sort_field: str,
         sort_order: str,
     ):
+        database_path = self.db.database_path
+        if not database_path:
+            return {"records": [], "total": 0, "primary_key": None}
         if sort_field:
             sort_field = f"ORDER BY \"{sort_field}\" {'DESC' if sort_order == 'descend' else 'ASC'}"
         else:
             sort_field = ""
 
-        connection = sqlite3.connect(self.db.database_path)
+        connection = sqlite3.connect(database_path)
         connection.row_factory = sqlite3.Row
         cursor = connection.cursor()
 
@@ -306,10 +317,11 @@ class UserDatabaseControl:
         }
 
     def get_table_max_rows(self, table_name: str) -> int:
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return 0
         try:
-            connection = sqlite3.connect(self.db.database_path)
+            connection = sqlite3.connect(database_path)
             cursor = connection.cursor()
             cursor.execute(f"SELECT COUNT(*) FROM {table_name}")
             result = cursor.fetchone()
@@ -327,11 +339,12 @@ class UserDatabaseControl:
         table.save()
 
     def delete_table(self, table_name: str):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return -1
 
         try:
-            connection = sqlite3.connect(self.db.database_path)
+            connection = sqlite3.connect(database_path)
             cursor = connection.cursor()
             cursor.execute(f'DROP TABLE "{table_name}"')
             connection.commit()
@@ -342,11 +355,12 @@ class UserDatabaseControl:
             return -1
 
     def update(self, table_name: str, records: list):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return -1
 
         try:
-            connection = sqlite3.connect(self.db.database_path)
+            connection = sqlite3.connect(database_path)
             cursor = connection.cursor()
             for record in records:
                 rowid = record.pop("rowid")
@@ -364,11 +378,12 @@ class UserDatabaseControl:
             return -1
 
     def delete(self, table_name: str, records: list):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return -1
 
         try:
-            connection = sqlite3.connect(self.db.database_path)
+            connection = sqlite3.connect(database_path)
             cursor = connection.cursor()
             for rowid in records:
                 delete_query = 'DELETE FROM "{}" WHERE rowid = ?'.format(table_name)
@@ -383,13 +398,14 @@ class UserDatabaseControl:
             return -1
 
     def add(self, table_name: str, records: list):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return -1
 
         table_max_rows = self.get_table_max_rows(table_name)
 
         try:
-            connection = sqlite3.connect(self.db.database_path)
+            connection = sqlite3.connect(database_path)
             cursor = connection.cursor()
             for record in records:
                 insert_query = 'INSERT INTO "{}" ({}) VALUES ({})'.format(
@@ -408,7 +424,8 @@ class UserDatabaseControl:
             return -1
 
     def add_from_file(self, table_name: str, file: str):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return -1
 
         try:
@@ -434,7 +451,8 @@ class UserDatabaseControl:
         include_column_names: bool = True,
         max_count: int | None = None,
     ):
-        if not Path(self.db.database_path).exists():
+        database_path = self.db.database_path
+        if not database_path or not Path(database_path).exists():
             return {
                 "status": 500,
                 "msg": "Database not found",
@@ -444,7 +462,7 @@ class UserDatabaseControl:
         sql_statements = sqlparse.split(sql_script)
         results = []
 
-        connection = sqlite3.connect(self.db.database_path)
+        connection = sqlite3.connect(database_path)
         if include_column_names:
             connection.row_factory = sqlite3.Row
 

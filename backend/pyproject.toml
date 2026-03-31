@@ -20,7 +20,6 @@ dependencies = [
   "markdownify>=1.0.0",
   "yt-dlp>=2023.3.4",
   "pycryptodome>=3.18.0",
-  "clr-loader>=0.2.6",
   "pyecharts>=2.0.3",
   "pathspec>=0.12.1",
   "langchain-text-splitters>=0.0.1",
@@ -38,13 +37,14 @@ dependencies = [
   "pynput>=1.7.7",
   "bilili>=1.4.15",
   "pathvalidate>=3.2.0",
-  "deepgram-sdk>=3.3.1",
-  "deepgram-captions>=1.2.0",
-  "vectorvein[vertex,bedrock]>=0.2.68",
   "docx-ea-font>=0.0.1",
   "celery>=5.3.0",
   "fastapi>=0.110.0",
   "uvicorn>=0.28.0",
+  "vv-llm[bedrock,vertex]>=0.3.86",
+  "sqlalchemy>=2.0",
+  "qtpy>=2.4; sys_platform == \"linux\"",
+  "PySide6>=6.8; sys_platform == \"linux\"",
 ]
 description = ""
 license = {text = "CC BY-NC-SA"}
@@ -65,9 +65,21 @@ dev.cmd = "python main.py"
 dev.env_file = ".env"
 fullstack-dev.cmd = "python run_fullstack_dev.py"
 fullstack-dev.env_file = ".env"
+test = "pytest tests"
+lint = "ruff check ."
+typecheck = "ty check --python-version 3.10 ."
 
 [project.optional-dependencies]
-mac = ["pyobjc"]
+mac = ["pyobjc; sys_platform == \"darwin\""]
 
 [dependency-groups]
-dev = ["ruff>=0.12.8"]
+dev = [
+    "ruff>=0.12.8",
+    "pytest>=9.0.2",
+    "ty>=0.0.26",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-q"

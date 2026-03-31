@@ -9,6 +9,13 @@ from .ratelimit import is_request_allowed, add_request_record
 ResultType = TypeVar("ResultType")
 
 
+def _callable_name(function: Callable[..., object]) -> str:
+    name = getattr(function, "__name__", None)
+    if isinstance(name, str) and name:
+        return name
+    return function.__class__.__name__
+
+
 class Retry(Generic[ResultType]):
     def __init__(self, function: Callable[..., ResultType]):
         self.function: Callable[..., ResultType] = function
@@ -75,7 +82,8 @@ class Retry(Generic[ResultType]):
                 try_times += 1
                 time.sleep(self.__sleep_time)
             except Exception as e:
-                print(f"{self.function.__name__} function error: {e}")
+                function_name = _callable_name(self.function)
+                print(f"{function_name} function error: {e}")
                 try_times += 1
                 time.sleep(self.__sleep_time)
 

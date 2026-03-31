@@ -1,8 +1,64 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
 import json
-from typing import Any
+from copy import deepcopy
 from collections.abc import Mapping
+from typing import Any
+from urllib.parse import urlsplit, urlunsplit
+
+from vv_llm.settings import Settings as VvLlmSettings
+
+
+DEFAULT_EMBEDDING_BACKENDS = {
+    "openai": {
+        "default_endpoint": "openai-default",
+        "models": {
+            "text-embedding-3-large": {
+                "id": "text-embedding-3-large",
+                "endpoints": ["openai-default"],
+                "protocol": "openai_embeddings",
+                "dimensions": 3072,
+            },
+            "text-embedding-3-small": {
+                "id": "text-embedding-3-small",
+                "endpoints": ["openai-default"],
+                "protocol": "openai_embeddings",
+                "dimensions": 1536,
+            },
+            "text-embedding-ada-002": {
+                "id": "text-embedding-ada-002",
+                "endpoints": ["openai-default"],
+                "protocol": "openai_embeddings",
+                "dimensions": 1536,
+            },
+        },
+    },
+    "cohere": {"models": {}},
+    "jina": {"models": {}},
+    "voyage": {"models": {}},
+    "siliconflow": {"models": {}},
+    "local": {"models": {}},
+    "custom": {
+        "default_endpoint": "tei-default",
+        "models": {
+            "text-embeddings-inference": {
+                "id": "text-embeddings-inference",
+                "endpoints": ["tei-default"],
+                "protocol": "custom_json_http",
+                "request_mapping": {
+                    "method": "POST",
+                    "path": "/embed",
+                    "body_template": {
+                        "inputs": "${inputs}",
+                    },
+                },
+                "response_mapping": {
+                    "data_path": "$[*]",
+                },
+            },
+        },
+    },
+}
 
 
 DEFAULT_SETTINGS = {
@@ -26,7 +82,6 @@ DEFAULT_SETTINGS = {
     },
     "microphone_device": 0,
     "shortcuts": {},
-    "embedding_models": {"text_embeddings_inference": {"api_base": "http://localhost:8080/embed"}},
     "tts": {
         "piper": {"api_base": "http://localhost:5000"},
         "reecho": {"api_key": "", "voices": []},
@@ -35,7 +90,6 @@ DEFAULT_SETTINGS = {
     "asr": {
         "provider": "openai",
         "openai": {"same_as_llm": True, "api_base": "https://api.openai.com/v1", "api_key": "", "model": "whisper-1"},
-        "deepgram": {"api_key": "", "speech_to_text": {"model": "nova-2", "language": "en"}},
     },
     "web_search": {
         "jinaai": {"api_key": ""},
@@ -58,6 +112,11 @@ DEFAULT_SETTINGS = {
                 "rpm": 900,
                 "tpm": 150000,
                 "is_azure": True,
+            },
+            {
+                "id": "tei-default",
+                "api_base": "http://localhost:8080",
+                "api_key": "",
             },
             {
                 "id": "anthropic-default",
@@ -105,6 +164,33 @@ DEFAULT_SETTINGS = {
             {
                 "id": "zhipuai-default",
                 "api_base": "https://open.bigmodel.cn/api/paas/v4",
+                "api_key": "",
+            },
+            {
+                "id": "qwen-default",
+                "api_base": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+                "api_key": "",
+                "rpm": 60,
+                "tpm": 600000,
+            },
+            {
+                "id": "baichuan-default",
+                "api_base": "https://api.baichuan-ai.com/v1",
+                "api_key": "",
+            },
+            {
+                "id": "ernie-default",
+                "api_base": "https://qianfan.baidubce.com/v2",
+                "api_key": "",
+            },
+            {
+                "id": "stepfun-default",
+                "api_base": "https://api.stepfun.com/v1",
+                "api_key": "",
+            },
+            {
+                "id": "xai-default",
+                "api_base": "https://api.x.ai/v1",
                 "api_key": "",
             },
             {
@@ -403,6 +489,12 @@ DEFAULT_SETTINGS = {
                     "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
                 }
             },
+            "baichuan": {
+                "models": {
+                    "Baichuan4": {"id": "Baichuan4", "endpoints": ["baichuan-default"]},
+                    "Baichuan3-Turbo": {"id": "Baichuan3-Turbo", "endpoints": ["baichuan-default"]},
+                }
+            },
             "zhipuai": {
                 "models": {
                     "glm-3-turbo": {"id": "glm-3-turbo", "endpoints": ["zhipuai-default"]},
@@ -439,10 +531,30 @@ DEFAULT_SETTINGS = {
                     },
                 }
             },
+            "stepfun": {
+                "models": {
+                    "step-1v-8k": {"id": "step-1v-8k", "endpoints": ["stepfun-default"]},
+                    "step-2-16k": {"id": "step-2-16k", "endpoints": ["stepfun-default"]},
+                }
+            },
+            "xai": {
+                "models": {
+                    "grok-2-1212": {"id": "grok-2-1212", "endpoints": ["xai-default"]},
+                    "grok-2-vision-1212": {"id": "grok-2-vision-1212", "endpoints": ["xai-default"]},
+                }
+            },
+            "ernie": {
+                "models": {
+                    "ernie-3.5": {"id": "ernie-3.5-128k", "endpoints": ["ernie-default"]},
+                    "ernie-4.0": {"id": "ernie-4.0-8k", "endpoints": ["ernie-default"]},
+                    "ernie-4.5": {"id": "ernie-4.5-8k-preview", "endpoints": ["ernie-default"]},
+                }
+            },
             "local": {
                 "models": {},
             },
         },
+        "embedding_backends": deepcopy(DEFAULT_EMBEDDING_BACKENDS),
     },
     "custom_llms": {},
 }
@@ -461,23 +573,99 @@ def deep_merge(default, custom):
     return default
 
 
+def _coerce_vv_llm_settings(raw_settings: object) -> VvLlmSettings | None:
+    if isinstance(raw_settings, VvLlmSettings):
+        return raw_settings
+    if isinstance(raw_settings, Mapping):
+        return VvLlmSettings(**dict(raw_settings))
+    return None
+
+
+def _split_endpoint_base_and_path(api_base: str, default_path: str = "/embed") -> tuple[str, str]:
+    parsed = urlsplit(api_base)
+    if not parsed.scheme or not parsed.netloc:
+        return api_base, default_path
+
+    raw_path = parsed.path.rstrip("/")
+    if not raw_path:
+        return urlunsplit((parsed.scheme, parsed.netloc, "", "", "")), default_path
+
+    base_path, _, endpoint_path = raw_path.rpartition("/")
+    if not endpoint_path:
+        return urlunsplit((parsed.scheme, parsed.netloc, "", "", "")), raw_path
+
+    endpoint_base = urlunsplit((parsed.scheme, parsed.netloc, base_path, "", ""))
+    endpoint_path_value = f"/{endpoint_path}"
+    return endpoint_base, endpoint_path_value
+
+
+def normalize_embedding_backends(data: dict[str, Any]) -> bool:
+    llm_settings = data.get("llm_settings")
+    if not isinstance(llm_settings, dict):
+        return False
+
+    changed = False
+    raw_embedding_backends = llm_settings.get("embedding_backends")
+    existing_embedding_backends: dict[str, Any] = dict(raw_embedding_backends) if isinstance(raw_embedding_backends, Mapping) else {}
+    normalized_embedding_backends = deep_merge(deepcopy(DEFAULT_EMBEDDING_BACKENDS), existing_embedding_backends)
+
+    legacy_embedding_models = data.pop("embedding_models", None)
+    if isinstance(legacy_embedding_models, Mapping):
+        tei_settings = legacy_embedding_models.get("text_embeddings_inference")
+        if isinstance(tei_settings, Mapping):
+            endpoint_base, endpoint_path = _split_endpoint_base_and_path(
+                str(tei_settings.get("api_base", "http://localhost:8080/embed"))
+            )
+            endpoint_list = llm_settings.setdefault("endpoints", [])
+            tei_endpoint = next(
+                (
+                    endpoint
+                    for endpoint in endpoint_list
+                    if isinstance(endpoint, dict) and endpoint.get("id") == "tei-default"
+                ),
+                None,
+            )
+            if tei_endpoint is None:
+                tei_endpoint = {"id": "tei-default", "api_base": endpoint_base, "api_key": ""}
+                endpoint_list.append(tei_endpoint)
+            tei_endpoint["api_base"] = endpoint_base
+            tei_endpoint["api_key"] = str(tei_settings.get("api_key", ""))
+
+            tei_model_settings = normalized_embedding_backends["custom"]["models"]["text-embeddings-inference"]
+            tei_model_settings["endpoints"] = ["tei-default"]
+            tei_model_settings["request_mapping"] = {
+                "method": "POST",
+                "path": endpoint_path or "/embed",
+                "body_template": {
+                    "inputs": "${inputs}",
+                },
+            }
+            changed = True
+
+    if raw_embedding_backends != normalized_embedding_backends:
+        llm_settings["embedding_backends"] = normalized_embedding_backends
+        changed = True
+
+    return changed
+
+
 def update_llm_settings_to_v2(data: dict):
-    from vectorvein.settings import settings as vectorvein_settings
+    from vv_llm.settings import settings as vv_llm_settings
 
     if data.get("settings_version", 1) == 2:
         if data.get("llm_settings", {}).get("VERSION", "1") == "2":
             return data
         else:
-            vectorvein_llm_settings_v1 = data.get("llm_settings", {})
-            vectorvein_settings.load(vectorvein_llm_settings_v1)
-            vectorvein_settings.upgrade_to_v2()
-            data["llm_settings"] = vectorvein_settings.export()
+            legacy_llm_settings_v1 = data.get("llm_settings", {})
+            vv_llm_settings.load(legacy_llm_settings_v1)
+            vv_llm_settings.upgrade_to_v2()
+            data["llm_settings"] = vv_llm_settings.export()
             return data
 
     with open("settings_v1.json", "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 
-    llm_settings = vectorvein_settings.model_dump()
+    llm_settings = vv_llm_settings.model_dump()
 
     # 转换 OpenAI 相关设置
     if data.get("openai_api_type") == "open_ai":
@@ -618,9 +806,9 @@ def update_llm_settings_to_v2(data: dict):
             del data[field]
 
     data["settings_version"] = 2
-    vectorvein_settings.load(llm_settings)  # type: ignore
-    vectorvein_settings.upgrade_to_v2()
-    data["llm_settings"] = vectorvein_settings.export()
+    vv_llm_settings.load(llm_settings)
+    vv_llm_settings.upgrade_to_v2()
+    data["llm_settings"] = vv_llm_settings.export()
     return data
 
 
@@ -635,12 +823,14 @@ class Settings:
     def load_setting(self):
         from models import model_serializer
         from models import Setting as SettingModel
-        from vectorvein.settings import settings as vectorvein_settings
+        from vv_llm.settings import settings as vv_llm_settings
 
         if SettingModel.select().count() == 0:
-            setting = SettingModel.create(data=DEFAULT_SETTINGS)
-            vectorvein_settings.load(DEFAULT_SETTINGS["llm_settings"])
-            setting.data["llm_settings"] = vectorvein_settings.export()
+            setting = SettingModel.create(data=deepcopy(DEFAULT_SETTINGS))
+            default_llm_settings = _coerce_vv_llm_settings(DEFAULT_SETTINGS.get("llm_settings"))
+            if default_llm_settings is not None:
+                vv_llm_settings.load(default_llm_settings)
+            setting.data["llm_settings"] = vv_llm_settings.export()
             setting.save()
         else:
             need_save = False
@@ -648,7 +838,9 @@ class Settings:
             if setting.data.get("llm_settings", {}).get("VERSION", "1") != "2":
                 need_save = True
             setting.data = update_llm_settings_to_v2(setting.data)
-            setting.data = deep_merge(DEFAULT_SETTINGS.copy(), setting.data)
+            setting.data = deep_merge(deepcopy(DEFAULT_SETTINGS), setting.data)
+            if normalize_embedding_backends(setting.data):
+                need_save = True
 
             # Update Gemini endpoint api_base to openai compatible version
             for endpoint in setting.data["llm_settings"]["endpoints"]:
@@ -659,8 +851,10 @@ class Settings:
                     need_save = True
 
             if need_save:
-                vectorvein_settings.load(setting.data["llm_settings"])
-                setting.data["llm_settings"] = vectorvein_settings.export()
+                current_llm_settings = _coerce_vv_llm_settings(setting.data.get("llm_settings"))
+                if current_llm_settings is not None:
+                    vv_llm_settings.load(current_llm_settings)
+                setting.data["llm_settings"] = vv_llm_settings.export()
                 setting.save()
 
         self.data = model_serializer(setting)["data"]

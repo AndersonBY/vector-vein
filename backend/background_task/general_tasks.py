@@ -4,8 +4,8 @@
 # General Celery tasks (non-Qdrant tasks)
 
 from celery_worker import app, timer
-from vectorvein.types import BackendType
-from vectorvein.chat_clients.utils import format_messages
+from vv_llm.types import BackendType
+from vv_llm.chat_clients.utils import format_messages
 
 from models import Workflow, WorkflowTemplate
 from utilities.general import mprint_with_name
