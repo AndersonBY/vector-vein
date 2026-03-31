@@ -1,6 +1,7 @@
 name: Release Desktop Packages
 
 on:
+  workflow_dispatch:
   push:
     tags:
       - "v*"
