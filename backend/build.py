@@ -24,6 +24,15 @@ def run_cmd(cmd: str | list[str], cwd: Path | None = None):
     """
     Run command in a specific working directory and fail fast on errors.
     """
+    if os.name == "nt":
+        if isinstance(cmd, str):
+            cmdline = cmd
+        else:
+            cmdline = subprocess.list2cmdline(cmd)
+
+        print(f"$ {cmdline}")
+        return subprocess.run(cmdline, cwd=str(cwd or BASE_DIR), check=True, shell=True)
+
     if isinstance(cmd, str):
         cmd_args = shlex.split(cmd)
     else:

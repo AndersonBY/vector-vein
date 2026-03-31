@@ -26,7 +26,7 @@ jobs:
             platform: windows
             python_version: "3.11"
             pdm_install_command: pdm install
-          - os: macos-13
+          - os: macos-latest
             label: macOS
             platform: mac
             python_version: "3.11"
