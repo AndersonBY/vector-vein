@@ -133,7 +133,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "minimax-default",
-                "api_base": "https://api.minimax.chat/v1/text/chatcompletion_v2",
+                "api_base": "https://api.minimax.chat/v1",
                 "api_key": "",
             },
             {
