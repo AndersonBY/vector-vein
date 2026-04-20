@@ -125,9 +125,21 @@ jobs:
         working-directory: backend
         run: python -c "from packaging_guard import verify_lockfile_groups; verify_lockfile_groups()"
 
+      - name: Verify backend runtime dependency declarations
+        working-directory: backend
+        run: python -c "from packaging_guard import verify_declared_runtime_dependencies; verify_declared_runtime_dependencies()"
+
+      - name: Verify backend PyInstaller hidden imports
+        working-directory: backend
+        run: python -c "from packaging_guard import verify_spec_hidden_imports; verify_spec_hidden_imports()"
+
       - name: Install backend dependencies
         working-directory: backend
         run: ${{ matrix.pdm_install_command }}
+
+      - name: Verify backend runtime imports
+        working-directory: backend
+        run: pdm run python -c "from packaging_guard import verify_importable_runtime_dependencies; verify_importable_runtime_dependencies()"
 
       - name: Verify backend dependency lock
         working-directory: backend

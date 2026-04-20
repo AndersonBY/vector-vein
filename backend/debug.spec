@@ -26,7 +26,6 @@ a = Analysis(
         "kombu.transport.sqlalchemy",
         "numpy",
         "pyaudio",
-        "deepgram",
     ],
     hookspath=["./hooks"],
     hooksconfig={},

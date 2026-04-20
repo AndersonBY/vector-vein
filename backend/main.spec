@@ -47,7 +47,6 @@ a = Analysis(
         "PySide6.QtQuickWidgets",
         "numpy",
         "pyaudio",
-        "deepgram",
     ],
     hookspath=["./hooks"],
     hooksconfig={},
