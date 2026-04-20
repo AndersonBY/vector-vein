@@ -33,6 +33,7 @@ dependencies = [
   "diskcache>=5.6.3",
   "mss>=9.0.1",
   "Pillow>=10.3.0",
+  "numpy>=1.26.0",
   "pyaudio>=0.2.14",
   "pynput>=1.7.7",
   "bilili>=1.4.15",
@@ -50,7 +51,7 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.6"
+version = "0.4.7"
 
 [tool.pdm]
 distribution = false

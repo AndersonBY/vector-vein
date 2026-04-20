@@ -11,6 +11,8 @@ import platform
 import subprocess
 from pathlib import Path
 
+from packaging_guard import verify_runtime_dependencies
+
 
 BASE_DIR = Path(__file__).resolve().parent
 DIST_DIR = BASE_DIR / "dist"
@@ -44,6 +46,7 @@ def run_cmd(cmd: str | list[str], cwd: Path | None = None):
 
 def build_production(version):
     run_cmd(["pyinstaller", "main.spec", "--noconfirm"])
+    verify_runtime_dependencies(APP_DIST_DIR)
     # Create a version file in ./dist/vector-vein/
     version_txt_path = APP_DIST_DIR / "version.txt"
     if not version_txt_path.parent.exists():
@@ -78,6 +81,7 @@ def build_production(version):
 
 def build_development(version):
     run_cmd(["pyinstaller", "debug.spec", "--noconfirm"])
+    verify_runtime_dependencies(APP_DIST_DIR)
     # Create a version file in ./dist/vector-vein/
     version_txt_path = APP_DIST_DIR / "version.txt"
     if not version_txt_path.parent.exists():

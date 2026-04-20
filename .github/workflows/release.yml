@@ -119,6 +119,14 @@ jobs:
         working-directory: backend
         run: ${{ matrix.pdm_install_command }}
 
+      - name: Verify backend dependency lock
+        working-directory: backend
+        run: pdm lock --check
+
+      - name: Run backend packaging guard tests
+        working-directory: backend
+        run: pdm run pytest tests/test_packaging_guards.py -q
+
       - name: Build frontend bundle
         working-directory: backend
         run: pdm run python build.py -t f
