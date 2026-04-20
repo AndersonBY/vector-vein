@@ -44,6 +44,7 @@ jobs:
     env:
       PDM_CHECK_UPDATE: "false"
       PDM_IGNORE_SAVED_PYTHON: "1"
+      PDM_USE_UV: "true"
 
     steps:
       - name: Checkout source
@@ -77,7 +78,12 @@ jobs:
           echo "asset_name=vector-vein-${{ matrix.platform }}-v${VERSION}.zip" >> "${GITHUB_OUTPUT}"
 
       - name: Install PDM
-        run: python -m pip install --upgrade pip pdm
+        run: python -m pip install --upgrade pip pdm uv
+
+      - name: Verify PDM uv resolver
+        run: |
+          python -c "import shutil; assert shutil.which('uv'), 'uv executable not found'"
+          test "$(pdm config use_uv)" = "True"
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4

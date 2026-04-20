@@ -51,7 +51,7 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.8"
+version = "0.4.9"
 
 [tool.pdm]
 distribution = false
