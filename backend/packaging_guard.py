@@ -1,9 +1,14 @@
 from __future__ import annotations
 
 from pathlib import Path
+import tomllib
 
 
 class MissingRuntimeDependencyError(RuntimeError):
+    pass
+
+
+class MissingLockfileGroupError(RuntimeError):
     pass
 
 
@@ -32,3 +37,17 @@ def verify_runtime_dependencies(
         raise MissingRuntimeDependencyError(
             f"Missing packaged runtime dependencies in {internal_dir}: {missing}"
         )
+
+
+def verify_lockfile_groups(
+    lockfile_path: str | Path = "pdm.lock",
+    required_groups: tuple[str, ...] = ("default", "dev", "mac"),
+) -> None:
+    lockfile_path = Path(lockfile_path)
+    lockfile_data = tomllib.loads(lockfile_path.read_text(encoding="utf-8"))
+    locked_groups = set(lockfile_data.get("metadata", {}).get("groups", []))
+    missing_groups = [group for group in required_groups if group not in locked_groups]
+
+    if missing_groups:
+        missing = ", ".join(missing_groups)
+        raise MissingLockfileGroupError(f"Missing dependency groups in {lockfile_path}: {missing}")

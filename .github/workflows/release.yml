@@ -115,6 +115,10 @@ jobs:
         working-directory: frontend
         run: pnpm install --frozen-lockfile
 
+      - name: Verify backend lockfile groups
+        working-directory: backend
+        run: python -c "from packaging_guard import verify_lockfile_groups; verify_lockfile_groups()"
+
       - name: Install backend dependencies
         working-directory: backend
         run: ${{ matrix.pdm_install_command }}

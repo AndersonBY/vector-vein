@@ -2,7 +2,7 @@
 # It is not intended for manual editing.
 
 [metadata]
-groups = ["default", "dev"]
+groups = ["default", "dev", "mac"]
 strategy = []
 lock_version = "4.5.0"
 content_hash = "sha256:84b4f842a243767f404bcb4169d1a4706de7b4bf882a602bdd42bd72b1b71e8d"
@@ -1853,6 +1853,178 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-accessibility; platform_release >= \"20.0\"",
+    "pyobjc-framework-accounts; platform_release >= \"12.0\"",
+    "pyobjc-framework-addressbook",
+    "pyobjc-framework-adservices; platform_release >= \"20.0\"",
+    "pyobjc-framework-adsupport; platform_release >= \"18.0\"",
+    "pyobjc-framework-applescriptkit",
+    "pyobjc-framework-applescriptobjc; platform_release >= \"10.0\"",
+    "pyobjc-framework-applicationservices",
+    "pyobjc-framework-apptrackingtransparency; platform_release >= \"20.0\"",
+    "pyobjc-framework-arkit; platform_release >= \"25.0\"",
+    "pyobjc-framework-audiovideobridging; platform_release >= \"12.0\"",
+    "pyobjc-framework-authenticationservices; platform_release >= \"19.0\"",
+    "pyobjc-framework-automaticassessmentconfiguration; platform_release >= \"19.0\"",
+    "pyobjc-framework-automator",
+    "pyobjc-framework-avfoundation; platform_release >= \"11.0\"",
+    "pyobjc-framework-avkit; platform_release >= \"13.0\"",
+    "pyobjc-framework-avrouting; platform_release >= \"22.0\"",
+    "pyobjc-framework-backgroundassets; platform_release >= \"22.0\"",
+    "pyobjc-framework-browserenginekit; platform_release >= \"23.4\"",
+    "pyobjc-framework-businesschat; platform_release >= \"18.0\"",
+    "pyobjc-framework-calendarstore; platform_release >= \"9.0\"",
+    "pyobjc-framework-callkit; platform_release >= \"20.0\"",
+    "pyobjc-framework-carbon",
+    "pyobjc-framework-cfnetwork",
+    "pyobjc-framework-cinematic; platform_release >= \"23.0\"",
+    "pyobjc-framework-classkit; platform_release >= \"20.0\"",
+    "pyobjc-framework-cloudkit; platform_release >= \"14.0\"",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-collaboration; platform_release >= \"9.0\"",
+    "pyobjc-framework-colorsync; platform_release >= \"17.0\"",
+    "pyobjc-framework-compositorservices; platform_release >= \"25.0\"",
+    "pyobjc-framework-contacts; platform_release >= \"15.0\"",
+    "pyobjc-framework-contactsui; platform_release >= \"15.0\"",
+    "pyobjc-framework-coreaudio",
+    "pyobjc-framework-coreaudiokit",
+    "pyobjc-framework-corebluetooth; platform_release >= \"14.0\"",
+    "pyobjc-framework-coredata",
+    "pyobjc-framework-corehaptics; platform_release >= \"19.0\"",
+    "pyobjc-framework-corelocation; platform_release >= \"10.0\"",
+    "pyobjc-framework-coremedia; platform_release >= \"11.0\"",
+    "pyobjc-framework-coremediaio; platform_release >= \"11.0\"",
+    "pyobjc-framework-coremidi",
+    "pyobjc-framework-coreml; platform_release >= \"17.0\"",
+    "pyobjc-framework-coremotion; platform_release >= \"19.0\"",
+    "pyobjc-framework-coreservices",
+    "pyobjc-framework-corespotlight; platform_release >= \"17.0\"",
+    "pyobjc-framework-coretext",
+    "pyobjc-framework-corewlan; platform_release >= \"10.0\"",
+    "pyobjc-framework-cryptotokenkit; platform_release >= \"14.0\"",
+    "pyobjc-framework-datadetection; platform_release >= \"21.0\"",
+    "pyobjc-framework-devicecheck; platform_release >= \"19.0\"",
+    "pyobjc-framework-devicediscoveryextension; platform_release >= \"24.0\"",
+    "pyobjc-framework-dictionaryservices; platform_release >= \"9.0\"",
+    "pyobjc-framework-discrecording",
+    "pyobjc-framework-discrecordingui",
+    "pyobjc-framework-diskarbitration",
+    "pyobjc-framework-dvdplayback",
+    "pyobjc-framework-eventkit; platform_release >= \"12.0\"",
+    "pyobjc-framework-exceptionhandling",
+    "pyobjc-framework-executionpolicy; platform_release >= \"19.0\"",
+    "pyobjc-framework-extensionkit; platform_release >= \"22.0\"",
+    "pyobjc-framework-externalaccessory; platform_release >= \"17.0\"",
+    "pyobjc-framework-fileprovider; platform_release >= \"19.0\"",
+    "pyobjc-framework-fileproviderui; platform_release >= \"19.0\"",
+    "pyobjc-framework-findersync; platform_release >= \"14.0\"",
+    "pyobjc-framework-fsevents; platform_release >= \"9.0\"",
+    "pyobjc-framework-fskit; platform_release >= \"24.4\"",
+    "pyobjc-framework-gamecenter; platform_release >= \"12.0\"",
+    "pyobjc-framework-gamecontroller; platform_release >= \"13.0\"",
+    "pyobjc-framework-gamekit; platform_release >= \"12.0\"",
+    "pyobjc-framework-gameplaykit; platform_release >= \"15.0\"",
+    "pyobjc-framework-gamesave; platform_release >= \"25.0\"",
+    "pyobjc-framework-healthkit; platform_release >= \"22.0\"",
+    "pyobjc-framework-imagecapturecore; platform_release >= \"10.0\"",
+    "pyobjc-framework-inputmethodkit; platform_release >= \"9.0\"",
+    "pyobjc-framework-installerplugins",
+    "pyobjc-framework-instantmessage; platform_release >= \"9.0\"",
+    "pyobjc-framework-intents; platform_release >= \"16.0\"",
+    "pyobjc-framework-intentsui; platform_release >= \"21.0\"",
+    "pyobjc-framework-iobluetooth",
+    "pyobjc-framework-iobluetoothui",
+    "pyobjc-framework-iosurface; platform_release >= \"10.0\"",
+    "pyobjc-framework-ituneslibrary; platform_release >= \"10.0\"",
+    "pyobjc-framework-kernelmanagement; platform_release >= \"20.0\"",
+    "pyobjc-framework-latentsemanticmapping",
+    "pyobjc-framework-launchservices",
+    "pyobjc-framework-libdispatch; platform_release >= \"12.0\"",
+    "pyobjc-framework-libxpc; platform_release >= \"12.0\"",
+    "pyobjc-framework-linkpresentation; platform_release >= \"19.0\"",
+    "pyobjc-framework-localauthentication; platform_release >= \"14.0\"",
+    "pyobjc-framework-localauthenticationembeddedui; platform_release >= \"21.0\"",
+    "pyobjc-framework-mailkit; platform_release >= \"21.0\"",
+    "pyobjc-framework-mapkit; platform_release >= \"13.0\"",
+    "pyobjc-framework-mediaaccessibility; platform_release >= \"13.0\"",
+    "pyobjc-framework-mediaextension; platform_release >= \"24.0\"",
+    "pyobjc-framework-medialibrary; platform_release >= \"13.0\"",
+    "pyobjc-framework-mediaplayer; platform_release >= \"16.0\"",
+    "pyobjc-framework-mediatoolbox; platform_release >= \"13.0\"",
+    "pyobjc-framework-metal; platform_release >= \"15.0\"",
+    "pyobjc-framework-metalfx; platform_release >= \"22.0\"",
+    "pyobjc-framework-metalkit; platform_release >= \"15.0\"",
+    "pyobjc-framework-metalperformanceshaders; platform_release >= \"17.0\"",
+    "pyobjc-framework-metalperformanceshadersgraph; platform_release >= \"20.0\"",
+    "pyobjc-framework-metrickit; platform_release >= \"21.0\"",
+    "pyobjc-framework-mlcompute; platform_release >= \"20.0\"",
+    "pyobjc-framework-modelio; platform_release >= \"15.0\"",
+    "pyobjc-framework-multipeerconnectivity; platform_release >= \"14.0\"",
+    "pyobjc-framework-naturallanguage; platform_release >= \"18.0\"",
+    "pyobjc-framework-netfs; platform_release >= \"10.0\"",
+    "pyobjc-framework-network; platform_release >= \"18.0\"",
+    "pyobjc-framework-networkextension; platform_release >= \"15.0\"",
+    "pyobjc-framework-notificationcenter; platform_release >= \"14.0\"",
+    "pyobjc-framework-opendirectory; platform_release >= \"10.0\"",
+    "pyobjc-framework-osakit",
+    "pyobjc-framework-oslog; platform_release >= \"19.0\"",
+    "pyobjc-framework-passkit; platform_release >= \"20.0\"",
+    "pyobjc-framework-pencilkit; platform_release >= \"19.0\"",
+    "pyobjc-framework-phase; platform_release >= \"21.0\"",
+    "pyobjc-framework-photos; platform_release >= \"15.0\"",
+    "pyobjc-framework-photosui; platform_release >= \"15.0\"",
+    "pyobjc-framework-preferencepanes",
+    "pyobjc-framework-pushkit; platform_release >= \"19.0\"",
+    "pyobjc-framework-quartz",
+    "pyobjc-framework-quicklookthumbnailing; platform_release >= \"19.0\"",
+    "pyobjc-framework-replaykit; platform_release >= \"20.0\"",
+    "pyobjc-framework-safariservices; platform_release >= \"16.0\"",
+    "pyobjc-framework-safetykit; platform_release >= \"22.0\"",
+    "pyobjc-framework-scenekit; platform_release >= \"11.0\"",
+    "pyobjc-framework-screencapturekit; platform_release >= \"21.4\"",
+    "pyobjc-framework-screensaver",
+    "pyobjc-framework-screentime; platform_release >= \"20.0\"",
+    "pyobjc-framework-scriptingbridge; platform_release >= \"9.0\"",
+    "pyobjc-framework-searchkit",
+    "pyobjc-framework-security",
+    "pyobjc-framework-securityfoundation",
+    "pyobjc-framework-securityinterface",
+    "pyobjc-framework-securityui; platform_release >= \"24.4\"",
+    "pyobjc-framework-sensitivecontentanalysis; platform_release >= \"23.0\"",
+    "pyobjc-framework-servicemanagement; platform_release >= \"10.0\"",
+    "pyobjc-framework-sharedwithyou; platform_release >= \"22.0\"",
+    "pyobjc-framework-sharedwithyoucore; platform_release >= \"22.0\"",
+    "pyobjc-framework-shazamkit; platform_release >= \"21.0\"",
+    "pyobjc-framework-social; platform_release >= \"12.0\"",
+    "pyobjc-framework-soundanalysis; platform_release >= \"19.0\"",
+    "pyobjc-framework-speech; platform_release >= \"19.0\"",
+    "pyobjc-framework-spritekit; platform_release >= \"13.0\"",
+    "pyobjc-framework-storekit; platform_release >= \"11.0\"",
+    "pyobjc-framework-symbols; platform_release >= \"23.0\"",
+    "pyobjc-framework-syncservices",
+    "pyobjc-framework-systemconfiguration",
+    "pyobjc-framework-systemextensions; platform_release >= \"19.0\"",
+    "pyobjc-framework-threadnetwork; platform_release >= \"22.0\"",
+    "pyobjc-framework-uniformtypeidentifiers; platform_release >= \"20.0\"",
+    "pyobjc-framework-usernotifications; platform_release >= \"18.0\"",
+    "pyobjc-framework-usernotificationsui; platform_release >= \"20.0\"",
+    "pyobjc-framework-videosubscriberaccount; platform_release >= \"18.0\"",
+    "pyobjc-framework-videotoolbox; platform_release >= \"12.0\"",
+    "pyobjc-framework-virtualization; platform_release >= \"20.0\"",
+    "pyobjc-framework-vision; platform_release >= \"17.0\"",
+    "pyobjc-framework-webkit",
+]
+files = [
+    {file = "pyobjc-12.1-py3-none-any.whl", hash = "sha256:6f8c36cf87b1159d2ca1aa387ffc3efcd51cc3da13ef47c65f45e6d9fbccc729"},
+    {file = "pyobjc-12.1.tar.gz", hash = "sha256:686d6db3eb3182fac9846b8ce3eedf4c7d2680b21b8b8d6e6df054a17e92a12d"},
+]
+
+[[package]]
 name = "pyobjc-core"
 version = "12.1"
 summary = ""
@@ -1864,14 +2036,110 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-accessibility"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_accessibility-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ca72a049a9dc56686cfe7b8c0bbb556205fb7a955a48cabf7f90447708d89651"},
+    {file = "pyobjc_framework_accessibility-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:5e29dac0ce8327cd5a8b9a5a8bd8aa83e4070018b93699e97ac0c3af09b42a9a"},
+    {file = "pyobjc_framework_accessibility-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:537691a0b28fedb8385cd093df069a6e5d7e027629671fc47b50210404eca20b"},
+    {file = "pyobjc_framework_accessibility-12.1.tar.gz", hash = "sha256:5ff362c3425edc242d49deec11f5f3e26e565cefb6a2872eda59ab7362149772"},
+]
+
+[[package]]
+name = "pyobjc-framework-accounts"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_accounts-12.1-py2.py3-none-any.whl", hash = "sha256:e1544ad11a2f889a7aaed649188d0e76d58595a27eec07ca663847a7adb21ae5"},
+    {file = "pyobjc_framework_accounts-12.1.tar.gz", hash = "sha256:76d62c5e7b831eb8f4c9ca6abaf79d9ed961dfffe24d89a041fb1de97fe56a3e"},
+]
+
+[[package]]
+name = "pyobjc-framework-addressbook"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_addressbook-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e6291d67436112057df27f76d758a8fb9a6ff1557420dee0baf52e61cf174872"},
+    {file = "pyobjc_framework_addressbook-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:681755ada6c95bd4a096bc2b9f9c24661ffe6bff19a96963ee3fad34f3d61d2b"},
+    {file = "pyobjc_framework_addressbook-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7893dd784322f4674299fb3ca40cb03385e5eddb78defd38f08c0b730813b56c"},
+    {file = "pyobjc_framework_addressbook-12.1.tar.gz", hash = "sha256:c48b740cf981103cef1743d0804a226d86481fcb839bd84b80e9a586187e8000"},
+]
+
+[[package]]
+name = "pyobjc-framework-adservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_adservices-12.1-py2.py3-none-any.whl", hash = "sha256:9ca3c55e35b2abb3149a0bce5de9a1f7e8ee4f8642036910ca8586ab2e161538"},
+    {file = "pyobjc_framework_adservices-12.1.tar.gz", hash = "sha256:7a31fc8d5c6fd58f012db87c89ba581361fc905114bfb912e0a3a87475c02183"},
+]
+
+[[package]]
+name = "pyobjc-framework-adsupport"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_adsupport-12.1-py2.py3-none-any.whl", hash = "sha256:97dcd8799dd61f047bb2eb788bbde81f86e95241b5e5173a3a61cfc05b5598b1"},
+    {file = "pyobjc_framework_adsupport-12.1.tar.gz", hash = "sha256:9a68480e76de567c339dca29a8c739d6d7b5cad30e1cd585ff6e49ec2fc283dd"},
+]
+
+[[package]]
+name = "pyobjc-framework-applescriptkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_applescriptkit-12.1-py2.py3-none-any.whl", hash = "sha256:b955fc017b524027f635d92a8a45a5fd9fbae898f3e03de16ecd94aa4c4db987"},
+    {file = "pyobjc_framework_applescriptkit-12.1.tar.gz", hash = "sha256:cb09f88cf0ad9753dedc02720065818f854b50e33eb4194f0ea34de6d7a3eb33"},
+]
+
+[[package]]
+name = "pyobjc-framework-applescriptobjc"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_applescriptobjc-12.1-py2.py3-none-any.whl", hash = "sha256:79068f982cc22471712ce808c0a8fd5deea11258fc8d8c61968a84b1962a3d10"},
+    {file = "pyobjc_framework_applescriptobjc-12.1.tar.gz", hash = "sha256:dce080ed07409b0dda2fee75d559bd312ea1ef0243a4338606440f282a6a0f5f"},
+]
+
+[[package]]
 name = "pyobjc-framework-applicationservices"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-coretext; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-quartz; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coretext",
+    "pyobjc-framework-quartz",
 ]
 files = [
     {file = "pyobjc_framework_applicationservices-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c4fd1b008757182b9e2603a63c6ffa930cc412fab47294ec64260ab3f8ec695d"},
@@ -1881,11 +2149,295 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-apptrackingtransparency"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_apptrackingtransparency-12.1-py2.py3-none-any.whl", hash = "sha256:23a98ade55495f2f992ecf62c3cbd8f648cbd68ba5539c3f795bf66de82e37ca"},
+    {file = "pyobjc_framework_apptrackingtransparency-12.1.tar.gz", hash = "sha256:e25bf4e4dfa2d929993ee8e852b28fdf332fa6cde0a33328fdc3b2f502fa50ec"},
+]
+
+[[package]]
+name = "pyobjc-framework-arkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_arkit-12.1-py2.py3-none-any.whl", hash = "sha256:f6d39e28d858ee03f052d6780a552247e682204382dbc090f1d3192fa1b21493"},
+    {file = "pyobjc_framework_arkit-12.1.tar.gz", hash = "sha256:0c5c6b702926179700b68ba29b8247464c3b609fd002a07a3308e72cfa953adf"},
+]
+
+[[package]]
+name = "pyobjc-framework-audiovideobridging"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_audiovideobridging-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c2fa51d674ba30801cfe67d1b5e71424635b62f6377b96602bce124ae3086823"},
+    {file = "pyobjc_framework_audiovideobridging-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:6bc24a7063b08c7d9f1749a4641430d363b6dba642c04d09b58abcee7a5260cb"},
+    {file = "pyobjc_framework_audiovideobridging-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:010021502649e2cca4e999a7c09358d48c6b0ed83530bbc0b85bba6834340e4b"},
+    {file = "pyobjc_framework_audiovideobridging-12.1.tar.gz", hash = "sha256:6230ace6bec1f38e8a727c35d054a7be54e039b3053f98e6dd8d08d6baee2625"},
+]
+
+[[package]]
+name = "pyobjc-framework-authenticationservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_authenticationservices-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:39bba6cc6041467d0046a04610e8aacc852961c82055d84bf3981971780ee5eb"},
+    {file = "pyobjc_framework_authenticationservices-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c15bb81282356f3f062ac79ff4166c93097448edc44b17dcf686e1dac78cc832"},
+    {file = "pyobjc_framework_authenticationservices-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:6fd5ce10fe5359cbbfe03eb12cab3e01992b32ab65653c579b00ac93cf674985"},
+    {file = "pyobjc_framework_authenticationservices-12.1.tar.gz", hash = "sha256:cef71faeae2559f5c0ff9a81c9ceea1c81108e2f4ec7de52a98c269feff7a4b6"},
+]
+
+[[package]]
+name = "pyobjc-framework-automaticassessmentconfiguration"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_automaticassessmentconfiguration-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:096c1f0dcd96a6e9903b70b3090747e76344324c02066026c4f7c347bc1823ae"},
+    {file = "pyobjc_framework_automaticassessmentconfiguration-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:d94a4a3beb77b3b2ab7b610c4b41e28593d15571724a9e6ab196b82acc98dc13"},
+    {file = "pyobjc_framework_automaticassessmentconfiguration-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:c2e22ea67d7e6d6a84d968169f83d92b59857a49ab12132de07345adbfea8a62"},
+    {file = "pyobjc_framework_automaticassessmentconfiguration-12.1.tar.gz", hash = "sha256:2b732c02d9097682ca16e48f5d3b10056b740bc091e217ee4d5715194c8970b1"},
+]
+
+[[package]]
+name = "pyobjc-framework-automator"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_automator-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:fa9189b481db4429e3aea6b567b0888f8c6f6ba388064be2ce6f287e19cea096"},
+    {file = "pyobjc_framework_automator-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:4f3d96da10d28c5c197193a9d805a13157b1cb694b6c535983f8572f5f8746ea"},
+    {file = "pyobjc_framework_automator-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:4df9aec77f0fbca66cd3534d1b8398fe6f3e3c2748c0fc12fec2546c7f2e3ffd"},
+    {file = "pyobjc_framework_automator-12.1.tar.gz", hash = "sha256:7491a99347bb30da3a3f744052a03434ee29bee3e2ae520576f7e796740e4ba7"},
+]
+
+[[package]]
+name = "pyobjc-framework-avfoundation"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coreaudio",
+    "pyobjc-framework-coremedia",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_avfoundation-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:370d5f1149c1041028cb1f5fb61b9f56655fe53bbffafc79393b0824a474bef0"},
+    {file = "pyobjc_framework_avfoundation-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:82cc2c2d9ab6cc04feeb4700ff251d00f1fcafff573c63d4e87168ff80adb926"},
+    {file = "pyobjc_framework_avfoundation-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:bf634f89265b4d93126153200d885b6de4859ed6b3bc65e69ff75540bc398406"},
+    {file = "pyobjc_framework_avfoundation-12.1.tar.gz", hash = "sha256:eda0bb60be380f9ba2344600c4231dd58a3efafa99fdc65d3673ecfbb83f6fcb"},
+]
+
+[[package]]
+name = "pyobjc-framework-avkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_avkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ec696a9ba354cdf4271d0076ed2daf7e4779ce809a7dc3d6c9cff4e14c88c1b0"},
+    {file = "pyobjc_framework_avkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:78bd31a8aed48644e5407b444dec8b1e15ff77af765607b52edf88b8f1213ac7"},
+    {file = "pyobjc_framework_avkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:eef2c0a51465de025a4509db05ef18ca2b678bb00ee0a8fbad7fd470edfd58f9"},
+    {file = "pyobjc_framework_avkit-12.1.tar.gz", hash = "sha256:a5c0ddb0cb700f9b09c8afeca2c58952d554139e9bb078236d2355b1fddfb588"},
+]
+
+[[package]]
+name = "pyobjc-framework-avrouting"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_avrouting-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b9724fcd834a8ee206df25139c3033bd508a4a830ac6d91dd7c611a03085386"},
+    {file = "pyobjc_framework_avrouting-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:9a79f05fb66e337cabc19a9d949c8b29a5145c879f42e29ba02b601b7700d1bb"},
+    {file = "pyobjc_framework_avrouting-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:4c0fb0d3d260527320377a70c87688ca5e4a208b09fddcae2b4257d7fe9b1e18"},
+    {file = "pyobjc_framework_avrouting-12.1.tar.gz", hash = "sha256:6a6c5e583d14f6501df530a9d0559a32269a821fc8140e3646015f097155cd1c"},
+]
+
+[[package]]
+name = "pyobjc-framework-backgroundassets"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_backgroundassets-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5af9d7db623e14876e3cbb79cd4234558162dad307fd341d141089652bb94bed"},
+    {file = "pyobjc_framework_backgroundassets-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:17de7990b5ea8047d447339f9e9e6f54b954ffc06647c830932a1688c4743fea"},
+    {file = "pyobjc_framework_backgroundassets-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:2c11cb98650c1a4bc68eeb4b040541ba96613434c5957e98e9bb363413b23c91"},
+    {file = "pyobjc_framework_backgroundassets-12.1.tar.gz", hash = "sha256:8da34df9ae4519c360c429415477fdaf3fbba5addbc647b3340b8783454eb419"},
+]
+
+[[package]]
+name = "pyobjc-framework-browserenginekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coreaudio",
+    "pyobjc-framework-coremedia",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_browserenginekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8161ac3a9e19b794d47c0022cd2b956818956bda355e4897a687850faf6ab380"},
+    {file = "pyobjc_framework_browserenginekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:41229c766fb3e5bba2de5e580776388297303b4d63d3065fef3f67b77ec46c3f"},
+    {file = "pyobjc_framework_browserenginekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:d15766bb841b081447015c9626e2a766febfe651f487893d29c5d72bef976b94"},
+    {file = "pyobjc_framework_browserenginekit-12.1.tar.gz", hash = "sha256:6a1a34a155778ab55ab5f463e885f2a3b4680231264e1fe078e62ddeccce49ed"},
+]
+
+[[package]]
+name = "pyobjc-framework-businesschat"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_businesschat-12.1-py2.py3-none-any.whl", hash = "sha256:f66ce741507b324de3c301d72ba0cfa6aaf7093d7235972332807645c118cc29"},
+    {file = "pyobjc_framework_businesschat-12.1.tar.gz", hash = "sha256:f6fa3a8369a1a51363e1757530128741d9d09ed90692a1d6777a4c0fbad25868"},
+]
+
+[[package]]
+name = "pyobjc-framework-calendarstore"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_calendarstore-12.1-py2.py3-none-any.whl", hash = "sha256:18533e0fcbcdd29ee5884dfbd30606710f65df9b688bf47daee1438ee22e50cc"},
+    {file = "pyobjc_framework_calendarstore-12.1.tar.gz", hash = "sha256:f9a798d560a3c99ad4c0d2af68767bc5695d8b1aabef04d8377861cd1d6d1670"},
+]
+
+[[package]]
+name = "pyobjc-framework-callkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_callkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:57e8c04d8e4f9358d0fe1f14862caf9aa74ae5ba90c8cae1751798a24b459166"},
+    {file = "pyobjc_framework_callkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e73beae08e6a32bcced8d5bdb45b52d6a0866dd1485eaaddba6063f17d41fcb0"},
+    {file = "pyobjc_framework_callkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:12adc0ace464a057f8908187698e1d417c6c53619797a69d096f4329bffb1089"},
+    {file = "pyobjc_framework_callkit-12.1.tar.gz", hash = "sha256:fd6dc9688b785aab360139d683be56f0844bf68bf5e45d0eb770cb68221083cc"},
+]
+
+[[package]]
+name = "pyobjc-framework-carbon"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_carbon-12.1-py2.py3-none-any.whl", hash = "sha256:f8b719b3c7c5cf1d61ac7c45a8a70b5e5e5a83fa02f5194c2a48a7e81a3d1b7f"},
+    {file = "pyobjc_framework_carbon-12.1.tar.gz", hash = "sha256:57a72807db252d5746caccc46da4bd20ff8ea9e82109af9f72735579645ff4f0"},
+]
+
+[[package]]
+name = "pyobjc-framework-cfnetwork"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_cfnetwork-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d54206b13f44f2503db53efbdb76d892c719959fb620266875d9934ceb586f2d"},
+    {file = "pyobjc_framework_cfnetwork-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:3bf93c0f3d262f629e72f8dd43384d0930ed8e610b3fc5ff555c0c1a1e05334a"},
+    {file = "pyobjc_framework_cfnetwork-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:92760da248c757085fc39bce4388a0f6f0b67540e51edf60a92ad60ca907d071"},
+    {file = "pyobjc_framework_cfnetwork-12.1.tar.gz", hash = "sha256:2d16e820f2d43522c793f55833fda89888139d7a84ca5758548ba1f3a325a88d"},
+]
+
+[[package]]
+name = "pyobjc-framework-cinematic"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-avfoundation",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coremedia",
+    "pyobjc-framework-metal",
+]
+files = [
+    {file = "pyobjc_framework_cinematic-12.1-py2.py3-none-any.whl", hash = "sha256:c003543bb6908379680a93dfd77a44228686b86c118cf3bc930f60241d0cd141"},
+    {file = "pyobjc_framework_cinematic-12.1.tar.gz", hash = "sha256:795068c30447548c0e8614e9c432d4b288b13d5614622ef2f9e3246132329b06"},
+]
+
+[[package]]
+name = "pyobjc-framework-classkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_classkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7fbca9dbd9485ec21c3bc64f0e27ce1037095db71bd16718f883b6f22ab0f9a0"},
+    {file = "pyobjc_framework_classkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:bd90aacc68eff3412204a9040fa81eb18348cbd88ed56d33558349f3e51bff52"},
+    {file = "pyobjc_framework_classkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:c027a3cd9be5fee3f605589118b8b278297c384a271f224c1a98b224e0c087e6"},
+    {file = "pyobjc_framework_classkit-12.1.tar.gz", hash = "sha256:8d1e9dd75c3d14938ff533d88b72bca2d34918e4461f418ea323bfb2498473b4"},
+]
+
+[[package]]
+name = "pyobjc-framework-cloudkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-accounts",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coredata",
+    "pyobjc-framework-corelocation",
+]
+files = [
+    {file = "pyobjc_framework_cloudkit-12.1-py2.py3-none-any.whl", hash = "sha256:875e37bf1a2ce3d05c2492692650104f2d908b56b71a0aedf6620bc517c6c9ca"},
+    {file = "pyobjc_framework_cloudkit-12.1.tar.gz", hash = "sha256:1dddd38e60863f88adb3d1d37d3b4ccb9cbff48c4ef02ab50e36fa40c2379d2f"},
+]
+
+[[package]]
 name = "pyobjc-framework-cocoa"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
 ]
 files = [
     {file = "pyobjc_framework_cocoa-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9b880d3bdcd102809d704b6d8e14e31611443aa892d9f60e8491e457182fdd48"},
@@ -1895,13 +2447,279 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-collaboration"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_collaboration-12.1-py2.py3-none-any.whl", hash = "sha256:182d6e6080833b97f9bef61738ae7bacb509714538f0d7281e5f0814c804b315"},
+    {file = "pyobjc_framework_collaboration-12.1.tar.gz", hash = "sha256:2afa264d3233fc0a03a56789c6fefe655ffd81a2da4ba1dc79ea0c45931ad47b"},
+]
+
+[[package]]
+name = "pyobjc-framework-colorsync"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_colorsync-12.1-py2.py3-none-any.whl", hash = "sha256:41e08d5b9a7af4b380c9adab24c7ff59dfd607b3073ae466693a3e791d8ffdc9"},
+    {file = "pyobjc_framework_colorsync-12.1.tar.gz", hash = "sha256:d69dab7df01245a8c1bd536b9231c97993a5d1a2765d77692ce40ebbe6c1b8e9"},
+]
+
+[[package]]
+name = "pyobjc-framework-compositorservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-metal",
+]
+files = [
+    {file = "pyobjc_framework_compositorservices-12.1-py2.py3-none-any.whl", hash = "sha256:9ef22d4eacd492e13099b9b8936db892cdbbef1e3d23c3484e0ed749f83c4984"},
+    {file = "pyobjc_framework_compositorservices-12.1.tar.gz", hash = "sha256:028e357bbee7fbd3723339a321bbe14e6da5a772708a661a13eea5f17c89e4ab"},
+]
+
+[[package]]
+name = "pyobjc-framework-contacts"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_contacts-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:86b570807aaead01b51c25cb425526f4ac3527eec25fa8672fd450a1b558c037"},
+    {file = "pyobjc_framework_contacts-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:8ab86070895a005239256d207e18209b1a79d35335b6604db160e8375a7165e6"},
+    {file = "pyobjc_framework_contacts-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:2e5ce33b686eb9c0a39351938a756442ea8dea88f6ae2f16bff5494a8569c687"},
+    {file = "pyobjc_framework_contacts-12.1.tar.gz", hash = "sha256:89bca3c5cf31404b714abaa1673577e1aaad6f2ef49d4141c6dbcc0643a789ad"},
+]
+
+[[package]]
+name = "pyobjc-framework-contactsui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-contacts",
+]
+files = [
+    {file = "pyobjc_framework_contactsui-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9aedac00f41c1fae02befc70263f22f74518cc392fe19b66cc325d8f95e78b2c"},
+    {file = "pyobjc_framework_contactsui-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:10e7ce3b105795919605be89ebeecffd656e82dbf1bafa5db6d51d6def2265ee"},
+    {file = "pyobjc_framework_contactsui-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:057f40d2f6eb1b169a300675ec75cc7a747cddcbcee8ece133e652a7086c5ab5"},
+    {file = "pyobjc_framework_contactsui-12.1.tar.gz", hash = "sha256:aaeca7c9e0c9c4e224d73636f9a558f9368c2c7422155a41fd4d7a13613a77c1"},
+]
+
+[[package]]
+name = "pyobjc-framework-coreaudio"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coreaudio-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d676c85bb9dc51217d94adc3b5b60e7e5b59a81167446f06821b2687d92641d3"},
+    {file = "pyobjc_framework_coreaudio-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a452de6b509fa4a20160c0410b72330ac871696cd80237883955a5b3a4de8f2a"},
+    {file = "pyobjc_framework_coreaudio-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a5ad6309779663f846ab36fe6c49647e470b7e08473c3e48b4f004017bdb68a4"},
+    {file = "pyobjc_framework_coreaudio-12.1.tar.gz", hash = "sha256:a9e72925fcc1795430496ce0bffd4ddaa92c22460a10308a7283ade830089fe1"},
+]
+
+[[package]]
+name = "pyobjc-framework-coreaudiokit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coreaudio",
+]
+files = [
+    {file = "pyobjc_framework_coreaudiokit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7b7230cf4f34f2e35fc40928fa723c43193c359b21b690485001ca3616829b6c"},
+    {file = "pyobjc_framework_coreaudiokit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e1144c272f8d6429a34a6757700048f4631eb067c4b08d4768ddc28c371a7014"},
+    {file = "pyobjc_framework_coreaudiokit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:97d5dd857e73d5b597cfc980972b021314b760e2f5bdde7bbba0334fbf404722"},
+    {file = "pyobjc_framework_coreaudiokit-12.1.tar.gz", hash = "sha256:b83624f8de3068ab2ca279f786be0804da5cf904ff9979d96007b69ef4869e1e"},
+]
+
+[[package]]
+name = "pyobjc-framework-corebluetooth"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_corebluetooth-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:937849f4d40a33afbcc56cbe90c8d1fbf30fb27a962575b9fb7e8e2c61d3c551"},
+    {file = "pyobjc_framework_corebluetooth-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:37e6456c8a076bd5a2bdd781d0324edd5e7397ef9ac9234a97433b522efb13cf"},
+    {file = "pyobjc_framework_corebluetooth-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:fe72c9732ee6c5c793b9543f08c1f5bdd98cd95dfc9d96efd5708ec9d6eeb213"},
+    {file = "pyobjc_framework_corebluetooth-12.1.tar.gz", hash = "sha256:8060c1466d90bbb9100741a1091bb79975d9ba43911c9841599879fc45c2bbe0"},
+]
+
+[[package]]
+name = "pyobjc-framework-coredata"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coredata-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:547115df2391dafe9dbc0ae885a7d87e1c5f1710384effd8638857e5081c75ec"},
+    {file = "pyobjc_framework_coredata-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c861dc42b786243cbd96d9ea07d74023787d03637ef69a2f75a1191a2f16d9d6"},
+    {file = "pyobjc_framework_coredata-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a3ee3581ca23ead0b152257e98622fe0bf7e7948f30a62a25a17cafe28fe015e"},
+    {file = "pyobjc_framework_coredata-12.1.tar.gz", hash = "sha256:1e47d3c5e51fdc87a90da62b97cae1bc49931a2bb064db1305827028e1fc0ffa"},
+]
+
+[[package]]
+name = "pyobjc-framework-corehaptics"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_corehaptics-12.1-py2.py3-none-any.whl", hash = "sha256:a3b07d36ddf5c86a9cdaa411ab53d09553d26ea04fc7d4f82d21a84f0fc05fc0"},
+    {file = "pyobjc_framework_corehaptics-12.1.tar.gz", hash = "sha256:521dd2986c8a4266d583dd9ed9ae42053b11ae7d3aa89bf53fbee88307d8db10"},
+]
+
+[[package]]
+name = "pyobjc-framework-corelocation"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_corelocation-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:833678750636976833d905a1575896167841394b77936074774b8921c94653e5"},
+    {file = "pyobjc_framework_corelocation-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ffc96b9ba504b35fe3e0fcfb0153e68fdfca6fe71663d240829ceab2d7122588"},
+    {file = "pyobjc_framework_corelocation-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:8c35ad29a062fea7d417fd8997a9309660ba7963f2847c004e670efbe6bb5b00"},
+    {file = "pyobjc_framework_corelocation-12.1.tar.gz", hash = "sha256:3674e9353f949d91dde6230ad68f6d5748a7f0424751e08a2c09d06050d66231"},
+]
+
+[[package]]
+name = "pyobjc-framework-coremedia"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coremedia-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:4fce8570db3eaa7b841456a7890b24546504d1059157dc33e700b14d9d3073d8"},
+    {file = "pyobjc_framework_coremedia-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ee7b822c9bb674b5b0a70bfb133410acae354e9241b6983f075395f3562f3c46"},
+    {file = "pyobjc_framework_coremedia-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:161a627f5c8cd30a5ebb935189f740e21e6cd94871a9afd463efdb5d51e255fa"},
+    {file = "pyobjc_framework_coremedia-12.1.tar.gz", hash = "sha256:166c66a9c01e7a70103f3ca44c571431d124b9070612ef63a1511a4e6d9d84a7"},
+]
+
+[[package]]
+name = "pyobjc-framework-coremediaio"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coremediaio-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1a471e82fddeaa8a172d96dd897c3489f0a0ad8d5e5d2b46ae690e273c254cd0"},
+    {file = "pyobjc_framework_coremediaio-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:3da79c5b9785c5ccc1f5982de61d4d0f1ba29717909eb6720734076ccdc0633c"},
+    {file = "pyobjc_framework_coremediaio-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:1108f8a278928fbca465f95123ea4a56456bd6571c1dc8b91793e6c61d624517"},
+    {file = "pyobjc_framework_coremediaio-12.1.tar.gz", hash = "sha256:880b313b28f00b27775d630174d09e0b53d1cdbadb74216618c9dd5b3eb6806a"},
+]
+
+[[package]]
+name = "pyobjc-framework-coremidi"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coremidi-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:bcbe70bdd5f79999d028aee7a8b34e72ff955547c7d277357c4d67afd8a23024"},
+    {file = "pyobjc_framework_coremidi-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:af3cdf195e8d5e30d1203889cc4107bebc6eb901aaa81bf3faf15e9ffaca0735"},
+    {file = "pyobjc_framework_coremidi-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:e84ffc1de59691c04201b0872e184fe55b5589f3a14876bd14460f3b5f3cd109"},
+    {file = "pyobjc_framework_coremidi-12.1.tar.gz", hash = "sha256:3c6f1fd03997c3b0f20ab8545126b1ce5f0cddcc1587dffacad876c161da8c54"},
+]
+
+[[package]]
+name = "pyobjc-framework-coreml"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coreml-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:df4e9b4f97063148cc481f72e2fbe3cc53b9464d722752aa658d7c0aec9f02fd"},
+    {file = "pyobjc_framework_coreml-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:16dafcfb123f022e62f47a590a7eccf7d0cb5957a77fd5f062b5ee751cb5a423"},
+    {file = "pyobjc_framework_coreml-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:10dc8e8db53d7631ebc712cad146e3a9a9a443f4e1a037e844149a24c3c42669"},
+    {file = "pyobjc_framework_coreml-12.1.tar.gz", hash = "sha256:0d1a4216891a18775c9e0170d908714c18e4f53f9dc79fb0f5263b2aa81609ba"},
+]
+
+[[package]]
+name = "pyobjc-framework-coremotion"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_coremotion-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0da3c3e82744cf555537d65ad796e9ad2687d26aeb458078c74896496538eace"},
+    {file = "pyobjc_framework_coremotion-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ed8cb67927985d97b1dd23ab6a4a1b716fc7c409c35349816108781efdcbb5b6"},
+    {file = "pyobjc_framework_coremotion-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a77908ab83c422030f913a2a761d196359ab47f6d1e7c76f21de2c6c05ea2f5f"},
+    {file = "pyobjc_framework_coremotion-12.1.tar.gz", hash = "sha256:8e1b094d34084cc8cf07bedc0630b4ee7f32b0215011f79c9e3cd09d205a27c7"},
+]
+
+[[package]]
+name = "pyobjc-framework-coreservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-fsevents",
+]
+files = [
+    {file = "pyobjc_framework_coreservices-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:38856a89ccab766a03270c415a6bf5ea0f87134134fe4c122af9894d50162d77"},
+    {file = "pyobjc_framework_coreservices-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:b6ef07bcf99e941395491f1efcf46e99e5fb83eb6bfa12ae5371135d83f731e1"},
+    {file = "pyobjc_framework_coreservices-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:8751dc2edcb7cfa248bf8a274c4d6493e8d53ef28a843827a4fc9a0a8b04b8be"},
+    {file = "pyobjc_framework_coreservices-12.1.tar.gz", hash = "sha256:fc6a9f18fc6da64c166fe95f2defeb7ac8a9836b3b03bb6a891d36035260dbaa"},
+]
+
+[[package]]
+name = "pyobjc-framework-corespotlight"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_corespotlight-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9299ebabe2031433c384aec52074c52f6258435152d3bdbbed0ed68e37ad1f45"},
+    {file = "pyobjc_framework_corespotlight-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:404a1e362fe19f0dff477edc1665d8ad90aada928246802da777399f7c06b22e"},
+    {file = "pyobjc_framework_corespotlight-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:bfcea64ab3250e2886d202b8731be3817b5ac0c8c9f43e77d0d5a0b6602e71a7"},
+    {file = "pyobjc_framework_corespotlight-12.1.tar.gz", hash = "sha256:57add47380cd0bbb9793f50a4a4b435a90d4ebd2a33698e058cb353ddfb0d068"},
+]
+
+[[package]]
 name = "pyobjc-framework-coretext"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-quartz; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
 ]
 files = [
     {file = "pyobjc_framework_coretext-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1c8315dcef6699c2953461d97117fe81402f7c29cff36d2950dacce028a362fd"},
@@ -1911,12 +2729,1081 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-corewlan"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_corewlan-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:440db62f4ecc0c3b636fa06928d51f147b58c4cb000c0ba2dfc820ad484c2358"},
+    {file = "pyobjc_framework_corewlan-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:3e3f2614eb37dfd6860d6a0683877c2f3b909758ef78b68e5f6b7ea9c858cc51"},
+    {file = "pyobjc_framework_corewlan-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:5cba04c0550fc777767cd3a5471e4ed837406ab182d7d5c273bc5ce6ea237bfe"},
+    {file = "pyobjc_framework_corewlan-12.1.tar.gz", hash = "sha256:a9d82ec71ef61f37e1d611caf51a4203f3dbd8caf827e98128a1afaa0fd2feb5"},
+]
+
+[[package]]
+name = "pyobjc-framework-cryptotokenkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_cryptotokenkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:cfdefb1d9b1bf2223055378ee84ad40b771b1a0ba02258fbf06be54d6b30a689"},
+    {file = "pyobjc_framework_cryptotokenkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:d84b75569054fa0886e3e341c00d7179d5fe287e6d1509630dd698ee60ec5af1"},
+    {file = "pyobjc_framework_cryptotokenkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:ef51a86c1d0125fabdfad0b3efa51098fb03660d8dad2787d82e8b71c9f189de"},
+    {file = "pyobjc_framework_cryptotokenkit-12.1.tar.gz", hash = "sha256:c95116b4b7a41bf5b54aff823a4ef6f4d9da4d0441996d6d2c115026a42d82f5"},
+]
+
+[[package]]
+name = "pyobjc-framework-datadetection"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_datadetection-12.1-py2.py3-none-any.whl", hash = "sha256:4dc8e1d386d655b44b2681a4a2341fb2fc9addbf3dda14cb1553cd22be6a5387"},
+    {file = "pyobjc_framework_datadetection-12.1.tar.gz", hash = "sha256:95539e46d3bc970ce890aa4a97515db10b2690597c5dd362996794572e5d5de0"},
+]
+
+[[package]]
+name = "pyobjc-framework-devicecheck"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_devicecheck-12.1-py2.py3-none-any.whl", hash = "sha256:ffd58148bdef4a1ee8548b243861b7d97a686e73808ca0efac5bef3c430e4a15"},
+    {file = "pyobjc_framework_devicecheck-12.1.tar.gz", hash = "sha256:567e85fc1f567b3fe64ac1cdc323d989509331f64ee54fbcbde2001aec5adbdb"},
+]
+
+[[package]]
+name = "pyobjc-framework-devicediscoveryextension"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_devicediscoveryextension-12.1-py2.py3-none-any.whl", hash = "sha256:d6d6b606d27d4d88efc0bed4727c375e749149b360290c3ad2afc52337739a1b"},
+    {file = "pyobjc_framework_devicediscoveryextension-12.1.tar.gz", hash = "sha256:60e12445fad97ff1f83472255c943685a8f3a9d95b3126d887cfe769b7261044"},
+]
+
+[[package]]
+name = "pyobjc-framework-dictionaryservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-coreservices",
+]
+files = [
+    {file = "pyobjc_framework_dictionaryservices-12.1-py2.py3-none-any.whl", hash = "sha256:578854eec17fa473ac17ab30050a7bbb2ab69f17c5c49b673695254c3e88ad4b"},
+    {file = "pyobjc_framework_dictionaryservices-12.1.tar.gz", hash = "sha256:354158f3c55d66681fa903c7b3cb05a435b717fa78d0cef44d258d61156454a7"},
+]
+
+[[package]]
+name = "pyobjc-framework-discrecording"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_discrecording-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b940e018b57ce637f5ada4d44ed6775d349dbc4e67c6e563f682fc3277c7affe"},
+    {file = "pyobjc_framework_discrecording-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:f7d815f28f781e20de0bf278aaa10b0de7e5ea1189aa17676c0bf5b99e9e0d52"},
+    {file = "pyobjc_framework_discrecording-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:865f1551e58459da6073360afc8f2cc452472c676ba83dcaa9b0c44e7775e4b5"},
+    {file = "pyobjc_framework_discrecording-12.1.tar.gz", hash = "sha256:6defc8ea97fb33b4d43870c673710c04c3dc48be30cdf78ba28191a922094990"},
+]
+
+[[package]]
+name = "pyobjc-framework-discrecordingui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-discrecording",
+]
+files = [
+    {file = "pyobjc_framework_discrecordingui-12.1-py2.py3-none-any.whl", hash = "sha256:6544ef99cad3dee95716c83cb207088768b6ecd3de178f7e1b17df5997689dfd"},
+    {file = "pyobjc_framework_discrecordingui-12.1.tar.gz", hash = "sha256:6793d4a1a7f3219d063f39d87f1d4ebbbb3347e35d09194a193cfe16cba718a8"},
+]
+
+[[package]]
+name = "pyobjc-framework-diskarbitration"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_diskarbitration-12.1-py2.py3-none-any.whl", hash = "sha256:54caf3079fe4ae5ac14466a9b68923ee260a1a88a8290686b4a2015ba14c2db6"},
+    {file = "pyobjc_framework_diskarbitration-12.1.tar.gz", hash = "sha256:6703bc5a09b38a720c9ffca356b58f7e99fa76fc988c9ec4d87112344e63dfc2"},
+]
+
+[[package]]
+name = "pyobjc-framework-dvdplayback"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_dvdplayback-12.1-py2.py3-none-any.whl", hash = "sha256:af911cc222272a55b46a1a02a46a355279aecfd8132231d8d1b279e252b8ad4c"},
+    {file = "pyobjc_framework_dvdplayback-12.1.tar.gz", hash = "sha256:279345d4b5fb2c47dd8e5c2fd289e644b6648b74f5c25079805eeb61bfc4a9cd"},
+]
+
+[[package]]
+name = "pyobjc-framework-eventkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_eventkit-12.1-py2.py3-none-any.whl", hash = "sha256:3d2d36d5bd9e0a13887a6ac7cdd36675985ebe2a9cb3cdf8cec0725670c92c60"},
+    {file = "pyobjc_framework_eventkit-12.1.tar.gz", hash = "sha256:7c1882be2f444b1d0f71e9a0cd1e9c04ad98e0261292ab741fc9de0b8bbbbae9"},
+]
+
+[[package]]
+name = "pyobjc-framework-exceptionhandling"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_exceptionhandling-12.1-py2.py3-none-any.whl", hash = "sha256:2f1eae14cf0162e53a0888d9ffe63f047501fe583a23cdc9c966e89f48cf4713"},
+    {file = "pyobjc_framework_exceptionhandling-12.1.tar.gz", hash = "sha256:7f0719eeea6695197fce0e7042342daa462683dc466eb6a442aad897032ab00d"},
+]
+
+[[package]]
+name = "pyobjc-framework-executionpolicy"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_executionpolicy-12.1-py2.py3-none-any.whl", hash = "sha256:c3a9eca3bd143cf202787dd5e3f40d954c198f18a5e0b8b3e2fcdd317bf33a52"},
+    {file = "pyobjc_framework_executionpolicy-12.1.tar.gz", hash = "sha256:682866589365cd01d3a724d8a2781794b5cba1e152411a58825ea52d7b972941"},
+]
+
+[[package]]
+name = "pyobjc-framework-extensionkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_extensionkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6764f7477bb0f6407a5217cbfc2da13a71a5d402ac5f005300958886e25fd9b5"},
+    {file = "pyobjc_framework_extensionkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:9139c064e1c7f21455411848eb39f092af6085a26cad322aa26309260e7929d9"},
+    {file = "pyobjc_framework_extensionkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7e01d705c7ac6d080ae34a81db6d9b81875eabefa63fd6eafbfa30f676dd780b"},
+    {file = "pyobjc_framework_extensionkit-12.1.tar.gz", hash = "sha256:773987353e8aba04223dbba3149253db944abfb090c35318b3a770195b75da6d"},
+]
+
+[[package]]
+name = "pyobjc-framework-externalaccessory"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_externalaccessory-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ee55a06fe8ef7ff07a435d75544d8c7177e790afaff60b5a55e3ceea1c9f03e7"},
+    {file = "pyobjc_framework_externalaccessory-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:32208e05c9448c8f41b3efdd35dbea4a8b119af190f7a2db0d580be8a5cf962e"},
+    {file = "pyobjc_framework_externalaccessory-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:dedbf7a09375ac19668156c1417bd7829565b164a246b714e225b9cbb6a351ad"},
+    {file = "pyobjc_framework_externalaccessory-12.1.tar.gz", hash = "sha256:079f770a115d517a6ab87db1b8a62ca6cdf6c35ae65f45eecc21b491e78776c0"},
+]
+
+[[package]]
+name = "pyobjc-framework-fileprovider"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_fileprovider-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:6f672069340bd8e994f9ef144949d807485ced5b1b9e21917cc7810e1aa8cda0"},
+    {file = "pyobjc_framework_fileprovider-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:9d527c417f06d27c4908e51d4e6ccce0adcd80c054f19e709626e55c511dc963"},
+    {file = "pyobjc_framework_fileprovider-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:89b140ea8369512ddf4164b007cbe35b4d97d1dcb8affa12a7264c0ab8d56e45"},
+    {file = "pyobjc_framework_fileprovider-12.1.tar.gz", hash = "sha256:45034e0d00ae153c991aa01cb1fd41874650a30093e77ba73401dcce5534c8ad"},
+]
+
+[[package]]
+name = "pyobjc-framework-fileproviderui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-fileprovider",
+]
+files = [
+    {file = "pyobjc_framework_fileproviderui-12.1-py2.py3-none-any.whl", hash = "sha256:521a914055089e28631018bd78df4c4f7416e98b4150f861d4a5bc97d5b1ffe4"},
+    {file = "pyobjc_framework_fileproviderui-12.1.tar.gz", hash = "sha256:15296429d9db0955abc3242b2920b7a810509a85118dbc185f3ac8234e5a6165"},
+]
+
+[[package]]
+name = "pyobjc-framework-findersync"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_findersync-12.1-py2.py3-none-any.whl", hash = "sha256:e07abeca52c486cf14927f617afc27afa7a3828b99fab3ad02355105fb29203e"},
+    {file = "pyobjc_framework_findersync-12.1.tar.gz", hash = "sha256:c513104cef0013c233bf8655b527df665ce6f840c8bc0b3781e996933d4dcfa6"},
+]
+
+[[package]]
+name = "pyobjc-framework-fsevents"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_fsevents-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b3af4e030325672679e3fce55d34fff2a6d9da0cf27810f3cfc0eec0880e45e8"},
+    {file = "pyobjc_framework_fsevents-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:459cc0aac9850c489d238ba778379d09f073bbc3626248855e78c4bc4d97fe46"},
+    {file = "pyobjc_framework_fsevents-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a2949358513fd7bc622fb362b5c4af4fc24fc6307320070ca410885e5e13d975"},
+    {file = "pyobjc_framework_fsevents-12.1.tar.gz", hash = "sha256:a22350e2aa789dec59b62da869c1b494a429f8c618854b1383d6473f4c065a02"},
+]
+
+[[package]]
+name = "pyobjc-framework-fskit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_fskit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:521423e7dfc4d2c5c262ba1db0adeb0e0b60976a2d74dec285642914f50252b2"},
+    {file = "pyobjc_framework_fskit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:95b9135eea81eeed319dcca32c9db04b38688301586180b86c4585fef6b0e9cd"},
+    {file = "pyobjc_framework_fskit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:50972897adea86508cfee33ec4c23aa91dede97e9da1640ea2fe74702b065be1"},
+    {file = "pyobjc_framework_fskit-12.1.tar.gz", hash = "sha256:ec54e941cdb0b7d800616c06ca76a93685bd7119b8aa6eb4e7a3ee27658fc7ba"},
+]
+
+[[package]]
+name = "pyobjc-framework-gamecenter"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_gamecenter-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:25f6a403352aaf8755a3874477fb70b1107ca28769e585541b52727ec50834be"},
+    {file = "pyobjc_framework_gamecenter-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:30943512f2aa8cb129f8e1abf951bf06922ca20b868e918b26c19202f4ee5cc4"},
+    {file = "pyobjc_framework_gamecenter-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:e8d6d10b868be7c00c2d5a0944cc79315945735dcf17eaa3fec1a7986d26be9b"},
+    {file = "pyobjc_framework_gamecenter-12.1.tar.gz", hash = "sha256:de4118f14c9cf93eb0316d49da410faded3609ce9cd63425e9ef878cebb7ea72"},
+]
+
+[[package]]
+name = "pyobjc-framework-gamecontroller"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_gamecontroller-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:38b290dfb8f5999c599b883fd13d3cade78f26111d010bc003b19ee400182aa5"},
+    {file = "pyobjc_framework_gamecontroller-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2633c2703fb30ce068b2f5ce145edbd10fd574d2670b5cdee77a9a126f154fec"},
+    {file = "pyobjc_framework_gamecontroller-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:878aa6590c1510e91bfc8710d6c880e7a8f3656a7b7b6f4f3af487a6f677ccd5"},
+    {file = "pyobjc_framework_gamecontroller-12.1.tar.gz", hash = "sha256:64ed3cc4844b67f1faeb540c7cc8d512c84f70b3a4bafdb33d4663a2b2a2b1d8"},
+]
+
+[[package]]
+name = "pyobjc-framework-gamekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_gamekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b15492801dafcbb569dee8c58d26e16ce06b33912872e85dfd50cf39b8f98f1e"},
+    {file = "pyobjc_framework_gamekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:eb263e90a6af3d7294bc1b1ea5907f8e33bb77d62fb806696f8df7e14806ccad"},
+    {file = "pyobjc_framework_gamekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:2eee796d5781157f2c5684f7ef4c2a7ace9d9b408a26a9e7e92e8adf5a3f63d7"},
+    {file = "pyobjc_framework_gamekit-12.1.tar.gz", hash = "sha256:014d032c3484093f1409f8f631ba8a0fd2ff7a3ae23fd9d14235340889854c16"},
+]
+
+[[package]]
+name = "pyobjc-framework-gameplaykit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-spritekit",
+]
+files = [
+    {file = "pyobjc_framework_gameplaykit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1af3963897c1ff2dfbcc6782ff162d6bf34488f6736e60cfc73411fdfaba2b31"},
+    {file = "pyobjc_framework_gameplaykit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:b2fb27f9f48c3279937e938a0456a5231b5c89e53e3199b9d54009a0bbd1228a"},
+    {file = "pyobjc_framework_gameplaykit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:309b0d7479f702830c9be92dbe5855ac2557a9d23f05f063caf9d9fdb85ff5f0"},
+    {file = "pyobjc_framework_gameplaykit-12.1.tar.gz", hash = "sha256:935ebd806d802888969357946245d35a304c530c86f1ffe584e2cf21f0a608a8"},
+]
+
+[[package]]
+name = "pyobjc-framework-gamesave"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_gamesave-12.1-py2.py3-none-any.whl", hash = "sha256:432e69f8404be9290d42c89caba241a3156ed52013947978ac54f0f032a14ffd"},
+    {file = "pyobjc_framework_gamesave-12.1.tar.gz", hash = "sha256:eb731c97aa644e78a87838ed56d0e5bdbaae125bdc8854a7772394877312cc2e"},
+]
+
+[[package]]
+name = "pyobjc-framework-healthkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_healthkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f1850c4f079374aaa3e91f22ab22b83817872460cc3a9c5310fe18c6140dc307"},
+    {file = "pyobjc_framework_healthkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e67bce41f8f63c11000394c6ce1dc694655d9ff0458771340d2c782f9eafcc6e"},
+    {file = "pyobjc_framework_healthkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:15b6fc958ff5de42888b18dffdec839cb36d2dd8b82076ed2f21a51db5271109"},
+    {file = "pyobjc_framework_healthkit-12.1.tar.gz", hash = "sha256:29c5e5de54b41080b7a4b0207698ac6f600dcb9149becc9c6b3a69957e200e5c"},
+]
+
+[[package]]
+name = "pyobjc-framework-imagecapturecore"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_imagecapturecore-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7cb050fcbfc3cd20cf0427523f080939f6d815cd85f58a2ebcac930567764384"},
+    {file = "pyobjc_framework_imagecapturecore-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:64d1eb677fe5b658a6b6ed734b7120998ea738ca038ec18c4f9c776e90bd9402"},
+    {file = "pyobjc_framework_imagecapturecore-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a2777e17ff71fb5a327a897e48c5c7b5a561723a80f990d26e6ed5a1b8748816"},
+    {file = "pyobjc_framework_imagecapturecore-12.1.tar.gz", hash = "sha256:c4776c59f4db57727389d17e1ffd9c567b854b8db52198b3ccc11281711074e5"},
+]
+
+[[package]]
+name = "pyobjc-framework-inputmethodkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_inputmethodkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e655947e314e6fe743ce225fc3170466003030b0186b8a7db161b54e87ee5c0e"},
+    {file = "pyobjc_framework_inputmethodkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c4e02f49816799a31d558866492048d69e8086178770b76f4c511295610e02ab"},
+    {file = "pyobjc_framework_inputmethodkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:0b7d813d46a060572fc0c14ef832e4fe538ebf64e5cab80ee955191792ce0110"},
+    {file = "pyobjc_framework_inputmethodkit-12.1.tar.gz", hash = "sha256:f63b6fe2fa7f1412eae63baea1e120e7865e3b68ccfb7d8b0a4aadb309f2b278"},
+]
+
+[[package]]
+name = "pyobjc-framework-installerplugins"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_installerplugins-12.1-py2.py3-none-any.whl", hash = "sha256:d2201c81b05bdbe0abf0af25db58dc230802573463bea322f8b2863e37b511d5"},
+    {file = "pyobjc_framework_installerplugins-12.1.tar.gz", hash = "sha256:1329a193bd2e92a2320a981a9a421a9b99749bade3e5914358923e94fe995795"},
+]
+
+[[package]]
+name = "pyobjc-framework-instantmessage"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_instantmessage-12.1-py2.py3-none-any.whl", hash = "sha256:cd91d38e8f356afd726b6ea8c235699316ea90edfd3472965c251efbf4150bc9"},
+    {file = "pyobjc_framework_instantmessage-12.1.tar.gz", hash = "sha256:f453118d5693dc3c94554791bd2aaafe32a8b03b0e3d8ec3934b44b7fdd1f7e7"},
+]
+
+[[package]]
+name = "pyobjc-framework-intents"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_intents-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:4dcca96da5b302583e3f8792f697e1d60a86f62b16ee07e9db11ce4186ca243c"},
+    {file = "pyobjc_framework_intents-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:dc68dc49f1f8d9f8d2ffbc0f57ad25caac35312ddc444899707461e596024fec"},
+    {file = "pyobjc_framework_intents-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:0ea9f3e79bf4baf6c7b0fd2d2797184ed51a372bf7f32974b4424f9bd067ef50"},
+    {file = "pyobjc_framework_intents-12.1.tar.gz", hash = "sha256:bd688c3ab34a18412f56e459e9dae29e1f4152d3c2048fcacdef5fc49dfb9765"},
+]
+
+[[package]]
+name = "pyobjc-framework-intentsui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-intents",
+]
+files = [
+    {file = "pyobjc_framework_intentsui-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:631baf74bc8ca65ebab6ed8914a116d12af8323dfa89b156a9f64f55a7fdde5b"},
+    {file = "pyobjc_framework_intentsui-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a877555e313d74ac3b10f7b4e738647eea9f744c00a227d1238935ac3f9d7968"},
+    {file = "pyobjc_framework_intentsui-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:cb894fcc4c9ea613a424dcf6fb48142d51174559b82cfdafac8cb47555c842cf"},
+    {file = "pyobjc_framework_intentsui-12.1.tar.gz", hash = "sha256:16bdf4b7b91c0d1ec9d5513a1182861f1b5b7af95d4f4218ff7cf03032d57f99"},
+]
+
+[[package]]
+name = "pyobjc-framework-iobluetooth"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_iobluetooth-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8963d7115fdcd753598f0757f36b19267d01d00ac84cf617c02d38889c3a40fd"},
+    {file = "pyobjc_framework_iobluetooth-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:77959f2ecf379aa41eb0848fdb25da7c322f9f4a82429965c87c4bc147137953"},
+    {file = "pyobjc_framework_iobluetooth-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:111a6e54be9e9dcf77fa2bf84fdac09fae339aa33087d8647ea7ffbd34765d4c"},
+    {file = "pyobjc_framework_iobluetooth-12.1.tar.gz", hash = "sha256:8a434118812f4c01dfc64339d41fe8229516864a59d2803e9094ee4cbe2b7edd"},
+]
+
+[[package]]
+name = "pyobjc-framework-iobluetoothui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-iobluetooth",
+]
+files = [
+    {file = "pyobjc_framework_iobluetoothui-12.1-py2.py3-none-any.whl", hash = "sha256:a6d8ab98efa3029130577a57ee96b183c35c39b0f1c53a7534f8838260fab993"},
+    {file = "pyobjc_framework_iobluetoothui-12.1.tar.gz", hash = "sha256:81f8158bdfb2966a574b6988eb346114d6a4c277300c8c0a978c272018184e6f"},
+]
+
+[[package]]
+name = "pyobjc-framework-iosurface"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_iosurface-12.1-py2.py3-none-any.whl", hash = "sha256:e784e248397cfebef4655d2c0025766d3eaa4a70474e363d084fc5ce2a4f2a3f"},
+    {file = "pyobjc_framework_iosurface-12.1.tar.gz", hash = "sha256:4b9d0c66431aa296f3ca7c4f84c00dc5fc961194830ad7682fdbbc358fa0db55"},
+]
+
+[[package]]
+name = "pyobjc-framework-ituneslibrary"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_ituneslibrary-12.1-py2.py3-none-any.whl", hash = "sha256:fb678d7c3ff14c81672e09c015e25880dac278aa819971f4d5f75d46465932ef"},
+    {file = "pyobjc_framework_ituneslibrary-12.1.tar.gz", hash = "sha256:7f3aa76c4d05f6fa6015056b88986cacbda107c3f29520dd35ef0936c7367a6e"},
+]
+
+[[package]]
+name = "pyobjc-framework-kernelmanagement"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_kernelmanagement-12.1-py2.py3-none-any.whl", hash = "sha256:926381bfbfbc985c3e6dfcb7004af21bb16ff66ecbc08912b925989a705944ff"},
+    {file = "pyobjc_framework_kernelmanagement-12.1.tar.gz", hash = "sha256:488062893ac2074e0c8178667bf864a21f7909c11111de2f6a10d9bc579df59d"},
+]
+
+[[package]]
+name = "pyobjc-framework-latentsemanticmapping"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_latentsemanticmapping-12.1-py2.py3-none-any.whl", hash = "sha256:7d760213b42bc8b1bc1472e1873c0f78ee80f987225978837b1fecdceddbdbf4"},
+    {file = "pyobjc_framework_latentsemanticmapping-12.1.tar.gz", hash = "sha256:f0b1fa823313eefecbf1539b4ed4b32461534b7a35826c2cd9f6024411dc9284"},
+]
+
+[[package]]
+name = "pyobjc-framework-launchservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-coreservices",
+]
+files = [
+    {file = "pyobjc_framework_launchservices-12.1-py2.py3-none-any.whl", hash = "sha256:e63e78fceeed4d4dc807f9dabd5cf90407e4f552fab6a0d75a8d0af63094ad3c"},
+    {file = "pyobjc_framework_launchservices-12.1.tar.gz", hash = "sha256:4d2d34c9bd6fb7f77566155b539a2c70283d1f0326e1695da234a93ef48352dc"},
+]
+
+[[package]]
+name = "pyobjc-framework-libdispatch"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_libdispatch-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:50a81a29506f0e35b4dc313f97a9d469f7b668dae3ba597bb67bbab94de446bd"},
+    {file = "pyobjc_framework_libdispatch-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:954cc2d817b71383bd267cc5cd27d83536c5f879539122353ca59f1c945ac706"},
+    {file = "pyobjc_framework_libdispatch-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:0e9570d7a9a3136f54b0b834683bf3f206acd5df0e421c30f8fd4f8b9b556789"},
+    {file = "pyobjc_framework_libdispatch-12.1.tar.gz", hash = "sha256:4035535b4fae1b5e976f3e0e38b6e3442ffea1b8aa178d0ca89faa9b8ecdea41"},
+]
+
+[[package]]
+name = "pyobjc-framework-libxpc"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_libxpc-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f135b9734ee461c30dc692e58ce4b58c84c9a455738afe9ac70040c893625f4f"},
+    {file = "pyobjc_framework_libxpc-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:8d7201db995e5dcd38775fd103641d8fb69b8577d8e6a405c5562e6c0bb72fd1"},
+    {file = "pyobjc_framework_libxpc-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:ba93e91e9ca79603dd265382e9f80e9bd32309cd09c8ac3e6489fc5b233676c8"},
+    {file = "pyobjc_framework_libxpc-12.1.tar.gz", hash = "sha256:e46363a735f3ecc9a2f91637750623f90ee74f9938a4e7c833e01233174af44d"},
+]
+
+[[package]]
+name = "pyobjc-framework-linkpresentation"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_linkpresentation-12.1-py2.py3-none-any.whl", hash = "sha256:853a84c7b525b77b114a7a8d798aef83f528ed3a6803bda12184fe5af4e79a47"},
+    {file = "pyobjc_framework_linkpresentation-12.1.tar.gz", hash = "sha256:84df6779591bb93217aa8bd82c10e16643441678547d2d73ba895475a02ade94"},
+]
+
+[[package]]
+name = "pyobjc-framework-localauthentication"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-security",
+]
+files = [
+    {file = "pyobjc_framework_localauthentication-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b1b24c9b453c3b3eb862a78a3a7387f357a90b99ec61cd1950b38e1cf08307ec"},
+    {file = "pyobjc_framework_localauthentication-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2d7e1b3f987dc387361517525c2c38550dc44dfb3ba42dec3a9fbf35015831a6"},
+    {file = "pyobjc_framework_localauthentication-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:3af1acd287d830cc7f912f46cde0dab054952bde0adaf66c8e8524311a68d279"},
+    {file = "pyobjc_framework_localauthentication-12.1.tar.gz", hash = "sha256:2284f587d8e1206166e4495b33f420c1de486c36c28c4921d09eec858a699d05"},
+]
+
+[[package]]
+name = "pyobjc-framework-localauthenticationembeddedui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-localauthentication",
+]
+files = [
+    {file = "pyobjc_framework_localauthenticationembeddedui-12.1-py2.py3-none-any.whl", hash = "sha256:a7ce7b56346597b9f4768be61938cbc8fc5b1292137225b6c7f631b9cde97cd7"},
+    {file = "pyobjc_framework_localauthenticationembeddedui-12.1.tar.gz", hash = "sha256:a15ec44bf2769c872e86c6b550b6dd4f58d4eda40ad9ff00272a67d279d1d4e9"},
+]
+
+[[package]]
+name = "pyobjc-framework-mailkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_mailkit-12.1-py2.py3-none-any.whl", hash = "sha256:536ac0c4ea3560364cd159a6512c3c18a744a12e4e0883c07df0f8a2ff21e3fe"},
+    {file = "pyobjc_framework_mailkit-12.1.tar.gz", hash = "sha256:d5574b7259baec17096410efcaacf5d45c7bb5f893d4c25cbb7072369799b652"},
+]
+
+[[package]]
+name = "pyobjc-framework-mapkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-corelocation",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_mapkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f48a5c9a95735d41a12929446fc45fd43913367faddedf852ab02e0452e06db4"},
+    {file = "pyobjc_framework_mapkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e8aa82d4aae81765c05dcd53fd362af615aa04159fc7a1df1d0eac9c252cb7d5"},
+    {file = "pyobjc_framework_mapkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:84ad7766271c114bdc423e4e2ff5433e5fc6771a3338b5f8e4b54d0340775800"},
+    {file = "pyobjc_framework_mapkit-12.1.tar.gz", hash = "sha256:dbc32dc48e821aaa9b4294402c240adbc1c6834e658a07677b7c19b7990533c5"},
+]
+
+[[package]]
+name = "pyobjc-framework-mediaaccessibility"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_mediaaccessibility-12.1-py2.py3-none-any.whl", hash = "sha256:2ff8845c97dd52b0e5cf53990291e6d77c8a73a7aac0e9235d62d9a4256916d1"},
+    {file = "pyobjc_framework_mediaaccessibility-12.1.tar.gz", hash = "sha256:cc4e3b1d45e84133d240318d53424eff55968f5c6873c2c53267598853445a3f"},
+]
+
+[[package]]
+name = "pyobjc-framework-mediaextension"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-avfoundation",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coremedia",
+]
+files = [
+    {file = "pyobjc_framework_mediaextension-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:1aa7964ffa9e1d877a45c86692047928dbe2735188d89b52aad7d6e24b2fbcb9"},
+    {file = "pyobjc_framework_mediaextension-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:9555f937f2508bd2b6264cba088e2c2e516b2f94a6c804aee40e33fd89c2fb78"},
+    {file = "pyobjc_framework_mediaextension-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:442bc3a759efb5c154cb75d643a5e182297093533fcdd1c24be6f64f68b93371"},
+    {file = "pyobjc_framework_mediaextension-12.1.tar.gz", hash = "sha256:44409d63cc7d74e5724a68e3f9252cb62fd0fd3ccf0ca94c6a33e5c990149953"},
+]
+
+[[package]]
+name = "pyobjc-framework-medialibrary"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_medialibrary-12.1-py2.py3-none-any.whl", hash = "sha256:1f03ad6802a5c6e19ee3208b065689d3ec79defe1052cb80e00f54e1eff5f2a0"},
+    {file = "pyobjc_framework_medialibrary-12.1.tar.gz", hash = "sha256:690dcca09b62511df18f58e8566cb33d9652aae09fe63a83f594bd018b5edfcd"},
+]
+
+[[package]]
+name = "pyobjc-framework-mediaplayer"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-avfoundation",
+]
+files = [
+    {file = "pyobjc_framework_mediaplayer-12.1-py2.py3-none-any.whl", hash = "sha256:85d9baec131807bfdf0f4c24d4b943e83cce806ab31c95c7e19c78e3fb7eefc8"},
+    {file = "pyobjc_framework_mediaplayer-12.1.tar.gz", hash = "sha256:5ef3f669bdf837d87cdb5a486ec34831542360d14bcba099c7c2e0383380794c"},
+]
+
+[[package]]
+name = "pyobjc-framework-mediatoolbox"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_mediatoolbox-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:91e039f988d2fd8cb852ee880e853a90902bb0fe9c337d1947241b79db145244"},
+    {file = "pyobjc_framework_mediatoolbox-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:74de0cb2d5aaa77e81f8b97eab0f39cd2fab5bf6fa7c6fb5546740cbfb1f8c1f"},
+    {file = "pyobjc_framework_mediatoolbox-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:d7bcfeeff3fbf7e9e556ecafd8eaed2411df15c52baf134efa7480494e6faf6d"},
+    {file = "pyobjc_framework_mediatoolbox-12.1.tar.gz", hash = "sha256:385b48746a5f08756ee87afc14037e552954c427ed5745d7ece31a21a7bad5ab"},
+]
+
+[[package]]
+name = "pyobjc-framework-metal"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_metal-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d563b540ef659176938f0eaa7d8353d5b7d4235aa76fc7fddb1beb00391c0905"},
+    {file = "pyobjc_framework_metal-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:59e10f9b36d2e409f80f42b6175457a07b18a21ca57ff268f4bc519cd30db202"},
+    {file = "pyobjc_framework_metal-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:38ab566b5a2979a43e13593d3eb12000a45e574576fe76996a5e1eb75ad7ac78"},
+    {file = "pyobjc_framework_metal-12.1.tar.gz", hash = "sha256:bb554877d5ee2bf3f340ad88e8fe1b85baab7b5ec4bd6ae0f4f7604147e3eae7"},
+]
+
+[[package]]
+name = "pyobjc-framework-metalfx"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-metal",
+]
+files = [
+    {file = "pyobjc_framework_metalfx-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c28d875f8817cb80c44afaebdbc2960af66ea8eef63e0236fab3dde9be685d50"},
+    {file = "pyobjc_framework_metalfx-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:1ec3f7ab036eae45e067fbf209676f98075892aa307d73bb9394304960746cd2"},
+    {file = "pyobjc_framework_metalfx-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a4418ae5c2eb77ec00695fa720a547638dc252dfd77ecb6feb88f713f5a948fd"},
+    {file = "pyobjc_framework_metalfx-12.1.tar.gz", hash = "sha256:1551b686fb80083a97879ce0331bdb1d4c9b94557570b7ecc35ebf40ff65c90b"},
+]
+
+[[package]]
+name = "pyobjc-framework-metalkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-metal",
+]
+files = [
+    {file = "pyobjc_framework_metalkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e8d2cfdf2dc4e8fc229dafe7c76787caa5430a0588d205bc9b61affd2d35d26a"},
+    {file = "pyobjc_framework_metalkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:28636454f222d9b20cb61f6e8dc1ebd48237903feb4d0dbdf9d7904c542475e5"},
+    {file = "pyobjc_framework_metalkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:1c4869076571d94788fe539fabfdd568a5c8e340936c7726d2551196640bd152"},
+    {file = "pyobjc_framework_metalkit-12.1.tar.gz", hash = "sha256:14cc5c256f0e3471b412a5b3582cb2a0d36d3d57401a8aa09e433252d1c34824"},
+]
+
+[[package]]
+name = "pyobjc-framework-metalperformanceshaders"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-metal",
+]
+files = [
+    {file = "pyobjc_framework_metalperformanceshaders-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b7a3a0dbe2a26c2c579e28124ec6ddd0d664a9557cbf64029d48b766d5af0209"},
+    {file = "pyobjc_framework_metalperformanceshaders-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e0159a6f731dc0fd126481a26490683586864e9d47c678900049a8ffe0135f56"},
+    {file = "pyobjc_framework_metalperformanceshaders-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:c00e786c352b3ff5d86cf0cf3a830dc9f6fc32a03ae1a7539d20d11324adb2e8"},
+    {file = "pyobjc_framework_metalperformanceshaders-12.1.tar.gz", hash = "sha256:b198e755b95a1de1525e63c3b14327ae93ef1d88359e6be1ce554a3493755b50"},
+]
+
+[[package]]
+name = "pyobjc-framework-metalperformanceshadersgraph"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-metalperformanceshaders",
+]
+files = [
+    {file = "pyobjc_framework_metalperformanceshadersgraph-12.1-py2.py3-none-any.whl", hash = "sha256:85a1c7a6114ada05c7924b3235a1a98c45359410d148097488f15aee5ebb6ab9"},
+    {file = "pyobjc_framework_metalperformanceshadersgraph-12.1.tar.gz", hash = "sha256:b8fd017b47698037d7b172d41bed7a4835f4c4f2a288235819d200005f89ee35"},
+]
+
+[[package]]
+name = "pyobjc-framework-metrickit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_metrickit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:8c074060cef54004451a1f919dfc6ef46b5479ead464ae791480f8d1d044a8dc"},
+    {file = "pyobjc_framework_metrickit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:da6650afd9523cf7a9cae177f4bbd1ad45cc122d97784785fa1482847485142c"},
+    {file = "pyobjc_framework_metrickit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:3ec96e9ec7dc37fbce57dae277f0d89c66ffe1c3fa2feaca1b7125f8b2b29d87"},
+    {file = "pyobjc_framework_metrickit-12.1.tar.gz", hash = "sha256:77841daf6b36ba0c19df88545fd910c0516acf279e6b7b4fa0a712a046eaa9f1"},
+]
+
+[[package]]
+name = "pyobjc-framework-mlcompute"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_mlcompute-12.1-py2.py3-none-any.whl", hash = "sha256:4f0fc19551d710a03dfc4c7129299897544ff8ea76db6c7539ecc2f9b2571bde"},
+    {file = "pyobjc_framework_mlcompute-12.1.tar.gz", hash = "sha256:3281db120273dcc56e97becffd5cedf9c62042788289f7be6ea067a863164f1e"},
+]
+
+[[package]]
+name = "pyobjc-framework-modelio"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_modelio-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e25d153ab231ca95954e3d12082f48aea4ec72db48269421011679f926638d07"},
+    {file = "pyobjc_framework_modelio-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:1c2c99d47a7e4956a75ce19bddbe2d8ada7d7ce9e2f56ff53fc2898367187749"},
+    {file = "pyobjc_framework_modelio-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:68d971917c289fdddf69094c74915d2ccb746b42b150e0bdc16d8161e6164022"},
+    {file = "pyobjc_framework_modelio-12.1.tar.gz", hash = "sha256:d041d7bca7c2a4526344d3e593347225b7a2e51a499b3aa548895ba516d1bdbb"},
+]
+
+[[package]]
+name = "pyobjc-framework-multipeerconnectivity"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_multipeerconnectivity-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:39eff9abbd40cb7306cfbc6119a95ce583074102081571c6c90569968e655787"},
+    {file = "pyobjc_framework_multipeerconnectivity-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:7372e505ed050286aeb83d7e158fda65ad379eae12e1526f32da0a260a8b7d06"},
+    {file = "pyobjc_framework_multipeerconnectivity-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:1c3bd254a16debed321debf4858f9c9b7d41572ddf1058a4bacf6a5bcfedeeff"},
+    {file = "pyobjc_framework_multipeerconnectivity-12.1.tar.gz", hash = "sha256:7123f734b7174cacbe92a51a62b4645cc9033f6b462ff945b504b62e1b9e6c1c"},
+]
+
+[[package]]
+name = "pyobjc-framework-naturallanguage"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_naturallanguage-12.1-py2.py3-none-any.whl", hash = "sha256:a02ef383ec88948ca28f03ab8995523726b3bc75c49f593b5c89c218bcbce7ce"},
+    {file = "pyobjc_framework_naturallanguage-12.1.tar.gz", hash = "sha256:cb27a1e1e5b2913d308c49fcd2fd04ab5ea87cb60cac4a576a91ebf6a50e52f6"},
+]
+
+[[package]]
+name = "pyobjc-framework-netfs"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_netfs-12.1-py2.py3-none-any.whl", hash = "sha256:0021f8b141e693d3821524c170e9c645090eb320e80c2935ddb978a6e8b8da81"},
+    {file = "pyobjc_framework_netfs-12.1.tar.gz", hash = "sha256:e8d0c25f41d7d9ced1aa2483238d0a80536df21f4b588640a72e1bdb87e75c1e"},
+]
+
+[[package]]
+name = "pyobjc-framework-network"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_network-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:07264f1dc5d7c437dfbbbf9302a60ead87bbce14692c4cc20b2a259a9fe20b3d"},
+    {file = "pyobjc_framework_network-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:d1ad948b9b977f432bf05363381d7d85a7021246ebf9d50771b35bf8d4548d2b"},
+    {file = "pyobjc_framework_network-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:5e53aad64eae2933fe12d49185d66aca62fb817abf8a46f86b01e436ce1b79e4"},
+    {file = "pyobjc_framework_network-12.1.tar.gz", hash = "sha256:dbf736ff84d1caa41224e86ff84d34b4e9eb6918ae4e373a44d3cb597648a16a"},
+]
+
+[[package]]
+name = "pyobjc-framework-networkextension"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_networkextension-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:dd96684be3a942a301eb38b5f46236091c87ec9830ed8d56be434e420af45387"},
+    {file = "pyobjc_framework_networkextension-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c3082c29f94ca3a05cd1f3219999ca3af9b6dece1302ccf789f347e612bb9303"},
+    {file = "pyobjc_framework_networkextension-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:adc9baacfc532944d67018e381c7645f66a9fa0064939a5a841476d81422cdcc"},
+    {file = "pyobjc_framework_networkextension-12.1.tar.gz", hash = "sha256:36abc339a7f214ab6a05cb2384a9df912f247163710741e118662bd049acfa2e"},
+]
+
+[[package]]
+name = "pyobjc-framework-notificationcenter"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_notificationcenter-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:f227d4b2e197f614b64302faea974f25434827da30f6d46b3a8d73cb3788cf69"},
+    {file = "pyobjc_framework_notificationcenter-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:84e254f2a56ff5372793dea938a2b2683dd0bc40c5107fede76f9c2c1f6641a2"},
+    {file = "pyobjc_framework_notificationcenter-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:82a735bd63f315f0a56abd206373917b7d09a0ae35fd99f1639a0fac4c525c0a"},
+    {file = "pyobjc_framework_notificationcenter-12.1.tar.gz", hash = "sha256:2d09f5ab9dc39770bae4fa0c7cfe961e6c440c8fc465191d403633dccc941094"},
+]
+
+[[package]]
+name = "pyobjc-framework-opendirectory"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_opendirectory-12.1-py2.py3-none-any.whl", hash = "sha256:b5b5a5cf3cc2fb25147b16b79f046b90e3982bf3ded1b210a993d8cfdba737c4"},
+    {file = "pyobjc_framework_opendirectory-12.1.tar.gz", hash = "sha256:2c63ce5dd179828ef2d8f9e3961da3bfa971a57db07a6c34eedc296548a928bb"},
+]
+
+[[package]]
+name = "pyobjc-framework-osakit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_osakit-12.1-py2.py3-none-any.whl", hash = "sha256:c49165336856fd75113d2e264a98c6deb235f1bd033eae48f661d4d832d85e6b"},
+    {file = "pyobjc_framework_osakit-12.1.tar.gz", hash = "sha256:36ea6acf03483dc1e4344a0cce7250a9656f44277d12bc265fa86d4cbde01f23"},
+]
+
+[[package]]
+name = "pyobjc-framework-oslog"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coremedia",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_oslog-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:4bdcba214ca33563408b7703282f9a99ca61d04bcc34d5474abc68621fd44c48"},
+    {file = "pyobjc_framework_oslog-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:8dd03386331fbb6b39df8941d99071da0bfeda7d10f6434d1daa1c69f0e7bb14"},
+    {file = "pyobjc_framework_oslog-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:072a41d36fcf780a070f13ac2569f8bafbb5ae4792fab4136b1a4d602dd9f5b4"},
+    {file = "pyobjc_framework_oslog-12.1.tar.gz", hash = "sha256:d0ec6f4e3d1689d5e4341bc1130c6f24cb4ad619939f6c14d11a7e80c0ac4553"},
+]
+
+[[package]]
+name = "pyobjc-framework-passkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_passkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b8383b36a99abea9f8d9fe05f89abca34e57d604664adc4964b1a8d6b9a0d04a"},
+    {file = "pyobjc_framework_passkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:cb5c8f0fdc46db6b91c51ee1f41a2b81e9a482c96a0c91c096dcb78a012b740a"},
+    {file = "pyobjc_framework_passkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7e95a484ec529dbf1d44f5f7f1406502a77bda733511e117856e3dca9fa29c5c"},
+    {file = "pyobjc_framework_passkit-12.1.tar.gz", hash = "sha256:d8c27c352e86a3549bf696504e6b25af5f2134b173d9dd60d66c6d3da53bb078"},
+]
+
+[[package]]
+name = "pyobjc-framework-pencilkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_pencilkit-12.1-py2.py3-none-any.whl", hash = "sha256:33b88e5ed15724a12fd8bf27a68614b654ff739d227e81161298bc0d03acca4f"},
+    {file = "pyobjc_framework_pencilkit-12.1.tar.gz", hash = "sha256:d404982d1f7a474369f3e7fea3fbd6290326143fa4138d64b6753005a6263dc4"},
+]
+
+[[package]]
+name = "pyobjc-framework-phase"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-avfoundation",
+]
+files = [
+    {file = "pyobjc_framework_phase-12.1-py2.py3-none-any.whl", hash = "sha256:99a1c1efc6644f5312cce3693117d4e4482538f65ad08fe59e41e2579b67ab17"},
+    {file = "pyobjc_framework_phase-12.1.tar.gz", hash = "sha256:3a69005c572f6fd777276a835115eb8359a33673d4a87e754209f99583534475"},
+]
+
+[[package]]
+name = "pyobjc-framework-photos"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_photos-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:ed6ca0ace0d12b469f68d35dddbede445350afd13b3c582e3297792fd08ad5f8"},
+    {file = "pyobjc_framework_photos-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:f28db92602daac9d760067449fc9bf940594536e65ad542aec47d52b56f51959"},
+    {file = "pyobjc_framework_photos-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:eda8a584a851506a1ebbb2ee8de2cb1ed9e3431e6a642ef6a9543e32117d17b9"},
+    {file = "pyobjc_framework_photos-12.1.tar.gz", hash = "sha256:adb68aaa29e186832d3c36a0b60b0592a834e24c5263e9d78c956b2b77dce563"},
+]
+
+[[package]]
+name = "pyobjc-framework-photosui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_photosui-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:14a088aeb67232a2e8f8658bd52fa0ccb896a2fe7c4e580299ec2da486c597fa"},
+    {file = "pyobjc_framework_photosui-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:02ca941187b2a2dcbbd4964d7b2a05de869653ed8484dc059a51cc70f520cd07"},
+    {file = "pyobjc_framework_photosui-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:713e3bb25feb5ea891e67260c2c0769cab44a7f11b252023bfcf9f8c29dd1206"},
+    {file = "pyobjc_framework_photosui-12.1.tar.gz", hash = "sha256:9141234bb9d17687f1e8b66303158eccdd45132341fbe5e892174910035f029a"},
+]
+
+[[package]]
+name = "pyobjc-framework-preferencepanes"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_preferencepanes-12.1-py2.py3-none-any.whl", hash = "sha256:1b3af9db9e0cfed8db28c260b2cf9a22c15fda5f0ff4c26157b17f99a0e29bbf"},
+    {file = "pyobjc_framework_preferencepanes-12.1.tar.gz", hash = "sha256:b2a02f9049f136bdeca7642b3307637b190850e5853b74b5c372bc7d88ef9744"},
+]
+
+[[package]]
+name = "pyobjc-framework-pushkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_pushkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:d1d6cb54971c7ed73ce1d13b683d117d4aa34415563c9ca2437dcffefd489940"},
+    {file = "pyobjc_framework_pushkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:03f41be8b27d06302ea487a6b250aaf811917a0e7d648cd4043fac759d027210"},
+    {file = "pyobjc_framework_pushkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7bdf472a55ac65154e03f54ae0bcad64c4cf45e9b1acba62f15107f2bc994d69"},
+    {file = "pyobjc_framework_pushkit-12.1.tar.gz", hash = "sha256:829a2fc8f4780e75fc2a41217290ee0ff92d4ade43c42def4d7e5af436d8ae82"},
+]
+
+[[package]]
 name = "pyobjc-framework-quartz"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
 ]
 files = [
     {file = "pyobjc_framework_quartz-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:c6f312ae79ef8b3019dcf4b3374c52035c7c7bc4a09a1748b61b041bb685a0ed"},
@@ -1926,12 +3813,160 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-quicklookthumbnailing"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_quicklookthumbnailing-12.1-py2.py3-none-any.whl", hash = "sha256:5efe50b0318188b3a4147681788b47fce64709f6fe0e1b5d020e408ef40ab08e"},
+    {file = "pyobjc_framework_quicklookthumbnailing-12.1.tar.gz", hash = "sha256:4f7e09e873e9bda236dce6e2f238cab571baeb75eca2e0bc0961d5fcd85f3c8f"},
+]
+
+[[package]]
+name = "pyobjc-framework-replaykit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_replaykit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:05c8e4cbda2ff22cd5180bee4a892306a4004127365b15e18335ab39e577faa8"},
+    {file = "pyobjc_framework_replaykit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:3a2f9da6939d7695fa40de9c560c20948d31b0cc2f892fdd611fc566a6b83606"},
+    {file = "pyobjc_framework_replaykit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:b0528c2a6188440fdc2017f0924c0a0f15d0a2f6aa295f1d1c2d6b3894c22f1d"},
+    {file = "pyobjc_framework_replaykit-12.1.tar.gz", hash = "sha256:95801fd35c329d7302b2541f2754e6574bf36547ab869fbbf41e408dfa07268a"},
+]
+
+[[package]]
+name = "pyobjc-framework-safariservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_safariservices-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:571c3c65c30dd492e49d9e561f6ba847e0b847352aeb8db0317c5b9ef84f2c88"},
+    {file = "pyobjc_framework_safariservices-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ae709cf7a72ac7b95d2f131349f852d5d7a1729a8d760ea3308883f8269a4c37"},
+    {file = "pyobjc_framework_safariservices-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:b475abc82504fc1c0801096a639562d6a6d37370193e8e4a406de9199a7cea13"},
+    {file = "pyobjc_framework_safariservices-12.1.tar.gz", hash = "sha256:6a56f71c1e692bca1f48fe7c40e4c5a41e148b4e3c6cfb185fd80a4d4a951897"},
+]
+
+[[package]]
+name = "pyobjc-framework-safetykit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_safetykit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:cbb7bcacc88aab1ab4d8dacedc9569be00e26bb7e761b7759dc4d4a2c2656586"},
+    {file = "pyobjc_framework_safetykit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:6c63bcd5d571bba149e28c49c8db06073e54e073b08589e94b850b39a43e52b0"},
+    {file = "pyobjc_framework_safetykit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:e4977f7069a23252053d1a42b1a053aefc19b85c960a5214b05daf3c037a6f16"},
+    {file = "pyobjc_framework_safetykit-12.1.tar.gz", hash = "sha256:0cd4850659fb9b5632fd8ad21f2de6863e8303ff0d51c5cc9c0034aac5db08d8"},
+]
+
+[[package]]
+name = "pyobjc-framework-scenekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_scenekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:269760fa2ab44df11be1a7898907d2f01eb05d1d98a8997ae876ed49803be75b"},
+    {file = "pyobjc_framework_scenekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:01bf1336a7a8bdc96fabde8f3506aa7a7d1905e20a5c46030a57daf0ce2cbd16"},
+    {file = "pyobjc_framework_scenekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:40aea10098893f0b06191f1e79d7b25e12e36a9265549d324238bdb25c7e6df0"},
+    {file = "pyobjc_framework_scenekit-12.1.tar.gz", hash = "sha256:1bd5b866f31fd829f26feac52e807ed942254fd248115c7c742cfad41d949426"},
+]
+
+[[package]]
+name = "pyobjc-framework-screencapturekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coremedia",
+]
+files = [
+    {file = "pyobjc_framework_screencapturekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:cf13285180e9acf8a6d0eff494dd7fb63296c648d4838f628c67be72b1af4725"},
+    {file = "pyobjc_framework_screencapturekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ae412d397eedf189e763defe3497fcb8dffa5e0b54f62390cb33bf9b1cfb864a"},
+    {file = "pyobjc_framework_screencapturekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:27df138ce2dfa9d4aae5106d4877e9ed694b5a174643c058f1c48678ffc7001a"},
+    {file = "pyobjc_framework_screencapturekit-12.1.tar.gz", hash = "sha256:50992c6128b35ab45d9e336f0993ddd112f58b8c8c8f0892a9cb42d61bd1f4c9"},
+]
+
+[[package]]
+name = "pyobjc-framework-screensaver"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_screensaver-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:58625f7d19d73b74521570ddd5b49bf5eeaf32bac6f2c39452594f020dda9b85"},
+    {file = "pyobjc_framework_screensaver-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:5bd10809005fbe0d68fe651f32a393ce059e90da38e74b6b3cd055ed5b23eaa9"},
+    {file = "pyobjc_framework_screensaver-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a3c90c2299eac6d01add81427ae2f90d7724f15d676261e838d7a7750f812322"},
+    {file = "pyobjc_framework_screensaver-12.1.tar.gz", hash = "sha256:c4ca111317c5a3883b7eace0a9e7dd72bc6ffaa2ca954bdec918c3ab7c65c96f"},
+]
+
+[[package]]
+name = "pyobjc-framework-screentime"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_screentime-12.1-py2.py3-none-any.whl", hash = "sha256:d34a068ec8ba2704987fcd05c37c9a9392de61d92933e6e71c8e4eaa4dfce029"},
+    {file = "pyobjc_framework_screentime-12.1.tar.gz", hash = "sha256:583de46b365543bbbcf27cd70eedd375d397441d64a2cf43c65286fd9c91af55"},
+]
+
+[[package]]
+name = "pyobjc-framework-scriptingbridge"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_scriptingbridge-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:97acd79168892ba457bc472214851f4e4a2d40a8aae106fb07cc94417e1fc681"},
+    {file = "pyobjc_framework_scriptingbridge-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e6e37e69760d6ac9d813decf135d107760d33e1cdf7335016522235607f6f31b"},
+    {file = "pyobjc_framework_scriptingbridge-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:8083cd68c559c55a3787b2e74fc983c8665e5078571475aaeabf4f34add36b62"},
+    {file = "pyobjc_framework_scriptingbridge-12.1.tar.gz", hash = "sha256:0e90f866a7e6a8aeaf723d04c826657dd528c8c1b91e7a605f8bb947c74ad082"},
+]
+
+[[package]]
+name = "pyobjc-framework-searchkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-coreservices",
+]
+files = [
+    {file = "pyobjc_framework_searchkit-12.1-py2.py3-none-any.whl", hash = "sha256:844ce62b7296b19da8db7dedd539d07f7b3fb3bb8b029c261f7bcf0e01a97758"},
+    {file = "pyobjc_framework_searchkit-12.1.tar.gz", hash = "sha256:ddd94131dabbbc2d7c3f17db3da87c1a712c431310eef16f07187771e7e85226"},
+]
+
+[[package]]
 name = "pyobjc-framework-security"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
 ]
 files = [
     {file = "pyobjc_framework_security-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:787e9d873535247e2caca2036cbcdc956bcc92d0c06044bec7eefe0a456856b0"},
@@ -1941,12 +3976,272 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-securityfoundation"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-security",
+]
+files = [
+    {file = "pyobjc_framework_securityfoundation-12.1-py2.py3-none-any.whl", hash = "sha256:579cf23e63434226f78ffe0afb8426e971009588e4ad812c478d47dfd558201c"},
+    {file = "pyobjc_framework_securityfoundation-12.1.tar.gz", hash = "sha256:1f39f4b3db6e3bd3a420aaf4923228b88e48c90692cf3612b0f6f1573302a75d"},
+]
+
+[[package]]
+name = "pyobjc-framework-securityinterface"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-security",
+]
+files = [
+    {file = "pyobjc_framework_securityinterface-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:048950875a968032bc133c64e594d4810d5bf5ef359012830cf193610d9c04ac"},
+    {file = "pyobjc_framework_securityinterface-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:ed599be750122376392e95c2407d57bd94644e8320ddef1d67660e16e96b0d06"},
+    {file = "pyobjc_framework_securityinterface-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:5cb5e79a73ea17663ebd29e350401162d93e42343da7d96c77efb38ae64ff01f"},
+    {file = "pyobjc_framework_securityinterface-12.1.tar.gz", hash = "sha256:deef11ad03be8d9ff77db6e7ac40f6b641ee2d72eaafcf91040537942472e88b"},
+]
+
+[[package]]
+name = "pyobjc-framework-securityui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-security",
+]
+files = [
+    {file = "pyobjc_framework_securityui-12.1-py2.py3-none-any.whl", hash = "sha256:3e988b83c9a2bb0393207eaa030fc023a8708a975ac5b8ea0508cdafc2b60705"},
+    {file = "pyobjc_framework_securityui-12.1.tar.gz", hash = "sha256:f1435fed85edc57533c334a4efc8032170424b759da184cb7a7a950ceea0e0b6"},
+]
+
+[[package]]
+name = "pyobjc-framework-sensitivecontentanalysis"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_sensitivecontentanalysis-12.1-py2.py3-none-any.whl", hash = "sha256:faf19d32d4599ac2b18fb1ccdc3e33b2b242bdf34c02e69978bd62d3643ad068"},
+    {file = "pyobjc_framework_sensitivecontentanalysis-12.1.tar.gz", hash = "sha256:2c615ac10e93eb547b32b214cd45092056bee0e79696426fd09978dc3e670f25"},
+]
+
+[[package]]
+name = "pyobjc-framework-servicemanagement"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_servicemanagement-12.1-py2.py3-none-any.whl", hash = "sha256:9a2941f16eeb71e55e1cd94f50197f91520778c7f48ad896761f5e78725cc08f"},
+    {file = "pyobjc_framework_servicemanagement-12.1.tar.gz", hash = "sha256:08120981749a698033a1d7a6ab99dbbe412c5c0d40f2b4154014b52113511c1d"},
+]
+
+[[package]]
+name = "pyobjc-framework-sharedwithyou"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-sharedwithyoucore",
+]
+files = [
+    {file = "pyobjc_framework_sharedwithyou-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:b5e05940bd0b9107340437ecef4502a2d2326072b0fa0b458f41c02a173d1047"},
+    {file = "pyobjc_framework_sharedwithyou-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:359c03096a6988371ea89921806bb81483ea509c9aa7114f9cd20efd511b3576"},
+    {file = "pyobjc_framework_sharedwithyou-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:a99a6ebc6b6de7bc8663b1f07332fab9560b984a57ce344dc5703f25258f258d"},
+    {file = "pyobjc_framework_sharedwithyou-12.1.tar.gz", hash = "sha256:167d84794a48f408ee51f885210c616fda1ec4bff3dd8617a4b5547f61b05caf"},
+]
+
+[[package]]
+name = "pyobjc-framework-sharedwithyoucore"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_sharedwithyoucore-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a7dd3048ea898b8fa401088d9fae73dbda361fb7c2dd1dc1057102e503b12771"},
+    {file = "pyobjc_framework_sharedwithyoucore-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:f4f9f7fed0768ebbbc2d24248365da2cf5f014b8822b2a1fbbce5fa920f410f1"},
+    {file = "pyobjc_framework_sharedwithyoucore-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:ed928266ae9d577ff73de72a03bebc66a751918eb59ca660a9eca157392f17be"},
+    {file = "pyobjc_framework_sharedwithyoucore-12.1.tar.gz", hash = "sha256:0813149eeb755d718b146ec9365eb4ca3262b6af9ff9ba7db2f7b6f4fd104518"},
+]
+
+[[package]]
+name = "pyobjc-framework-shazamkit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_shazamkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:18ff0a83a6d2517d30669cf5337e688310e424d1cdc1fa90acf3753a73cc1bd4"},
+    {file = "pyobjc_framework_shazamkit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:0c10ba22de524fbedf06270a71bb0a3dbd4a3853b7002ddf54394589c3be6939"},
+    {file = "pyobjc_framework_shazamkit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:e184dd0f61a604b1cfcf44418eb95b943e7b8f536058a29e4b81acadd27a9420"},
+    {file = "pyobjc_framework_shazamkit-12.1.tar.gz", hash = "sha256:71db2addd016874639a224ed32b2000b858802b0370c595a283cce27f76883fe"},
+]
+
+[[package]]
+name = "pyobjc-framework-social"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_social-12.1-py2.py3-none-any.whl", hash = "sha256:2f3b36ba5769503b1bc945f85fd7b255d42d7f6e417d78567507816502ff2b44"},
+    {file = "pyobjc_framework_social-12.1.tar.gz", hash = "sha256:1963db6939e92ae40dd9d68852e8f88111cbfd37a83a9fdbc9a0c08993ca7e60"},
+]
+
+[[package]]
+name = "pyobjc-framework-soundanalysis"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_soundanalysis-12.1-py2.py3-none-any.whl", hash = "sha256:8b2029ab48c1a9772f247f0aea995e8c3ff4706909002a9c1551722769343a52"},
+    {file = "pyobjc_framework_soundanalysis-12.1.tar.gz", hash = "sha256:e2deead8b9a1c4513dbdcf703b21650dcb234b60a32d08afcec4895582b040b1"},
+]
+
+[[package]]
+name = "pyobjc-framework-speech"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_speech-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:be5c005595918557f17e991b2575159b8ea943e7fb08fd00b1dabccde35f8b1b"},
+    {file = "pyobjc_framework_speech-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:0301bfae5d0d09b6e69bd4dbabc5631209e291cc40bda223c69ed0c618f8f2dc"},
+    {file = "pyobjc_framework_speech-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:cae4b88ef9563157a6c9e66b37778fc4022ee44dd1a2a53081c2adbb69698945"},
+    {file = "pyobjc_framework_speech-12.1.tar.gz", hash = "sha256:2a2a546ba6c52d5dd35ddcfee3fd9226a428043d1719597e8701851a6566afdd"},
+]
+
+[[package]]
+name = "pyobjc-framework-spritekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_spritekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9324955df38e24ab799d5bc7f66cce20aa0c9a93aef3139e54dee99f9d7848cc"},
+    {file = "pyobjc_framework_spritekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:26fd12944684713ae1e3cdd229348609c1142e60802624161ca0c3540eec3ffa"},
+    {file = "pyobjc_framework_spritekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:1649e57c25145795d04bb6a1ec44c20ef7cf0af7c60a9f6f5bc7998dd269db1e"},
+    {file = "pyobjc_framework_spritekit-12.1.tar.gz", hash = "sha256:a851f4ef5aa65cc9e08008644a528e83cb31021a1c0f17ebfce4de343764d403"},
+]
+
+[[package]]
+name = "pyobjc-framework-storekit"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_storekit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:e67341cb14adfdecbd230393f3b02d4b19fbb3ada427b06d4f82a703ae90431f"},
+    {file = "pyobjc_framework_storekit-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a29f45bcba9dee4cf73dae05ab0f94d06a32fb052e31414d0c23791c1ec7931c"},
+    {file = "pyobjc_framework_storekit-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:9fe2d65a2b644bb6b4fdd3002292cba153560917de3dd6cf969431fa32d21dd0"},
+    {file = "pyobjc_framework_storekit-12.1.tar.gz", hash = "sha256:818452e67e937a10b5c8451758274faa44ad5d4329df0fa85735115fb0608da9"},
+]
+
+[[package]]
+name = "pyobjc-framework-symbols"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_symbols-12.1-py2.py3-none-any.whl", hash = "sha256:c72eecbc25f6bfcd39c733067276270057c5aca684be20fdc56def645f2b6446"},
+    {file = "pyobjc_framework_symbols-12.1.tar.gz", hash = "sha256:7d8e999b8a59c97d38d1d343b6253b1b7d04bf50b665700957d89c8ac43b9110"},
+]
+
+[[package]]
+name = "pyobjc-framework-syncservices"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coredata",
+]
+files = [
+    {file = "pyobjc_framework_syncservices-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:21dcb61da6816d2c55afb24d5bbf30741f806c0db8bb7a842fd27177550a3c9c"},
+    {file = "pyobjc_framework_syncservices-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:e81a38c2eb7617cb0ecfc4406c1ae2a97c60e95af42e863b2b0f1f6facd9b0da"},
+    {file = "pyobjc_framework_syncservices-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:0cd629bea95692aad2d26196657cde2fbadedae252c7846964228661a600b900"},
+    {file = "pyobjc_framework_syncservices-12.1.tar.gz", hash = "sha256:6a213e93d9ce15128810987e4c5de8c73cfab1564ac8d273e6b437a49965e976"},
+]
+
+[[package]]
+name = "pyobjc-framework-systemconfiguration"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_systemconfiguration-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:db640a31120e8cd4e47516f5e32a222488809478d6cf4402db506496defd3e18"},
+    {file = "pyobjc_framework_systemconfiguration-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:796390a80500cc7fde86adc71b11cdc41d09507dd69103d3443fbb60e94fb438"},
+    {file = "pyobjc_framework_systemconfiguration-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:0e5bb9103d39483964431db7125195c59001b7bff2961869cfe157b4c861e52d"},
+    {file = "pyobjc_framework_systemconfiguration-12.1.tar.gz", hash = "sha256:90fe04aa059876a21626931c71eaff742a27c79798a46347fd053d7008ec496e"},
+]
+
+[[package]]
+name = "pyobjc-framework-systemextensions"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_systemextensions-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:820f2d0364340395efafdfa85630b2e4a3ffc3f40b469b2880bab2c03f1e2907"},
+    {file = "pyobjc_framework_systemextensions-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:2a4e82160e43c0b1aa17e6d4435e840a655737fbe534e00e37fc1961fbf3bebd"},
+    {file = "pyobjc_framework_systemextensions-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:01fac4f8d88c0956d9fc714d24811cd070e67200ba811904317d91e849e38233"},
+    {file = "pyobjc_framework_systemextensions-12.1.tar.gz", hash = "sha256:243e043e2daee4b5c46cd90af5fff46b34596aac25011bab8ba8a37099685eeb"},
+]
+
+[[package]]
+name = "pyobjc-framework-threadnetwork"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_threadnetwork-12.1-py2.py3-none-any.whl", hash = "sha256:07d937748fc54199f5ec04d5a408e8691a870481c11b641785c2adc279dd8e4b"},
+    {file = "pyobjc_framework_threadnetwork-12.1.tar.gz", hash = "sha256:e071eedb41bfc1b205111deb54783ec5a035ccd6929e6e0076336107fdd046ee"},
+]
+
+[[package]]
 name = "pyobjc-framework-uniformtypeidentifiers"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
 ]
 files = [
     {file = "pyobjc_framework_uniformtypeidentifiers-12.1-py2.py3-none-any.whl", hash = "sha256:ec5411e39152304d2a7e0e426c3058fa37a00860af64e164794e0bcffee813f2"},
@@ -1954,12 +4249,103 @@ files = [
 ]
 
 [[package]]
+name = "pyobjc-framework-usernotifications"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_usernotifications-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:95796a075e3a92257d69596ec16d9e03cb504f1324294ed41052f5b3bf90ce9f"},
+    {file = "pyobjc_framework_usernotifications-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:c62e8d7153d72c4379071e34258aa8b7263fa59212cfffd2f137013667e50381"},
+    {file = "pyobjc_framework_usernotifications-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:412afb2bf5fe0049f9c4e732e81a8a35d5ebf97c30a5a6abd276259d020c82ac"},
+    {file = "pyobjc_framework_usernotifications-12.1.tar.gz", hash = "sha256:019ccdf2d400f9a428769df7dba4ea97c02453372bc5f8b75ce7ae54dfe130f9"},
+]
+
+[[package]]
+name = "pyobjc-framework-usernotificationsui"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-usernotifications",
+]
+files = [
+    {file = "pyobjc_framework_usernotificationsui-12.1-py2.py3-none-any.whl", hash = "sha256:11af59dc5abfcb72c08769ab4d7ca32a628527a8ba341786431a0d2dacf31605"},
+    {file = "pyobjc_framework_usernotificationsui-12.1.tar.gz", hash = "sha256:51381c97c7344099377870e49ed0871fea85ba50efe50ab05ccffc06b43ec02e"},
+]
+
+[[package]]
+name = "pyobjc-framework-videosubscriberaccount"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_videosubscriberaccount-12.1-py2.py3-none-any.whl", hash = "sha256:381a5e8a3016676e52b88e38b706559fa09391d33474d8a8a52f20a883104a7b"},
+    {file = "pyobjc_framework_videosubscriberaccount-12.1.tar.gz", hash = "sha256:750459fa88220ab83416f769f2d5d210a1f77b8938fa4d119aad0002fc32846b"},
+]
+
+[[package]]
+name = "pyobjc-framework-videotoolbox"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coremedia",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_videotoolbox-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:5cb63e0e69aac148fa45d577f049e1e4846d65d046fcb0f7744fb90ac85da936"},
+    {file = "pyobjc_framework_videotoolbox-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a1eb1eb41c0ffdd8dcc6a9b68ab2b5bc50824a85820c8a7802a94a22dfbb4f91"},
+    {file = "pyobjc_framework_videotoolbox-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:eb6ce6837344ee319122066c16ada4beb913e7bfd62188a8d14b1ecbb5a89234"},
+    {file = "pyobjc_framework_videotoolbox-12.1.tar.gz", hash = "sha256:7adc8670f3b94b086aed6e86c3199b388892edab4f02933c2e2d9b1657561bef"},
+]
+
+[[package]]
+name = "pyobjc-framework-virtualization"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+]
+files = [
+    {file = "pyobjc_framework_virtualization-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:9a5f565411330c5776b60eb5eb94ab1591f76f0969e85b23a046d2de915fc84e"},
+    {file = "pyobjc_framework_virtualization-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:a88a307dc96885afc227ceda4067f1af787f024063f4ccf453d59e7afd47cda8"},
+    {file = "pyobjc_framework_virtualization-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:7d5724b38e64b39ab5ec3b45993afa29fc88b307d99ee2c7a1c0fd770e9b4b21"},
+    {file = "pyobjc_framework_virtualization-12.1.tar.gz", hash = "sha256:e96afd8e801e92c6863da0921e40a3b68f724804f888bce43791330658abdb0f"},
+]
+
+[[package]]
+name = "pyobjc-framework-vision"
+version = "12.1"
+summary = ""
+dependencies = [
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
+    "pyobjc-framework-coreml",
+    "pyobjc-framework-quartz",
+]
+files = [
+    {file = "pyobjc_framework_vision-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:a30c3fff926348baecc3ce1f6da8ed327d0cbd55ca1c376d018e31023b79c0ab"},
+    {file = "pyobjc_framework_vision-12.1-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:1edbf2fc18ce3b31108f845901a88f2236783ae6bf0bc68438d7ece572dc2a29"},
+    {file = "pyobjc_framework_vision-12.1-cp312-cp312-macosx_10_13_universal2.whl", hash = "sha256:6b3211d84f3a12aad0cde752cfd43a80d0218960ac9e6b46b141c730e7d655bd"},
+    {file = "pyobjc_framework_vision-12.1.tar.gz", hash = "sha256:a30959100e85dcede3a786c544e621ad6eb65ff6abf85721f805822b8c5fe9b0"},
+]
+
+[[package]]
 name = "pyobjc-framework-webkit"
 version = "12.1"
 summary = ""
 dependencies = [
-    "pyobjc-core; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
-    "pyobjc-framework-cocoa; python_full_version < \"3.11\" and (sys_platform == \"emscripten\" or sys_platform == \"win32\") or sys_platform != \"emscripten\" and sys_platform != \"win32\"",
+    "pyobjc-core",
+    "pyobjc-framework-cocoa",
 ]
 files = [
     {file = "pyobjc_framework_webkit-12.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:231048d250e97323b25e5f1690d09e2415b691c0d57bc13241e442d486ef94c8"},

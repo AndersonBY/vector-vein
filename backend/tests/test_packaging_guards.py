@@ -2,6 +2,7 @@ import builtins
 import importlib
 import importlib.util
 import sys
+import textwrap
 
 import pytest
 
@@ -74,3 +75,42 @@ def test_build_command_failures_stop_the_build():
 
     with pytest.raises(CalledProcessError):
         run_cmd("python -c \"import sys; sys.exit(7)\"")
+
+
+def test_verify_lockfile_groups_detects_missing_groups(tmp_path):
+    from packaging_guard import MissingLockfileGroupError, verify_lockfile_groups
+
+    lockfile_path = tmp_path / "pdm.lock"
+    lockfile_path.write_text(
+        textwrap.dedent(
+            """
+            [metadata]
+            groups = ["default", "dev"]
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(MissingLockfileGroupError) as exc_info:
+        verify_lockfile_groups(lockfile_path, required_groups=("dev", "mac"))
+
+    assert "mac" in str(exc_info.value)
+
+
+def test_verify_lockfile_groups_accepts_present_groups(tmp_path):
+    from packaging_guard import verify_lockfile_groups
+
+    lockfile_path = tmp_path / "pdm.lock"
+    lockfile_path.write_text(
+        textwrap.dedent(
+            """
+            [metadata]
+            groups = ["default", "dev", "mac"]
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    verify_lockfile_groups(lockfile_path, required_groups=("dev", "mac"))
