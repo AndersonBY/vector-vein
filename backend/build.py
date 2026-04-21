@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 
 from packaging_guard import verify_runtime_dependencies
+from packaging_guard import verify_workflow_editor_node_registration
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -101,12 +102,14 @@ def build_development(version):
 
 def build_frontend():
     run_cmd(["pnpm", "run", "build"], cwd=FRONTEND_DIR)
+    verify_workflow_editor_node_registration(FRONTEND_DIR / "dist" / "assets")
 
     if WEB_DIR.exists():
         shutil.rmtree(WEB_DIR)
     WEB_DIR.mkdir(parents=True, exist_ok=True)
 
     shutil.copytree(FRONTEND_DIR / "dist", WEB_DIR, dirs_exist_ok=True)
+    verify_workflow_editor_node_registration(WEB_DIR / "assets")
 
     assets_dir = FRONTEND_DIR / "src" / "assets"
     if assets_dir.exists():

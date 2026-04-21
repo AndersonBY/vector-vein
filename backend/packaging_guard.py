@@ -23,6 +23,10 @@ class MissingImportableDependencyError(RuntimeError):
     pass
 
 
+class InvalidFrontendBundleError(RuntimeError):
+    pass
+
+
 def _package_exists(internal_dir: Path, package_name: str) -> bool:
     package_path = internal_dir / package_name
     package_file = internal_dir / f"{package_name}.py"
@@ -149,3 +153,27 @@ def verify_spec_hidden_imports(
             for spec, packages in missing_by_spec.items()
         )
         raise MissingRuntimeDependencyError(f"Missing PyInstaller hidden imports: {details}")
+
+
+def verify_workflow_editor_node_registration(
+    assets_dir: str | Path = "web/assets",
+) -> None:
+    assets_dir = Path(assets_dir)
+    workflow_assets = sorted(assets_dir.glob("WorkflowEditor-*.js"))
+    if not workflow_assets:
+        raise InvalidFrontendBundleError(f"Missing WorkflowEditor asset in {assets_dir}")
+
+    asset_content = workflow_assets[-1].read_text(encoding="utf-8")
+    component_matches = re.findall(
+        r'["\']/src/(?:components|extensions)/nodes/[^"\']+\.vue["\']',
+        asset_content,
+    )
+    template_matches = re.findall(
+        r'["\']/src/(?:components|extensions)/nodes/[^"\']+\.js["\']',
+        asset_content,
+    )
+
+    if not component_matches or not template_matches:
+        raise InvalidFrontendBundleError(
+            f"WorkflowEditor bundle in {workflow_assets[-1]} is missing node registrations"
+        )

@@ -75,6 +75,37 @@ def test_build_command_failures_stop_the_build():
         run_cmd("python -c \"import sys; sys.exit(7)\"")
 
 
+def test_build_frontend_verifies_node_registration(monkeypatch, tmp_path):
+    import build
+
+    calls = []
+
+    monkeypatch.setattr(build, "FRONTEND_DIR", tmp_path / "frontend")
+    monkeypatch.setattr(build, "WEB_DIR", tmp_path / "web")
+    monkeypatch.setattr(build, "run_cmd", lambda *args, **kwargs: None)
+
+    def fake_verify(path):
+        calls.append(path)
+
+    monkeypatch.setattr(build, "verify_workflow_editor_node_registration", fake_verify)
+
+    frontend_dist_assets = build.FRONTEND_DIR / "dist" / "assets"
+    frontend_dist_assets.mkdir(parents=True)
+    (build.FRONTEND_DIR / "dist" / "index.html").write_text("<html></html>\n", encoding="utf-8")
+    (frontend_dist_assets / "WorkflowEditor-test.js").write_text(
+        "const nodeFiles = {\"/src/components/nodes/triggers/ButtonTrigger.vue\": {}};\n"
+        "const nodeTemplateFiles = {\"/src/components/nodes/triggers/ButtonTrigger.js\": {}};\n",
+        encoding="utf-8",
+    )
+
+    build.build_frontend()
+
+    assert calls == [
+        build.FRONTEND_DIR / "dist" / "assets",
+        build.WEB_DIR / "assets",
+    ]
+
+
 def test_verify_lockfile_groups_detects_missing_groups(tmp_path):
     from packaging_guard import MissingLockfileGroupError, verify_lockfile_groups
 
@@ -236,3 +267,42 @@ def test_project_specs_include_audio_runtime_dependencies():
     from packaging_guard import verify_spec_hidden_imports
 
     verify_spec_hidden_imports()
+
+
+def test_verify_workflow_editor_node_registration_detects_missing_node_maps(tmp_path):
+    from packaging_guard import InvalidFrontendBundleError, verify_workflow_editor_node_registration
+
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    (assets_dir / "WorkflowEditor-broken.js").write_text(
+        "const nodeFiles = Object.assign({}); const nodeTemplateFiles = Object.assign({});\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(InvalidFrontendBundleError) as exc_info:
+        verify_workflow_editor_node_registration(assets_dir)
+
+    assert "missing node registrations" in str(exc_info.value)
+
+
+def test_verify_workflow_editor_node_registration_accepts_registered_node_maps(tmp_path):
+    from packaging_guard import verify_workflow_editor_node_registration
+
+    assets_dir = tmp_path / "assets"
+    assets_dir.mkdir()
+    (assets_dir / "WorkflowEditor-good.js").write_text(
+        textwrap.dedent(
+            """
+            const nodeFiles = Object.assign({
+              "/src/components/nodes/triggers/ButtonTrigger.vue": {}
+            });
+            const nodeTemplateFiles = Object.assign({
+              "/src/components/nodes/triggers/ButtonTrigger.js": {}
+            });
+            """
+        ).strip()
+        + "\n",
+        encoding="utf-8",
+    )
+
+    verify_workflow_editor_node_registration(assets_dir)
