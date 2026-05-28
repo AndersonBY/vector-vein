@@ -292,3 +292,58 @@ If the tag version and `backend/pyproject.toml` version do not match, the workfl
 ## 📄 License
 
 VectorVein is an open-source software that supports personal non-commercial use. Please refer to [LICENSE](LICENSE.md) for specific agreements.
+
+
+
+## FAQ
+
+### What is VectorVein?
+
+VectorVein is a **no-code AI workflow software** inspired by [LangChain](https://github.com/hwchase17/langchain) and [langflow](https://github.com/logspace-ai/langflow). It combines the powerful capabilities of large language models with drag-and-drop workflow creation, enabling users to achieve intelligent and automated workflows for various daily tasks without any programming.
+
+### Key Features
+
+| Feature | Description |
+|---------|-------------|
+| **No-Code Workflow** | Drag and drop to create powerful workflows without programming |
+| **AI Integration** | Combine large language models with personal knowledge base |
+| **Multi-Language Support** | English, Chinese, and Japanese interfaces available |
+| **Online Version** | No installation required, experience online at vectorvein.ai |
+| **Local Deployment** | Download and run locally with full control over your data |
+| **OpenAI Compatible** | Supports LM-Studio, Ollama, vLLM, and other local services |
+
+### Installation
+
+1. Download from [GitHub Releases](https://github.com/AndersonBY/vector-vein/releases/)
+2. Extract the package
+3. Ensure webview2 runtime is installed (download from [Microsoft](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) if needed)
+4. Run the application
+
+> **Note**: If the software cannot be opened after extraction, check if the .zip file is locked. Right-click the compressed package and select "Unblock" to resolve this issue.
+
+### Requirements
+
+- **WebView2 Runtime**: Required for Windows users
+- **LLM Configuration**: At least one large language model endpoint must be configured
+- **Embedding Models**: Optional for vector search functionality
+
+### Configuration
+
+| Section | Description |
+|---------|-------------|
+| **API Endpoints** | Configure OpenAI-compatible endpoints (OpenAI, LM-Studio, Ollama, vLLM) |
+| **Remote LLMs** | Set up specific model configurations for each endpoint |
+| **Custom LLMs** | Add custom model families and models with OpenAI-compatible interfaces |
+| **Speech Recognition** | Configure ASR service for voice conversations |
+| **Embedding Models** | Configure embedding backends for vector search |
+| **Shortcuts** | Set keyboard shortcuts for quick voice interactions |
+
+### License
+
+Apache 2.0 License — Free to use, modify, and distribute.
+
+### Help Resources
+
+- 📖 [Online Documentation](https://vectorvein.ai/help/docs/introduction)
+- 🌐 [Online Experience](https://vectorvein.ai/en)
+- 🐛 [GitHub Issues](https://github.com/AndersonBY/vector-vein/issues)
