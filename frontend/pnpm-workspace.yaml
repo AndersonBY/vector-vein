@@ -4,5 +4,7 @@ allowBuilds:
   vue-demi: true
 overrides:
   brace-expansion: 5.0.6
+  dompurify: 3.4.11
   lodash: 4.18.1
   postcss: 8.5.15
+  undici: 6.27.0
