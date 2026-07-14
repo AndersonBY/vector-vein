@@ -46,7 +46,7 @@
     "midi-player-js": "^2.0.17",
     "pinia": "^3.0.4",
     "reconnecting-websocket": "^4.4.0",
-    "smplr": "^0.20.0",
+    "smplr": "^1.0.0",
     "uuid": "^14.0.1",
     "vue": "^3.5.39",
     "vue-codemirror": "^6.1.1",

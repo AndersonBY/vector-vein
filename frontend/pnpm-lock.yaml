@@ -124,8 +124,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       smplr:
-        specifier: ^0.20.0
-        version: 0.20.0
+        specifier: ^1.0.0
+        version: 1.0.0
       uuid:
         specifier: ^14.0.1
         version: 14.0.1
@@ -1858,8 +1858,8 @@ packages:
     resolution: {integrity: sha512-7++dFhtcx3353uBaq8DDR4NuxBetBzC7ZQOhmTQInHEd6bSrXdiEyzCvG07Z44UYdLShWUyXt5M/yhz8ekcb1A==}
     engines: {node: '>=8'}
 
-  smplr@0.20.0:
-    resolution: {integrity: sha512-XGxPL4ANBP0qzs30y673HYqvAEl/fJq/SKLv1oJpRuoo0VDqUcRGBz5A99PzN7srKT2WYtFU+yl6uqGHz/21zQ==}
+  smplr@1.0.0:
+    resolution: {integrity: sha512-mCggf1Ex9oNOMl3LJNq7qlc3/aotKsH4DRFz0WgB7g7H4P1qUxmENkoqZ8FKj5vFY6CeweGNk7Uz8vOU/exQ7w==}
     engines: {node: '>=14.0.0'}
 
   source-map-js@1.2.1:
@@ -3964,7 +3964,7 @@ snapshots:
 
   shebang-regex@3.0.0: {}
 
-  smplr@0.20.0: {}
+  smplr@1.0.0: {}
 
   source-map-js@1.2.1: {}
 
