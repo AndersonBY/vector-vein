@@ -1,9 +1,13 @@
 name: Release dependency updates
 
 on:
-  pull_request:
-    types:
-      - closed
+  push:
+    branches:
+      - main
+    paths:
+      - frontend/package.json
+      - frontend/pnpm-lock.yaml
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -14,10 +18,6 @@ concurrency:
 
 jobs:
   release:
-    if: >-
-      github.event.pull_request.merged == true &&
-      github.event.pull_request.user.login == 'dependabot[bot]' &&
-      github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout current main
@@ -40,14 +40,31 @@ jobs:
 
           VERSION="$(python - <<'PY'
           import re
+          import subprocess
           from pathlib import Path
 
           text = Path('backend/pyproject.toml').read_text()
           match = re.search(r'^version = "([0-9]+)\.([0-9]+)\.([0-9]+)"$', text, re.MULTILINE)
           if match is None:
               raise SystemExit('Could not find a semantic project version.')
-          major, minor, patch = map(int, match.groups())
-          print(f'{major}.{minor}.{patch + 1}')
+
+          versions = [tuple(map(int, match.groups()))]
+          tags = subprocess.check_output(
+              ['git', 'tag', '--list', 'v[0-9]*.[0-9]*.[0-9]*'],
+              text=True,
+          ).splitlines()
+          for tag in tags:
+              tag_match = re.fullmatch(r'v([0-9]+)\.([0-9]+)\.([0-9]+)', tag)
+              if tag_match:
+                  versions.append(tuple(map(int, tag_match.groups())))
+
+          major, minor, patch = max(versions)
+          candidate = (major, minor, patch + 1)
+          tag_names = set(tags)
+          while f'v{candidate[0]}.{candidate[1]}.{candidate[2]}' in tag_names:
+              candidate = (candidate[0], candidate[1], candidate[2] + 1)
+
+          print(f'{candidate[0]}.{candidate[1]}.{candidate[2]}')
           PY
           )"
 
