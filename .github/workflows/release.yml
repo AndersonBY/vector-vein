@@ -1,7 +1,18 @@
 name: Release Desktop Packages
 
 on:
+  workflow_call:
+    inputs:
+      version:
+        description: Release version without the v prefix
+        required: true
+        type: string
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version without the v prefix
+        required: false
+        type: string
   push:
     tags:
       - "v*"
@@ -10,7 +21,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.version || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -47,19 +58,27 @@ jobs:
 
     steps:
       - name: Checkout source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python_version }}
 
       - name: Validate tag version
         id: meta
+        env:
+          RELEASE_VERSION_INPUT: ${{ inputs.version }}
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          if [ -n "${RELEASE_VERSION_INPUT}" ]; then
+            VERSION="${RELEASE_VERSION_INPUT}"
+          else
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+
           PROJECT_VERSION="$(python - <<'PY'
           import tomllib
 
@@ -80,13 +99,13 @@ jobs:
         run: python -m pip install --upgrade pip pdm
 
       - name: Set up pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 10
           run_install: false
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: pnpm
@@ -128,7 +147,7 @@ jobs:
         run: pdm run python build.py -t p -v "${{ steps.meta.outputs.version }}"
 
       - name: Upload packaged artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-${{ matrix.platform }}
           path: backend/dist/${{ steps.meta.outputs.asset_name }}
@@ -141,7 +160,7 @@ jobs:
 
     steps:
       - name: Download packaged artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: release-*
           path: release-assets
@@ -150,6 +169,7 @@ jobs:
       - name: Create or update GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.version && format('v{0}', inputs.version) || github.ref_name }}
         run: |
           shopt -s nullglob
           assets=(release-assets/*.zip)
@@ -159,12 +179,12 @@ jobs:
             exit 1
           fi
 
-          if gh release view "${GITHUB_REF_NAME}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
-            gh release upload "${GITHUB_REF_NAME}" "${assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
+          if gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
+            gh release upload "${RELEASE_TAG}" "${assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
           else
-            gh release create "${GITHUB_REF_NAME}" "${assets[@]}" \
+            gh release create "${RELEASE_TAG}" "${assets[@]}" \
               --repo "${GITHUB_REPOSITORY}" \
-              --title "${GITHUB_REF_NAME}" \
+              --title "${RELEASE_TAG}" \
               --verify-tag \
               --generate-notes
           fi

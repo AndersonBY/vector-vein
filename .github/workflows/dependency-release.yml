@@ -19,9 +19,11 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout current main
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: main
           fetch-depth: 0
@@ -99,8 +101,10 @@ jobs:
           git push origin HEAD:main
           git push origin "v${VERSION}"
 
-      - name: Trigger desktop release workflow
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VERSION: ${{ steps.version.outputs.version }}
-        run: gh workflow run release.yml --repo "${GITHUB_REPOSITORY}" --ref "v${VERSION}"
+  desktop-release:
+    name: Build and publish desktop packages
+    needs: release
+    uses: ./.github/workflows/release.yml
+    with:
+      version: ${{ needs.release.outputs.version }}
+    secrets: inherit
