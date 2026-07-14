@@ -29,7 +29,7 @@
     "ant-design-vue": "^4.2.6",
     "axios": "^1.18.0",
     "codemirror": "^6.0.2",
-    "echarts": "^6.0.0",
+    "echarts": "^6.1.0",
     "file-saver": "^2.0.5",
     "github-markdown-css": "^5.9.0",
     "highlight.js": "^11.11.1",

@@ -1,0 +1,89 @@
+name: Release dependency updates
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dependency-release-main
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.pull_request.merged == true &&
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.base.ref == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+      - name: Bump patch version
+        id: version
+        shell: bash
+        run: |
+          git fetch origin main --tags
+          git checkout -B main origin/main
+
+          VERSION="$(python - <<'PY'
+          import re
+          from pathlib import Path
+
+          text = Path('backend/pyproject.toml').read_text()
+          match = re.search(r'^version = "([0-9]+)\.([0-9]+)\.([0-9]+)"$', text, re.MULTILINE)
+          if match is None:
+              raise SystemExit('Could not find a semantic project version.')
+          major, minor, patch = map(int, match.groups())
+          print(f'{major}.{minor}.{patch + 1}')
+          PY
+          )"
+
+          python - "${VERSION}" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          path = Path('backend/pyproject.toml')
+          text = path.read_text()
+          updated, count = re.subn(
+              r'(?m)^version = "[0-9]+\.[0-9]+\.[0-9]+"$',
+              f'version = "{sys.argv[1]}"',
+              text,
+              count=1,
+          )
+          if count != 1:
+              raise SystemExit('Could not update the project version.')
+          path.write_text(updated)
+          PY
+
+          echo "version=${VERSION}" >> "${GITHUB_OUTPUT}"
+
+      - name: Commit and tag release
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          git add backend/pyproject.toml
+          git diff --cached --check
+          git commit -m "chore(release): prepare v${VERSION}"
+          git tag "v${VERSION}"
+          git push origin HEAD:main
+          git push origin "v${VERSION}"
+
+      - name: Trigger desktop release workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh workflow run release.yml --repo "${GITHUB_REPOSITORY}" --ref "v${VERSION}"
