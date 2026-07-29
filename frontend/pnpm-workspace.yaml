@@ -3,8 +3,9 @@ allowBuilds:
   midi-player-js: true
   vue-demi: true
 overrides:
-  brace-expansion: 5.0.6
-  dompurify: 3.4.11
+  brace-expansion: 5.0.8
+  dompurify: 3.4.12
+  linkify-it: 5.0.2
   lodash: 4.18.1
-  postcss: 8.5.15
+  postcss: 8.5.18
   undici: 6.27.0
