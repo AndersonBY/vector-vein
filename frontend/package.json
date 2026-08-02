@@ -44,7 +44,7 @@
     "markmap-view": "^0.18.12",
     "mermaid": "^11.16.0",
     "midi-player-js": "^2.0.17",
-    "pinia": "^3.0.4",
+    "pinia": "^4.0.2",
     "reconnecting-websocket": "^4.4.0",
     "smplr": "^1.0.0",
     "uuid": "^14.0.1",
