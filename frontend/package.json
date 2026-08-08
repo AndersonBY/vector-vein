@@ -42,7 +42,7 @@
     "markmap-common": "^0.18.9",
     "markmap-lib": "^0.18.12",
     "markmap-view": "^0.18.12",
-    "mermaid": "^11.16.0",
+    "mermaid": "^11.16.1",
     "midi-player-js": "^2.0.17",
     "pinia": "^3.0.4",
     "reconnecting-websocket": "^4.4.0",
