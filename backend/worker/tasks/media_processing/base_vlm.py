@@ -108,16 +108,15 @@ def _is_string_list(value: object) -> TypeGuard[list[str]]:
 
 class BaseVLMTask:
     MODEL_TYPE = BackendType.OpenAI
-    DEFAULT_MODEL = "gpt-4o"
+    DEFAULT_MODEL = "gpt-5.5"
     SINGLE_PROCESS_TIMEOUT = 180
     BASE64_ENCODE_IMAGE = False
-    MODEL_MAPPING: dict[str, str] = {}
 
     def __init__(self, workflow_data: dict, node_id: str):
         self.workflow = Workflow(workflow_data)
         self.node_id = node_id
         self.input_prompt: str | list = self.workflow.get_node_field_value(node_id, "text_prompt")
-        self.model: str = self.workflow.get_node_field_value(node_id, "llm_model", self.DEFAULT_MODEL)
+        self.model: str = self.workflow.get_node_field_value(node_id, "llm_model", self.DEFAULT_MODEL) or self.DEFAULT_MODEL
         self.stream: bool = self.workflow.get_node_field_value(node_id, "stream", False)
         self.detail_type = self.workflow.get_node_field_value(node_id, "detail_type", "auto")
         self.multiple_input = self.workflow.get_node_field_value(node_id, "multiple_input", False)
@@ -186,64 +185,18 @@ class BaseVLMTask:
 
         self.original_model = self.model
 
-        if self.model.startswith(("o1", "o3-mini", "o4-mini", "gpt-5")):
-            self.temperature = 1.0
-            self.top_p = 1
-            self.stream = False
-
-        if self.model and self.model.startswith(("o3-mini", "o4-mini")):
+        self.thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN
+        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
+        self.extra_body: dict = {}
+        if self.MODEL_TYPE == BackendType.OpenAI and self.model.startswith(("gpt-5", "gpt-6")):
+            self.temperature = NOT_GIVEN
+            self.top_p = NOT_GIVEN
+        if self.MODEL_TYPE in (BackendType.Anthropic, BackendType.Qwen):
+            self.stream = True
+        if self.MODEL_TYPE == BackendType.Anthropic:
+            self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
 
-        if self.model in (
-            "claude-3-7-sonnet-thinking",
-            "claude-opus-4-20250514-thinking",
-            "claude-opus-4-1-20250805-thinking",
-            "claude-sonnet-4-20250514-thinking",
-            "claude-sonnet-4-5-20250929-thinking",
-        ):
-            self.original_model = self.model = self.model.removesuffix("-thinking")
-            self.thinking: ThinkingConfigParam | None | NotGiven = {"type": "enabled", "budget_tokens": 16000}
-            self.temperature = 1.0
-        else:
-            self.thinking = NOT_GIVEN
-
-        if self.model.startswith(("claude-opus-4", "claude-sonnet-4")):
-            self.stream = True
-
-        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
-        if self.model == "o3-mini-high":
-            self.original_model = self.model = "o3-mini"
-            self.reasoning_effort = "high"
-
-        if self.model == "o4-mini-high":
-            self.original_model = self.model = "o4-mini"
-            self.reasoning_effort = "high"
-
-        self.extra_body: dict[str, bool | int | dict] = {}
-        if self.model.startswith("qwen3"):
-            self.stream = True  # 百炼上思考模式只支持流式输出
-            if self.model.endswith("-thinking"):
-                if self.model not in [
-                    "qwen3-next-80b-a3b-thinking",
-                    "qwen3-vl-235b-a22b-thinking",
-                    "qwen3-vl-32b-thinking",
-                    "qwen3-vl-30b-a3b-thinking",
-                    "qwen3-vl-8b-thinking",
-                ]:
-                    self.model = self.model.removesuffix("-thinking")
-                self.extra_body = {"enable_thinking": True}
-            else:
-                self.extra_body = {"enable_thinking": False}
-
-        if self.model.startswith("glm-4.") and self.model.endswith("-thinking"):
-            self.model = self.model.removesuffix("-thinking")
-            self.extra_body = {
-                "thinking": {
-                    "type": "enabled",
-                },
-            }
-
-        self.model = self.MODEL_MAPPING.get(self.model, self.model)
         self.model_settings = vv_llm_settings.get_backend(self.MODEL_TYPE).models[self.model]
 
         self.response_format: ResponseFormat | NotGiven = NOT_GIVEN

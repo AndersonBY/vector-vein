@@ -19,77 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "gpt-5",
-        "options": [
-          {
-            "value": "gpt-5",
-            "label": "gpt-5"
-          },
-          {
-            "value": "gpt-5-pro",
-            "label": "gpt-5-pro"
-          },
-          {
-            "value": "gpt-5-mini",
-            "label": "gpt-5-mini"
-          },
-          {
-            "value": "gpt-5-nano",
-            "label": "gpt-5-nano"
-          },
-          {
-            "value": "gpt-5-chat-latest",
-            "label": "gpt-5-chat-latest"
-          },
-          {
-            "value": "gpt-5-codex",
-            "label": "gpt-5-codex"
-          },
-          {
-            "value": "o4-mini",
-            "label": "o4-mini"
-          },
-          {
-            "value": "o4-mini-high",
-            "label": "o4-mini-high"
-          },
-          {
-            "value": "gpt-4.1",
-            "label": "gpt-4.1"
-          },
-          {
-            "value": "o3-mini",
-            "label": "o3-mini"
-          },
-          {
-            "value": "o3-mini-high",
-            "label": "o3-mini-high"
-          },
-          {
-            "value": "o1-mini",
-            "label": "o1-mini"
-          },
-          {
-            "value": "o1-preview",
-            "label": "o1-preview"
-          },
-          {
-            "value": "gpt-4o",
-            "label": "gpt-4o"
-          },
-          {
-            "value": "gpt-4",
-            "label": "gpt-4-turbo"
-          },
-          {
-            "value": "gpt-4o-mini",
-            "label": "gpt-4o-mini"
-          },
-          {
-            "value": "gpt-3.5",
-            "label": "gpt-3.5-turbo"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

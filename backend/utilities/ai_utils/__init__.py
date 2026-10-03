@@ -15,7 +15,7 @@ from .client import get_openai_client_and_model_id
 
 
 def conversation_title_generator(
-    messages: list, max_input_length: int = 512, backend: BackendType = BackendType.OpenAI, model: str = "gpt-4o-mini"
+    messages: list, max_input_length: int = 512, backend: BackendType = BackendType.OpenAI, model: str = "gpt-5-nano"
 ):
     user_settings = Settings()
     vv_llm_settings.load(user_settings.get("llm_settings"))

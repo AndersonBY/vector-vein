@@ -1,6 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { onBeforeMount, ref, watch } from 'vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
+import { hydrateTemplateModelField } from '@/utils/modelCatalog'
 import { createTemplateData } from './GptVision'
 
 const props = defineProps({
@@ -21,6 +22,10 @@ Object.entries(templateData.template).forEach(([key, value]) => {
   if (value.is_output) {
     fieldsData.value[key].is_output = true
   }
+})
+
+onBeforeMount(async () => {
+  await hydrateTemplateModelField(fieldsData, 'OpenAI', 'llm_model', true)
 })
 
 watch(() => fieldsData.value.images_or_urls, () => {

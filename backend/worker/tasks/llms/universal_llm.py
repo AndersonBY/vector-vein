@@ -22,6 +22,7 @@ class UniversalLLMTask(BaseLLMTask):
         "ernie": BackendType.Ernie,
         "stepfun": BackendType.StepFun,
         "xai": BackendType.XAI,
+        "xiaomi": BackendType.Xiaomi,
     }
 
     def __init__(self, workflow_data: dict, node_id: str):

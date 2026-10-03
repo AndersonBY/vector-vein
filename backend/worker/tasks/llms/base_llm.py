@@ -32,7 +32,7 @@ from vv_llm.types import (
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
-from utilities.network import new_httpx_client
+from utilities.network.llm_client import new_llm_http_client
 from utilities.general.ratelimit import is_request_allowed, add_request_record
 
 from .types.output import ModelOutput
@@ -144,7 +144,6 @@ class BaseLLMTask:
     MODEL_TYPE: BackendType
     NAME: str = "BaseLLMTask"
     SINGLE_PROCESS_TIMEOUT = 180
-    MODEL_MAPPING: dict[str, str] = {}
 
     def __init__(self, workflow_data: dict, node_id: str):
         self.workflow = Workflow(workflow_data)
@@ -162,68 +161,26 @@ class BaseLLMTask:
 
         user_settings = Settings()
         vv_llm_settings.load(user_settings.llm_settings)
+        if not self.model:
+            self.model = user_settings.llm_settings["backends"][self.MODEL_TYPE.value]["default_model"]
 
-        if self.model.startswith(("o1", "o3-mini", "o4-mini", "gpt-5")):
-            self.temperature = 1.0
-            self.top_p = 1
-            self.stream = False
-
-        if self.model == "deepseek-reasoner":
+        self.thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN
+        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
+        self.extra_body: dict = {}
+        if self.MODEL_TYPE == BackendType.OpenAI and self.model.startswith(("gpt-5", "gpt-6")):
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
-
-        if self.model in (
-            "claude-3-7-sonnet-thinking",
-            "claude-opus-4-20250514-thinking",
-            "claude-opus-4-1-20250805-thinking",
-            "claude-sonnet-4-20250514-thinking",
-            "claude-sonnet-4-5-20250929-thinking",
-        ):
-            self.original_model = self.model = self.model.removesuffix("-thinking")
-            self.thinking: ThinkingConfigParam | None | NotGiven = {"type": "enabled", "budget_tokens": 16000}
-            self.temperature = 1.0
-        else:
-            self.thinking = NOT_GIVEN
-
-        if self.model.startswith(("claude-opus-4", "claude-sonnet-4")):
+        if self.MODEL_TYPE in (BackendType.Anthropic, BackendType.Qwen):
             self.stream = True
-
-        if self.model and self.model.startswith(("o3-mini", "o4-mini")):
+        if self.MODEL_TYPE == BackendType.Anthropic:
+            self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
-
-        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
-        if self.model == "o3-mini-high":
-            self.original_model = self.model = "o3-mini"
-            self.reasoning_effort = "high"
-
-        if self.model == "o4-mini-high":
-            self.original_model = self.model = "o4-mini"
-            self.reasoning_effort = "high"
-
-        self.extra_body: object | None = None
-        if self.model.startswith("qwen3"):
-            self.stream = True  # 百炼上思考模式只支持流式输出
-            if self.model.endswith("-thinking"):
-                self.model = self.model.removesuffix("-thinking")
-                self.extra_body = {"enable_thinking": True}
-            else:
-                self.extra_body = {"enable_thinking": False}
-
-        if self.model.startswith("glm-4.") and self.model.endswith("-thinking"):
-            self.model = self.model.removesuffix("-thinking")
-            self.extra_body = {
-                "thinking": {
-                    "type": "enabled",
-                },
-            }
-
-        self.model = self.MODEL_MAPPING.get(self.model, self.model)
 
         self.chat_client = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
             temperature=self.temperature,
-            http_client=new_httpx_client(is_async=False),
+            http_client=new_llm_http_client(is_async=False),
         )
 
         self.model_settings = self.chat_client.backend_settings.models[self.model]

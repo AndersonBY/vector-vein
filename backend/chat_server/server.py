@@ -13,7 +13,6 @@ from vv_llm.types import (
     NotGiven,
     NOT_GIVEN,
     BackendType,
-    ThinkingConfigParam,
 )
 from vv_llm.chat_clients import create_async_chat_client
 from vv_llm.settings import settings as vv_llm_settings
@@ -22,7 +21,7 @@ from vv_llm.chat_clients.utils import ToolCallContentProcessor, format_messages
 from tts_server.server import tts_server
 from utilities.config import Settings, cache
 from utilities.general import mprint_with_name
-from utilities.network import new_httpx_client
+from utilities.network.llm_client import new_llm_http_client
 from celery_tasks import summarize_conversation_title
 from .utils import get_tool_call_data, get_tool_related_workflow
 
@@ -139,65 +138,8 @@ class WebSocketServer:
         temperature = NOT_GIVEN
         max_tokens = None
 
-        if model in ("deepseek-reasoner", "deepseek-r1-tools"):
-            thinking = NOT_GIVEN
-            temperature = 0.6
-        elif model in (
-            "claude-3-7-sonnet-thinking",
-            "claude-opus-4-20250514-thinking",
-            "claude-opus-4-1-20250805-thinking",
-            "claude-sonnet-4-20250514-thinking",
-            "claude-sonnet-4-5-20250929-thinking",
-        ):
-            model = model.removesuffix("-thinking")
-            thinking: ThinkingConfigParam | NotGiven = {"type": "enabled", "budget_tokens": 16000}
-            temperature = 1.0
-            max_tokens = 20000
-
         reasoning_effort: NotGiven | str = NOT_GIVEN
-        if model in ("o3-mini-high", "o4-mini-high"):
-            reasoning_effort = "high"
-            model = model.removesuffix("-high")
-
-        if model.startswith("gpt-5") and model.endswith("-high"):
-            reasoning_effort = "high"
-            model = model.removesuffix("-high")
-
-        extra_body: dict[str, bool | dict] = {}
-        if model.startswith("qwen3"):
-            if model.endswith("-thinking"):
-                if model not in [
-                    "qwen3-next-80b-a3b-thinking",
-                    "qwen3-vl-235b-a22b-thinking",
-                    "qwen3-vl-32b-thinking",
-                    "qwen3-vl-30b-a3b-thinking",
-                    "qwen3-vl-8b-thinking",
-                ]:
-                    model = model.removesuffix("-thinking")
-                extra_body = {"enable_thinking": True}
-            else:
-                extra_body = {"enable_thinking": False}
-
-        if model.startswith("glm-4.") and model.endswith("-thinking"):
-            model = model.removesuffix("-thinking")
-            extra_body = {
-                "thinking": {
-                    "type": "enabled",
-                },
-            }
-
-        if model.startswith("gemini-2.5"):
-            reasoning_effort = NOT_GIVEN
-            extra_body = {
-                "extra_body": {
-                    "google": {
-                        "thinking_config": {
-                            "thinkingBudget": -1,
-                            "include_thoughts": True,
-                        }
-                    }
-                }
-            }
+        extra_body: dict = {}
 
         model_settings = vv_llm_settings.get_backend(backend=backend)
         native_multimodal = model_settings.models[model].native_multimodal
@@ -219,14 +161,14 @@ class WebSocketServer:
         messages = [*system_message, *user_messages]
 
         if need_title:
-            title_backend, title_model = user_settings.get("agent.auto_title_model", ["openai", "gpt-4o-mini"])
+            title_backend, title_model = user_settings.get("agent.auto_title_model", ["openai", "gpt-5-nano"])
             if title_backend.startswith("_local__"):
                 title_backend = BackendType.Local
             else:
                 title_backend = BackendType(title_backend.lower())
             summarize_conversation_title.delay(ai_message_mid, history_messages, title_backend, title_model)
 
-        client = create_async_chat_client(backend=backend, model=model, http_client=new_httpx_client(is_async=True))
+        client = create_async_chat_client(backend=backend, model=model, http_client=new_llm_http_client(is_async=True))
 
         tool_call_data = request_data["conversation"]["tool_call_data"]
         if tool_call_data.get("workflows") or tool_call_data.get("templates"):

@@ -39,6 +39,7 @@ def _noop_base_init(self: Any, workflow_data: dict[str, Any], node_id: str) -> N
         (" XAI ", BackendType.XAI),
         ("stepfun", BackendType.StepFun),
         ("OpenAI", BackendType.OpenAI),
+        ("Xiaomi", BackendType.Xiaomi),
         ("unknown-provider", BackendType.OpenAI),
     ],
 )

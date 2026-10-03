@@ -25,17 +25,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "gemini-2.5-pro",
-        "options": [
-          {
-            "label": "gemini-2.5-pro",
-            "value": "gemini-2.5-pro",
-          },
-          {
-            "label": "gemini-2.5-flash",
-            "value": "gemini-2.5-flash",
-          }
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

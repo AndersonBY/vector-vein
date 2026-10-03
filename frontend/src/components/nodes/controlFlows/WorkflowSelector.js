@@ -41,7 +41,7 @@ export function createTemplateData() {
         required: false,
         placeholder: "",
         show: false,
-        value: "OpenAI/gpt-4o-mini",
+        value: "OpenAI/gpt-5-nano",
         options: [],
         name: "llm_model",
         display_name: "llm_model",

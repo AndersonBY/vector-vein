@@ -1,12 +1,13 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
-import json
 from copy import deepcopy
 from collections.abc import Mapping
 from typing import Any
 from urllib.parse import urlsplit, urlunsplit
 
 from vv_llm.settings import Settings as VvLlmSettings
+
+from .model_catalog import CHAT_CATALOG, DEFAULT_CHAT_BACKENDS, OPENAI_SERVICE_MODELS, is_retired_model
 
 
 DEFAULT_EMBEDDING_BACKENDS = {
@@ -67,7 +68,13 @@ DEFAULT_SETTINGS = {
     "output_folder": "./",
     "data_path": "./data",
     "log_path": "./log",
-    "email": {"user": "", "password": "", "smtp_host": "", "smtp_port": "", "smtp_ssl": True},
+    "email": {
+        "user": "",
+        "password": "",
+        "smtp_host": "",
+        "smtp_port": "",
+        "smtp_ssl": True,
+    },
     "pexels_api_key": "",
     "stable_diffusion_base_url": "http://127.0.0.1:7860",
     "stability_key": "",
@@ -76,9 +83,9 @@ DEFAULT_SETTINGS = {
     "website_domain": "vectorvein.ai",
     "agent": {
         "auto_title": True,
-        "auto_title_model": ["OpenAI", "gpt-4o-mini"],
+        "auto_title_model": ["OpenAI", "gpt-5-nano"],
         "screenshot_monitor_device": 0,
-        "tool_call_data_generate_model": ["OpenAI", "gpt-4o-mini"],
+        "tool_call_data_generate_model": ["OpenAI", "gpt-5-nano"],
     },
     "microphone_device": 0,
     "shortcuts": {},
@@ -89,11 +96,19 @@ DEFAULT_SETTINGS = {
     },
     "asr": {
         "provider": "openai",
-        "openai": {"same_as_llm": True, "api_base": "https://api.openai.com/v1", "api_key": "", "model": "whisper-1"},
+        "openai": {
+            "same_as_llm": True,
+            "api_base": "https://api.openai.com/v1",
+            "api_key": "",
+            "model": "whisper-1",
+        },
     },
     "web_search": {
         "jinaai": {"api_key": ""},
-        "bing": {"ocp_apim_subscription_key": "", "endpoint": "https://api.bing.microsoft.com/v7.0/search"},
+        "bing": {
+            "ocp_apim_subscription_key": "",
+            "endpoint": "https://api.bing.microsoft.com/v7.0/search",
+        },
     },
     "llm_settings": {
         "endpoints": [
@@ -133,7 +148,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "minimax-default",
-                "api_base": "https://api.minimax.chat/v1",
+                "api_base": "https://api.minimax.cn/v1",
                 "api_key": "",
             },
             {
@@ -143,7 +158,7 @@ DEFAULT_SETTINGS = {
             },
             {
                 "id": "deepseek-default",
-                "api_base": "https://api.deepseek.com/beta",
+                "api_base": "https://api.deepseek.com/v1",
                 "api_key": "",
             },
             {
@@ -194,6 +209,11 @@ DEFAULT_SETTINGS = {
                 "api_key": "",
             },
             {
+                "id": "xiaomi-default",
+                "api_base": "https://api.xiaomimimo.com/v1",
+                "api_key": "",
+            },
+            {
                 "api_base": "https://api.siliconflow.cn/v1",
                 "api_key": "",
                 "concurrent_requests": 20,
@@ -202,358 +222,7 @@ DEFAULT_SETTINGS = {
                 "tpm": 50000,
             },
         ],
-        "backends": {
-            "openai": {
-                "models": {
-                    "o1": {"id": "o1", "endpoints": ["openai-default"]},
-                    "o1-mini": {"id": "o1-mini", "endpoints": ["openai-default"]},
-                    "o1-preview": {"id": "o1-preview", "endpoints": ["openai-default"]},
-                    "o3-mini": {"id": "o3-mini", "endpoints": ["openai-default"]},
-                    "o3-mini-high": {"id": "o3-mini-high", "endpoints": ["openai-default"]},
-                    "gpt-4o": {"id": "gpt-4o", "endpoints": ["openai-default"]},
-                    "gpt-4o-mini": {"id": "gpt-4o-mini", "endpoints": ["openai-default"]},
-                    "gpt-4": {"id": "gpt-4", "endpoints": ["openai-default"]},
-                    "gpt-35-turbo": {"id": "gpt-3.5-turbo", "endpoints": ["openai-default"]},
-                    "whisper-1": {"id": "whisper-1", "endpoints": ["openai-default"]},
-                    "tts-1": {"id": "tts-1", "endpoints": ["openai-default"]},
-                    "tts-1-hd": {"id": "tts-1-hd", "endpoints": ["openai-default"]},
-                    "dall-e-3": {"id": "dall-e-3", "endpoints": ["openai-default"]},
-                    "text-embedding-ada-002": {"id": "text-embedding-ada-002", "endpoints": ["openai-default"]},
-                }
-            },
-            "anthropic": {
-                "models": {
-                    "claude-3-opus-20240229": {
-                        "id": "claude-3-opus-20240229",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-sonnet-20240229": {
-                        "id": "claude-3-sonnet-20240229",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-haiku-20240307": {
-                        "id": "claude-3-haiku-20240307",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-5-sonnet-20240620": {
-                        "id": "claude-3-5-sonnet-20240620",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-5-sonnet-20241022": {
-                        "id": "claude-3-5-sonnet-20241022",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-5-haiku-20241022": {
-                        "id": "claude-3-5-haiku-20241022",
-                        "endpoints": ["anthropic-default"],
-                    },
-                    "claude-3-7-sonnet-20250219": {
-                        "id": "claude-3-7-sonnet-20250219",
-                        "endpoints": ["anthropic-default"],
-                    },
-                }
-            },
-            "minimax": {
-                "models": {
-                    "abab5-chat": {"id": "abab5-chat", "endpoints": ["minimax-default"]},
-                    "abab5.5-chat": {"id": "abab5.5-chat", "endpoints": ["minimax-default"]},
-                    "abab6-chat": {"id": "abab6-chat", "endpoints": ["minimax-default"]},
-                    "abab6.5s-chat": {"id": "abab6.5s-chat", "endpoints": ["minimax-default"]},
-                    "MiniMax-Text-01": {"endpoints": ["minimax-default"], "id": "MiniMax-Text-01"},
-                }
-            },
-            "gemini": {
-                "models": {
-                    "gemini-1.5-pro": {"id": "gemini-1.5-pro", "endpoints": ["gemini-default"]},
-                    "gemini-1.5-flash": {"id": "gemini-1.5-flash", "endpoints": ["gemini-default"]},
-                    "gemini-2.0-flash-thinking-exp-1219": {
-                        "endpoints": ["gemini-default"],
-                        "id": "gemini-2.0-flash-thinking-exp-1219",
-                    },
-                    "gemini-2.0-flash-thinking-exp-01-21": {
-                        "endpoints": ["gemini-default"],
-                        "id": "gemini-2.0-flash-thinking-exp-01-21",
-                    },
-                    "gemini-2.0-pro-exp-02-05": {"id": "gemini-2.0-pro-exp-02-05", "endpoints": ["gemini-default"]},
-                    "gemini-2.0-flash": {"id": "gemini-2.0-flash", "endpoints": ["gemini-default"]},
-                    "gemini-2.0-flash-lite-preview-02-05": {
-                        "id": "gemini-2.0-flash-lite-preview-02-05",
-                        "endpoints": ["gemini-default"],
-                    },
-                }
-            },
-            "deepseek": {
-                "models": {
-                    "deepseek-chat": {"id": "deepseek-chat", "endpoints": ["deepseek-default"]},
-                    "deepseek-reasoner": {"id": "deepseek-reasoner", "endpoints": ["deepseek-default"]},
-                }
-            },
-            "groq": {
-                "models": {
-                    "mixtral-8x7b-32768": {
-                        "id": "mixtral-8x7b-32768",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama3-70b-8192": {
-                        "id": "llama3-70b-8192",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama3-8b-8192": {
-                        "id": "llama3-8b-8192",
-                        "endpoints": ["groq-default"],
-                    },
-                    "gemma-7b-it": {
-                        "id": "gemma-7b-it",
-                        "endpoints": ["groq-default"],
-                    },
-                    "gemma2-9b-it": {
-                        "id": "gemma2-9b-it",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama3-groq-70b-8192-tool-use-preview": {
-                        "id": "llama3-groq-70b-8192-tool-use-preview",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama3-groq-8b-8192-tool-use-preview": {
-                        "id": "llama3-groq-8b-8192-tool-use-preview",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama-3.1-70b-versatile": {
-                        "id": "llama-3.1-70b-versatile",
-                        "endpoints": ["groq-default"],
-                    },
-                    "llama-3.1-8b-instant": {
-                        "id": "llama-3.1-8b-instant",
-                        "endpoints": ["groq-default"],
-                    },
-                }
-            },
-            "mistral": {
-                "models": {
-                    "mistral-large": {
-                        "id": "mistral-large-latest",
-                        "context_length": 128000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "mistral-small": {
-                        "id": "mistral-small-latest",
-                        "context_length": 128000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "codestral": {
-                        "id": "codestral-latest",
-                        "context_length": 32000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "mistral-embed": {
-                        "id": "mistral-embed",
-                        "context_length": 8000,
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "pixtral": {
-                        "id": "pixtral-12b-2409",
-                        "context_length": 128000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "mistral-nemo": {
-                        "id": "open-mistral-nemo",
-                        "context_length": 128000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                    "codestral-mamba": {
-                        "id": "open-codestral-mamba",
-                        "context_length": 256000,
-                        "function_call_available": True,
-                        "response_format_available": True,
-                        "endpoints": ["mistral-default"],
-                    },
-                }
-            },
-            "qwen": {
-                "models": {
-                    "qwen2.5-7b-instruct": {
-                        "id": "qwen2.5-7b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 131072,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen2.5-14b-instruct": {
-                        "id": "qwen2.5-14b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 131072,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen2.5-32b-instruct": {
-                        "id": "qwen2.5-32b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 131072,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen2.5-coder-32b-instruct": {
-                        "id": "qwen2.5-coder-32b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 131072,
-                        "max_output_tokens": 4096,
-                    },
-                    "qwen2.5-72b-instruct": {
-                        "id": "qwen2.5-72b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 131072,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwq-32b-preview": {
-                        "id": "qwq-32b-preview",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": False,
-                        "context_length": 32768,
-                        "max_output_tokens": 4096,
-                    },
-                    "qwen2.5-vl-72b-instruct": {
-                        "id": "qwen2.5-vl-72b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen2.5-vl-7b-instruct": {
-                        "id": "qwen2.5-vl-7b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen2.5-vl-3b-instruct": {
-                        "id": "qwen2.5-vl-3b-instruct",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "max_output_tokens": 8192,
-                    },
-                    "qwen-max": {
-                        "id": "qwen-max",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": True,
-                        "context_length": 8096,
-                        "max_output_tokens": 2048,
-                    },
-                    "qwen-max-longcontext": {
-                        "id": "qwen-max-longcontext",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": True,
-                        "context_length": 30000,
-                        "max_output_tokens": 2048,
-                    },
-                    "qwen-plus": {
-                        "id": "qwen-plus",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": True,
-                        "context_length": 131072,
-                        "max_output_tokens": 8096,
-                    },
-                    "qwen-turbo": {
-                        "id": "qwen-turbo",
-                        "endpoints": ["qwen-default"],
-                        "function_call_available": False,
-                        "response_format_available": True,
-                        "context_length": 8096,
-                        "max_output_tokens": 1500,
-                    },
-                }
-            },
-            "yi": {
-                "models": {
-                    "yi-vision-v2": {"id": "yi-vision-v2", "endpoints": ["lingyiwanwu-default"]},
-                    "yi-lightning": {"id": "yi-lightning", "endpoints": ["lingyiwanwu-default"]},
-                }
-            },
-            "baichuan": {
-                "models": {
-                    "Baichuan4": {"id": "Baichuan4", "endpoints": ["baichuan-default"]},
-                    "Baichuan3-Turbo": {"id": "Baichuan3-Turbo", "endpoints": ["baichuan-default"]},
-                }
-            },
-            "zhipuai": {
-                "models": {
-                    "glm-3-turbo": {"id": "glm-3-turbo", "endpoints": ["zhipuai-default"]},
-                    "glm-4": {"id": "glm-4", "endpoints": ["zhipuai-default"]},
-                    "glm-4-plus": {"id": "glm-4-plus", "endpoints": ["zhipuai-default"]},
-                    "glm-4-0520": {"id": "glm-4-0520", "endpoints": ["zhipuai-default"]},
-                    "glm-4-air": {"id": "glm-4-air", "endpoints": ["zhipuai-default"]},
-                    "glm-4-airx": {"id": "glm-4-airx", "endpoints": ["zhipuai-default"]},
-                    "glm-4-flash": {"id": "glm-4-flash", "endpoints": ["zhipuai-default"]},
-                    "glm-4-flashx": {"id": "glm-4-flashx", "endpoints": ["zhipuai-default"]},
-                    "glm-4-long": {"id": "glm-4-long", "endpoints": ["zhipuai-default"]},
-                    "glm-4v": {"id": "glm-4v", "endpoints": ["zhipuai-default"]},
-                    "glm-4v-flash": {"id": "glm-4v-flash", "endpoints": ["zhipuai-default"]},
-                    "glm-4v-plus": {"id": "glm-4v-plus", "endpoints": ["zhipuai-default"]},
-                    "glm-zero-preview": {"id": "glm-zero-preview", "endpoints": ["zhipuai-default"]},
-                }
-            },
-            "moonshot": {
-                "models": {
-                    "moonshot-v1-8k": {"id": "moonshot-v1-8k", "endpoints": ["moonshot-default"]},
-                    "moonshot-v1-32k": {"id": "moonshot-v1-32k", "endpoints": ["moonshot-default"]},
-                    "moonshot-v1-128k": {"id": "moonshot-v1-128k", "endpoints": ["moonshot-default"]},
-                    "moonshot-v1-8k-vision-preview": {
-                        "endpoints": ["moonshot-default"],
-                        "id": "moonshot-v1-8k-vision-preview",
-                    },
-                    "moonshot-v1-32k-vision-preview": {
-                        "endpoints": ["moonshot-default"],
-                        "id": "moonshot-v1-32k-vision-preview",
-                    },
-                    "moonshot-v1-128k-vision-preview": {
-                        "endpoints": ["moonshot-default"],
-                        "id": "moonshot-v1-128k-vision-preview",
-                    },
-                }
-            },
-            "stepfun": {
-                "models": {
-                    "step-1v-8k": {"id": "step-1v-8k", "endpoints": ["stepfun-default"]},
-                    "step-2-16k": {"id": "step-2-16k", "endpoints": ["stepfun-default"]},
-                }
-            },
-            "xai": {
-                "models": {
-                    "grok-2-1212": {"id": "grok-2-1212", "endpoints": ["xai-default"]},
-                    "grok-2-vision-1212": {"id": "grok-2-vision-1212", "endpoints": ["xai-default"]},
-                }
-            },
-            "ernie": {
-                "models": {
-                    "ernie-3.5": {"id": "ernie-3.5-128k", "endpoints": ["ernie-default"]},
-                    "ernie-4.0": {"id": "ernie-4.0-8k", "endpoints": ["ernie-default"]},
-                    "ernie-4.5": {"id": "ernie-4.5-8k-preview", "endpoints": ["ernie-default"]},
-                }
-            },
-            "local": {
-                "models": {},
-            },
-        },
+        "backends": deepcopy(DEFAULT_CHAT_BACKENDS),
         "embedding_backends": deepcopy(DEFAULT_EMBEDDING_BACKENDS),
     },
     "custom_llms": {},
@@ -573,12 +242,55 @@ def deep_merge(default, custom):
     return default
 
 
-def _coerce_vv_llm_settings(raw_settings: object) -> VvLlmSettings | None:
-    if isinstance(raw_settings, VvLlmSettings):
-        return raw_settings
-    if isinstance(raw_settings, Mapping):
-        return VvLlmSettings(**dict(raw_settings))
-    return None
+def normalize_chat_backends(data: dict[str, Any]) -> None:
+    normalize_embedding_backends(data)
+    raw = deepcopy(data.get("llm_settings", {}))
+    backends = raw.setdefault("backends", {})
+    for provider in DEFAULT_CHAT_BACKENDS:
+        # vv-llm 0.7 only accepts providers nested under backends.
+        if provider in raw:
+            backends[provider] = raw.pop(provider)
+        backend = backends.setdefault(provider, {})
+        default = DEFAULT_CHAT_BACKENDS[provider]
+        if not backend.get("default_endpoint"):
+            backend["default_endpoint"] = default.get("default_endpoint")
+        models = backend.setdefault("models", {})
+        for name in list(models):
+            if is_retired_model(provider, name):
+                del models[name]
+        for name, model in default["models"].items():
+            # Refresh built-in capabilities while retaining routing and enablement.
+            overrides = {key: models.get(name, {})[key] for key in ("id", "endpoints", "enabled") if key in models.get(name, {})}
+            models[name] = {**deepcopy(model), **overrides}
+        if provider == "openai":
+            for name in OPENAI_SERVICE_MODELS:
+                models[name]["enabled"] = False
+
+    endpoints = raw["endpoints"] = list({endpoint["id"]: endpoint for endpoint in raw.get("endpoints", [])}.values())
+    endpoint_ids = {endpoint["id"] for endpoint in endpoints}
+    for endpoint in DEFAULT_SETTINGS["llm_settings"]["endpoints"]:
+        if endpoint["id"] not in endpoint_ids:
+            endpoints.append(deepcopy(endpoint))
+    for endpoint in endpoints:
+        if endpoint.get("api_base") == "https://api.deepseek.com/beta":
+            endpoint["api_base"] = "https://api.deepseek.com/v1"
+        if endpoint.get("api_base") == "https://api.minimax.chat/v1":
+            endpoint["api_base"] = "https://api.minimax.cn/v1"
+
+    raw["VERSION"] = "2"
+    normalized = VvLlmSettings(**raw).model_dump(mode="json")
+    # vv-llm also carries historical models; keep them out of application settings.
+    for provider, backend in normalized["backends"].items():
+        backend["models"] = {name: model for name, model in backend["models"].items() if not is_retired_model(provider, name)}
+        default_model = {"mistral": "mistral-small-latest"}.get(provider, CHAT_CATALOG["default_models"].get(provider))
+        if default_model not in backend["models"]:
+            default_model = next(iter(backend["models"]), "")
+        backend["default_model"] = default_model
+    data["llm_settings"] = normalized
+    for field in ("auto_title_model", "tool_call_data_generate_model"):
+        selection = data.get("agent", {}).get(field)
+        if selection and len(selection) == 2 and is_retired_model(str(selection[0]).lower(), selection[1]):
+            data["agent"][field] = deepcopy(DEFAULT_SETTINGS["agent"][field])
 
 
 def _split_endpoint_base_and_path(api_base: str, default_path: str = "/embed") -> tuple[str, str]:
@@ -613,20 +325,18 @@ def normalize_embedding_backends(data: dict[str, Any]) -> bool:
     if isinstance(legacy_embedding_models, Mapping):
         tei_settings = legacy_embedding_models.get("text_embeddings_inference")
         if isinstance(tei_settings, Mapping):
-            endpoint_base, endpoint_path = _split_endpoint_base_and_path(
-                str(tei_settings.get("api_base", "http://localhost:8080/embed"))
-            )
+            endpoint_base, endpoint_path = _split_endpoint_base_and_path(str(tei_settings.get("api_base", "http://localhost:8080/embed")))
             endpoint_list = llm_settings.setdefault("endpoints", [])
             tei_endpoint = next(
-                (
-                    endpoint
-                    for endpoint in endpoint_list
-                    if isinstance(endpoint, dict) and endpoint.get("id") == "tei-default"
-                ),
+                (endpoint for endpoint in endpoint_list if isinstance(endpoint, dict) and endpoint.get("id") == "tei-default"),
                 None,
             )
             if tei_endpoint is None:
-                tei_endpoint = {"id": "tei-default", "api_base": endpoint_base, "api_key": ""}
+                tei_endpoint = {
+                    "id": "tei-default",
+                    "api_base": endpoint_base,
+                    "api_key": "",
+                }
                 endpoint_list.append(tei_endpoint)
             tei_endpoint["api_base"] = endpoint_base
             tei_endpoint["api_key"] = str(tei_settings.get("api_key", ""))
@@ -650,22 +360,11 @@ def normalize_embedding_backends(data: dict[str, Any]) -> bool:
 
 
 def update_llm_settings_to_v2(data: dict):
-    from vv_llm.settings import settings as vv_llm_settings
-
     if data.get("settings_version", 1) == 2:
-        if data.get("llm_settings", {}).get("VERSION", "1") == "2":
-            return data
-        else:
-            legacy_llm_settings_v1 = data.get("llm_settings", {})
-            vv_llm_settings.load(legacy_llm_settings_v1)
-            vv_llm_settings.upgrade_to_v2()
-            data["llm_settings"] = vv_llm_settings.export()
-            return data
+        normalize_chat_backends(data)
+        return data
 
-    with open("settings_v1.json", "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=4)
-
-    llm_settings = vv_llm_settings.model_dump()
+    llm_settings = deepcopy(DEFAULT_SETTINGS["llm_settings"])
 
     # 转换 OpenAI 相关设置
     if data.get("openai_api_type") == "open_ai":
@@ -678,18 +377,7 @@ def update_llm_settings_to_v2(data: dict):
                 "tpm": 150000,
             }
         )
-        for model in [
-            "gpt-35-turbo",
-            "gpt-4",
-            "gpt-4o",
-            "gpt-4o-mini",
-            "whisper-1",
-            "tts-1",
-            "tts-1-hd",
-            "dall-e-3",
-            "text-embedding-ada-002",
-        ]:
-            llm_settings["openai"]["models"][model] = {"id": model, "endpoints": ["openai-default"]}
+        llm_settings["backends"]["openai"]["default_endpoint"] = "openai-default"
     else:
         azure_endpoints = data.get("azure_openai", {}).get("endpoints", [])
         for endpoint in azure_endpoints:
@@ -708,7 +396,9 @@ def update_llm_settings_to_v2(data: dict):
             ("text-embedding-ada-002", "text_embedding_ada_002_deployment"),
         ]:
             endpoint_id = data.get("azure_openai", {}).get(model_deployment, {}).get("endpoint_id", 0)
-            llm_settings["openai"]["models"][model_id] = {
+            if not azure_endpoints:
+                continue
+            llm_settings["backends"]["openai"]["models"][model_id] = {
                 "id": model_id,
                 "endpoints": [azure_endpoints[endpoint_id]["id"]],
             }
@@ -736,7 +426,7 @@ def update_llm_settings_to_v2(data: dict):
                     "api_key": data.get(api_key_key, ""),
                 }
             )
-            for model in llm_settings[provider]["models"].values():
+            for model in llm_settings["backends"][provider]["models"].values():
                 model["endpoints"] = [f"{provider}-default"]
 
     local_llms = data.get("local_llms", [])
@@ -761,7 +451,7 @@ def update_llm_settings_to_v2(data: dict):
         custom_llm_families[llm["model_family"]] = []
         for model in llm["models"]:
             model_id = model["model_id"]
-            llm_settings["local"]["models"][model_id] = {
+            llm_settings["backends"]["local"]["models"][model_id] = {
                 "id": model_id,
                 "endpoints": llm["endpoints"],
                 "function_call_available": model.get("function_calling", False),
@@ -806,10 +496,12 @@ def update_llm_settings_to_v2(data: dict):
             del data[field]
 
     data["settings_version"] = 2
-    vv_llm_settings.load(llm_settings)
-    vv_llm_settings.upgrade_to_v2()
-    data["llm_settings"] = vv_llm_settings.export()
+    data["llm_settings"] = llm_settings
+    normalize_chat_backends(data)
     return data
+
+
+normalize_chat_backends(DEFAULT_SETTINGS)
 
 
 class Settings:
@@ -823,38 +515,16 @@ class Settings:
     def load_setting(self):
         from models import model_serializer
         from models import Setting as SettingModel
-        from vv_llm.settings import settings as vv_llm_settings
 
         if SettingModel.select().count() == 0:
             setting = SettingModel.create(data=deepcopy(DEFAULT_SETTINGS))
-            default_llm_settings = _coerce_vv_llm_settings(DEFAULT_SETTINGS.get("llm_settings"))
-            if default_llm_settings is not None:
-                vv_llm_settings.load(default_llm_settings)
-            setting.data["llm_settings"] = vv_llm_settings.export()
-            setting.save()
         else:
-            need_save = False
             setting = SettingModel.select().order_by(SettingModel.create_time.desc()).first()
-            if setting.data.get("llm_settings", {}).get("VERSION", "1") != "2":
-                need_save = True
+            previous_data = deepcopy(setting.data)
             setting.data = update_llm_settings_to_v2(setting.data)
             setting.data = deep_merge(deepcopy(DEFAULT_SETTINGS), setting.data)
-            if normalize_embedding_backends(setting.data):
-                need_save = True
-
-            # Update Gemini endpoint api_base to openai compatible version
-            for endpoint in setting.data["llm_settings"]["endpoints"]:
-                if "is_azure" in endpoint or "is_vertex" in endpoint or "is_bedrock" in endpoint:
-                    need_save = True
-                if endpoint.get("api_base") == "https://generativelanguage.googleapis.com/v1beta":
-                    endpoint["api_base"] = "https://generativelanguage.googleapis.com/v1beta/openai/"
-                    need_save = True
-
-            if need_save:
-                current_llm_settings = _coerce_vv_llm_settings(setting.data.get("llm_settings"))
-                if current_llm_settings is not None:
-                    vv_llm_settings.load(current_llm_settings)
-                setting.data["llm_settings"] = vv_llm_settings.export()
+            normalize_embedding_backends(setting.data)
+            if setting.data != previous_data:
                 setting.save()
 
         self.data = model_serializer(setting)["data"]

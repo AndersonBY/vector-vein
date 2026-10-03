@@ -56,7 +56,7 @@ def summarize_conversation_title(
     message_id: str,
     messages: list,
     backend: BackendType = BackendType.OpenAI,
-    model: str = "gpt-4o-mini",
+    model: str = "gpt-5-nano",
 ):
     """Summarize conversation title"""
     try:

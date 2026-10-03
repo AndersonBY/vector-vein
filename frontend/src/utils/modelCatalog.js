@@ -44,7 +44,7 @@ export function flattenProviderModelOptions(optionGroups) {
   return flattened
 }
 
-export async function hydrateTemplateModelField(fieldsData, provider, fieldName = "llm_model") {
+export async function hydrateTemplateModelField(fieldsData, provider, fieldName = "llm_model", vision = false) {
   const store = useModelCatalogStore()
   await store.ensureLoaded()
 
@@ -52,10 +52,7 @@ export async function hydrateTemplateModelField(fieldsData, provider, fieldName 
     return
   }
 
-  const providerOptions = findProviderChildren(store.generalModelOptions, provider)
-  if (providerOptions.length === 0) {
-    return
-  }
+  const providerOptions = findProviderChildren(vision ? store.visionModelOptions : store.generalModelOptions, provider)
 
   fieldsData.value[fieldName].options = providerOptions.map((item) => ({
     value: item.value,
@@ -65,7 +62,7 @@ export async function hydrateTemplateModelField(fieldsData, provider, fieldName 
   const currentValue = fieldsData.value[fieldName].value
   const currentValid = providerOptions.some((item) => item.value === currentValue)
   if (!currentValid) {
-    fieldsData.value[fieldName].value = providerOptions[0].value
+    fieldsData.value[fieldName].value = providerOptions[0]?.value || ''
   }
 }
 

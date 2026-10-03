@@ -15,7 +15,7 @@ export function createTemplateData() {
     list: true,
     field_type: 'select',
   }
-  template.template.llm_model.value = 'gpt-4o-mini'
+  template.template.llm_model.value = ''
   template.template.llm_model.options = []
   return template
 }

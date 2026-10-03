@@ -19,33 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "yi-lightning",
-        "options": [
-          {
-            "value": "yi-lightning",
-            "label": "yi-lightning",
-          },
-          {
-            "value": "yi-large",
-            "label": "yi-large",
-          },
-          {
-            "value": "yi-large-turbo",
-            "label": "yi-large-turbo",
-          },
-          {
-            "value": "yi-medium",
-            "label": "yi-medium",
-          },
-          {
-            "value": "yi-medium-200k",
-            "label": "yi-medium-200k",
-          },
-          {
-            "value": "yi-spark",
-            "label": "yi-spark",
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

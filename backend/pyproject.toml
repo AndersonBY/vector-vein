@@ -41,7 +41,7 @@ dependencies = [
   "celery>=5.3.0",
   "fastapi>=0.110.0",
   "uvicorn>=0.28.0",
-  "vv-llm[bedrock,vertex]>=0.3.86",
+  "vv-llm[bedrock,vertex]>=0.7.4,<0.8",
   "sqlalchemy>=2.0",
   "qtpy>=2.4; sys_platform == \"linux\"",
   "PySide6>=6.8; sys_platform == \"linux\"",
@@ -50,7 +50,7 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.14"
+version = "0.4.15"
 
 [tool.pdm]
 distribution = false

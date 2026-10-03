@@ -25,73 +25,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "qwen3-vl-30b-a3b-instruct",
-        "options": [
-          {
-            "value": "qwen3-vl-30b-a3b-thinking",
-            "label": "qwen3-vl-30b-a3b-thinking",
-          },
-          {
-            "value": "qwen3-vl-30b-a3b-instruct",
-            "label": "qwen3-vl-30b-a3b-instruct",
-          },
-          {
-            "value": "qwen3-vl-8b-thinking",
-            "label": "qwen3-vl-8b-thinking",
-          },
-          {
-            "value": "qwen3-vl-8b-instruct",
-            "label": "qwen3-vl-8b-instruct",
-          },
-          {
-            "value": "qwen3-vl-flash",
-            "label": "qwen3-vl-flash",
-          },
-          {
-            "value": "qwen3-vl-plus",
-            "label": "qwen3-vl-plus",
-          },
-          {
-            "value": "qwen3-vl-235b-a22b-thinking",
-            "label": "qwen3-vl-235b-a22b-thinking",
-          },
-          {
-            "value": "qwen3-vl-235b-a22b-instruct",
-            "label": "qwen3-vl-235b-a22b-instruct",
-          },
-          {
-            "value": "qvq-72b-preview",
-            "label": "qvq-72b-preview",
-          },
-          {
-            "value": "qwen2.5-vl-72b-instruct",
-            "label": "qwen2.5-vl-72b-instruct",
-          },
-          {
-            "value": "qwen2.5-vl-7b-instruct",
-            "label": "qwen2.5-vl-7b-instruct",
-          },
-          {
-            "value": "qwen2.5-vl-3b-instruct",
-            "label": "qwen2.5-vl-3b-instruct",
-          },
-          {
-            "value": "qwen2-vl-72b-instruct",
-            "label": "qwen2-vl-72b-instruct",
-          },
-          {
-            "value": "qwen2-vl-7b-instruct",
-            "label": "qwen2-vl-7b-instruct",
-          },
-          {
-            "value": "qwen-vl-max",
-            "label": "qwen-vl-max",
-          },
-          {
-            "value": "qwen-vl-plus",
-            "label": "qwen-vl-plus",
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

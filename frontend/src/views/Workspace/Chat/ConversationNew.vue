@@ -32,7 +32,7 @@ const conversation = reactive({
   cid: '',
   title: t('workspace.chatSpace.new_chat'),
   settings: defaultSettings[locale.value],
-  model: 'gpt-4o-mini',
+  model: 'gpt-5-nano',
   model_provider: 'OpenAI',
   update_time: new Date().getTime(),
 })
