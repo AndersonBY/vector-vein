@@ -10,3 +10,4 @@ class ModelOutput(pydantic.BaseModel):
     function_call_arguments: Optional[dict] = None
     prompt_tokens: int
     completion_tokens: int
+    cache_hit: bool = False

@@ -49,6 +49,17 @@ export function createTemplateData() {
         "list": false,
         "field_type": "checkbox"
       },
+      "continue_on_error": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": false,
+  "name": "continue_on_error",
+  "display_name": "continue_on_error",
+  "type": "bool",
+  "list": false,
+  "field_type": "checkbox"
+},
       "output": {
         "required": true,
         "placeholder": "",

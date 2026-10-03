@@ -12,9 +12,7 @@ from pathlib import Path
 
 import pypdf
 import mammoth
-import openpyxl
 import pathspec
-import pandas as pd
 from pptx import Presentation
 
 from utilities.config import Settings
@@ -144,7 +142,7 @@ def read_zip_contents(zip_file_path: str | Path, extract_path: str | Path | None
 
 
 def read_file_content(local_file: str | Path, read_zip: bool = False):
-    filename = Path(local_file).name
+    filename = Path(local_file).name.lower()
     if filename.endswith(".docx"):
         with open(local_file, "rb") as docx_file:
             docx_data = mammoth.convert_to_markdown(docx_file)
@@ -165,19 +163,9 @@ def read_file_content(local_file: str | Path, read_zip: bool = False):
                     ppt_contents.append(text.strip())
         return "\n\n".join(ppt_contents)
     elif filename.endswith(".xlsx"):
-        try:
-            df = pd.read_excel(local_file, engine="openpyxl")
-            return df.to_csv(index=False)
-        except Exception as e:
-            mprint.error(e)
-            wb = openpyxl.load_workbook(local_file, data_only=True)
-            ws = wb.active
-            if ws is None:
-                return ""
-            csv_contents = []
-            for row in ws.rows:
-                csv_contents.append(",".join([str(cell.value) if cell.value else "" for cell in row]))
-            return "\n\n".join(csv_contents)
+        from .structured import read_workbook, workbook_text
+
+        return workbook_text(read_workbook(local_file))
     elif filename.endswith((".txt", ".md", ".html", ".json", ".csv", ".srt")):
         for codec in CODEC_TEST_LIST:
             try:

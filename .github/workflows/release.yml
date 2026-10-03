@@ -138,6 +138,13 @@ jobs:
         working-directory: backend
         run: ${{ matrix.pdm_install_command }}
 
+      - name: Check backend
+        working-directory: backend
+        run: |
+          pdm run test
+          pdm run lint
+          pdm run python examples/reliable_report.py
+
       - name: Build frontend bundle
         working-directory: backend
         run: pdm run python build.py -t f
