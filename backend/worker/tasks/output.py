@@ -4,18 +4,22 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-28 19:37:00
 import uuid
+import csv
+import json
+import os
+import tempfile
 from io import StringIO
 from pathlib import Path
-from datetime import datetime
 
 import yagmail
-import openpyxl
+from pathvalidate import validate_filename
 import markdown2
 import pandas as pd
 import docx_ea_font
 from docx import Document
 
 from worker.tasks import task, timer
+from utilities.file_processing.structured import write_workbook, write_report, write_chart
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
@@ -94,48 +98,60 @@ def email(
 
 @task
 @timer
-def document(
-    workflow_data: dict,
-    node_id: str,
-):
+def document(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
-    output_folder = Path(Settings().output_folder)
+    output_folder = Path(Settings().output_folder).resolve()
+    output_folder.mkdir(parents=True, exist_ok=True)
     file_name = workflow.get_node_field_value(node_id, "file_name")
+    validate_filename(file_name, platform="universal")
     content = workflow.get_node_field_value(node_id, "content")
-    workflow.get_node_field_value(node_id, "show_download")
-    contents = [content]
     export_type = workflow.get_node_field_value(node_id, "export_type")
-
+    if export_type not in (".txt", ".md", ".html", ".json", ".csv", ".srt", ".docx", ".xlsx", ".png"):
+        raise ValueError("Unsupported document export type")
+    structured = isinstance(content, dict) or workflow.get_node_field_value(node_id, "content_format", "text") == "structured"
+    if structured and isinstance(content, str):
+        content = json.loads(content)
+    template_file = workflow.get_node_field_value(node_id, "template_file", "") or None
     local_file = output_folder / f"{file_name}{export_type}"
-    if local_file.exists():
-        local_file = output_folder / f"{file_name}_{datetime.now().strftime('%Y%m%d%H%M%S')}{export_type}"
-    if export_type.endswith((".txt", ".md", ".html", ".json", ".csv")):
-        with open(local_file, "w") as txt_file:
-            txt_file.write("\n".join(contents))
-    elif export_type.endswith(".docx"):
-        content_str = "\n".join(contents)
-        html_content = markdown2.markdown(content_str)
-        new_parser = HtmlToDocx()
-        document = Document()
-        new_parser.add_html_to_document(html_content, document)
-        for paragraph in document.paragraphs:
-            for run in paragraph.runs:
-                docx_ea_font.set_font(run, "微软雅黑")
-
-        document.save(local_file.as_posix())
-    elif export_type.endswith(".xlsx"):
-        content_str = "\n".join(contents)
-        lines = content_str.split("\n")
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        if ws is None:
-            ws = wb.create_sheet()
-        for line in lines:
-            ws.append(line.split(","))
-        wb.save(local_file)
-
-    file_full_path = str(local_file.resolve())
-    workflow.update_node_field_value(node_id, "output", file_full_path)
+    if local_file.exists() and workflow.get_node_field_value(node_id, "overwrite", False) is not True:
+        local_file = output_folder / f"{file_name}_{uuid.uuid4().hex[:12]}{export_type}"
+    handle = tempfile.NamedTemporaryFile(dir=output_folder, suffix=export_type, delete=False)
+    temporary = Path(handle.name)
+    handle.close()
+    try:
+        if export_type == ".xlsx":
+            if not structured:
+                rows = list(csv.reader(StringIO(content)))
+                if not rows:
+                    raise ValueError("Spreadsheet content must not be empty")
+                content = {"sheets": [{"name": "Sheet", "columns": rows[0], "rows": rows[1:]}]}
+            write_workbook(content, temporary)
+        elif export_type == ".docx":
+            if structured:
+                write_report(content, temporary, template_file)
+            else:
+                html_content = markdown2.markdown(content)
+                document = Document(template_file) if template_file else Document()
+                HtmlToDocx().add_html_to_document(html_content, document)
+                if not template_file:
+                    for paragraph in document.paragraphs:
+                        for run in paragraph.runs:
+                            docx_ea_font.set_font(run, "微软雅黑")
+                document.save(str(temporary))
+        elif export_type == ".png":
+            if not structured:
+                raise ValueError("PNG charts require structured content")
+            write_chart(content, temporary)
+        else:
+            if export_type == ".json" and structured:
+                content = json.dumps(content, ensure_ascii=False, allow_nan=False, indent=2)
+            if not isinstance(content, str):
+                raise ValueError("Text exports require string content")
+            temporary.write_text(content, encoding="utf-8")
+        os.replace(temporary, local_file)
+    finally:
+        temporary.unlink(missing_ok=True)
+    workflow.update_node_field_value(node_id, "output", str(local_file))
     return workflow.data
 
 

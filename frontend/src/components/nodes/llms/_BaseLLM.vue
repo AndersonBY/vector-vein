@@ -51,11 +51,72 @@ const props = defineProps({
 
 
 const { t, te } = useI18n()
+const reliabilityTemplate = { template: {
+  "output_schema": {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "value": "",
+    "name": "output_schema",
+    "display_name": "output_schema",
+    "type": "str",
+    "list": false,
+    "field_type": "textarea"
+  },
+  "max_repairs": {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "value": 1,
+    "name": "max_repairs",
+    "display_name": "max_repairs",
+    "type": "int",
+    "list": false,
+    "field_type": "number",
+    "min": 0,
+    "max": 2
+  },
+  "cache_results": {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "value": false,
+    "name": "cache_results",
+    "display_name": "cache_results",
+    "type": "bool",
+    "list": false,
+    "field_type": "checkbox"
+  },
+  "cache_version": {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "value": "",
+    "name": "cache_version",
+    "display_name": "cache_version",
+    "type": "str",
+    "list": false,
+    "field_type": "input"
+  },
+  "run_stats": {
+    "required": false,
+    "placeholder": "",
+    "show": false,
+    "value": "",
+    "name": "run_stats",
+    "display_name": "run_stats",
+    "type": "str",
+    "list": false,
+    "field_type": "textarea",
+    "is_output": true
+  }
+} }
 const loading = ref(true)
 const fieldsData = defineModel('templateData')
 onBeforeMount(async () => {
   const templateData = await props.createTemplateData()
   mergeTemplateIntoFields(fieldsData, templateData)
+  mergeTemplateIntoFields(fieldsData, reliabilityTemplate)
 
   const modelProvider = LLM_NODE_PROVIDER_MAP[props.llmName]
   if (modelProvider) {
@@ -331,6 +392,19 @@ const nodeDescription = computed(() => {
             type="target" v-model:data="fieldsData.response_format">
             <a-select style="width: 100%;" v-model:value="fieldsData.response_format.value"
               :options="fieldsData.response_format.options" />
+          </BaseField>
+
+          <BaseField :name="t('components.nodes.llms.common.output_schema')" type="target" v-model:data="fieldsData.output_schema">
+            <a-textarea v-model:value="fieldsData.output_schema.value" :autoSize="{ minRows: 2, maxRows: 12 }" :placeholder="t('components.nodes.llms.common.output_schema_help')" />
+          </BaseField>
+          <BaseField :name="t('components.nodes.llms.common.max_repairs')" type="target" v-model:data="fieldsData.max_repairs">
+            <a-input-number v-model:value="fieldsData.max_repairs.value" :min="0" :max="2" />
+          </BaseField>
+          <BaseField :name="t('components.nodes.llms.common.cache_results')" type="target" name-only v-model:data="fieldsData.cache_results">
+            <template #inline><a-checkbox v-model:checked="fieldsData.cache_results.value" /></template>
+          </BaseField>
+          <BaseField :name="t('components.nodes.llms.common.cache_version')" type="target" v-model:data="fieldsData.cache_version">
+            <a-input v-model:value="fieldsData.cache_version.value" />
           </BaseField>
 
           <BaseField v-if="props.functionCallAvailable" :name="t('components.nodes.llms.common.use_function_call')"

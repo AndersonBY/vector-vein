@@ -5,13 +5,15 @@
 # @Last Modified time: 2024-06-25 21:42:59
 import re
 import io
-import sys
+import builtins
+import uuid
 import json
 import shutil
 import traceback
 from pathlib import Path
 from urllib.parse import quote
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, cast
+from threading import RLock
 
 from bs4 import BeautifulSoup
 
@@ -27,6 +29,9 @@ from worker.tasks import task, timer
 
 mprint = mprint_with_name(name="Tools Tasks")
 
+# ponytail: serialize legacy working-directory file collection; use isolated workers if throughput matters.
+_PYTHON_FILE_LOCK = RLock()
+
 SKIPPING_FIELDS = [
     "language",
     "code",
@@ -36,10 +41,8 @@ SKIPPING_FIELDS = [
     "error_msg",
     "console_msg",
     "files",
+    "continue_on_error",
 ]
-
-MainFunctionType = Callable[..., Any]
-
 
 def convert_parameter_value(value, parameter_type):
     if parameter_type == "str":
@@ -55,135 +58,74 @@ def convert_parameter_value(value, parameter_type):
 
 @task
 @timer
-def programming_function(
-    workflow_data: dict,
-    node_id: str,
-):
+def programming_function(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
     code = workflow.get_node_field_value(node_id, "code")
-    language = workflow.get_node_field_value(node_id, "language")
-    fields = workflow.get_node_fields(node_id)
-    list_input = workflow.get_node_field_value(node_id, "list_input")
+    if workflow.get_node_field_value(node_id, "language") != "python":
+        raise ValueError("Unsupported language")
+    list_input = workflow.get_node_field_value(node_id, "list_input", False)
     if isinstance(list_input, str):
-        list_input = True if list_input.lower() == "true" else False
-
-    parameters_batch = []
-    for field in fields:
+        list_input = list_input.lower() == "true"
+    parameters_batch = None
+    for field in workflow.get_node_fields(node_id):
         if field in SKIPPING_FIELDS:
             continue
         parameter = workflow.get_node_field_value(node_id, field)
         parameter_type = workflow.get_node_field_value_by_key(node_id, field, "type")
         if list_input:
-            parameters_batch = parameters_batch or [dict() for _ in range(len(parameter))]
-            for batch, parameter_value in zip(parameters_batch, parameter):
-                batch[field] = convert_parameter_value(parameter_value, parameter_type)
+            if not isinstance(parameter, list):
+                raise ValueError("Batch parameters must be lists")
+            if parameters_batch is None:
+                parameters_batch = [{} for _ in parameter]
+            if len(parameter) != len(parameters_batch):
+                raise ValueError("Batch parameter lists must have equal lengths")
+            for batch, value in zip(parameters_batch, parameter):
+                batch[field] = convert_parameter_value(value, parameter_type)
         else:
-            parameters_batch = parameters_batch or [dict()]
+            if parameters_batch is None:
+                parameters_batch = [{}]
             parameters_batch[0][field] = convert_parameter_value(parameter, parameter_type)
-
-    pattern = r"```.*?\n(.*?)\n```"
-    code_block_search = re.search(pattern, code, re.DOTALL)
-
-    if code_block_search:
-        pure_code = code_block_search.group(1)
-    else:
-        pure_code = code
-
-    output_batch = []
-    files_batch = []
-    error_msg_batch = []
-    console_msg_batch = []
-    if len(parameters_batch) == 0:
-        parameters_batch.append({})
-
-    # 创建一个StringIO对象来捕获输出
-    # Create a StringIO object to capture the output
-    console_output = io.StringIO()
-
-    # 保存原始的stdout对象
-    # Save the original stdout object
-    original_stdout = sys.stdout
-
-    # 将stdout重定向到StringIO对象
-    # Redirect stdout to the StringIO object
-    sys.stdout = console_output
-
-    original_files = set(Path(".").iterdir())
-
-    settings = Settings()
-    output_folder = settings.output_folder
-
+    if parameters_batch is None:
+        parameters_batch = [{}]
+    match = re.search(r"```.*?\n(.*?)\n```", code, re.DOTALL)
+    compiled = compile(match.group(1) if match else code, "<workflow-python>", "exec")
+    output_folder = Path(Settings().output_folder).resolve()
+    output_folder.mkdir(parents=True, exist_ok=True)
+    output_batch, files_batch, errors, consoles = [], [], [], []
     for parameters in parameters_batch:
-        if language == "python":
+        console = io.StringIO()
+        # Capture this node's direct prints without replacing process-wide stdout.
+        def node_print(*args, **kwargs):
+            kwargs.setdefault("file", console)
+            print(*args, **kwargs)
+        namespace = {"__builtins__": {**vars(builtins), "print": node_print}}
+        with _PYTHON_FILE_LOCK:
+            original_files = set(Path.cwd().iterdir())
             try:
-                # 使用独立的命名空间执行用户代码
-                exec_namespace: Dict[str, Any] = {}
-                exec(pure_code, exec_namespace)
-
-                # 提取 main 函数并进行类型提示
-                main_func: MainFunctionType | None = exec_namespace.get("main")
-
-                if callable(main_func):
-                    result = main_func(**parameters)
-                    output_batch.append(result)
-                    error_msg_batch.append("")
-                else:
-                    # 如果 main 未定义，则尝试直接执行代码块
-                    result = None
-                    exec(pure_code, exec_namespace)
-                    output_batch.append(result)
-                    error_msg_batch.append("")
-
-                console_msg_batch.append(console_output.getvalue())
-            except Exception as e:
-                if "name 'main' is not defined" in str(e):
-                    # 如果用户没有定义main函数，则尝试直接执行代码块
-                    # If the user does not define the main function, try to execute the code block directly.
-                    try:
-                        console_output.truncate(0)
-                        console_output.seek(0)
-                        exec(pure_code, globals())
-                        output_batch.append(None)
-                        error_msg_batch.append("")
-                        console_msg_batch.append(console_output.getvalue())
-                    except Exception:
-                        output_batch.append(None)
-                        error_msg_batch.append(traceback.format_exc())
-                        console_msg_batch.append(console_output.getvalue())
-                else:
-                    output_batch.append(None)
-                    error_msg_batch.append(traceback.format_exc())
-                    console_msg_batch.append(console_output.getvalue())
-            finally:
-                # 清空StringIO对象以捕获下一次的输出
-                # Clear the StringIO object to capture the next output
-                console_output.truncate(0)
-                console_output.seek(0)
-        else:
-            raise Exception("Unsupported language")
-
-        # 获取新的文件列表并确定新生成的文件
-        new_files = set(Path(".").iterdir()) - original_files
-        new_file_paths = []
-        for file_path in new_files:
-            dest_file_path = Path(output_folder) / file_path.name
-            shutil.move(str(file_path), str(dest_file_path))
-            new_file_paths.append(str(dest_file_path.absolute()))
-        files_batch.append(new_file_paths)
-
-    # 恢复原始的stdout对象
-    # Restore the original stdout object
-    sys.stdout = original_stdout
-
-    if not list_input:
-        output_batch = output_batch[0]
-        files_batch = files_batch[0]
-        error_msg_batch = error_msg_batch[0]
-        console_msg_batch = console_msg_batch[0]
-    workflow.update_node_field_value(node_id, "output", output_batch)
-    workflow.update_node_field_value(node_id, "files", files_batch)
-    workflow.update_node_field_value(node_id, "error_msg", error_msg_batch)
-    workflow.update_node_field_value(node_id, "console_msg", console_msg_batch)
+                exec(compiled, namespace)
+                main = cast(Callable[..., Any] | None, namespace.get("main"))
+                output_batch.append(main(**parameters) if callable(main) else None)
+                errors.append("")
+            except Exception:
+                output_batch.append(None)
+                errors.append(traceback.format_exc())
+            consoles.append(console.getvalue())
+            files = []
+            for file in sorted(set(Path.cwd().iterdir()) - original_files):
+                if not file.is_file() or file.is_symlink():
+                    continue
+                destination = output_folder / file.name
+                if file.resolve() != destination:
+                    if destination.exists():
+                        destination = output_folder / f"{file.stem}_{uuid.uuid4().hex[:12]}{file.suffix}"
+                    shutil.move(str(file), str(destination))
+                files.append(str(destination))
+            files_batch.append(files)
+    for field, values in (("output", output_batch), ("files", files_batch), ("error_msg", errors), ("console_msg", consoles)):
+        workflow.update_node_field_value(node_id, field, values if list_input else values[0])
+    if any(errors) and workflow.get_node_field_value(node_id, "continue_on_error", False) is not True:
+        indexes = [index for index, error in enumerate(errors) if error]
+        raise RuntimeError(f"Python node failed at item indexes: {indexes}")
     return workflow.data
 
 

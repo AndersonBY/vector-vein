@@ -1,10 +1,10 @@
 # @Author: Bi Ying
 # @Date:   2024-04-11 20:37:32
 import json
+import hashlib
 import time
 import random
 from collections.abc import Generator
-from traceback import format_exc
 from typing import Any, Iterable, Literal, Protocol, TypeGuard, cast, overload
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -29,7 +29,8 @@ from vv_llm.types import (
     ThinkingConfigParam,
 )
 
-from utilities.config import Settings
+from utilities.config import Settings, cache
+from utilities.workflow.structured_output import make_validator, validate_output
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.network.llm_client import new_llm_http_client
@@ -158,6 +159,14 @@ class BaseLLMTask:
         self.stream: bool = self.workflow.get_node_field_value(node_id, "stream", False)
         self.top_p: float | NotGiven = self.workflow.get_node_field_value(node_id, "top_p", NOT_GIVEN)
         self.system_prompt: str = self.workflow.get_node_field_value(node_id, "system_prompt", "")
+        self.output_validator = make_validator(self.workflow.get_node_field_value(node_id, "output_schema", ""))
+        self.max_repairs = int(self.workflow.get_node_field_value(node_id, "max_repairs", 1))
+        if not 0 <= self.max_repairs <= 2:
+            raise ValueError("max_repairs must be between 0 and 2")
+        self.cache_results = self.workflow.get_node_field_value(node_id, "cache_results", False) is True
+        self.cache_version = self.workflow.get_node_field_value(node_id, "cache_version", "")
+        if self.output_validator is not None and self.use_function_call:
+            raise ValueError("Output schema validation and function calling must be used in separate nodes")
 
         user_settings = Settings()
         vv_llm_settings.load(user_settings.llm_settings)
@@ -362,13 +371,12 @@ class BaseLLMTask:
                     break
                 except APIStatusError as e:
                     if e.status_code == 429:
-                        mprint.error(f"Rate limit exceeded with endpoint {endpoint.id}: {e}")
+                        mprint.error(f"Rate limit exceeded with endpoint {endpoint.id}")
                         time.sleep(5)
                     else:
                         raise e
                 except Exception as e:
-                    mprint.error(f"Error with endpoint {endpoint.id}: {str(e)}")
-                    mprint.error(format_exc())
+                    mprint.error(f"Error with endpoint {endpoint.id}: {type(e).__name__}")
 
             if not request_success:
                 time.sleep(1)
@@ -448,10 +456,65 @@ class BaseLLMTask:
 
         return output
 
+    def process_validated_prompt(self, prompt: str, index: int) -> ModelOutput:
+        thinking = _enabled_thinking_config(self.thinking)
+        if thinking is not None:
+            self.thinking = cast(ThinkingConfigEnabledParam, {**thinking, "budget_tokens": 15000})
+        validator = self.output_validator
+        schema = validator.schema if validator is not None else None
+        cache_key = None
+        if self.cache_results:
+            # Only the digest is persisted. Endpoint credentials and the key payload
+            # stay in memory; changing endpoint/model configuration invalidates reuse.
+            payload = {
+                "version": 1, "namespace": self.cache_version, "task": type(self).__name__,
+                "provider": self.MODEL_TYPE.value, "model": self.model_settings.model_dump(mode="json"),
+                "endpoints": [vv_llm_settings.get_endpoint(get_endpoint_id(e)).model_dump(mode="json") for e in self.model_settings.endpoints],
+                "prompt": prompt, "system_prompt": self.system_prompt, "schema": schema,
+                "temperature": self.temperature, "top_p": self.top_p, "thinking": self.thinking,
+                "reasoning_effort": self.reasoning_effort, "extra_body": self.extra_body,
+                "response_format": self.response_format, "tools": self.tools, "tool_choice": self.tool_choice,
+                "stream": self.stream,
+            }
+            encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=lambda value: "NOT_GIVEN" if isinstance(value, NotGiven) else str(value))
+            cache_key = "llm-result:v1:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+            saved = cache.get(cache_key)
+            if saved is not None:
+                result = ModelOutput.model_validate(saved)
+                if validator is not None:
+                    validate_output(result.content_output or "", validator)
+                return result.model_copy(update={"cache_hit": True, "prompt_tokens": 0, "completion_tokens": 0})
+
+        request_prompt = prompt
+        if validator is not None:
+            request_prompt += "\nReturn only JSON matching this schema:\n" + json.dumps(schema, ensure_ascii=False)
+        prompt_tokens = completion_tokens = 0
+        for attempt in range(self.max_repairs + 1):
+            result = self.process_prompt(request_prompt, index)
+            prompt_tokens += result.prompt_tokens
+            completion_tokens += result.completion_tokens
+            try:
+                if validator is not None:
+                    validate_output(result.content_output or "", validator)
+                elif not result.content_output and not result.tool_calls:
+                    raise ValueError("Model returned an empty response")
+                break
+            except ValueError as exc:
+                if validator is None or attempt == self.max_repairs:
+                    raise
+                request_prompt = prompt + "\nReturn only corrected JSON matching this schema:\n" + json.dumps(schema, ensure_ascii=False)
+                request_prompt += "\nValidation error: " + str(exc) + "\nPrevious output:\n" + (result.content_output or "")
+        result = result.model_copy(update={"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens})
+        if cache_key is not None:
+            cache.set(cache_key, result.model_dump(mode="json"), expire=30 * 24 * 60 * 60)
+        return result
+
     def run(self):
+        failures = []
+        cache_hits = 0
         max_concurrent = self.get_max_concurrent_requests()
         with ThreadPoolExecutor(max_workers=max_concurrent) as executor:
-            future_to_index = {executor.submit(self.process_prompt, prompt, index): index for index, prompt in enumerate(self.prompts)}
+            future_to_index = {executor.submit(self.process_validated_prompt, prompt, index): index for index, prompt in enumerate(self.prompts)}
 
             for future in as_completed(future_to_index):
                 index = future_to_index[future]
@@ -461,11 +524,11 @@ class BaseLLMTask:
                     self.reasoning_content_outputs[index] = result.reasoning_content or ""
                     self.function_call_outputs[index] = result.tool_calls or []
                     self.function_call_arguments_batches[index] = result.function_call_arguments or {}
+                    cache_hits += int(result.cache_hit)
                     self.total_prompt_tokens += result.prompt_tokens
                     self.total_completion_tokens += result.completion_tokens
                 except Exception as exc:
-                    mprint.error(f"Generated an exception: {exc}")
-                    mprint.error(f"Prompt: {self.prompts[index]}")
+                    failures.append({"index": index, "error": type(exc).__name__})
 
         content_output = self.content_outputs[0] if isinstance(self.input_prompt, str) else self.content_outputs
         self.workflow.update_node_field_value(self.node_id, "output", content_output)
@@ -481,6 +544,13 @@ class BaseLLMTask:
             else:
                 self.workflow.update_node_field_value(self.node_id, "function_call_arguments", self.function_call_arguments_batches)
 
+        self.workflow.update_node_field_value(self.node_id, "run_stats", {
+            "items": len(self.prompts), "cache_hits": cache_hits, "failures": sorted(failures, key=lambda item: item["index"]),
+            "prompt_tokens": self.total_prompt_tokens, "completion_tokens": self.total_completion_tokens,
+        })
+        if failures:
+            indexes = ", ".join(str(item["index"]) for item in sorted(failures, key=lambda item: item["index"]))
+            raise RuntimeError(f"LLM batch failed at item indexes: {indexes}")
         return self.workflow.data
 
     def get_max_concurrent_requests(self):
