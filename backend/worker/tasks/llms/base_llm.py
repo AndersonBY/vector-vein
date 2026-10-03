@@ -386,7 +386,7 @@ class BaseLLMTask:
                             max_tokens,
                         )
                     request_success = True
-                    self.add_endpoint_request_record(endpoint)
+                    # endpoint_available already reserves this request in the rate window.
                     break
                 except APIStatusError as e:
                     if e.status_code == 429:
