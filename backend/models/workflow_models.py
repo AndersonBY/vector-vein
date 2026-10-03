@@ -81,6 +81,7 @@ class WorkflowRunRecord(BaseModel):
     """用户工作流运行记录"""
 
     class RunFromTypes:
+        CLI = "CLI"
         WEB = "WEB"
         SCHEDULE = "SCHEDULE"
         API = "API"
