@@ -236,3 +236,15 @@ def test_poll_retry_preserves_state_and_marks_exhaustion_failed(monkeypatch, iso
     assert "node_id" not in calls[0]["args"][0]
     assert calls[0]["max_retries"] == 2
     assert isolated_nodes == ([500] if exhausted else [])
+
+
+def test_cache_keys_are_stable_for_modality_set_order_and_read_legacy_entries():
+    from copy import deepcopy
+    from worker.tasks.llms.base_llm import cache_keys
+    payload = {"model": {"capabilities": {"input_modalities": ["video", "text", "image"], "output_modalities": ["text"]}}, "prompt": "sample"}
+    other = deepcopy(payload)
+    other["model"]["capabilities"]["input_modalities"] = ["text", "image", "video"]
+    first, second = list(cache_keys(payload)), list(cache_keys(other))
+    assert first[0] == second[0]
+    assert set(first) == set(second) and len(first) == 6
+    assert payload["model"]["capabilities"]["input_modalities"] == ["video", "text", "image"]
