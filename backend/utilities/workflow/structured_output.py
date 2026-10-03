@@ -38,5 +38,9 @@ def validate_output(content: str, validator):
     try:
         validator.validate(value)
     except ValidationError as exc:
-        raise ValueError(f"Schema validation failed at {exc.json_path}: {exc.validator}") from exc
+        details = "; ".join(dict.fromkeys(f"{child.json_path}: {child.validator}" for child in exc.context))[:1200]
+        message = f"Schema validation failed at {exc.json_path}: {exc.validator}"
+        if details:
+            message += "; " + details
+        raise ValueError(message) from exc
     return value

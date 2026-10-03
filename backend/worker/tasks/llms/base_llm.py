@@ -2,6 +2,8 @@
 # @Date:   2024-04-11 20:37:32
 import json
 import hashlib
+from copy import deepcopy
+from itertools import permutations, product
 import time
 import random
 from collections.abc import Generator
@@ -139,6 +141,33 @@ def add_model_request_record(model: ModelSetting, endpoint: EndpointSetting) -> 
     cycle = 60
 
     return add_request_record(product, cycle)
+
+
+
+def cache_keys(payload: dict):
+    """Stable modality ordering, with reads of older order-sensitive keys."""
+    payload = {**payload, "model": deepcopy(payload["model"])}
+    capabilities = payload["model"].get("capabilities")
+    modalities = {}
+    if isinstance(capabilities, dict):
+        for name in ("input_modalities", "output_modalities"):
+            if isinstance(capabilities.get(name), list):
+                capabilities[name] = sorted(capabilities[name])
+                modalities[name] = capabilities[name]
+    def identity():
+        encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=lambda value: "NOT_GIVEN" if isinstance(value, NotGiven) else str(value))
+        return "llm-result:v1:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+    canonical = identity()
+    yield canonical
+    # These SDK enum sets contain at most four modalities.
+    if modalities:
+        names = list(modalities)
+        for ordering in product(*(permutations(modalities[name]) for name in names)):
+            for name, values in zip(names, ordering):
+                capabilities[name] = list(values)
+            legacy = identity()
+            if legacy != canonical:
+                yield legacy
 
 
 class StructuredOutputError(ValueError):
@@ -495,9 +524,15 @@ class BaseLLMTask:
                 "response_format": self.response_format, "tools": self.tools, "tool_choice": self.tool_choice,
                 "stream": self.stream,
             }
-            encoded = json.dumps(payload, ensure_ascii=False, sort_keys=True, default=lambda value: "NOT_GIVEN" if isinstance(value, NotGiven) else str(value))
-            cache_key = "llm-result:v1:" + hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+            identities = cache_keys(payload)
+            cache_key = next(identities)
             saved = cache.get(cache_key)
+            if saved is None:
+                for legacy_key in identities:
+                    saved = cache.get(legacy_key)
+                    if saved is not None:
+                        cache.set(cache_key, saved, expire=30 * 24 * 60 * 60)
+                        break
             if saved is not None:
                 result = ModelOutput.model_validate(saved)
                 if validator is not None:
