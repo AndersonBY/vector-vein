@@ -20,7 +20,7 @@ block_cipher = None
 
 
 a = Analysis(
-    ["main.py"],
+    ["main.py", "cli.py"],
     pathex=[],
     binaries=[],
     datas=[
@@ -61,7 +61,7 @@ pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
 exe = EXE(
     pyz,
-    a.scripts,
+    [script for script in a.scripts if script[0] != "cli"],
     [],
     exclude_binaries=True,
     name="VectorVein",
@@ -77,8 +77,20 @@ exe = EXE(
     entitlements_file=None,
     icon="web/assets/favicon.ico",
 )
+cli_exe = EXE(
+    pyz,
+    [script for script in a.scripts if script[0] != "main"],
+    [],
+    exclude_binaries=True,
+    name="VectorVeinCLI",
+    console=True,
+    strip=False,
+    upx=True,
+)
+
 coll = COLLECT(
     exe,
+    cli_exe,
     a.binaries,
     a.zipfiles,
     a.datas,

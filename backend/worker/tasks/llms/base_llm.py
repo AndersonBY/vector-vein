@@ -141,6 +141,12 @@ def add_model_request_record(model: ModelSetting, endpoint: EndpointSetting) -> 
     return add_request_record(product, cycle)
 
 
+class StructuredOutputError(ValueError):
+    def __init__(self, message: str, result: ModelOutput):
+        super().__init__(message)
+        self.result = result
+
+
 class BaseLLMTask:
     MODEL_TYPE: BackendType
     NAME: str = "BaseLLMTask"
@@ -176,6 +182,11 @@ class BaseLLMTask:
         self.thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN
         self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
         self.extra_body: dict = {}
+        if self.workflow.get_node_field_value(node_id, "thinking_enabled", None) is False:
+            if self.MODEL_TYPE == BackendType.DeepSeek:
+                self.extra_body["thinking"] = {"type": "disabled"}
+            elif self.MODEL_TYPE == BackendType.Qwen:
+                self.extra_body["enable_thinking"] = False
         if self.MODEL_TYPE == BackendType.OpenAI and self.model.startswith(("gpt-5", "gpt-6")):
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
@@ -193,6 +204,14 @@ class BaseLLMTask:
         )
 
         self.model_settings = self.chat_client.backend_settings.models[self.model]
+        budget = self.workflow.get_node_field_value(node_id, "max_output_tokens", 0)
+        if budget:
+            budget = int(budget)
+            if not 1 <= budget <= self.model_settings.context_length:
+                raise ValueError("Output token limit must fit the model context")
+            self.model_settings = self.model_settings.model_copy(update={"max_output_tokens": budget})
+        if self.workflow.get_node_field_value(node_id, "endpoint_policy", "all") == "first":
+            self.model_settings = self.model_settings.model_copy(update={"endpoints": self.model_settings.endpoints[:1]})
 
         if isinstance(self.input_prompt, str):
             self.prompts = [self.input_prompt]
@@ -367,7 +386,7 @@ class BaseLLMTask:
                             max_tokens,
                         )
                     request_success = True
-                    self.add_endpoint_request_record(endpoint)
+                    # endpoint_available already reserves this request in the rate window.
                     break
                 except APIStatusError as e:
                     if e.status_code == 429:
@@ -501,7 +520,7 @@ class BaseLLMTask:
                 break
             except ValueError as exc:
                 if validator is None or attempt == self.max_repairs:
-                    raise
+                    raise StructuredOutputError(str(exc), result) from exc
                 request_prompt = prompt + "\nReturn only corrected JSON matching this schema:\n" + json.dumps(schema, ensure_ascii=False)
                 request_prompt += "\nValidation error: " + str(exc) + "\nPrevious output:\n" + (result.content_output or "")
         result = result.model_copy(update={"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens})
@@ -528,7 +547,10 @@ class BaseLLMTask:
                     self.total_prompt_tokens += result.prompt_tokens
                     self.total_completion_tokens += result.completion_tokens
                 except Exception as exc:
-                    failures.append({"index": index, "error": type(exc).__name__})
+                    failure = {"index": index, "error": type(exc).__name__}
+                    if isinstance(exc, StructuredOutputError):
+                        failure.update(message=str(exc), invalid_output=exc.result.content_output or "", completion_tokens=exc.result.completion_tokens, reasoning_characters=len(exc.result.reasoning_content or ""))
+                    failures.append(failure)
 
         content_output = self.content_outputs[0] if isinstance(self.input_prompt, str) else self.content_outputs
         self.workflow.update_node_field_value(self.node_id, "output", content_output)
@@ -554,4 +576,10 @@ class BaseLLMTask:
         return self.workflow.data
 
     def get_max_concurrent_requests(self):
-        return max(vv_llm_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)
+        configured = max(vv_llm_settings.get_endpoint(get_endpoint_id(endpoint)).concurrent_requests for endpoint in self.model_settings.endpoints)
+        requested = self.workflow.get_node_field_value(self.node_id, "max_concurrent_requests", 0)
+        if requested:
+            if int(requested) < 1:
+                raise ValueError("Concurrency must be positive")
+            return min(configured, int(requested))
+        return configured

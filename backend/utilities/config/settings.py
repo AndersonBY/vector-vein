@@ -1,5 +1,8 @@
 # @Author: Bi Ying
 # @Date:   2024-04-29 16:50:17
+import json
+import os
+from pathlib import Path
 from copy import deepcopy
 from collections.abc import Mapping
 from typing import Any
@@ -511,6 +514,14 @@ class Settings:
             self.load_setting()
         except Exception:
             self.data = dict()
+        external = os.environ.get("VECTORVEIN_LLM_SETTINGS_FILE")
+        if external:
+            raw = json.loads(Path(external).read_text(encoding="utf-8-sig"))
+            VvLlmSettings.model_validate(raw)
+            self.data["llm_settings"] = raw
+        output_dir = os.environ.get("VECTORVEIN_OUTPUT_DIR")
+        if output_dir:
+            self.data["output_folder"] = str(Path(output_dir).resolve())
 
     def load_setting(self):
         from models import model_serializer

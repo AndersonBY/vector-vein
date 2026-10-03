@@ -150,6 +150,10 @@ For detailed API documentation, visit `http://localhost:8787/docs` after startin
 
 Version 0.4.16 adds source-preserving multi-sheet workbook input, typed XLSX output, structured DOCX reports and automatic PNG charts. LLM nodes support local JSON Schema validation, bounded repairs and per-item result reuse. Failed batches stop downstream execution. See the [workflow guide and reproducible example](docs/reliable-workflows.md).
 
+### Workflow CLI
+
+Use `pdm run cli` from source, or the `VectorVeinCLI` console executable in CLI-enabled desktop builds, to create, validate, update and run workflows or inspect results. See the [CLI guide](docs/cli.md).
+
 ### 📖 Basic Concepts
 
 A workflow represents a work task process, including input, output, and how input is processed to reach the output result.
