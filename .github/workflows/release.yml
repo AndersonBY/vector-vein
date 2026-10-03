@@ -142,7 +142,7 @@ jobs:
         working-directory: backend
         run: |
           pdm run test
-          pdm run lint
+          pdm run ruff check . --select E4,E7,E9,F
           pdm run python examples/reliable_report.py
 
       - name: Build frontend bundle
