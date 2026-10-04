@@ -1,4 +1,4 @@
- [English](README_en.md) | [简体中文](README_zh.md) | 日本語
+ [English](README.md) | [简体中文](README_zh.md) | 日本語
 
  [![ベクトル静脈](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.com)
 
