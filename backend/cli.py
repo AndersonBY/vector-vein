@@ -112,12 +112,8 @@ def initialize():
     from peewee_migrate import Router
     Path(config.data_path).mkdir(parents=True, exist_ok=True)
     router = Router(database, migrate_dir=str(APP_ROOT / "migrations"))
-    if not database.table_exists("workflow"):
-        create_tables()
-        router.run(fake=True)
-    else:
-        router.run()
-        create_tables()
+    router.run()
+    create_tables()
     Settings()
 
 

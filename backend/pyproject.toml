@@ -3,7 +3,8 @@ authors = [{name = "MakerBi", email = "biying@vectorvein.com"}]
 dependencies = [
   "pywebview>=6.0.0",
   "httpx>=0.22.0",
-  "peewee>=3.16.2",
+  # peewee-migrate 1.x uses the Peewee 3 migration operation API.
+  "peewee>=3.16.2,<4",
   "pypdf>=3.8.1",
   "mammoth>=1.5.1",
   "openpyxl>=3.1.2",
@@ -30,7 +31,7 @@ dependencies = [
   "matplotlib>=3.9,<3.11",
   "lxml[html_clean]>=5.2.1",
   "PyMuPDF>=1.24.5",
-  "peewee-migrate>=1.12.2",
+  "peewee-migrate>=1.12.2,<2",
   "websockets>=12.0",
   "diskcache>=5.6.3",
   "mss>=9.0.1",
@@ -52,7 +53,7 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.19"
+version = "0.4.20"
 
 [tool.pdm]
 distribution = false
