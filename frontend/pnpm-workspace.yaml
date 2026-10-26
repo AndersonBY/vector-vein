@@ -4,8 +4,10 @@ allowBuilds:
   vue-demi: true
 overrides:
   brace-expansion: 5.0.12
-  dompurify: 3.4.16
+  dompurify: 3.4.17
+  # Keep Markdown and Mermaid math rendering on the patched application version.
+  katex: $katex
   linkify-it: 5.0.2
   lodash: 4.18.1
   postcss: 8.5.23
-  undici: 6.28.1
+  undici: 6.29.1
