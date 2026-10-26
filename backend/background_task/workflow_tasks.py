@@ -4,7 +4,6 @@
 
 import time
 import inspect
-import traceback
 import threading
 from copy import deepcopy
 
@@ -12,7 +11,8 @@ from celery_worker import app, timer
 
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
-from worker.tasks import chain, on_finish, TaskError, TaskRetry, task
+from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
+from worker.tasks import chain, on_finish, TaskRetry, task
 from worker.tasks import (
     llms,
     tools,
@@ -86,37 +86,20 @@ def merge_results(workflow_data_list: list, node_ids: list):
     if not workflow_data_list:
         return {}
 
-    merged_data = Workflow(workflow_data_list[0]).data
-
-    # Merge node_run_time from all results
-    merged_run_times = {}
-    for workflow_data in workflow_data_list:
-        if isinstance(workflow_data, dict) and "node_run_time" in workflow_data:
-            merged_run_times.update(workflow_data["node_run_time"])
-
-    for workflow_data, node_id in zip(workflow_data_list[1:], node_ids[1:]):
-        current_workflow = Workflow(workflow_data)
-        merged_workflow = Workflow(merged_data)
-        node = current_workflow.get_node(node_id=node_id)
-        if node is None:
-            continue
-
-        # Copy the run_time from the node if it exists
-        if hasattr(node, "run_time") and node.run_time >= 0:
-            merged_node = merged_workflow.get_node(node_id=node_id)
-            if merged_node:
-                merged_node.run_time = node.run_time
-
-        node_fields = current_workflow.get_node_fields(node_id=node_id)
-        for field in node_fields:
-            field_value = current_workflow.get_node_field_value(node_id=node_id, field=field)
-            merged_workflow.update_node_field_value(node_id=node_id, field=field, value=field_value)
-        merged_data = merged_workflow.data
-
-    # Ensure all run times are preserved in the merged data
-    if merged_run_times:
-        merged_data["node_run_time"] = merged_run_times
-
+    merged_data = deepcopy(workflow_data_list[0])
+    nodes = {node["id"]: node for node in merged_data["nodes"]}
+    for data, node_id in zip(workflow_data_list, node_ids):
+        node = next((node for node in data["nodes"] if node["id"] == node_id), None)
+        if node is not None:
+            nodes[node_id] = deepcopy(node)
+        merged_data.setdefault("node_run_time", {}).update(data.get("node_run_time", {}))
+        for skipped in data.get("skipped_nodes", []):
+            if skipped not in merged_data.setdefault("skipped_nodes", []):
+                merged_data["skipped_nodes"].append(skipped)
+        for failure in data.get("failures", []):
+            add_failure(merged_data, failure)
+    merged_data["nodes"] = list(nodes.values())
+    merged_data.pop("_batch_collecting", None)
     return merged_data
 
 
@@ -138,14 +121,12 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
     """
     results = {}
     threads = []
-    has_failed_task = False
     error_tasks = []
     result_lock = threading.Lock()
 
     def run_task(task: Dict[str, Any]):
-        nonlocal has_failed_task
         task_data = deepcopy(workflow_data)
-        module, function = task["task_name"].split(".")
+        task_data["_batch_collecting"] = True
         node_id = task["node_id"]
         is_skipped = node_id in workflow_data.get("skipped_nodes", [])
 
@@ -153,6 +134,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
         start_time = time.time()
 
         try:
+            module, function = task["task_name"].split(".")
             task_result = task_functions[module][function](task_data, node_id)
 
             # Record end time and calculate elapsed time
@@ -179,28 +161,20 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
 
             with result_lock:
                 results[node_id] = task_result
-        except Exception as e:
-            has_failed_task = True
+        except Exception as exc:
+            workflow = Workflow(task_data)
+            workflow.set_node_status(node_id, 500)
+            elapsed_time = time.time() - start_time
+            task_data.setdefault("node_run_time", {})[node_id] = elapsed_time
+            node = workflow.get_node(node_id)
+            if node:
+                node.run_time = elapsed_time
+            if not task_data.get("failures"):
+                add_failure(task_data, node_failure(exc, task_data, node_id, task["task_name"]))
             with result_lock:
                 error_tasks.append(task)
-            mprint.error(f"Error in task {task['task_name']} -> {node_id}: {e}")
-            mprint.error(f"Error type: {type(e).__name__}")
-            mprint.error(traceback.format_exc())
-
-            # Try to save partial result with error info
-            if isinstance(task_data, dict):
-                if "node_run_time" not in task_data:
-                    task_data["node_run_time"] = {}
-                # Mark failed node with 0 runtime
-                workflow_data["node_run_time"][node_id] = 0
-
-            # Only report workflow status if we have a valid workflow
-            try:
-                workflow = Workflow(task_data)
-                workflow.report_workflow_status(500, task["task_name"])
-            except Exception as e:
-                mprint.error(f"Error in report_workflow_status: {e}")
-                pass
+                results[node_id] = task_data
+            mprint.error(f"Task {task['task_name']} -> {node_id} failed: {type(exc).__name__}")
         return None
 
     # Create a daemon thread for each task
@@ -212,10 +186,6 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
     # Drain active nodes before failing the batch; no background writes after failure.
     for thread in threads:
         thread.join()
-
-    if has_failed_task:
-        mprint.error(error_tasks)
-        raise Exception("Some tasks failed")
 
     # Collect results in the correct order
     sorted_task_results = []
@@ -248,6 +218,12 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
                 node.run_time = 0  # Default to 0 if we couldn't measure it
 
     merged_result = merged_workflow.data
+    for task_item in tasks:
+        merged_workflow.report_node_status(task_item["node_id"])
+    if error_tasks:
+        workflow_data.update(merged_result)
+        merged_workflow.report_workflow_status(500, error_tasks[0]["task_name"])
+        raise WorkflowExecutionError(merged_result.get("failures", []))
     return merged_result
 
 
@@ -262,6 +238,7 @@ def run_workflow(self, workflow_data: dict):
     Returns:
         dict: Updated workflow data after execution
     """
+    dispatch_task = None
     try:
         mprint(f"Starting workflow execution: {workflow_data.get('wid', 'unknown')}")
         workflow = Workflow(workflow_data)
@@ -274,10 +251,12 @@ def run_workflow(self, workflow_data: dict):
                 group_tasks = batch_tasks.s(task_item)
                 func_list.append(group_tasks)
             else:  # Single task
+                dispatch_task = task_item
                 module, function = task_item["task_name"].split(".")
                 # Create signature with node_id as second parameter
                 # workflow_data will be passed from previous task result
                 func_list.append(task_functions[module][function].s(node_id=task_item["node_id"]))
+                dispatch_task = None
 
         # Build and execute the task chain
         task_chain = chain(*func_list, on_finish.s())
@@ -292,33 +271,14 @@ def run_workflow(self, workflow_data: dict):
         retry_delay = min(e.retry_delay * (2**self.request.retries), 300)  # Max 5 minutes
         raise self.retry(countdown=retry_delay)
 
-    except TaskError as e:
-        mprint.error(traceback.format_exc())
-        mprint.error(f"Workflow task error: {e}")
-
-        # Find the error module
-        module_name = "unknown"
-        for module, functions in task_functions.items():
-            if e.task_name in functions:
-                module_name = module
-                break
-
-        # Report error status
-        if workflow := Workflow(workflow_data):
-            workflow.report_workflow_status(500, f"{module_name}.{e.task_name}")
-
-        raise
-
-    except Exception:
-        mprint.error(f"Unexpected error in workflow: {traceback.format_exc()}")
-
-        # Report generic error
-        if workflow := Workflow(workflow_data):
-            workflow.report_workflow_status(500, "unknown.error")
-
-        # Retry with exponential backoff for unexpected errors
-        if self.request.retries < self.max_retries:
-            retry_delay = min(60 * (2**self.request.retries), 300)
-            raise self.retry(countdown=retry_delay)
-
+    except Exception as exc:
+        # Dispatch failures carry the same evidence as node failures; never replay an unknown side effect.
+        workflow = Workflow(workflow_data)
+        if not workflow_data.get("failures"):
+            node_id = dispatch_task["node_id"] if dispatch_task else ""
+            task_name = dispatch_task["task_name"] if dispatch_task else "workflow.run"
+            if node_id:
+                workflow.set_node_status(node_id, 500)
+            add_failure(workflow_data, node_failure(exc, workflow_data, node_id, task_name))
+        workflow.report_workflow_status(500, dispatch_task["task_name"] if dispatch_task else "workflow.run")
         raise

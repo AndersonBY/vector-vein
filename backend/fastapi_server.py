@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 from utilities.general import mprint_with_name
 from utilities.config import config
+from utilities.workflow_errors import workflow_error_payload
 
 from api.workflow_api import (
     WorkflowAPI,
@@ -223,8 +224,7 @@ class FastAPIServer:
 
                             return StandardResponse(status=200, msg="FINISHED", data=output_data)
                         elif status == "FAILED":
-                            error_info = record_data.get("error_message", "Workflow failed")
-                            return StandardResponse(status=500, msg="FAILED", data={"error": error_info})
+                            return StandardResponse(status=500, msg="FAILED", data=workflow_error_payload(record_data))
 
                         await asyncio.sleep(1)
 
@@ -269,10 +269,8 @@ class FastAPIServer:
                     _cache.set(f"workflow:record:{request.rid}", 200, 60 * 60)
                     return StandardResponse(status=200, msg="FINISHED", data=output_data)
                 elif status == "FAILED":
-                    error_info = record.get("error_message", "Unknown error")
-                    error_task = record.get("error_task", "")
                     _cache.set(f"workflow:record:{request.rid}", 500, 60 * 60)
-                    return StandardResponse(status=500, msg="FAILED", data={"error_task": error_task, "error": error_info})
+                    return StandardResponse(status=500, msg="FAILED", data=workflow_error_payload(record))
                 else:
                     return StandardResponse(status=500, msg=f"Unknown status: {status}", data={})
 

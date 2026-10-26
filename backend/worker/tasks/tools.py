@@ -21,6 +21,7 @@ from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
 from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
 from utilities.network import headers, new_httpx_client
@@ -106,9 +107,11 @@ def programming_function(workflow_data: dict, node_id: str):
                 main = cast(Callable[..., Any] | None, namespace.get("main"))
                 output_batch.append(main(**parameters) if callable(main) else None)
                 errors.append("")
-            except Exception:
+            except Exception as exc:
                 output_batch.append(None)
-                errors.append(traceback.format_exc())
+                errors.append(redact_message(traceback.format_exc(), workflow_data))
+                if workflow.get_node_field_value(node_id, "continue_on_error", False) is not True:
+                    add_failure(workflow_data, node_failure(exc, workflow_data, node_id, "tools.programming_function"))
             consoles.append(console.getvalue())
             files = []
             for file in sorted(set(Path.cwd().iterdir()) - original_files):
@@ -125,7 +128,8 @@ def programming_function(workflow_data: dict, node_id: str):
         workflow.update_node_field_value(node_id, field, values if list_input else values[0])
     if any(errors) and workflow.get_node_field_value(node_id, "continue_on_error", False) is not True:
         indexes = [index for index, error in enumerate(errors) if error]
-        raise RuntimeError(f"Python node failed at item indexes: {indexes}")
+        failure = workflow_data["failures"][0]
+        raise RuntimeError(f"Python node failed at item indexes: {indexes}; {failure['exception_type']}: {failure['message']}")
     return workflow.data
 
 
@@ -465,7 +469,7 @@ def workflow_invoke(
             if record.status in ("RUNNING", "QUEUED"):
                 continue
             elif record.status != "FINISHED":
-                raise Exception("Run workflow failed!")
+                raise WorkflowExecutionError(workflow_error_payload(record)["failures"])
 
             finished_record_ids.append(record_id)
 

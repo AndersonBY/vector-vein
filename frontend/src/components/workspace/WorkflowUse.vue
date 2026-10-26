@@ -31,6 +31,7 @@ import { deepCopy, formatTime } from '@/utils/util'
 import { settingAPI } from '@/api/user'
 import { workflowAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
+import { getWorkflowRunStatus } from '@/utils/workflowFailures'
 
 const props = defineProps({
   workflow: {
@@ -194,7 +195,7 @@ const checkWorkflowRunningStatus = async () => {
   checkingStatus.value = true
   try {
     const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
-    if (statusResponse.status == 200) {
+    if (getWorkflowRunStatus(statusResponse) === 'FINISHED') {
       message.success(t('workspace.workflowSpace.run_workflow_success'))
       clearInterval(checkStatusTimer.value)
       running.value = false
@@ -283,10 +284,19 @@ const checkWorkflowRunningStatus = async () => {
           }
         }
       })
-    } else if (statusResponse.status == 500) {
+    } else if (getWorkflowRunStatus(statusResponse) === 'FAILED') {
       running.value = false
       recordStatus.value = 'FAILED'
-      currentWorkflow.value = statusResponse.data
+      clearInterval(checkStatusTimer.value)
+      if (Array.isArray(statusResponse.data?.data?.nodes)) {
+        currentWorkflow.value = statusResponse.data
+      } else {
+        currentWorkflow.value.data = {
+          ...currentWorkflow.value.data,
+          failures: statusResponse.data?.data?.failures,
+          error_task: statusResponse.data?.data?.error_task,
+        }
+      }
       currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
       if (currentWorkflow.value.data?.ui_design) {
         const uiDesign = currentWorkflow.value.data.ui_design
@@ -302,10 +312,10 @@ const checkWorkflowRunningStatus = async () => {
         humanFeedbackNodes.value = reactiveUIDesign.humanFeedbackNodes
       }
       message.error(t('workspace.workflowSpace.run_workflow_failed'))
-      clearInterval(checkStatusTimer.value)
-      rawErrorTask.value = statusResponse.data?.data?.error_task
       showingRecord.value = true
     }
+  } catch {
+    message.error({ key: 'workflow-status', content: t('workspace.workflowSpace.check_workflow_status_retrying') })
   } finally {
     checkingStatus.value = false
   }
@@ -420,25 +430,24 @@ const runWorkflow = async (workflowVersion = null) => {
     return node
   })
   running.value = true
-  let response
-  if (props.isTemplate) {
-    response = await workflowAPI('run-template', workflowDataForRun)
-  } else {
-    response = await workflowAPI('run', workflowDataForRun)
-  }
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.submit_workflow_success'))
-    runRecordId.value = response.data.rid
-    checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
-  } else {
+  try {
+    const response = await workflowAPI(props.isTemplate ? 'run-template' : 'run', workflowDataForRun)
+    if (response.status == 200 && response.data?.rid) {
+      message.success(t('workspace.workflowSpace.submit_workflow_success'))
+      runRecordId.value = response.data.rid
+      checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
+    } else {
+      message.error(t('workspace.workflowSpace.submit_workflow_failed'))
+    }
+  } catch {
     message.error(t('workspace.workflowSpace.submit_workflow_failed'))
-    running.value = false
+  } finally {
+    if (!runRecordId.value) running.value = false
   }
 }
 
 const showingRecord = ref(false)
 const recordStatus = ref('')
-const rawErrorTask = ref('')
 
 function setWorkflowRecord(record) {
   runRecordId.value = record.rid
@@ -449,13 +458,13 @@ function setWorkflowRecord(record) {
   }
   currentWorkflow.value.data = {
     ...record.data,
+    nodes: Array.isArray(record.data?.nodes) ? record.data.nodes : savedWorkflow.value.data.nodes,
     ui: savedWorkflow.value.data?.ui || {}
   }
   currentWorkflow.value.shared = record.shared
   currentWorkflow.value.is_public = record.is_public
   currentWorkflow.value.public_shared_record = record.public_shared_record
   currentWorkflow.value.version = record.workflow_version
-  rawErrorTask.value = record.data.error_task
   if (currentWorkflow.value.data?.ui_design) {
     // currentWorkflow.value.data?.ui_design 里的是运行结果的 ui_design
     // currentWorkflow.value.ui_design 里的是原本工作流的 ui_design
@@ -505,7 +514,7 @@ function clearWorkflow() {
   <a-row :gutter="[16, 16]" class="main-use-container" v-else>
     <a-col :span="24" v-if="showingRecord">
       <WorkflowRecordStatusAlert :key="`${runRecordId}-${recordStatus}`"
-        :recordWorkflowVersion="currentWorkflow.version" :status="recordStatus" :rawErrorTask="rawErrorTask"
+        :recordWorkflowVersion="currentWorkflow.version" :status="recordStatus" :snapshot="currentWorkflow.data"
         @close="clearWorkflow" />
     </a-col>
 

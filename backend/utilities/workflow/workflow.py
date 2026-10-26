@@ -2,6 +2,7 @@
 # @Date:   2023-04-13 18:51:34
 import uuid
 import time
+import json
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Any, Union
@@ -11,6 +12,7 @@ from models import Workflow as WorkflowModel
 from models import WorkflowRunRecord, Message
 from utilities.config import cache
 from utilities.general import mprint_with_name
+from utilities.workflow_errors import workflow_error_payload
 
 
 mprint = mprint_with_name(name="Workflow")
@@ -511,35 +513,43 @@ class Workflow:
     def report_workflow_status(self, status: int, error_task: str = ""):
         try:
             workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
-
+            # An outer dispatch error must not replace the node's saved evidence.
+            if status != 200 and workflow_record.status == "FAILED" and workflow_record.data.get("failures"):
+                self.workflow_data = workflow_record.data
             workflow_record.status = "FINISHED" if status == 200 else "FAILED"
             workflow_record.data = self.workflow_data
-            workflow_record.data["error_task"] = error_task if not error_task.endswith("batch_tasks") else ""
+            workflow_record.data.pop("_batch_collecting", None)
+            if error_task and not workflow_record.data.get("error_task"):
+                workflow_record.data["error_task"] = error_task if not error_task.endswith("batch_tasks") else ""
             workflow_record.end_time = datetime.now()
+            workflow_record.save()
+            cache.set(f"workflow:record:{self.record_id}", status, 60 * 60)
 
+        except Exception as e:
+            mprint.error(f"report_workflow_status failed: {type(e).__name__}")
+            return False
+
+        try:
             if workflow_record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
                 source_message_mid = workflow_record.source_message
                 source_message = Message.get(mid=source_message_mid)
                 if source_message.status == Message.StatusTypes.RUNNING_WORKFLOW:
                     # 如果是从聊天中调用的工作流，运行完成后先更新 message
                     # If the workflow is called from a chat, update the message first after running
-                    workflow_data_obj = WorkflowData(workflow_record.data)
-                    output_contents = workflow_data_obj.output_contents
-                    source_message.metadata["workflow_result"] = "\n\n".join(
-                        [
-                            f"# {output_content['title']}\n{output_content['value']}" if output_content["title"] else f"{output_content['value']}"
-                            for output_content in output_contents
-                        ]
-                    )
-                    source_message.status = Message.StatusTypes.SUCCESS
+                    if status == 200:
+                        output_contents = WorkflowData(workflow_record.data).output_contents
+                        source_message.metadata["workflow_result"] = "\n\n".join(
+                            f"# {item['title']}\n{item['value']}" if item["title"] else f"{item['value']}"
+                            for item in output_contents
+                        )
+                        source_message.status = Message.StatusTypes.SUCCESS
+                    else:
+                        source_message.metadata["workflow_result"] = json.dumps(workflow_error_payload(workflow_record), ensure_ascii=False)
+                        source_message.status = Message.StatusTypes.WORKFLOW_FAILED
                     source_message.save()
-
-            workflow_record.save()
-            cache.set(f"workflow:record:{self.record_id}", status, 60 * 60)
-            return True
         except Exception as e:
-            mprint.error(f"report_workflow_status failed: {e}")
-            return False
+            mprint.error(f"Workflow message update failed: {type(e).__name__}")
+        return True
 
     def set_node_status(
         self,

@@ -9,7 +9,6 @@ import os
 import re
 import sys
 from copy import deepcopy
-from datetime import datetime
 from pathlib import Path
 
 from bootstrap import APP_ROOT
@@ -124,6 +123,7 @@ def checked(response):
 
 
 def record_result(record, full=False):
+    from utilities.workflow_errors import workflow_error_payload
     result = {"rid": record.rid.hex, "wid": record.workflow.wid.hex, "status": record.status,
               "workflow_version": record.workflow_version, "outputs": {}}
     for node in record.data.get("nodes", []):
@@ -133,6 +133,7 @@ def record_result(record, full=False):
     if full:
         result["data"] = record.data
     if record.status == "FAILED":
+        result.update(workflow_error_payload(record))
         result["error_task"] = record.data.get("error_task", "")
     return result
 
@@ -204,10 +205,11 @@ def execute(args):
     except (Exception, KeyboardInterrupt) as exc:
         record = WorkflowRunRecord.get_by_id(record.rid)
         if record.status != "FAILED":
-            record.status = "FAILED"
-            record.end_time = datetime.now()
-            record.data = {**record.data, "error_type": type(exc).__name__}
-            record.save()
+            from utilities.workflow import Workflow
+            from utilities.workflow_errors import add_failure, node_failure
+            failed_data = {**record.data, "rid": record.rid.hex}
+            add_failure(failed_data, node_failure(exc, failed_data, task_name="workflow.run"))
+            Workflow(failed_data).report_workflow_status(500, "workflow.run")
     record = WorkflowRunRecord.get_by_id(record.rid)
     return record_result(record, args.full), 0 if record.status == "FINISHED" else 1
 

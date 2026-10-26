@@ -9,11 +9,13 @@ import { useUserChatsStore } from '@/stores/userChats'
 import { useUserAccountStore } from '@/stores/userAccount'
 import ChatAuthor from '@/components/workspace/chat/ChatAuthor.vue'
 import WorkflowRecordShow from '@/components/workspace/WorkflowRecordShow.vue'
+import WorkflowFailureDetails from '@/components/workspace/WorkflowFailureDetails.vue'
 import IconButton from '@/components/IconButton.vue'
 import AttachmentsList from '@/components/workspace/chat/AttachmentsList.vue'
 import TextOutput from '@/components/TextOutput.vue'
 import { workflowAPI, workflowRunRecordAPI } from "@/api/workflow"
 import { messageAPI } from '@/api/chat'
+import { getWorkflowFailures, getWorkflowRunStatus, getWorkflowFailureSnapshot } from '@/utils/workflowFailures'
 
 const props = defineProps({
   loading: {
@@ -129,7 +131,7 @@ watch(
   [() => props.workflowInvokeStep, () => props.status],
   ([workflowInvokeStep, status]) => {
     if (workflowInvokeStep === 'wait_for_invoke' && status === 'W') {
-      if (conversation.settings.auto_run_workflow) {
+      if (conversation?.settings?.auto_run_workflow) {
         runWorkflow()
       }
     }
@@ -139,120 +141,128 @@ watch(
 const runRecordId = ref(props.metadata?.record_id ?? '')
 const showingRecord = ref(false)
 const recordStatus = ref('')
-const recordErrorTask = ref('')
 const runningWorkflow = ref(false)
 const checkStatusTimer = ref(null)
 const workflowData = ref(props.workflowData)
+const failureSnapshot = computed(() => getWorkflowFailureSnapshot(
+  workflowData.value?.data, props.metadata?.workflow_result
+))
+const failedWorkflow = computed(() => recordStatus.value ? recordStatus.value === 'FAILED' :
+  !runningWorkflow.value && (['Z', 'F'].includes(props.status) || getWorkflowFailures(failureSnapshot.value).length > 0))
+const displayedRecordStatus = computed(() => failedWorkflow.value ? 'FAILED' : recordStatus.value)
+watch(failedWorkflow, (failed) => {
+  if (failed) activeKey.value = [`${props.mid}-workflow`]
+}, { immediate: true })
+const checkingStatus = ref(false)
 const runWorkflow = async () => {
-  let response = {}
-  if (props.metadata.selected_workflow.type == 'Workflow') {
-    response = await messageAPI('run_workflow', {
-      mid: props.mid,
-      wid: props.metadata.selected_workflow.wid,
-      params: props.metadata.selected_workflow.params,
-    })
-  } else {
-    response = await messageAPI('run_template', {
-      mid: props.mid,
-      tid: props.metadata.selected_workflow.tid,
-      params: props.metadata.selected_workflow.params,
-    })
-  }
+  if (runningWorkflow.value) return
+  runningWorkflow.value = true
+  clearInterval(checkStatusTimer.value)
+  recordStatus.value = ''
+  workflowData.value = {}
+  let submitted = false
+  try {
+    let response
+    if (props.metadata.selected_workflow.type == 'Workflow') {
+      response = await messageAPI('run_workflow', {
+        mid: props.mid,
+        wid: props.metadata.selected_workflow.wid,
+        params: props.metadata.selected_workflow.params,
+      })
+    } else {
+      response = await messageAPI('run_template', {
+        mid: props.mid,
+        tid: props.metadata.selected_workflow.tid,
+        params: props.metadata.selected_workflow.params,
+      })
+    }
 
-  const newRecordId = response.data.rid
+    const newRecordId = response.data?.rid
 
-  if (response.status == 200) {
-    message.success(t('workspace.workflowSpace.submit_workflow_success'))
-    runningWorkflow.value = true
-    checkStatusTimer.value = setInterval(async () => {
-      const response = await workflowAPI('check_status', { rid: newRecordId })
-      if (response.status == 200) {
-        message.success(t('workspace.workflowSpace.run_workflow_success'))
-        clearInterval(checkStatusTimer.value)
-        recordStatus.value = 'FINISHED'
-        workflowData.value = response.data
-        runRecordId.value = newRecordId // runRecordId 放在 workflowData 改变后改变，强迫 WorkflowRecordShow 根据新数据重新渲染
-        runningWorkflow.value = false
-        showingRecord.value = true
-        emit('update:status', 'S')
-        const msgResponse = await messageAPI('get', { mid: props.mid })
-        if (msgResponse.status == 200) {
-          content.value = msgResponse.data.content
+    if (response.status == 200 && newRecordId) {
+      submitted = true
+      message.success(t('workspace.workflowSpace.submit_workflow_success'))
+      runRecordId.value = newRecordId
+      emit('update:status', 'R')
+      checkStatusTimer.value = setInterval(async () => {
+        if (checkingStatus.value) return
+        checkingStatus.value = true
+        try {
+          const response = await workflowAPI('check_status', { rid: newRecordId })
+          const status = getWorkflowRunStatus(response)
+          if (!status) return
+          clearInterval(checkStatusTimer.value)
+          recordStatus.value = status
+          workflowData.value = response.data || {}
+          runRecordId.value = newRecordId // runRecordId 放在 workflowData 改变后改变，强迫 WorkflowRecordShow 根据新数据重新渲染
+          runningWorkflow.value = false
+          showingRecord.value = true
+          emit('update:status', status === 'FAILED' ? 'Z' : 'S')
+          activeKey.value = [`${props.mid}-workflow`]
+          message[status === 'FAILED' ? 'error' : 'success'](t(
+            `workspace.workflowSpace.${status === 'FAILED' ? 'run_workflow_failed' : 'run_workflow_success'}`
+          ))
+          try {
+            const msgResponse = await messageAPI('get', { mid: props.mid })
+            if (msgResponse.status == 200) content.value = msgResponse.data.content
+          } catch {
+            message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+          }
+          if (status === 'FINISHED') emit('append-answer', props.mid)
+        } catch {
+          message.error({ key: `workflow-status-${props.mid}`,
+            content: t('workspace.workflowSpace.check_workflow_status_retrying') })
+        } finally {
+          checkingStatus.value = false
         }
-        activeKey.value = `${props.mid}-workflow`
-        emit('append-answer', props.mid)
-      } else if (response.status == 500) {
-        runningWorkflow.value = false
-        recordStatus.value = 'FAILED'
-        message.error(t('workspace.workflowSpace.run_workflow_failed'))
-        clearInterval(checkStatusTimer.value)
-        setErrorTask(response.data.error_task)
-      }
-    }, 1000)
-  } else {
+      }, 1000)
+    } else {
+      message.error(t('workspace.workflowSpace.submit_workflow_failed'))
+    }
+  } catch {
     message.error(t('workspace.workflowSpace.submit_workflow_failed'))
-    runningWorkflow.value = false
+  } finally {
+    if (!submitted) runningWorkflow.value = false
   }
 }
 const alertType = computed(() => {
-  if (recordStatus.value == 'FINISHED') {
+  if (displayedRecordStatus.value == 'FINISHED') {
     return 'success'
   }
-  else if (recordStatus.value == 'FAILED') {
+  else if (displayedRecordStatus.value == 'FAILED') {
     return 'error'
   }
   else {
     return 'info'
   }
 })
-const setErrorTask = (errorTask) => {
-  let [category, node] = (errorTask || '.').split('.')
-  category = category.split('_')
-    .map((word, index) => {
-      if (index === 0) {
-        return word.charAt(0).toLowerCase() + word.slice(1);
-      }
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join('')
-  if (category == 'output') {
-    category = 'outputs'
-  }
-  node = node.split('_')
-    .map((word) => {
-      return word.charAt(0).toUpperCase() + word.slice(1);
-    })
-    .join('')
-  if (node == 'OpenAi') {
-    node = 'OpenAI'
-  } else if (node == 'ChatGlm') {
-    node = 'ChatGLM'
-  } else if (node == 'SearchData' && category == 'vectorDb') {
-    node = 'Search'
-  }
-  recordErrorTask.value = `${category}.${node}`
-}
 const setWorkflowRecord = (record) => {
   workflowData.value = record
   runRecordId.value = record.rid
   recordStatus.value = record.status
-  setErrorTask(record.data.error_task)
   showingRecord.value = true
 }
 
 const loadingWorkflowRecord = ref(false)
 const workflowPanelChange = async (key) => {
-  if (key.length > 0 && Object.keys(workflowData.value).length == 0 && props.metadata?.record_id?.length > 0) {
+  if (key.length > 0 && !loadingWorkflowRecord.value && !runningWorkflow.value &&
+      Object.keys(workflowData.value).length == 0 && props.metadata?.record_id?.length > 0) {
     loadingWorkflowRecord.value = true
-    const recordRequest = await workflowRunRecordAPI('get', { rid: props.metadata.record_id })
-    if (recordRequest.data.status == 200) {
-      setWorkflowRecord(recordRequest.data.data)
-    } else {
+    try {
+      const recordRequest = await workflowRunRecordAPI('get', { rid: props.metadata.record_id })
+      if (recordRequest.data?.status == 200 && recordRequest.data.data) {
+        setWorkflowRecord(recordRequest.data.data)
+      } else {
+        message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+      }
+    } catch {
       message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+    } finally {
+      loadingWorkflowRecord.value = false
     }
-    loadingWorkflowRecord.value = false
   }
 }
+if (props.expandWorkflowRecord || failedWorkflow.value) workflowPanelChange(activeKey.value)
 
 const navigateToWorkflowRecord = () => {
   if (props.metadata.selected_workflow.type == 'Workflow') {
@@ -407,8 +417,9 @@ const deleteMessage = () => {
                     {{ param }}: {{ props.metadata.selected_workflow.params[param] }}
                   </a-typography-paragraph>
                 </div>
-                <a-spin v-else-if="status == 'S'" :spinning="loadingWorkflowRecord || runningWorkflow">
-                  <a-alert :type="alertType" banner="" show-icon v-if="recordStatus.length > 0">
+                <a-spin v-else-if="['S', 'A', 'R', 'Z', 'F'].includes(status) || showingRecord"
+                  :spinning="loadingWorkflowRecord || runningWorkflow">
+                  <a-alert :type="alertType" banner="" show-icon v-if="displayedRecordStatus.length > 0">
 
                     <template #message>
                       <a-flex justify="space-between">
@@ -416,13 +427,7 @@ const deleteMessage = () => {
                           <span>
                             {{ t('workspace.workflowSpace.record_status', {
                               status:
-                                t(`components.workspace.workflowRunRecordsDrawer.status_${recordStatus.toLowerCase()}`)
-                            }) }}
-                          </span>
-                          <a-divider type="vertical" />
-                          <span v-if="recordStatus == 'FAILED' && recordErrorTask != '.'">
-                            {{ t('workspace.workflowSpace.record_error_task', {
-                              task: t('components.nodes.' + recordErrorTask + '.title')
+                                t(`components.workspace.workflowRunRecordsDrawer.status_${displayedRecordStatus.toLowerCase()}`)
                             }) }}
                           </span>
                         </div>
@@ -435,9 +440,12 @@ const deleteMessage = () => {
                         </a-tooltip>
                       </a-flex>
                     </template>
+                    <template v-if="failedWorkflow" #description>
+                      <WorkflowFailureDetails :snapshot="failureSnapshot" />
+                    </template>
                   </a-alert>
                   <WorkflowRecordShow class="workflow-record" :key="runRecordId" :workflowData="workflowData"
-                    v-if="Object.keys(workflowData).length > 0" />
+                    v-if="Array.isArray(workflowData?.data?.nodes)" />
                 </a-spin>
               </a-collapse-panel>
             </a-collapse>

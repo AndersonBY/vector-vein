@@ -18,6 +18,7 @@ from worker.tasks import task, timer
 from worker.tasks.condition_logic import resolve_conditional_branch
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_errors import WorkflowExecutionError, workflow_error_payload
 from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 
@@ -323,7 +324,7 @@ def workflow_selector(
     if record.status in ("RUNNING", "QUEUED"):
         workflow_selector.retry(workflow.data, node_id, retry_delay=1)
     if record.status != "FINISHED":
-        raise Exception("Selected workflow run failed")
+        raise WorkflowExecutionError(workflow_error_payload(record)["failures"])
 
     workflow.update_node_field_value(node_id, "selected_workflow_id", async_task_data["selected_workflow_id"])
     workflow.update_node_field_value(node_id, "selection_reason", async_task_data["selection_reason"])
@@ -495,7 +496,7 @@ def workflow_loop(
         if record.status in ("RUNNING", "QUEUED"):
             workflow_loop.retry(workflow.data, node_id, retry_delay=1)
         elif record.status != "FINISHED":
-            raise Exception("Run workflow failed!")
+            raise WorkflowExecutionError(workflow_error_payload(record)["failures"])
 
         nodes = record.data["nodes"]
         for node in nodes:

@@ -14,6 +14,7 @@ from celery.exceptions import Retry
 
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
+from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
 
 
 mprint = mprint_with_name(name="Workflow Task Server")
@@ -77,6 +78,7 @@ class Task:
                 mprint(f"<Node:{node_id}> Skip task {celery_task_name} due to conditional branch.")
                 result = workflow_data
             else:
+                start_time = time.time()
                 try:
                     try:
                         result = func(*args, **kwargs)
@@ -86,22 +88,37 @@ class Task:
                         raise self.celery_task.retry(args=(retry_data, node_id), kwargs={}, countdown=exc.retry_delay, max_retries=self.max_retries)
                 except Retry:
                     raise
-                except Exception:
+                except Exception as exc:
                     if workflow_data is not None:
                         wf = Workflow(workflow_data)
                         if node_id:
                             wf.set_node_status(node_id, 500)
-                        wf.report_workflow_status(500, celery_task_name)
+                            elapsed_time = time.time() - start_time
+                            workflow_data.setdefault("node_run_time", {})[node_id] = elapsed_time
+                            node = wf.get_node(node_id)
+                            if node:
+                                node.run_time = elapsed_time
+                        if isinstance(exc, WorkflowExecutionError):
+                            for failure in exc.failures:
+                                add_failure(workflow_data, failure)
+                        if not any(failure.get("node_id") == node_id for failure in workflow_data.get("failures", [])):
+                            add_failure(workflow_data, node_failure(exc, workflow_data, node_id, celery_task_name))
+                        if not workflow_data.get("_batch_collecting"):
+                            wf.report_workflow_status(500, celery_task_name)
                     raise
 
             try:
                 # Try best-effort to report node finished for UI progress
                 if node_id:
-                    wf = Workflow(result if isinstance(result, dict) else (args[0] if args else {}))
-                    wf.report_node_status(node_id)
+                    result_data = result if isinstance(result, dict) else (workflow_data or {})
+                    wf = Workflow(result_data)
+                    if node_id not in result_data.get("skipped_nodes", []):
+                        wf.set_node_status(node_id, 200)
+                    if not (workflow_data or {}).get("_batch_collecting"):
+                        wf.report_node_status(node_id)
             except Exception as _e:
                 # Do not break task result on progress reporting failures
-                mprint.error(f"report_node_status failed after task {celery_task_name}: {_e}")
+                mprint.error(f"report_node_status failed after task {celery_task_name}: {type(_e).__name__}")
             return result
 
         # Create the actual Celery task
@@ -268,7 +285,7 @@ def on_finish(workflow_data: dict):
 
 
 def on_error(*args, **kwargs):
-    mprint.error(f"workflow error: {args}, {kwargs}")
+    mprint.error("Workflow execution failed")
     workflow_data = args[-1]
     workflow = Workflow(workflow_data)
     workflow.report_workflow_status(500)

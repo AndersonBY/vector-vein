@@ -34,6 +34,7 @@ from vv_llm.types import (
 from utilities.config import Settings, cache
 from utilities.workflow.structured_output import make_validator, validate_output
 from utilities.workflow import Workflow
+from utilities.workflow_errors import MAX_MESSAGE_LENGTH, add_failure, node_failure
 from utilities.general import mprint_with_name
 from utilities.network.llm_client import new_llm_http_client
 from utilities.general.ratelimit import is_request_allowed, add_request_record
@@ -377,6 +378,7 @@ class BaseLLMTask:
             thinking_config["budget_tokens"] = max_tokens - 1000
 
         request_success = False
+        last_error = None
         stream_response: Generator[ChatCompletionDeltaMessage, Any, None] | None = None
         response: ChatCompletionMessage | None = None
         start_time = time.time()
@@ -418,18 +420,22 @@ class BaseLLMTask:
                     # endpoint_available already reserves this request in the rate window.
                     break
                 except APIStatusError as e:
+                    last_error = e
                     if e.status_code == 429:
                         mprint.error(f"Rate limit exceeded with endpoint {endpoint.id}")
                         time.sleep(5)
                     else:
                         raise e
                 except Exception as e:
+                    last_error = e
                     mprint.error(f"Error with endpoint {endpoint.id}: {type(e).__name__}")
 
             if not request_success:
                 time.sleep(1)
 
         if not request_success:
+            if last_error is not None:
+                raise last_error
             raise Exception("Failed to request the model")
 
         tool_calls: list[dict[str, Any]] = []
@@ -582,6 +588,10 @@ class BaseLLMTask:
                     self.total_prompt_tokens += result.prompt_tokens
                     self.total_completion_tokens += result.completion_tokens
                 except Exception as exc:
+                    node = self.workflow.get_node(self.node_id)
+                    detail = node_failure(exc, self.workflow.data, self.node_id, node.task_name if node else "llms")
+                    detail["message"] = f"Item {index}: {detail['message']}"[:MAX_MESSAGE_LENGTH]
+                    add_failure(self.workflow.data, detail)
                     failure = {"index": index, "error": type(exc).__name__}
                     if isinstance(exc, StructuredOutputError):
                         failure.update(message=str(exc), invalid_output=exc.result.content_output or "", completion_tokens=exc.result.completion_tokens, reasoning_characters=len(exc.result.reasoning_content or ""))
