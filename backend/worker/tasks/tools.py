@@ -23,6 +23,7 @@ from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.workflow_artifacts import register_artifact
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
+from utilities.workflow_stopping import WorkflowStopped
 from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
 from utilities.network import headers, new_httpx_client
@@ -467,6 +468,7 @@ def workflow_invoke(
                 workflow_data=_workflow_data,
                 workflow=workflow_model,
                 run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+                parent_rid=workflow.record_id,
             )
             record_ids.append(record_rid)
 
@@ -486,7 +488,9 @@ def workflow_invoke(
             if record_id in finished_record_ids:
                 continue
             record = WorkflowRunRecord.select().join(WorkflowModel).where(WorkflowRunRecord.rid == record_id).first()
-            if record.status in ("RUNNING", "QUEUED"):
+            if record.status == "STOPPED":
+                raise WorkflowStopped()
+            if record.status in ("RUNNING", "QUEUED", "STOPPING"):
                 continue
             elif record.status != "FINISHED":
                 raise WorkflowExecutionError(workflow_error_payload(record)["failures"])

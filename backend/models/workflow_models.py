@@ -96,6 +96,8 @@ class WorkflowRunRecord(BaseModel):
         ("NOT_STARTED", "未开始"),
         ("QUEUED", "排队中"),
         ("RUNNING", "运行中"),
+        ("STOPPING", "停止中"),
+        ("STOPPED", "已停止"),
         ("FINISHED", "已完成"),
         ("FAILED", "失败"),
     )

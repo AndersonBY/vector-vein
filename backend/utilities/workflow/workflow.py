@@ -514,19 +514,28 @@ class Workflow:
 
     def report_workflow_status(self, status: int, error_task: str = ""):
         try:
-            workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
-            # An outer dispatch error must not replace the node's saved evidence.
-            if status != 200 and workflow_record.status == "FAILED" and workflow_record.data.get("failures"):
-                self.workflow_data = workflow_record.data
-            workflow_record.status = "FINISHED" if status == 200 else "FAILED"
-            merge_timeline(self.workflow_data)
-            workflow_record.data = self.workflow_data
-            workflow_record.data.pop("_batch_collecting", None)
-            if error_task and not workflow_record.data.get("error_task"):
-                workflow_record.data["error_task"] = error_task if not error_task.endswith("batch_tasks") else ""
-            workflow_record.end_time = datetime.now()
-            workflow_record.save()
-            cache.set(f"workflow:record:{self.record_id}", status, 60 * 60)
+            with cache.transact():
+                workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
+                if workflow_record.status in ("FINISHED", "FAILED", "STOPPED"):
+                    return True
+                if status == 200 and workflow_record.status == "STOPPING":
+                    from utilities.workflow_stopping import _finish_stopping
+                    _finish_stopping(self.record_id)
+                    return True
+                previous_status = workflow_record.status
+                workflow_record.status = "FINISHED" if status == 200 else "FAILED"
+                merge_timeline(self.workflow_data)
+                workflow_record.data = self.workflow_data
+                workflow_record.data.pop("_batch_collecting", None)
+                if error_task and not workflow_record.data.get("error_task"):
+                    workflow_record.data["error_task"] = error_task if not error_task.endswith("batch_tasks") else ""
+                workflow_record.end_time = datetime.now()
+                changed = WorkflowRunRecord.update(status=workflow_record.status, data=workflow_record.data,
+                                                   end_time=workflow_record.end_time).where(
+                    WorkflowRunRecord.rid == self.record_id, WorkflowRunRecord.status == previous_status).execute()
+                if not changed:
+                    return True
+                cache.set(f"workflow:record:{self.record_id}", status, 60 * 60)
 
         except Exception as e:
             mprint.error(f"report_workflow_status failed: {type(e).__name__}")

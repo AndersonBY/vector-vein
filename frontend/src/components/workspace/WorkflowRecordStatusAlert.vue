@@ -28,7 +28,10 @@ const alertType = computed(() => ({
         }) }}
       </span>
     </template>
-    <template v-if="status === 'FAILED'" #description>
+    <template v-if="status === 'STOPPING'" #description>
+      {{ t('workspace.workflowSpace.stopping_description') }}
+    </template>
+    <template v-else-if="status === 'FAILED'" #description>
       <WorkflowFailureDetails :snapshot="snapshot" />
     </template>
   </a-alert>

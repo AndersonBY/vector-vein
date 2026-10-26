@@ -19,6 +19,7 @@ from worker.tasks.condition_logic import resolve_conditional_branch
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.workflow_errors import WorkflowExecutionError, workflow_error_payload
+from utilities.workflow_stopping import WorkflowStopped
 from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 
@@ -297,6 +298,7 @@ def workflow_selector(
             workflow_data=selected_workflow_data,
             workflow=selected_workflow,
             run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+            parent_rid=workflow.record_id,
             workflow_version=selected_workflow.version,
         )
         workflow.add_async_task(
@@ -321,7 +323,9 @@ def workflow_selector(
     )
     if record is None:
         raise Exception("Selected workflow run record not found")
-    if record.status in ("RUNNING", "QUEUED"):
+    if record.status == "STOPPED":
+        raise WorkflowStopped()
+    if record.status in ("RUNNING", "QUEUED", "STOPPING"):
         workflow_selector.retry(workflow.data, node_id, retry_delay=1)
     if record.status != "FINISHED":
         raise WorkflowExecutionError(workflow_error_payload(record)["failures"])
@@ -473,6 +477,7 @@ def workflow_loop(
             workflow_data=_workflow_data,
             workflow=workflow_model,
             run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+            parent_rid=workflow.record_id,
         )
 
         workflow.add_async_task(
@@ -493,7 +498,9 @@ def workflow_loop(
         loop_count = async_task_data["loop_count"]
         used_credits = async_task_data["used_credits"]
         record = WorkflowRunRecord.select().join(WorkflowModel).where(WorkflowRunRecord.rid == record_id).first()
-        if record.status in ("RUNNING", "QUEUED"):
+        if record.status == "STOPPED":
+            raise WorkflowStopped()
+        if record.status in ("RUNNING", "QUEUED", "STOPPING"):
             workflow_loop.retry(workflow.data, node_id, retry_delay=1)
         elif record.status != "FINISHED":
             raise WorkflowExecutionError(workflow_error_payload(record)["failures"])
@@ -574,6 +581,7 @@ def workflow_loop(
                 workflow_data=_workflow_data,
                 workflow=workflow_model,
                 run_from=WorkflowRunRecord.RunFromTypes.WORKFLOW,
+                parent_rid=workflow.record_id,
             )
 
             workflow.update_async_task(

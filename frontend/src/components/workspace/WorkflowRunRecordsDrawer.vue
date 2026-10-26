@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, computed } from "vue"
+import { ref, reactive, computed, watch, onBeforeUnmount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -19,6 +19,10 @@ import { workflowRunRecordAPI } from "@/api/workflow"
 
 const { t } = useI18n()
 const loading = ref(true)
+const stoppingRecords = reactive(new Set())
+const activeStatuses = ['QUEUED', 'RUNNING', 'STOPPING']
+let refreshTimer
+let listEpoch = 0
 
 const props = defineProps({
   workflowId: {
@@ -159,33 +163,77 @@ const workflowRunRecords = reactive({
       need_workflow: props.showWorkflowTitle,
     })
   },
-  load: async (params) => {
-    workflowRunRecords.loading = true
-    const res = await workflowRunRecordAPI('list', {
-      wid: props.workflowId,
-      ...params
-    })
-    if (res.status == 200) {
-      workflowRunRecords.data = res.data.records.map(item => {
-        if (item.start_time && item.end_time) {
-          item.run_time = ((parseInt(item.end_time) - parseInt(item.start_time)) / 1000).toFixed(2) + 's'
-        } else {
-          item.run_time = '-'
-        }
-        item.run_from_label = runFromOptions.find((option) => option.value === item.run_from)?.text || item.run_from
-        item.start_time = item.start_time ? formatTime(item.start_time) : '-'
-        item.end_time = item.end_time ? formatTime(item.end_time) : '-'
-        return item
+  load: async (params, quiet = false) => {
+    const epoch = ++listEpoch
+    if (!quiet) workflowRunRecords.loading = true
+    try {
+      const res = await workflowRunRecordAPI('list', {
+        wid: props.workflowId,
+        ...params
       })
-    } else {
-      message.error(res.msg)
+      if (epoch !== listEpoch || !open.value) return
+      if (res.status == 200) {
+        workflowRunRecords.data = res.data.records.map(item => {
+          if (item.start_time && item.end_time) {
+            item.run_time = ((parseInt(item.end_time) - parseInt(item.start_time)) / 1000).toFixed(2) + 's'
+          } else {
+            item.run_time = '-'
+          }
+          item.run_from_label = runFromOptions.find((option) => option.value === item.run_from)?.text || item.run_from
+          item.start_time = item.start_time ? formatTime(item.start_time) : '-'
+          item.end_time = item.end_time ? formatTime(item.end_time) : '-'
+          return item
+        })
+      } else {
+        if (!quiet) message.error(res.msg)
+        return
+      }
+      workflowRunRecords.total = res.data.total
+      workflowRunRecords.pageSize = res.data.page_size
+      workflowRunRecords.current = res.data.page
+    } catch {
+      if (!quiet && epoch === listEpoch) message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+    } finally {
+      if (epoch === listEpoch) {
+        workflowRunRecords.loading = false
+        scheduleRefresh()
+      }
     }
-    workflowRunRecords.total = res.data.total
-    workflowRunRecords.pageSize = res.data.page_size
-    workflowRunRecords.current = res.data.page
-    workflowRunRecords.loading = false
   }
 })
+
+const refreshRecords = (quiet = false) => workflowRunRecords.load({
+  page_size: workflowRunRecords.pageSize,
+  page: workflowRunRecords.current,
+  sort_field: workflowRunRecords.sort_field,
+  sort_order: workflowRunRecords.sort_order,
+  status: workflowRunRecords.filters.status,
+  run_from: workflowRunRecords.filters.run_from,
+  need_workflow: props.showWorkflowTitle,
+}, quiet)
+const scheduleRefresh = () => {
+  clearTimeout(refreshTimer)
+  if (open.value && workflowRunRecords.data.some(record => activeStatuses.includes(record.status))) {
+    refreshTimer = setTimeout(() => refreshRecords(true), 2000)
+  }
+}
+watch(open, scheduleRefresh)
+onBeforeUnmount(() => { clearTimeout(refreshTimer); listEpoch++ })
+const stopWorkflowRunRecord = async (record) => {
+  if (!['QUEUED', 'RUNNING'].includes(record.status) || stoppingRecords.has(record.rid)) return
+  stoppingRecords.add(record.rid)
+  try {
+    const response = await workflowRunRecordAPI('stop', { rid: record.rid })
+    if (response.status === 200) {
+      record.status = response.data.status
+      await refreshRecords(true)
+    } else message.error(response.msg || t('workspace.workflowSpace.stop_workflow_failed'))
+  } catch {
+    message.error(t('workspace.workflowSpace.stop_workflow_failed'))
+  } finally {
+    stoppingRecords.delete(record.rid)
+  }
+}
 
 const showDrawer = async () => {
   open.value = true
@@ -239,6 +287,7 @@ const deleteWorkflowRunRecord = async (rid) => {
 }
 
 const rerunWorkflowRunRecord = async (record) => {
+  if (activeStatuses.includes(record.status)) return
   loading.value = true
   const rerunResponse = await workflowRunRecordAPI('rerun', { rid: record.rid, run_from: 'WEB' })
   if (rerunResponse.status !== 200) {
@@ -348,12 +397,17 @@ const rerunWorkflowRunRecord = async (record) => {
                     </a-button>
                   </a-tooltip>
                   <a-tooltip :title="t('components.workspace.workflowRunRecordsDrawer.rerun_record')">
-                    <a-button type="text" @click.prevent="rerunWorkflowRunRecord(record)">
+                    <a-button type="text" :disabled="activeStatuses.includes(record.status)" @click.prevent="rerunWorkflowRunRecord(record)">
                       <template #icon>
                         <Redo />
                       </template>
                     </a-button>
                   </a-tooltip>
+                  <a-button v-if="activeStatuses.includes(record.status)" type="text" danger size="small"
+                    :disabled="record.status === 'STOPPING'" :loading="stoppingRecords.has(record.rid)"
+                    @click.prevent="stopWorkflowRunRecord(record)">
+                    {{ t(record.status === 'STOPPING' ? 'components.workspace.workflowRunRecordsDrawer.status_stopping' : 'workspace.workflowSpace.stop_workflow') }}
+                  </a-button>
                   <a-tooltip v-if="['FINISHED', 'FAILED', 'STOPPED'].includes(record.status)"
                     :title="t('components.workspace.workflowRunRecordsDrawer.delete_record')">
                     <a-popconfirm placement="left" :overlayInnerStyle="{ maxWidth: '300px' }"

@@ -31,7 +31,7 @@ import {
 } from '@/utils/workflow'
 import { deepCopy, formatTime } from '@/utils/util'
 import { settingAPI } from '@/api/user'
-import { workflowAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
+import { workflowAPI, workflowRunRecordAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 import { getWorkflowRunStatus } from '@/utils/workflowFailures'
 
@@ -227,11 +227,12 @@ const checkWorkflowRunningStatus = async () => {
         timelineSnapshot.value.nodes = timelineSnapshot.value.nodes.map(node => snapshot.finished_nodes.find(item => item.id === node.id) || node)
       }
     }
-    if (getWorkflowRunStatus(statusResponse) === 'FINISHED') {
-      message.success(t('workspace.workflowSpace.run_workflow_success'))
+    if (['FINISHED', 'STOPPED'].includes(getWorkflowRunStatus(statusResponse))) {
+      if (getWorkflowRunStatus(statusResponse) === 'FINISHED') message.success(t('workspace.workflowSpace.run_workflow_success'))
       clearInterval(checkStatusTimer.value)
       running.value = false
-      recordStatus.value = 'FINISHED'
+      recordStatus.value = getWorkflowRunStatus(statusResponse)
+      stopStatusPolling()
       currentWorkflow.value = statusResponse.data
       currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || currentWorkflow.value.data?.ui_design
       if (currentWorkflow.value.data?.ui_design) {
@@ -252,7 +253,7 @@ const checkWorkflowRunningStatus = async () => {
       showingRecord.value = true
 
     } else if (statusResponse.status == 202) {
-      recordStatus.value = ['RUNNING', 'QUEUED'].includes(statusResponse.msg) ? statusResponse.msg : 'RUNNING'
+      recordStatus.value = ['RUNNING', 'QUEUED', 'STOPPING'].includes(statusResponse.msg) ? statusResponse.msg : 'RUNNING'
       const finishedNodes = statusResponse.data.finished_nodes ?? []
       outputNodes.value.forEach((node) => {
         const finishedNode = finishedNodes.find((item) => {
@@ -368,6 +369,27 @@ const runWorkflowVersionModal = ref(false)
 const running = ref(false)
 const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
+const stopRequest = ref(null)
+const stopWorkflow = async () => {
+  if (!runRecordId.value || !['QUEUED', 'RUNNING'].includes(recordStatus.value) || stopRequest.value === runRecordId.value) return
+  const rid = runRecordId.value
+  const epoch = pollEpoch
+  stopRequest.value = rid
+  try {
+    const response = await workflowRunRecordAPI('stop', { rid })
+    if (epoch !== pollEpoch || rid !== runRecordId.value) return
+    if (response.status !== 200) {
+      message.error(response.msg || t('workspace.workflowSpace.stop_workflow_failed'))
+      return
+    }
+    recordStatus.value = response.data.status
+    await checkWorkflowRunningStatus()
+  } catch {
+    if (epoch === pollEpoch && rid === runRecordId.value) message.error(t('workspace.workflowSpace.stop_workflow_failed'))
+  } finally {
+    if (stopRequest.value === rid) stopRequest.value = null
+  }
+}
 const hasButtonTrigger = computed(() => triggerNodes.value.some((node) => node.type === 'ButtonTrigger'))
 const hasScheduleTrigger = computed(() => triggerNodes.value.some((node) => node.type === 'ScheduleTrigger'))
 const scheduleSummary = computed(() => {
@@ -409,6 +431,7 @@ const openScheduleManager = async () => {
 }
 
 const runWorkflow = async (workflowVersion = null) => {
+  if (running.value) return
   let workflowDataForRun = deepCopy(savedWorkflow.value)
   if (savedWorkflow.value.version !== null && currentWorkflow.value.version !== null && savedWorkflow.value.version !== currentWorkflow.value.version) {
     if (workflowVersion === null) {
@@ -463,10 +486,9 @@ const runWorkflow = async (workflowVersion = null) => {
     })
   }
   outputNodes.value.forEach((node) => {
-    if (node.category == 'outputs') {
-      node.finished = false
-    }
-    return node
+    const definition = workflowDataForRun.data.nodes.find(item => item.id === node.id)
+    if (definition) node.data = deepCopy(definition.data)
+    node.finished = false
   })
   stopStatusPolling()
   const epoch = pollEpoch
@@ -516,7 +538,7 @@ function setWorkflowRecord(record) {
   timelineSnapshot.value = { ...record.data, nodes: Array.isArray(record.data?.nodes) ? record.data.nodes : deepCopy(savedWorkflow.value.data.nodes) }
   runRecordId.value = record.rid
   recordStatus.value = record.status
-  if (['RUNNING', 'QUEUED'].includes(record.status)) {
+  if (['RUNNING', 'QUEUED', 'STOPPING'].includes(record.status)) {
     running.value = true
     startStatusPolling()
   }
@@ -657,16 +679,20 @@ function clearWorkflow() {
             </a-card>
           </a-flex>
 
+          <a-button v-if="running && runRecordId" danger block :loading="stopRequest === runRecordId"
+            :disabled="recordStatus === 'STOPPING'" @click="stopWorkflow">
+            {{ t(recordStatus === 'STOPPING' ? 'components.workspace.workflowRunRecordsDrawer.status_stopping' : 'workspace.workflowSpace.stop_workflow') }}
+          </a-button>
           <template v-for="(node) in triggerNodes" :key="`node-${node.id}`">
             <a-button type="primary" block @click="runWorkflow(null)" :loading="running"
-              v-if="node.type == 'ButtonTrigger'">
+              v-if="node.type == 'ButtonTrigger' && !(running && runRecordId)">
               <template #icon>
                 <PlayOne />
               </template>
               {{ node.data.template.button_text.value }}
             </a-button>
           </template>
-          <a-button v-if="!hasButtonTrigger" type="primary" ghost block @click="runWorkflow(null)" :loading="running">
+          <a-button v-if="!hasButtonTrigger && !(running && runRecordId)" type="primary" ghost block @click="runWorkflow(null)" :loading="running">
             <template #icon>
               <PlayOne />
             </template>

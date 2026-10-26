@@ -134,6 +134,7 @@ def run_workflow_common(
     message: Message | None = None,
     run_from=WorkflowRunRecord.RunFromTypes.WEB,
     workflow_version: str | int | None = None,
+    parent_rid: str | None = None,
 ) -> str:
     from celery_tasks import run_workflow
     from utilities.workflow_timeline import reset_run, initialize_timeline
@@ -143,16 +144,25 @@ def run_workflow_common(
 
     source_message = message.mid.hex if message is not None else None
 
-    record: WorkflowRunRecord = WorkflowRunRecord.create(
-        workflow=workflow,
-        data=workflow_data,
-        status="RUNNING",
-        run_from=run_from,
-        schedule_time=datetime.now() if run_from == WorkflowRunRecord.RunFromTypes.SCHEDULE else None,
-        source_message=source_message,
-        workflow_version=workflow_version or workflow.version,
-    )
-    workflow_data["rid"] = record.rid.hex
+    from utilities.workflow_stopping import register_child, request_stop, stop_requested
+    with cache.transact():
+        record: WorkflowRunRecord = WorkflowRunRecord.create(
+            workflow=workflow,
+            data=workflow_data,
+            status="RUNNING",
+            run_from=run_from,
+            schedule_time=datetime.now() if run_from == WorkflowRunRecord.RunFromTypes.SCHEDULE else None,
+            source_message=source_message,
+            workflow_version=workflow_version or workflow.version,
+        )
+        workflow_data["rid"] = record.rid.hex
+        record.data = workflow_data
+        record.save()
+        if parent_rid:
+            register_child(parent_rid, record.rid.hex)
+            if stop_requested({"rid": parent_rid}):
+                request_stop(record.rid.hex)
+                return record.rid.hex
     initialize_timeline(workflow_data)
 
     # Pre-mark status so UI can reflect queued state immediately

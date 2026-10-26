@@ -232,6 +232,35 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     assert.doesNotMatch(history, /run-workflow-button|typing-dot|<img/)
     await render('/src/components/workspace/chat/ChatMessage.vue', { ...failedProps, retryDisabled: true }, async c => { c.regenerate() })
     assert.equal(retries, 1)
+    await render('/src/components/workspace/chat/ChatMessage.vue', {
+      ...failedProps, status:'Z', metadata:{record_id:'saved-stopped',recordStatus:'STOPPED'},
+    }, async c => {
+      request = async () => ({status:200,data:{rid:'saved-stopped',status:'STOPPED',data:{nodes:[{id:'output'}]}}})
+      await c.workflowPanelChange(['history-workflow'])
+      assert.equal(c.recordStatus.value,'STOPPED')
+      assert.equal(c.workflowData.value.data.nodes[0].id,'output')
+      assert.equal(c.failedWorkflow.value,false)
+    })
+    const previousInterval = globalThis.setInterval
+    let poll, appended = 0
+    globalThis.setInterval = callback => { poll = callback; return 123 }
+    try {
+      await render('/src/components/workspace/chat/ChatMessage.vue', {
+        ...failedProps, status: 'S', metadata: {selected_workflow:{type:'Workflow',wid:'wf',params:{}}},
+        onAppendAnswer: () => appended++,
+      }, async c => {
+        request = async action => action === 'message__run_workflow' ? {status:200,data:{rid:'cancelled'}}
+          : action === 'workflow__check_status' ? {status:200,msg:'STOPPED',data:{data:{nodes:[]}}}
+          : {status:200,data:{content:{text:'partial output'}}}
+        await c.runWorkflow()
+        await poll()
+        assert.equal(c.recordStatus.value, 'STOPPED')
+        assert.equal(c.runningWorkflow.value, false)
+        assert.equal(c.showingRecord.value, true)
+        assert.equal(appended, 0)
+        assert.equal(c.content.value.text, 'partial output')
+      })
+    } finally { globalThis.setInterval = previousInterval }
     const legacyFailure = await render('/src/components/workspace/chat/ChatMessage.vue', {
       ...failedProps, contentType: 'TXT', metadata: {}, loading: true,
     }, async () => {})

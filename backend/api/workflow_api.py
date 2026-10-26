@@ -5,6 +5,7 @@
 # @Last Modified time: 2024-07-01 18:31:32
 from copy import deepcopy
 from datetime import datetime
+from uuid import UUID
 
 from peewee import fn
 
@@ -294,13 +295,13 @@ class WorkflowAPI:
             return JResponse(status=404, msg="record not found")
 
         record = record_qs.first()
-        if record.status == "FINISHED":
+        if record.status in ("FINISHED", "STOPPED"):
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
             workflow_serializer_data["version"] = record.workflow_version
             response = {"status": 200, "msg": record.status, "data": workflow_serializer_data}
             cache.set(f"workflow:record:{rid}", 200, 60 * 60)
-        elif record.status in ("RUNNING", "QUEUED"):
+        elif record.status in ("RUNNING", "QUEUED", "STOPPING"):
             response = {"status": 202, "msg": record.status, "data": {"finished_nodes": finished_nodes, "node_timeline": read_timeline({**record.data, "rid": rid})}}
         else:
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
@@ -308,6 +309,9 @@ class WorkflowAPI:
             response = {"status": 500, "msg": record.status, "data": workflow_serializer_data}
             cache.set(f"workflow:record:{rid}", 500, 60 * 60)
         return JResponse(**response)
+
+    def stop(self, payload):
+        return WorkflowRunRecordAPI().stop(payload)
 
     def add_to_fast_access(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -407,7 +411,7 @@ class WorkflowTemplateAPI:
 
 def _artifact_snapshot(record):
     snapshot = deepcopy(record.data)
-    if record.status in ("RUNNING", "QUEUED"):
+    if record.status in ("RUNNING", "QUEUED", "STOPPING"):
         try:
             finished = cache.get(f"workflow:record:finished_nodes:{record.rid.hex}", [])
             by_id = {node.get("id"): node for node in finished if isinstance(node, dict)}
@@ -420,6 +424,21 @@ def _artifact_snapshot(record):
 
 class WorkflowRunRecordAPI:
     name = "workflow_run_record"
+
+    def stop(self, payload):
+        try:
+            rid = UUID(str(payload.get("rid"))).hex
+            wid = UUID(str(payload["wid"])).hex if payload.get("wid") is not None else None
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="invalid run or workflow id")
+        status, msg, record = get_user_object_general(WorkflowRunRecord, rid=rid)
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+        if wid and (record.workflow is None or record.workflow.wid.hex != wid):
+            return JResponse(status=404, msg="record not found")
+        from utilities.workflow_stopping import request_stop
+        stopped = request_stop(record.rid.hex)
+        return JResponse(msg=stopped.status, data=model_serializer(stopped, manytomany=True))
 
     def list_artifacts(self, payload):
         status, msg, record = get_user_object_general(WorkflowRunRecord, rid=payload.get("rid"))
@@ -442,7 +461,7 @@ class WorkflowRunRecordAPI:
         if status != 200 or not isinstance(record, WorkflowRunRecord):
             return JResponse(status=status, msg=msg)
 
-        active_timeline = read_timeline({**record.data, "rid": record.rid.hex}) if record.status in ("RUNNING", "QUEUED") else None
+        active_timeline = read_timeline({**record.data, "rid": record.rid.hex}) if record.status in ("RUNNING", "QUEUED", "STOPPING") else None
         record = model_serializer(record, manytomany=True)
         if active_timeline is not None:
             record["data"]["node_timeline"] = active_timeline

@@ -2,13 +2,13 @@ import { getWorkflowFailures, getWorkflowTaskTitleKey } from './workflowFailures
 
 const finite = value => typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
 const text = value => typeof value === 'string' ? value.slice(0, 200) : ''
-const states = new Set(['PENDING', 'RUNNING', 'WAITING', 'SUCCEEDED', 'FAILED', 'SKIPPED'])
+const states = new Set(['PENDING', 'RUNNING', 'WAITING', 'SUCCEEDED', 'FAILED', 'SKIPPED', 'STOPPED'])
 
 export function getWorkflowTimeline(snapshot = {}, { active = false, status = '', now = Date.now(), fresh = false } = {}) {
   snapshot = snapshot && typeof snapshot === 'object' ? snapshot : {}
   const nodes = Array.isArray(snapshot.nodes) ? snapshot.nodes : []
   const timeline = snapshot.node_timeline && typeof snapshot.node_timeline === 'object' ? snapshot.node_timeline : {}
-  const failed = status === 'FAILED' || getWorkflowFailures(snapshot).length > 0
+  const failed = ['FAILED', 'STOPPED'].includes(status) || getWorkflowFailures(snapshot).length > 0
   const eligible = nodes.filter(node => node && !node.ignored && !['triggers', 'assistedNodes'].includes(node.category))
   const ids = [...new Set([...eligible.map(node => node.id), ...Object.keys(timeline).filter(id => !nodes.some(node => node.id === id))])]
   return ids.map(id => {

@@ -93,7 +93,7 @@ def _update_timeline(data, node_id, status):
         entry["status"] = status
         if status in ("RUNNING", "WAITING") and entry["started_at"] is None:
             entry["started_at"] = now
-        if status in ("SUCCEEDED", "FAILED", "SKIPPED"):
+        if status in ("SUCCEEDED", "FAILED", "SKIPPED", "STOPPED"):
             entry["finished_at"] = now
             entry["run_time"] = max(0, (now - entry["started_at"]) / 1000) if entry["started_at"] is not None else None
         else:

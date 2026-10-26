@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+from contextlib import nullcontext
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -208,7 +209,12 @@ def test_report_workflow_status_updates_cached_record_status(monkeypatch) -> Non
 
     class _FakeWorkflowRunRecordModel:
         rid = object()
+        status = "RUNNING"
         RunFromTypes = SimpleNamespace(CHAT="CHAT")
+
+        @staticmethod
+        def update(**kwargs):
+            return SimpleNamespace(where=lambda *args: SimpleNamespace(execute=lambda: 1))
 
         @staticmethod
         def get(*args, **kwargs):
@@ -225,7 +231,7 @@ def test_report_workflow_status_updates_cached_record_status(monkeypatch) -> Non
     monkeypatch.setattr(
         workflow_module,
         "cache",
-        SimpleNamespace(set=lambda key, value, ttl: cache_updates.__setitem__(key, value)),
+        SimpleNamespace(transact=nullcontext, set=lambda key, value, ttl: cache_updates.__setitem__(key, value)),
     )
 
     workflow = Workflow(

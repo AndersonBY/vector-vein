@@ -16,6 +16,7 @@ from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
 from utilities.workflow_timeline import update_timeline
+from utilities.workflow_stopping import guarded_execution, stop_requested, request_stop, WorkflowStopped
 
 
 mprint = mprint_with_name(name="Workflow Task Server")
@@ -64,6 +65,7 @@ class Task:
         celery_task_name = f"tasks.{module_name}.{callable_name}"
 
         # Wrap original function to always report node status after execution
+        @guarded_execution
         def _wrapped(*args, **kwargs):
             from utilities.workflow import Workflow
 
@@ -86,7 +88,12 @@ class Task:
                 try:
                     try:
                         result = func(*args, **kwargs)
+                    except WorkflowStopped:
+                        request_stop(workflow_data.get("rid"))
+                        return workflow_data
                     except TaskRetry as exc:
+                        if stop_requested(workflow_data):
+                            return exc.task
                         retry_data = exc.task.copy()
                         retry_data.pop("node_id", None)
                         try:

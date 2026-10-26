@@ -331,6 +331,7 @@
       "timeline_succeeded": "Succeeded",
       "timeline_failed": "Failed",
       "timeline_skipped": "Skipped",
+      "timeline_stopped": "Stopped",
       "timeline_not_run": "Not run",
       "timeline_unknown": "Unknown",
 
@@ -431,6 +432,9 @@
       "move_to_trash": "Move to trash",
       "move_to_trash_success": "Moved to trash",
       "move_to_trash_failed": "Failed to move to trash",
+      "stop_workflow": "Stop run",
+      "stop_workflow_failed": "Unable to stop the run. Please retry.",
+      "stopping_description": "Waiting for the current node to finish. Following nodes will not run.",
       "run_once": "Run once",
       "human_feedback": "Human feedback",
       "human_feedback_placeholder": "Enter approval notes, operator context, or confirmation details",

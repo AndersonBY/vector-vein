@@ -331,6 +331,7 @@
       "timeline_succeeded": "成功",
       "timeline_failed": "失败",
       "timeline_skipped": "已跳过",
+      "timeline_stopped": "已停止",
       "timeline_not_run": "未执行",
       "timeline_unknown": "未知",
 
@@ -431,6 +432,9 @@
       "move_to_trash": "移入回收站",
       "move_to_trash_success": "已移入回收站",
       "move_to_trash_failed": "移入回收站失败",
+      "stop_workflow": "停止运行",
+      "stop_workflow_failed": "停止运行失败，请重试",
+      "stopping_description": "正在等待当前节点结束，后续节点将不再运行",
       "run_once": "运行一次",
       "human_feedback": "人工反馈",
       "human_feedback_placeholder": "输入审批意见、补充说明或人工确认结果",

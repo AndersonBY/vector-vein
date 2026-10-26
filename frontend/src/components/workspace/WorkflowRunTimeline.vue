@@ -18,7 +18,7 @@ watch(() => props.active, active => {
 }, { immediate: true })
 onBeforeUnmount(() => clearInterval(timer))
 const rows = computed(() => getWorkflowTimeline(props.snapshot, { active: props.active, status: props.status, now: now.value, fresh: props.fresh }))
-const completed = computed(() => rows.value.filter(row => ['SUCCEEDED', 'FAILED', 'SKIPPED'].includes(row.status)).length)
+const completed = computed(() => rows.value.filter(row => ['SUCCEEDED', 'FAILED', 'SKIPPED', 'STOPPED'].includes(row.status)).length)
 const runningNames = computed(() => rows.value.filter(row => ['RUNNING', 'WAITING'].includes(row.status)).map(row => `${getTimelineNodeLabel(row, t, te)} (${t(`workspace.workflowSpace.timeline_${row.status.toLowerCase()}`)})`).join(' · '))
 const time = value => value === null ? '—' : new Date(value).toLocaleTimeString()
 </script>

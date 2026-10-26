@@ -151,7 +151,7 @@ watch(
 
 const runRecordId = ref(props.metadata?.record_id ?? '')
 const showingRecord = ref(false)
-const recordStatus = ref('')
+const recordStatus = ref(props.metadata?.recordStatus || '')
 const runningWorkflow = ref(false)
 const checkStatusTimer = ref(null)
 const workflowData = ref(props.workflowData)
@@ -208,9 +208,9 @@ const runWorkflow = async () => {
           runRecordId.value = newRecordId // runRecordId 放在 workflowData 改变后改变，强迫 WorkflowRecordShow 根据新数据重新渲染
           runningWorkflow.value = false
           showingRecord.value = true
-          emit('update:status', status === 'FAILED' ? 'Z' : 'S')
+          emit('update:status', status === 'FINISHED' ? 'S' : 'Z')
           activeKey.value = [`${props.mid}-workflow`]
-          message[status === 'FAILED' ? 'error' : 'success'](t(
+          if (status !== 'STOPPED') message[status === 'FAILED' ? 'error' : 'success'](t(
             `workspace.workflowSpace.${status === 'FAILED' ? 'run_workflow_failed' : 'run_workflow_success'}`
           ))
           try {
@@ -261,8 +261,8 @@ const workflowPanelChange = async (key) => {
     loadingWorkflowRecord.value = true
     try {
       const recordRequest = await workflowRunRecordAPI('get', { rid: props.metadata.record_id })
-      if (recordRequest.data?.status == 200 && recordRequest.data.data) {
-        setWorkflowRecord(recordRequest.data.data)
+      if (recordRequest.status == 200 && recordRequest.data) {
+        setWorkflowRecord(recordRequest.data)
       } else {
         message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
       }

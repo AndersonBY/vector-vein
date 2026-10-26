@@ -69,6 +69,35 @@ def api_client(monkeypatch):
     return TestClient(server.fastapi_app)
 
 
+def test_fastapi_stop_delegates_and_stopped_wait_is_terminal(monkeypatch):
+    import utilities.config
+
+    monkeypatch.setattr(utilities.config, "cache", MemoryCache())
+    server = FastAPIServer.__new__(FastAPIServer)
+    server.fastapi_app = FastAPI()
+    server.workflow_api = SimpleNamespace(
+        get=lambda payload: {"status": 200, "data": {"data": {"nodes": [], "edges": []}}},
+        run=lambda payload: {"status": 200, "data": {"rid": "stopped-run"}},
+    )
+    calls = []
+    server.workflow_run_record_api = SimpleNamespace(
+        get=lambda payload: {"status": 200, "data": {"status": "STOPPED", "data": {"nodes": [], "edges": []}}},
+        stop=lambda payload: (calls.append(payload) or {"status": 200, "msg": "STOPPED", "data": {"status": "STOPPED"}}),
+    )
+    server.setup_workflow_endpoints()
+    client = TestClient(server.fastapi_app)
+    stopped = client.post("/api/workflow/workflow-id/stop/stopped-run").json()
+    assert stopped["status"] == 200 and stopped["msg"] == "STOPPED"
+    assert calls == [{"wid": "workflow-id", "rid": "stopped-run"}]
+    checked = client.post("/api/workflow/check-status", json={"rid": "stopped-run"}).json()
+    assert checked["status"] == 200 and checked["msg"] == "STOPPED"
+    waited = client.post("/api/workflow/run", json={"wid": "workflow-id", "wait_for_completion": True}).json()
+    assert waited["status"] == 200 and waited["msg"] == "STOPPED"
+    server.workflow_run_record_api.get = lambda payload: {"status": 200, "data": {"status": "STOPPING", "data": {}}}
+    checked = client.post("/api/workflow/check-status", json={"rid": "stopped-run"}).json()
+    assert checked["status"] == 202 and checked["msg"] == "STOPPING"
+
+
 @pytest.mark.parametrize("path,payload", [
     ("/api/workflow/check-status", {"rid": "failed-run"}),
     ("/api/workflow/run", {"wid": "workflow", "wait_for_completion": True}),

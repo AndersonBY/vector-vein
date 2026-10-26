@@ -71,7 +71,7 @@ test('poll lifecycle invalidates late requests, retries errors, and never stacks
   assert.equal(sockets.size, 0)
   assert.match(source, /if \(epoch !== pollEpoch \|\| rid !== runRecordId.value\) return/)
   assert.match(source, /if \(epoch === pollEpoch\) checkingStatus.value = false/)
-  assert.match(source, /\['RUNNING', 'QUEUED'\]\.includes\(record.status\)/)
+  assert.match(source, /\['RUNNING', 'QUEUED', 'STOPPING'\]\.includes\(record.status\)/)
 })
 
 test('real polling code ignores late history responses and retries a temporary network failure', async () => {
@@ -123,4 +123,21 @@ test('timeline component renders localized names and escapes custom labels', asy
     assert.match(html, /HTTP request/)
     assert.match(html, /Unknown/)
   } finally { await server.close() }
+})
+
+test('stopped timeline preserves completed and in-flight evidence while pending nodes did not run', () => {
+  const snapshot = {nodes: [{id:'done'},{id:'pending'},{id:'running'},{id:'unknown'}], node_timeline: {
+    done: {status:'SUCCEEDED',run_time:2}, pending: {status:'PENDING'}, running: {status:'RUNNING',started_at:1},
+  }}
+  const rows = getWorkflowTimeline(snapshot, {status:'STOPPED',now:10000})
+  assert.deepEqual(rows.map(row => row.status), ['SUCCEEDED','NOT_RUN','RUNNING','NOT_RUN'])
+  assert.equal(rows[2].elapsed,null)
+})
+
+test('explicit stopped timeline entries retain their cancellation state and measured duration', () => {
+  const [row] = getWorkflowTimeline({ nodes: [nodes[0]], node_timeline: {
+    a: {status:'STOPPED',started_at:1000,finished_at:3000},
+  } }, {status:'STOPPED',now:10000})
+  assert.equal(row.status,'STOPPED')
+  assert.equal(row.elapsed,2)
 })

@@ -215,14 +215,14 @@ class FastAPIServer:
                         record_data = record_result["data"]
                         status = record_data.get("status", "RUNNING")
 
-                        if status == "FINISHED":
+                        if status in ("FINISHED", "STOPPED"):
                             # Get workflow output
                             output_data = record_data.get("data", {})
                             if request.output_scope == "output_fields_only":
                                 # Filter to only output fields
                                 output_data = self._filter_output_fields(output_data)
 
-                            return StandardResponse(status=200, msg="FINISHED", data=output_data)
+                            return StandardResponse(status=200, msg=status, data=output_data)
                         elif status == "FAILED":
                             return StandardResponse(status=500, msg="FAILED", data=workflow_error_payload(record_data))
 
@@ -260,14 +260,14 @@ class FastAPIServer:
                 record = record_result["data"]
                 status = record.get("status", "RUNNING")
 
-                if status in ("RUNNING", "QUEUED"):
+                if status in ("RUNNING", "QUEUED", "STOPPING"):
                     # Keep returning partial progress
                     return StandardResponse(status=202, msg=status, data={"finished_nodes": finished_nodes})
-                elif status == "FINISHED":
+                elif status in ("FINISHED", "STOPPED"):
                     # Format output data
                     output_data = self._format_workflow_output(record.get("data", {}))
                     _cache.set(f"workflow:record:{request.rid}", 200, 60 * 60)
-                    return StandardResponse(status=200, msg="FINISHED", data=output_data)
+                    return StandardResponse(status=200, msg=status, data=output_data)
                 elif status == "FAILED":
                     _cache.set(f"workflow:record:{request.rid}", 500, 60 * 60)
                     return StandardResponse(status=500, msg="FAILED", data=workflow_error_payload(record))
@@ -292,9 +292,7 @@ class FastAPIServer:
         async def stop_workflow(workflow_id: str, record_id: str):
             """Stop a running workflow"""
             try:
-                # Note: The workflow API doesn't have a stop method, need to check this
-                # For now, return a message that this feature is not yet implemented
-                return {"workflow_id": workflow_id, "record_id": record_id, "status": "not_implemented", "message": "Stop workflow feature is not yet implemented"}
+                return self.workflow_run_record_api.stop({"wid": workflow_id, "rid": record_id})
             except Exception as e:
                 mprint(f"Error stopping workflow {workflow_id}/{record_id}: {e}")
                 raise HTTPException(status_code=500, detail=str(e))

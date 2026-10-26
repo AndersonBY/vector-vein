@@ -122,12 +122,15 @@ def test_batch_collects_every_failure_and_preserves_successes_and_skips(monkeypa
 
 
 def install_record(monkeypatch, data, run_from="CHAT"):
+    from contextlib import nullcontext
     events = []
     record = SimpleNamespace(rid="run-1", data=data, status="RUNNING", run_from=run_from,
                              source_message="message-1", save=lambda: events.append("record"))
     monkeypatch.setattr(workflow_module, "WorkflowRunRecord", SimpleNamespace(
-        rid="rid", get=lambda *args: record, RunFromTypes=SimpleNamespace(CHAT="CHAT")))
-    monkeypatch.setattr(workflow_module, "cache", SimpleNamespace(set=lambda *args: events.append("cache")))
+        rid="rid", status="RUNNING", get=lambda *args: record,
+        update=lambda **kwargs: SimpleNamespace(where=lambda *args: SimpleNamespace(execute=lambda: (events.append("record") or 1))),
+        RunFromTypes=SimpleNamespace(CHAT="CHAT")))
+    monkeypatch.setattr(workflow_module, "cache", SimpleNamespace(transact=nullcontext, set=lambda *args: events.append("cache")))
     return record, events
 
 

@@ -201,10 +201,12 @@ def execute(args):
     app.conf.update(task_always_eager=True, task_eager_propagates=False)
     try:
         # The same Celery chain runs synchronously; a separate broker worker is unnecessary.
-        run_workflow.run(data).get(propagate=True)
+        result = run_workflow.run(data)
+        if not isinstance(result, dict):
+            result.get(propagate=True)
     except (Exception, KeyboardInterrupt) as exc:
         record = WorkflowRunRecord.get_by_id(record.rid)
-        if record.status != "FAILED":
+        if record.status not in ("FAILED", "STOPPING", "STOPPED"):
             from utilities.workflow import Workflow
             from utilities.workflow_errors import add_failure, node_failure
             failed_data = {**record.data, "rid": record.rid.hex}

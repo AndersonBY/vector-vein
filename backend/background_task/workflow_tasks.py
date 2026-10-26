@@ -13,6 +13,7 @@ from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
 from utilities.workflow_timeline import merge_timeline, update_timeline
+from utilities.workflow_stopping import guarded_execution, stop_requested
 from worker.tasks import chain, on_finish, TaskRetry, task
 from worker.tasks import (
     llms,
@@ -111,6 +112,7 @@ def merge_results(workflow_data_list: list, node_ids: list):
 
 @app.task(bind=True, name="workflow.batch_tasks")
 @timer
+@guarded_execution
 def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
     """Run multiple tasks concurrently
 
@@ -236,6 +238,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
 
 @app.task(bind=True, name="workflow.run", max_retries=3)
 @timer
+@guarded_execution
 def run_workflow(self, workflow_data: dict):
     """Run a workflow task
 
@@ -273,6 +276,8 @@ def run_workflow(self, workflow_data: dict):
         return result
 
     except TaskRetry as e:
+        if stop_requested(workflow_data):
+            return workflow_data
         mprint.error(f"Scheduling retry for task function: {e.func_name}")
         # Retry with exponential backoff
         retry_delay = min(e.retry_delay * (2**self.request.retries), 300)  # Max 5 minutes

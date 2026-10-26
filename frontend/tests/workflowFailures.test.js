@@ -88,3 +88,11 @@ test('failure details render malicious provider text as escaped text, including 
     await server.close()
   }
 })
+
+test('stopped responses remain cancellation even with partial node failures', () => {
+  for (const response of [
+    { status: 200, msg: 'STOPPED', data: { data: { failures: [{ message: 'partial failure' }] } } },
+    { status: 200, data: { status: 'STOPPED' } },
+  ]) assert.equal(getWorkflowRunStatus(response), 'STOPPED')
+  assert.equal(getWorkflowRunStatus({ status: 202, msg: 'STOPPING' }), '')
+})
