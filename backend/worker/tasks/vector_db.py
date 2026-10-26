@@ -68,6 +68,10 @@ def add_data(
             content_titles = content_titles * max_length
         if len(source_urls) == 1:
             source_urls = source_urls * max_length
+        if not (len(texts) == len(content_titles) == len(source_urls)):
+            raise ValueError(
+                "Batch text, content_title, and source_url values must have equal lengths after single-value expansion"
+            )
 
     database_vid = workflow.get_node_field_value(node_id, "database")
     vector_database = UserVectorDatabase.get(vid=database_vid)
