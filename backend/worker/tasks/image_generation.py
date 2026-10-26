@@ -9,6 +9,7 @@ import base64
 from worker.tasks import task, timer
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.network import new_httpx_client
 from utilities.file_processing import static_file_server
 from utilities.ai_utils import get_openai_client_and_model_id
@@ -134,6 +135,7 @@ def stable_diffusion(
         else:
             raise Exception(f"Invalid provider: {provider}")
 
+        register_artifact(workflow.data, node_id, local_file)
         image_url = static_file_server.get_file_url(f"images/{image_name}")
         if output_type == "only_link":
             results.append(image_url)
@@ -191,6 +193,7 @@ def dall_e(
         with open(local_file, "wb") as image_file:
             image_file.write(image_bytes)
 
+        register_artifact(workflow.data, node_id, local_file)
         image_url = static_file_server.get_file_url(f"images/{image_name}")
 
         if output_type == "only_link":

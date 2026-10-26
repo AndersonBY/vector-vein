@@ -292,6 +292,13 @@
     "workflowSpace": {
       "show_debug_details": "调试信息",
       "hide_debug_details": "收起调试信息",
+      "artifacts_title": "输出文件",
+      "artifact_missing": "文件已丢失",
+      "artifact_open": "打开",
+      "artifact_folder": "打开文件夹",
+      "artifact_retry": "重试",
+      "artifact_list_error": "无法加载输出文件，请重试。",
+      "artifact_open_error": "无法打开文件或文件夹，请确认其仍然存在后重试。",
       "timeline_title": "节点时间线",
       "timeline_timing_unavailable": "— 表示暂无可用的计时记录。",
       "timeline_completed": "已结束 {completed}/{total}",

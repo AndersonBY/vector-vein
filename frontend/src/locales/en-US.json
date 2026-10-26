@@ -292,6 +292,13 @@
     "workflowSpace": {
       "show_debug_details": "Debug details",
       "hide_debug_details": "Hide debug details",
+      "artifacts_title": "Output files",
+      "artifact_missing": "Missing",
+      "artifact_open": "Open",
+      "artifact_folder": "Open folder",
+      "artifact_retry": "Retry",
+      "artifact_list_error": "Could not load output files. Try again.",
+      "artifact_open_error": "Could not open this file or folder. Check that it is available, then try again.",
       "timeline_title": "Node timeline",
       "timeline_timing_unavailable": "— indicates timing is unavailable.",
       "timeline_completed": "{completed}/{total} ended",

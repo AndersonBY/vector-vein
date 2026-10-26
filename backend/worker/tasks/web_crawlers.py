@@ -12,6 +12,7 @@ from bilili.api.acg_video import get_acg_video_subtitle
 
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.general import mprint_with_name
 from utilities.network import crawl_text_from_url, new_httpx_client
 from worker.tasks import task, timer
@@ -150,6 +151,7 @@ def bilibili_crawler(
             ydl_opts = {
                 "outtmpl": str(output_folder) + "/%(title)s.%(ext)s",
                 "merge_output_format": "mp4",
+                "post_hooks": [lambda path: register_artifact(workflow.data, node_id, path)],
             }
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 ydl.download([url])

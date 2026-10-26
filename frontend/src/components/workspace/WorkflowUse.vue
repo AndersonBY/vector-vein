@@ -19,6 +19,7 @@ import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TableRenderer from "@/components/workspace/TableRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 import WorkflowRunTimeline from "@/components/workspace/WorkflowRunTimeline.vue"
+import WorkflowRunArtifacts from "@/components/workspace/WorkflowRunArtifacts.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
 import TextOutput from "@/components/TextOutput.vue"
 import {
@@ -192,6 +193,7 @@ let pollEpoch = 0
 const runSockets = new Set()
 const timelineSnapshot = ref({})
 const timelineFresh = ref(false)
+const artifactsRevision = ref(0)
 const showTimeline = ref(false)
 function stopStatusPolling() {
   pollEpoch += 1
@@ -216,6 +218,7 @@ const checkWorkflowRunningStatus = async () => {
   try {
     const statusResponse = await workflowAPI('check_status', { rid })
     if (epoch !== pollEpoch || rid !== runRecordId.value) return
+    artifactsRevision.value++
     const snapshot = statusResponse.status === 202 ? statusResponse.data : statusResponse.data?.data
     if (snapshot) {
       timelineFresh.value = false
@@ -506,6 +509,7 @@ const recordStatus = ref('')
 
 function setWorkflowRecord(record) {
   stopStatusPolling()
+  artifactsRevision.value++
   showTimeline.value = false
   running.value = false
   timelineFresh.value = false
@@ -707,7 +711,8 @@ function clearWorkflow() {
       </a-typography-title>
       <WorkflowRunTimeline v-if="showTimeline && (running || showingRecord)" :snapshot="timelineSnapshot" :active="running" :status="recordStatus" :fresh="timelineFresh" />
       <a-flex vertical gap="small">
-        <a-spin :spinning="running && !node.finished && node.field_type != 'typography-paragraph'"
+        <a-spin :spinning="running && node.type !== 'Document' && !node.finished && node.field_type != 'typography-paragraph'"
+          v-show="node.type !== 'Document' || !Array.isArray(node.data?.artifacts) || !node.data.artifacts.some(artifact => artifact?.path === node.data.template?.output?.value)"
           class="draggable-item" v-for="(node, index) in outputNodes" :key="`node-${node.id}-${index}`">
           <div v-if="node.type == 'Text'">
             <a-typography-title :level="5" class="text-output-title">
@@ -756,6 +761,7 @@ function clearWorkflow() {
           </div>
         </a-spin>
       </a-flex>
+      <WorkflowRunArtifacts v-if="runRecordId && (running || showingRecord)" :rid="runRecordId" :revision="artifactsRevision" :status="recordStatus" />
     </a-col>
 
     <a-modal v-model:open="runWorkflowVersionModal"

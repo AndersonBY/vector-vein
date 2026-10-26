@@ -22,6 +22,7 @@ from worker.tasks import task, timer
 from utilities.file_processing.structured import write_workbook, write_report, write_chart
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.general import mprint_with_name
 from utilities.media_processing import TTSClient
 from utilities.file_processing import HtmlToDocx, process_pdf, static_file_server
@@ -149,6 +150,7 @@ def document(workflow_data: dict, node_id: str):
                 raise ValueError("Text exports require string content")
             temporary.write_text(content, encoding="utf-8")
         os.replace(temporary, local_file)
+        register_artifact(workflow.data, node_id, local_file)
     finally:
         temporary.unlink(missing_ok=True)
     workflow.update_node_field_value(node_id, "output", str(local_file))
@@ -181,6 +183,7 @@ def audio(
         else:
             output_folder = Path(Settings().output_folder)
             output_file_path = tts_client.create(text=content, voice=tts_voice, output_folder=output_folder.as_posix())
+            register_artifact(workflow.data, node_id, output_file_path)
             output_file_path = static_file_server.get_file_url(output_file_path)
     elif audio_type == "play_audio":
         output_file_path = file_link
@@ -270,7 +273,10 @@ def picture_render(
     results = []
     for content in contents:
         if render_type == "pdf":
-            image_files = process_pdf(content, "render_images", image_path)
+            image_files = process_pdf(
+                content, "render_images", image_path,
+                on_image_saved=lambda path: register_artifact(workflow.data, node_id, path),
+            )
             image_urls = [
                 static_file_server.get_file_url(Path(image_file).relative_to(static_path.absolute()).as_posix())
                 for image_file in image_files
@@ -300,6 +306,7 @@ def html(
     file_path = output_folder / file_name
     with open(file_path, "w", encoding="utf8") as f:
         f.write(html_code)
+    register_artifact(workflow.data, node_id, file_path)
     html_url = static_file_server.get_file_url(file_path)
     workflow.update_node_field_value(node_id, "output", html_url)
     return workflow.data

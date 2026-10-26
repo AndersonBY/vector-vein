@@ -21,6 +21,7 @@ from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
 from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
@@ -139,6 +140,7 @@ def programming_function(workflow_data: dict, node_id: str):
                     if destination.exists():
                         destination = output_folder / f"{file.stem}_{uuid.uuid4().hex[:12]}{file.suffix}"
                     shutil.move(str(file), str(destination))
+                register_artifact(workflow.data, node_id, destination)
                 files.append(str(destination))
             files_batch.append(files)
     for field, values in (("output", output_batch), ("files", files_batch), ("error_msg", errors), ("console_msg", consoles)):
@@ -250,9 +252,10 @@ def screenshot(
     monitor_number = workflow.get_node_field_value(node_id, "monitor_number")
     output_type = workflow.get_node_field_value(node_id, "output_type")
 
-    workflow.update_node_field_value(
-        node_id, "output", get_screenshot(output_type=output_type, monitor_number=monitor_number)
-    )
+    result = get_screenshot(output_type=output_type, monitor_number=monitor_number)
+    if output_type == "file_path":
+        register_artifact(workflow.data, node_id, result)
+    workflow.update_node_field_value(node_id, "output", result)
     return workflow.data
 
 

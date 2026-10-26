@@ -23,6 +23,7 @@ from api.utils import (
 )
 from utilities.config import cache
 from utilities.workflow_timeline import read_timeline
+from utilities.workflow_artifacts import get_run_artifacts, open_run_artifact
 from utilities.workflow import WorkflowData, validate_cron_expression, get_next_run_time
 from utilities.file_processing import static_file_server
 from celery_tasks import update_workflow_tool_call_data
@@ -404,8 +405,34 @@ class WorkflowTemplateAPI:
         return JResponse(data=response_data)
 
 
+def _artifact_snapshot(record):
+    snapshot = deepcopy(record.data)
+    if record.status in ("RUNNING", "QUEUED"):
+        try:
+            finished = cache.get(f"workflow:record:finished_nodes:{record.rid.hex}", [])
+            by_id = {node.get("id"): node for node in finished if isinstance(node, dict)}
+            snapshot["nodes"] = [by_id.pop(node.get("id"), node) for node in snapshot.get("nodes", [])] + list(by_id.values())
+        except Exception:
+            pass
+        snapshot["node_timeline"] = read_timeline({**snapshot, "rid": record.rid.hex})
+    return snapshot
+
+
 class WorkflowRunRecordAPI:
     name = "workflow_run_record"
+
+    def list_artifacts(self, payload):
+        status, msg, record = get_user_object_general(WorkflowRunRecord, rid=payload.get("rid"))
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+        return JResponse(data={"artifacts": get_run_artifacts(_artifact_snapshot(record))})
+
+    def open_artifact(self, payload):
+        status, msg, record = get_user_object_general(WorkflowRunRecord, rid=payload.get("rid"))
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+        status, msg = open_run_artifact(_artifact_snapshot(record), payload.get("path"), payload.get("action"))
+        return JResponse(status=status, msg=msg)
 
     def get(self, payload):
         status, msg, record = get_user_object_general(

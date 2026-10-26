@@ -10,6 +10,7 @@ from pathlib import Path
 
 from utilities.config import Settings
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.file_processing import get_files_contents, remove_markdown_image, remove_url_and_email
 from worker.tasks import task, timer
 from utilities.file_processing.structured import read_workbook, workbook_text
@@ -124,6 +125,7 @@ def document_convert(
         else:
             target_path.write_text(content, encoding="utf-8")
 
+        register_artifact(workflow.data, node_id, target_path)
         output_files.append(target_path.as_posix())
 
     workflow.update_node_field_value(node_id, "output", output_files[0] if len(output_files) == 1 else output_files)

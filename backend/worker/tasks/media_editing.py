@@ -4,6 +4,7 @@ import uuid
 
 from worker.tasks import task, timer
 from utilities.workflow import Workflow
+from utilities.workflow_artifacts import register_artifact
 from utilities.general import align_elements
 from utilities.media_processing import ImageProcessor
 from utilities.text_processing import extract_image_url
@@ -141,6 +142,7 @@ def image_editing(
         with open(local_file, "wb") as file:
             file.write(image_processor.bytes)
 
+        register_artifact(workflow.data, node_id, local_file)
         image_url = static_file_server.get_file_url(f"images/{image_name}")
 
         if current_output_type == "only_link":
@@ -264,6 +266,7 @@ def image_watermark(
         with open(local_file, "wb") as file:
             file.write(image_processor.bytes)
 
+        register_artifact(workflow.data, node_id, local_file)
         image_url = static_file_server.get_file_url(f"images/{image_name}")
 
         current_output_type = output_types[index]

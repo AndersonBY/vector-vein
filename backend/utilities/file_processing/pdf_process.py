@@ -12,7 +12,7 @@ def calculate_zoom(page, min_dimension=1920):
     return zoom_x, zoom_y
 
 
-def pdf_to_images(pdf_path, output_folder):
+def pdf_to_images(pdf_path, output_folder, on_image_saved=None):
     if not Path(output_folder).exists():
         Path(output_folder).mkdir(parents=True, exist_ok=True)
 
@@ -25,14 +25,16 @@ def pdf_to_images(pdf_path, output_folder):
         pix = page.get_pixmap(matrix=mat, alpha=False)
         image_path = Path(output_folder) / Path(f"page_{page_num + 1}.png")
         pix.save(str(image_path.absolute()))
+        if on_image_saved is not None:
+            on_image_saved(image_path.absolute())
         images.append(str(image_path.absolute()))
 
     return images
 
 
-def process_pdf(input_data, action: str, output_folder: str | Path):
+def process_pdf(input_data, action: str, output_folder: str | Path, on_image_saved=None):
     if action == "render_images":
-        images = pdf_to_images(input_data, output_folder)
+        images = pdf_to_images(input_data, output_folder, on_image_saved=on_image_saved)
         return images
     else:
         raise ValueError(f"Unsupported action: {action}")

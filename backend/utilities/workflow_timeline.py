@@ -29,6 +29,7 @@ def reset_run(data):
     for key in ("failures", "error_task", "error_type", "skipped_nodes", "node_run_time", "node_timeline", "original_workflow_data", "async_tasks", "__node_id_map", "_batch_collecting"):
         data.pop(key, None)
     for node in data.get("nodes", []):
+        node.setdefault("data", {})["artifacts"] = []
         for key in ("status", "run_time", "started_at", "finished_at"):
             node.pop(key, None)
             node.get("data", {}).pop(key, None)
