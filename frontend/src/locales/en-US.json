@@ -506,6 +506,8 @@
       "diagnosing_record": "Diagnosing {record}",
       "cannot_save_when_diagnosing": "Cannot save when diagnosing record",
       "layout_graph": "Auto layout",
+      "undo": "Undo",
+      "redo": "Redo",
       "resume_node_but_edge_already_connected_message": "The other end of the line has other lines, please delete other lines or ignore the nodes corresponding to the lines.",
       "images_helper": "Upload images to show the workflow effect",
       "visual_assets": "Visual assets",

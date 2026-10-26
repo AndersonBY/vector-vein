@@ -96,6 +96,9 @@ const pushMessage = (action, data) => {
 
 const { t } = useI18n()
 const title = ref(props.data?.title ? props.data.title : (props.title.length == 0 ? t(`${props.translatePrefix}.title`) : props.title))
+watch(() => props.data?.title, newTitle => {
+  title.value = newTitle || (props.title.length == 0 ? t(`${props.translatePrefix}.title`) : props.title)
+})
 const description = props.description.length == 0 ? t(`${props.translatePrefix}.description`) : props.description
 
 const onTitleChange = (string) => {

@@ -3,7 +3,8 @@ import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTi
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne, ConnectionPoint, Connection, Robot } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne, ConnectionPoint, Connection, Robot, Undo, Redo } from '@icon-park/vue-next'
+import { cloneDeep } from 'lodash-es'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'
 import { Background } from '@vue-flow/background'
@@ -29,6 +30,7 @@ import { nodeCategoryOptions, plannedNodeManifest } from "@/config/nodeManifest"
 import { isFeatureEnabled } from '@/config/featureFlags'
 import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/utils/workflow'
 import { useLayout } from '@/utils/useLayout'
+import { createWorkflowHistory, workflowSnapshot, isHistoryTextTarget } from '@/utils/workflowHistory'
 import { workflowAPI, workflowTemplateAPI, workflowRunRecordAPI } from "@/api/workflow"
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
@@ -114,12 +116,25 @@ const handleKeyDown = (event) => {
   if ((event.ctrlKey || event.metaKey) && event.key === 's') {
     event.preventDefault() // 阻止浏览器默认的保存行为
     saveWorkflow() // 调用我们自己的保存操作
+    return
   }
+  if (!(event.ctrlKey || event.metaKey) || event.altKey || event.defaultPrevented || event.isComposing) return
+  if (loading.value || activeTab.value !== 'canvas' || codeEditorModal.open || testRunModal.open ||
+    saveCheckModalOpen.value || exitModalOpen.value || document.querySelector('.ant-modal-wrap:not([style*="display: none"])') ||
+    isHistoryTextTarget(event.target)) return
+  const key = event.key.toLowerCase()
+  if (key !== 'z' && key !== 'y') return
+  event.preventDefault()
+  if (key === 'y' || event.shiftKey) redo()
+  else undo()
 }
 
 onUnmounted(() => {
   // 移除键盘事件监听器
   document.removeEventListener('keydown', handleKeyDown)
+  clearTimeout(historyTimeout)
+  clearTimeout(initialSnapshotTimeout)
+  historyDisposed = true
   userWorkflowsStore.setDiagnosisRecord(null)
 })
 
@@ -150,6 +165,7 @@ onMounted(async () => {
   const workflowResponse = await getWorkflowRequest
   const listVectorDbResponse = await listVectorDbRequest
   const listRelationalDbResponse = await listRelationalDbRequest
+  if (historyDisposed) return
 
   if (listVectorDbResponse.status == 200) {
     userDatabasesStore.setUserDatabases(listVectorDbResponse.data)
@@ -228,6 +244,7 @@ onMounted(async () => {
   loading.value = false
 
   nextTick(() => {
+    if (historyDisposed) return
     if (currentWorkflow.value.data.nodes.length == 0) {
       addNodeToCanvas('ButtonTrigger', { x: 100, y: 100 })
     }
@@ -235,9 +252,12 @@ onMounted(async () => {
     if (currentWorkflow.value.data.viewport) {
       setViewport(currentWorkflow.value.data.viewport)
     }
-    setTimeout(() => {
+    initialSnapshotTimeout = setTimeout(() => {
       // 刚给 elements.value 赋值，在 getWorkflowHash 里 getCleanWorkflowData 里的 toObject 还没拿到值，所以需要再等待一下
       savedWorkflowHash.value = getWorkflowHash(currentWorkflow.value)
+      history.reset(workflowSnapshot(nodes.value, edges.value))
+      historyReady = true
+      historyVersion.value++
     }, 300)
   })
 })
@@ -389,7 +409,85 @@ const {
   edges,
   nodes,
 } = useVueFlow()
+
+const history = createWorkflowHistory(50)
+const historyVersion = ref(0)
+let historyReady = false
+let applyingHistory = false
+let draggingHistory = false
+let historyDisposed = false
+let historyTimeout
+let initialSnapshotTimeout
+const canUndo = computed(() => { historyVersion.value; return historyReady && history.canUndo })
+const canRedo = computed(() => { historyVersion.value; return historyReady && history.canRedo })
+const flushHistory = () => {
+  clearTimeout(historyTimeout)
+  historyTimeout = null
+  if (!historyReady || applyingHistory) return
+  history.observe(workflowSnapshot(nodes.value, edges.value))
+  history.commit()
+  historyVersion.value++
+}
+watch(() => workflowSnapshot(nodes.value, edges.value), snapshot => {
+  if (!historyReady || applyingHistory || !history.observe(snapshot)) return
+  historyVersion.value++
+  clearTimeout(historyTimeout)
+  if (!draggingHistory) historyTimeout = setTimeout(flushHistory, 200)
+}, { deep: true, flush: 'sync' })
+const applyHistory = async snapshot => {
+  if (!snapshot) return
+  applyingHistory = true
+  // Vue Flow merges existing elements, so explicitly clear removed persisted keys.
+  const previous = workflowSnapshot(nodes.value, edges.value)
+  for (const restored of [...snapshot.nodes, ...snapshot.edges]) {
+    const existing = restored.source ? edges.value.find(edge => edge.id === restored.id) : findNode(restored.id)
+    const persisted = [...previous.nodes, ...previous.edges].find(item => item.id === restored.id)
+    if (!existing || !persisted) continue
+    for (const key of Object.keys(persisted)) {
+      if (!(key in restored)) delete existing[key]
+    }
+  }
+  // Existing wrappers retain their template root from setup; restore it in place.
+  for (const restored of snapshot.nodes) {
+    const existing = findNode(restored.id)
+    if (existing?.type !== restored.type || !existing?.data?.template || !restored.data?.template) continue
+    const template = existing.data.template
+    for (const key of Object.keys(template)) {
+      if (!(key in restored.data.template)) delete template[key]
+    }
+    Object.assign(template, restored.data.template)
+    restored.data.template = template
+  }
+  elements.value = [...snapshot.nodes, ...snapshot.edges]
+  await nextTick()
+  await nextTick()
+  if (!historyDisposed) {
+    // Newly restored wrappers hydrate defaults; keep that baseline without clearing redo.
+    history.settle(workflowSnapshot(nodes.value, edges.value))
+    applyingHistory = false
+  }
+  historyVersion.value++
+}
+const undo = () => {
+  if (!historyReady || applyingHistory || draggingHistory) return
+  flushHistory()
+  applyHistory(history.undo())
+}
+const redo = () => {
+  if (!historyReady || applyingHistory || draggingHistory) return
+  flushHistory()
+  applyHistory(history.redo())
+}
+const onHistoryDragStart = () => {
+  flushHistory()
+  draggingHistory = true
+}
+const onHistoryDragStop = () => {
+  draggingHistory = false
+  flushHistory()
+}
 onConnect((params) => {
+  flushHistory()
   const hasConnectedEdge = edges.value.some((edge) => {
     return !edge.ignored && edge.target === params.target && edge.targetHandle === params.targetHandle
   })
@@ -413,6 +511,7 @@ onConnect((params) => {
   addEdges([params])
 })
 const onEdgeUpdate = ({ edge, connection }) => {
+  flushHistory()
   updateEdge(edge, connection)
 }
 
@@ -425,6 +524,7 @@ const onPaneClick = (event) => {
 }
 
 const onEdgeDoubleClick = (event) => {
+  flushHistory()
   elements.value = elements.value.filter((element) => {
     if (element.source === event.edge.source && element.target === event.edge.target && element.sourceHandle === event.edge.sourceHandle && element.targetHandle === event.edge.targetHandle) {
       return false
@@ -471,12 +571,14 @@ const nodeEvents = {
     }
   },
   delete: (data, nodeId) => {
+    flushHistory()
     removeNodes([nodeId])
   },
   clone: (data, nodeId) => {
+    flushHistory()
     const node = findNode(nodeId)
     node.selected = false
-    const newNode = JSON.parse(JSON.stringify(node))
+    const newNode = cloneDeep(workflowSnapshot([node], []).nodes[0])
     newNode.id = uuidv4()
     newNode.selected = true
     newNode.position.x += 50
@@ -491,6 +593,7 @@ const nodeEvents = {
     node.data.title = newTitle
   },
   ignore: (ignored, nodeId) => {
+    flushHistory()
     const node = findNode(nodeId)
 
     // 检查是否可以忽略该节点，主要判断 target 类端口在该节点恢复后不能有多个连线
@@ -583,6 +686,7 @@ const onTouchMove = (event) => {
 }
 
 const addNodeToCanvas = (nodeType, position, updateTemplateData = {}, extraData = {}) => {
+  flushHistory()
   const nodeTemplateData = nodeTemplateCreators[nodeType]()
   nodeTemplateData.template = {
     ...nodeTemplateData.template,
@@ -811,6 +915,7 @@ const codeEditorModal = reactive({
     codeEditorModal.open = true
   },
   updateCode: (code) => {
+    flushHistory()
     const workflowData = JSON.parse(code)
     currentWorkflow.value.data.ui = workflowData.ui || {}
     elements.value = [...workflowData.nodes, ...workflowData.edges]
@@ -818,6 +923,10 @@ const codeEditorModal = reactive({
     currentWorkflow.value.data.nodes = workflowData.nodes
     currentWorkflow.value.data.edges = workflowData.edges
     currentWorkflow.value.data.nodes.forEach((node) => {
+      const template = nodeTemplateCreators[node.type]?.().template
+      for (const [key, field] of Object.entries(node.data.template)) {
+        if (template?.[key]?.condition) field.condition = template[key].condition
+      }
       if (node.category == "vectorDb") {
         node.data.template.database.options = userDatabases.value.filter((database) => {
           return database.status == 'VALID'
@@ -843,6 +952,7 @@ const testRunModal = reactive({
 
 const { layout } = useLayout()
 async function layoutGraph(direction) {
+  flushHistory()
   const result = layout(nodes.value, edges.value, direction)
   elements.value.forEach((element) => {
     if (Object.keys(element).includes('handleBounds')) {
@@ -1154,6 +1264,8 @@ const llmNodesCount = computed(() => {
         </a-alert>
         <a-layout-content class="editor-canvas">
           <VueFlow v-model="elements" :node-types="nodeTypes" :edges-updatable="true" @edge-update="onEdgeUpdate"
+            @node-drag-start="onHistoryDragStart" @node-drag-stop="onHistoryDragStop"
+            @selection-drag-start="onHistoryDragStart" @selection-drag-stop="onHistoryDragStop"
             @edge-click="onEdgeClick" @edge-double-click="onEdgeDoubleClick" @pane-click="onPaneClick"
             :snap-to-grid="true" :snap-grid="[20, 20]">
             <MiniMap pannable :style="{ backgroundColor: 'var(--component-background)' }"
@@ -1161,6 +1273,16 @@ const llmNodesCount = computed(() => {
             <Controls />
             <Background variant="dots" />
             <a-flex align="center" justify="center" class="vue-flow-toolbar">
+              <a-tooltip :title="t('workspace.workflowEditor.undo')">
+                <a-button type="text" :disabled="!canUndo" :aria-label="t('workspace.workflowEditor.undo')" @click="undo">
+                  <template #icon><Undo /></template>
+                </a-button>
+              </a-tooltip>
+              <a-tooltip :title="t('workspace.workflowEditor.redo')">
+                <a-button type="text" :disabled="!canRedo" :aria-label="t('workspace.workflowEditor.redo')" @click="redo">
+                  <template #icon><Redo /></template>
+                </a-button>
+              </a-tooltip>
               <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
               <a-tooltip :title="t('workspace.workflowEditor.layout_graph')">
                 <a-button type="text" @click="layoutGraph('LR')">

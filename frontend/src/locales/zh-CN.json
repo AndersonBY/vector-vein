@@ -506,6 +506,8 @@
       "diagnosing_record": "正在诊断记录 {record}",
       "cannot_save_when_diagnosing": "诊断记录时无法保存",
       "layout_graph": "自动布局",
+      "undo": "撤销",
+      "redo": "重做",
       "resume_node_but_edge_already_connected_message": "连线另一端有其他连线，请先删除其他连线或忽略对应连线的节点。",
       "images_helper": "上传图片展示工作流的效果",
       "visual_assets": "视觉资源",
