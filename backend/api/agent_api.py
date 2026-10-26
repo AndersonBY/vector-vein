@@ -19,6 +19,7 @@ from api.utils import (
     get_user_object_general,
 )
 from utilities.config import cache
+from utilities.chat_responses import CLIENT_FAILURES, PENDING, failure_response, persist_response
 from utilities.file_processing import static_file_server
 from utilities.media_processing import SpeechRecognitionClient
 
@@ -304,25 +305,32 @@ class MessageAPI:
         if not message:
             return JResponse(status=404)
 
-        response = json.loads(cache.get(f"chat_response:{mid}"))
-        message.content_type = response["content_type"]
-        message.content = response["content"]
-        message.metadata.update(response["metadata"])
+        if message.author_type != Message.AuthorTypes.ASSISTANT:
+            return JResponse(status=400, msg="Invalid AI message")
+        if message.status in PENDING:
+            cached = cache.get(f"chat_response:{message.mid.hex}")
+            try:
+                response = json.loads(cached) if isinstance(cached, (str, bytes)) else cached
+                if isinstance(response, dict) and response.get("content_type") in ("TXT", "WKF") and isinstance(response.get("content"), dict):
+                    message = persist_response(message, response)
+            except (TypeError, ValueError, KeyError):
+                pass
+        return JResponse(data=model_serializer(message))
 
-        message.status = (
-            Message.StatusTypes.WAITING_FOR_WORKFLOW
-            if response["content_type"] == Message.ContentTypes.WORKFLOW
-            else Message.StatusTypes.SUCCESS
-        )
-        message.save()
-
-        title = response.get("conversation_title")
-        if title and message.conversation.title != title:
-            message.conversation.title = title
-            message.conversation.update_time = datetime.now()
-            message.conversation.save()
-
-        return JResponse()
+    def fail_notice(self, payload):
+        code = payload.get("code")
+        if code not in CLIENT_FAILURES:
+            return JResponse(status=400, msg="Invalid chat failure code")
+        conversation = Conversation.get_or_none(Conversation.cid == payload.get("cid"))
+        if conversation is None:
+            return JResponse(status=404)
+        message = Message.get_or_none((Message.mid == payload.get("mid")) &
+            (Message.conversation == conversation) & (Message.author_type == Message.AuthorTypes.ASSISTANT))
+        if message is None:
+            return JResponse(status=404)
+        content = payload.get("content")
+        message = persist_response(message, failure_response(code, content if isinstance(content, dict) else {}))
+        return JResponse(data=model_serializer(message))
 
     def get(self, payload):
         mid = payload.get("mid")

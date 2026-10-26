@@ -6,7 +6,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
-import ReconnectingWebSocket from 'reconnecting-websocket'
+import { createChatConnection, replaceChatMessage, terminalChatMessage } from '@/utils/chatConnection'
 import ChatMessage from '@/components/workspace/chat/ChatMessage.vue'
 import ScrollEndButton from '@/components/ScrollEndButton.vue'
 import ShareChat from '@/components/workspace/chat/ShareChat.vue'
@@ -37,40 +37,35 @@ const { unsentChats } = storeToRefs(userChatsStore)
 
 const wsPort = ref(null)
 
-const fetchConversation = async (cid) => {
-  const res = await conversationAPI('get', { cid: cid })
-  if (res.status != 200) {
-    message.error(t('workspace.chatSpace.fetch_conversation_failed'))
-    return
+const fetchConversation = async cid => {
+  try {
+    const res = await conversationAPI('get', { cid })
+    if (disposed || cid !== conversationId.value) return false
+    if (res.status !== 200) throw new Error('fetch failed')
+    conversation.value = res.data.conversation
+    userChatsStore.addConversation(conversation.value)
+    messages.value = res.data.messages
+    selectedWorkflows.workflows = {}
+    selectedWorkflows.templates = {}
+    conversation.value.related_workflows.forEach(workflow => { selectedWorkflows.workflows[workflow.wid] = workflow })
+    conversation.value.related_templates.forEach(workflow => { selectedWorkflows.templates[workflow.tid] = workflow })
+    nextTick(() => navigateToElementBottom(chatBodyElementRef.value))
+    return true
+  } catch {
+    if (!disposed && cid === conversationId.value) message.error(t('workspace.chatSpace.fetch_conversation_failed'))
+    return false
+  } finally {
+    if (!disposed && cid === conversationId.value) loading.value = false
   }
-  conversation.value = res.data.conversation
-  userChatsStore.addConversation(conversation.value)
-  messages.value = res.data.messages
-  selectedWorkflows.workflows = {}
-  selectedWorkflows.templates = {}
-  conversation.value.related_workflows.forEach((workflow) => {
-    selectedWorkflows.workflows[workflow.wid] = workflow
-  })
-  conversation.value.related_templates.forEach((workflow) => {
-    selectedWorkflows.templates[workflow.tid] = workflow
-  })
-
-  loading.value = false
-  nextTick(() => {
-    navigateToElementBottom(chatBodyElementRef.value)
-  })
 }
 
 watch(() => route.params.conversationId, async (newVal, oldVal) => {
+  cancelAttempt()
   conversationId.value = newVal
   if (oldVal == newVal || newVal == undefined) {
     return
   }
   loading.value = true
-  if (chatSocket !== null) {
-    chatSocket.close()
-    chatSocket = null
-  }
   await fetchConversation(newVal)
 })
 
@@ -83,11 +78,12 @@ onBeforeMount(async () => {
   if (unsentChats.value.length == 0) {
     loading.value = true
   }
-  await fetchConversation(conversationId.value)
+  const fetched = await fetchConversation(conversationId.value)
+  if (disposed || !fetched) return
   if (unsentChats.value.length > 0) {
     attachments.value = unsentChats.value[0].attachments
-    await sendMessage(unsentChats.value[0].content, true)
-    userChatsStore.clearUnsentChats()
+    userInput.value = unsentChats.value[0].content
+    if (await sendMessage(userInput.value, true)) userChatsStore.clearUnsentChats()
   }
   nextTick(() => {
     if (chatBodyElementRef.value) {
@@ -97,10 +93,8 @@ onBeforeMount(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (chatSocket !== null) {
-    chatSocket.close()
-    chatSocket = null
-  }
+  disposed = true
+  cancelAttempt()
   if (chatBodyElementRef.value) {
     chatBodyElementRef.value.removeEventListener('scroll', handleScroll)
   }
@@ -127,8 +121,23 @@ const userScrolled = ref(false)
 
 const chatBodyElementRef = ref(null)
 
-const websocketStatus = ref('connecting')
-let chatSocket = null
+let chatConnection = null
+let connectionSetupTimer = null
+let attemptEpoch = 0
+let disposed = false
+const cancelAttempt = () => {
+  const pending = aiMessage.mid !== 'tmp' && receiving.value
+    ? { mid: aiMessage.mid, cid: conversationId.value, code: 'CHAT_CONNECTION_CLOSED',
+        content: { text: aiMessage.content.text, reasoning_content: aiMessage.content.reasoning_content } } : null
+  attemptEpoch += 1
+  chatConnection?.cancel()
+  chatConnection = null
+  clearTimeout(connectionSetupTimer)
+  receiving.value = false
+  sending.value = false
+  if (pending) void messageAPI('fail_notice', pending).catch(() => {})
+  clearAiMessage()
+}
 const receiving = ref(false)
 
 const aiMessage = reactive({
@@ -153,168 +162,143 @@ const clearAiMessage = () => {
   aiMessage.content = { text: '', reasoning_content: '', tool: {}, selected_workflow: {} }
 }
 
-const sendWebsocketMsg = async (msg) => {
-  if (chatSocket === null) {
+const currentAttempt = epoch => !disposed && epoch === attemptEpoch
+const applySnapshot = (epoch, mid, snapshot) => {
+  if (!currentAttempt(epoch) || snapshot?.mid !== mid) return
+  const current = messages.value.flat().find(message => message.mid === mid)
+  if (!current || !['S', 'W', 'F'].includes(current.status)) return
+  replaceChatMessage(messages.value, mid, { ...snapshot, loading: false,
+    workflow_invoke_step: snapshot.status === 'W' ? 'wait_for_invoke' : '' })
+}
+const sendWebsocketMsg = async (msg, epoch, cid) => {
+  const mid = msg.ai_message_mid
+  let ended = false
+  const finish = async (data, failureCode) => {
+    if (!currentAttempt(epoch) || ended) return
+    ended = true
+    clearTimeout(connectionSetupTimer)
+    chatConnection?.cancel()
+    chatConnection = null
+    const partial = { text: aiMessage.content.text, reasoning_content: aiMessage.content.reasoning_content }
+    const snapshot = terminalChatMessage(aiMessage, data)
+    replaceChatMessage(messages.value, mid, snapshot)
+    receiving.value = false
+    sending.value = false
+    clearAiMessage()
+    if (typeof data.title === 'string' && data.title) {
+      conversation.value.title = data.title
+      userChatsStore.updateConversation(cid, 'title', data.title)
+    }
+    try {
+      const response = await messageAPI(failureCode ? 'fail_notice' : 'done_notice', failureCode
+        ? { mid, cid, code: failureCode, content: partial } : { mid })
+      if (response.status === 200) applySnapshot(epoch, mid, response.data)
+    } catch { /* Keep the terminal local result when persistence is unavailable. */ }
+  }
+  const fail = code => finish({ status: 'F', error: { code,
+    message: t(`workspace.chatSpace.${code.toLowerCase()}`) } }, code)
+  try {
     if (wsPort.value === null) {
+      connectionSetupTimer = setTimeout(() => { void fail('CHAT_TIMEOUT') }, 15000)
       const res = await settingAPI('get_port', { port_name: 'chat_ws_port' })
+      if (!currentAttempt(epoch) || ended) return
+      clearTimeout(connectionSetupTimer)
+      if (res.status !== 200 || !res.data?.port) throw new Error('port unavailable')
       wsPort.value = res.data.port
     }
-    chatSocket = new ReconnectingWebSocket(
-      `ws://localhost:${wsPort.value}/ws/chat/${conversationId.value}/`,
-      null,
-      { maxReconnectAttempts: 5 }
-    )
-  } else {
-    chatSocket.send(JSON.stringify(msg))
-  }
-  chatSocket.onmessage = async (e) => {
-    const data = JSON.parse(e.data)
-    if (!data.end) {
-      receiving.value = true
-      aiMessage.loading = false
-      aiMessage.status = 'G'
-      if (data.workflow_invoke_step === 'generating_params') {
-        aiMessage.workflow_invoke_step = 'generating_params'
-        aiMessage.content_type = 'WKF'
-        aiMessage.content.text += data.content ?? ''
-        if (!userScrolled.value) {
-          nextTick(() => {
-            navigateToElementBottom(chatBodyElementRef.value)
-          })
+    if (!currentAttempt(epoch) || ended) return
+    chatConnection = createChatConnection({
+      url: `ws://localhost:${wsPort.value}/ws/chat/${cid}/`, payload: msg,
+      onFailure: fail,
+      onData: data => {
+        if (!currentAttempt(epoch) || ended || (data.mid && data.mid !== mid)) return
+        if (data.end) { void finish(data); return }
+        aiMessage.loading = false
+        aiMessage.status = 'G'
+        if (data.workflow_invoke_step) {
+          aiMessage.workflow_invoke_step = data.workflow_invoke_step
+          aiMessage.content_type = 'WKF'
+          if (data.selected_workflow) aiMessage.metadata.selected_workflow = data.selected_workflow
+        } else if (data.tool_calls?.length > 0) {
+          aiMessage.content_type = 'WKF'
+          aiMessage.content.tool = data.tool_calls[0].function.name
+        } else {
+          aiMessage.workflow_invoke_step = ''
+          aiMessage.content_type = 'TXT'
         }
-      } else if (data.workflow_invoke_step === 'wait_for_invoke') {
-        aiMessage.workflow_invoke_step = 'wait_for_invoke'
-        aiMessage.content_type = 'WKF'
         aiMessage.content.text += data.content ?? ''
-        aiMessage.metadata.selected_workflow = data.selected_workflow
-        if (!userScrolled.value) {
-          nextTick(() => {
-            navigateToElementBottom(chatBodyElementRef.value)
-          })
-        }
-      } else if (data.tool_calls?.length > 0) {
-        aiMessage.content_type = 'WKF'
-        aiMessage.content.tool = data.tool_calls[0].function.name
-        aiMessage.content.text += data.content ?? ''
-      } else if (data.content === null && data.reasoning_content === null) {
-        return
-      } else {
-        aiMessage.workflow_invoke_step = ''
-        aiMessage.content_type = 'TXT'
         aiMessage.content.reasoning_content += data.reasoning_content ?? ''
-        aiMessage.content.text += data.content ?? ''
-      }
-    } else {
-      // 收到 end 字段，表示这一轮对话结束
-      receiving.value = false
-      if (data.title !== null) {
-        conversation.value.title = data.title
-        userChatsStore.updateConversation(conversationId.value, 'title', data.title)
-      }
-      await messageAPI('done_notice', { mid: aiMessage.mid })
-      aiMessage.content.text = data.content ?? ''
-      aiMessage.content.reasoning_content = data.reasoning_content ?? ''
-      aiMessage.status = aiMessage.content_type == 'WKF' ? 'W' : 'S'
-      if (aiMessage.content_type == 'WKF') {
-        aiMessage.workflow_invoke_step = 'wait_for_invoke'
-      }
+        if (!userScrolled.value) nextTick(() => navigateToElementBottom(chatBodyElementRef.value))
+      },
+    })
+  } catch { await fail('CHAT_CONNECTION_FAILED') }
+}
 
-      const lastGroup = messages.value[messages.value.length - 1]
-      lastGroup[lastGroup.length - 1] = JSON.parse(JSON.stringify(aiMessage))
-      clearAiMessage()
-    }
-    if (!userScrolled.value) {
-      navigateToElementBottom(chatBodyElementRef.value)
-    }
+const beginAssistant = (data, epoch, cid, groupIndex) => {
+  clearAiMessage()
+  aiMessage.mid = data.ai_message_mid
+  receiving.value = true
+  if (groupIndex === undefined) messages.value.push([aiMessage])
+  else {
+    const parentGroup = messages.value[groupIndex]
+    messages.value[groupIndex] = [...parentGroup, aiMessage]
+    messagePagination.set(groupIndex, parentGroup.length)
   }
-  chatSocket.onopen = () => {
-    websocketStatus.value = 'success'
-    chatSocket.send(JSON.stringify(msg))
-    console.log('chat websocket connected')
-  }
-  chatSocket.onerror = () => {
-    websocketStatus.value = 'error'
-    console.log('chat websocket error')
-  }
+  nextTick(() => navigateToElementBottom(chatBodyElementRef.value))
+  void sendWebsocketMsg({ ...data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }, epoch, cid)
 }
 
 const sendMessage = async (content, needTitle = false) => {
-  if (!content) {
-    return
-  }
-  let parentMid = null
-  if (messages.value.length > 0) {
-    const lastValidMessage = messages.value.findLast(message => message[0].mid !== 'tmp')
-    if (lastValidMessage) {
-      parentMid = lastValidMessage[0].mid
+  if (!content?.trim() || sending.value || receiving.value || disposed) return false
+  sending.value = true
+  const epoch = ++attemptEpoch
+  const cid = conversationId.value
+  const files = [...attachments.value]
+  const parentMid = messages.value.findLast(group => group[0].mid !== 'tmp')?.[0].mid ?? null
+  try {
+    const res = await messageAPI('send', { need_title: needTitle, parent_mid: parentMid,
+      cid, content, content_type: 'TXT', attachments: files })
+    if (!currentAttempt(epoch)) {
+      if (res.status === 200) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
+        code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
+      return false
     }
+    if (res.status !== 200 || !res.data?.ai_message_mid) throw new Error('send failed')
+    messages.value.push([{ loading: false, mid: res.data.user_message_mid, status: 'S', author_type: 'U',
+      content_type: 'TXT', create_time: Date.now(), metadata: {}, content: { text: content }, attachments: files }])
+    if (userInput.value === content) userInput.value = ''
+    attachments.value = attachments.value.filter(file => !files.includes(file))
+    beginAssistant(res.data, epoch, cid)
+    return true
+  } catch {
+    if (currentAttempt(epoch)) message.error(t('workspace.chatSpace.send_message_failed'))
+    return false
+  } finally {
+    if (currentAttempt(epoch)) sending.value = false
   }
-  const userMessage = {
-    loading: false,
-    mid: 'tmp',
-    status: 'S',
-    author_type: 'U',
-    content_type: 'TXT',
-    create_time: new Date().getTime(),
-    metadata: {},
-    content: { text: content },
-    attachments: attachments.value,
-  }
-  messages.value.push([userMessage])
-  if (!userScrolled.value) {
-    nextTick(() => {
-      navigateToElementBottom(chatBodyElementRef.value)
-    })
-  }
-  const res = await messageAPI('send', {
-    need_title: needTitle,
-    parent_mid: parentMid,
-    cid: conversationId.value,
-    content: content,
-    content_type: 'TXT',
-    attachments: attachments.value,
-  })
-  if (res.status != 200) {
-    message.error({ description: t('workspace.chatSpace.send_message_failed') })
-    return
-  }
-  const userMessageMid = res.data.user_message_mid
-  userMessage.mid = userMessageMid
-  attachments.value = []
-
-  aiMessage.loading = true
-  aiMessage.mid = res.data.ai_message_mid
-  aiMessage.create_time = new Date().getTime()
-
-  messages.value.push([aiMessage])
-  nextTick(() => {
-    navigateToElementBottom(chatBodyElementRef.value)
-  })
-
-  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
-  userInput.value = ''
 }
 
-const onAppendAnswer = async (mid) => {
-  const res = await messageAPI('append_answer', {
-    cid: conversationId.value,
-    mid: mid,
-  })
-  if (res.status != 200) {
-    return
+const requestAssistant = async (action, mid, groupIndex) => {
+  if (sending.value || receiving.value || disposed) return
+  sending.value = true
+  const epoch = ++attemptEpoch
+  const cid = conversationId.value
+  try {
+    const res = await messageAPI(action, { cid, mid })
+    if (!currentAttempt(epoch)) {
+      if (res.status === 200) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
+        code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
+      return
+    }
+    if (res.status !== 200 || !res.data?.ai_message_mid) throw new Error('request failed')
+    beginAssistant(res.data, epoch, cid, groupIndex)
+  } catch {
+    if (currentAttempt(epoch)) message.error(t('workspace.chatSpace.regenerate_failed'))
+  } finally {
+    if (currentAttempt(epoch)) sending.value = false
   }
-  aiMessage.mid = res.data.ai_message_mid
-  aiMessage.create_time = new Date().getTime()
-
-  messages.value.push([aiMessage])
-  if (!userScrolled.value) {
-    nextTick(() => {
-      navigateToElementBottom(chatBodyElementRef.value)
-    })
-  }
-
-  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
 }
+const onAppendAnswer = mid => requestAssistant('append_answer', mid)
 
 const editable = reactive({
   onEnd: async () => {
@@ -374,25 +358,7 @@ const handleScroll = () => {
 
 const messagePagination = reactive(new Map())
 
-const regenerate = async (mid, groupIndex) => {
-  const res = await messageAPI('regenerate', { mid: mid, cid: conversationId.value })
-  if (res.status !== 200) {
-    message.error(t('workspace.chatSpace.regenerate_failed'))
-    return
-  }
-
-  aiMessage.loading = true
-  aiMessage.mid = res.data.ai_message_mid
-  aiMessage.create_time = new Date().getTime()
-
-  const parentGroup = messages.value[groupIndex]
-
-  messages.value[groupIndex] = [...parentGroup, aiMessage]
-
-  messagePagination.set(groupIndex, parentGroup.length)
-
-  sendWebsocketMsg({ ...res.data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone })
-}
+const regenerate = (mid, groupIndex) => requestAssistant('regenerate', mid, groupIndex)
 
 const switchMessagePage = (groupIndex, direction) => {
   const group = messages.value[groupIndex]
@@ -450,7 +416,7 @@ const deleteMessage = async (mid, groupIndex) => {
             <ChatMessage
               v-for="currentMessage in [chatMessageGroup[messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)]]"
               :key="currentMessage.mid" :loading="currentMessage.loading" :cid="conversationId"
-              :mid="currentMessage.mid" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
+              :mid="currentMessage.mid" :retry-disabled="sending || receiving" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
               :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
               :metadata="currentMessage.metadata" :content="currentMessage.content"
               :workflowInvokeStep="currentMessage.workflow_invoke_step" :attachments="currentMessage?.attachments"
@@ -508,7 +474,7 @@ const deleteMessage = async (mid, groupIndex) => {
         <a-tooltip :title="t('workspace.chatSpace.upload_attachments')">
           <UploaderFieldUse class="chat-attachment-btn" v-model="attachments" supportFileTypes="*.*" :acceptPaste="true"
             :multiple="true" :showUploadList="false" :singleButton="true"
-            :singleButtonProps="{ type: 'text', loading: sending, disabled: receiving }">
+            :singleButtonProps="{ type: 'text', disabled: sending || receiving }">
             <template #icon>
               <Link />
             </template>
@@ -516,7 +482,7 @@ const deleteMessage = async (mid, groupIndex) => {
         </a-tooltip>
         <a-tooltip :title="t('workspace.chatSpace.send_message')">
           <a-button type="primary" class="chat-send-btn" :loading="sending"
-            :disabled="userInput.length == 0 || receiving" @click="sendMessage(userInput)">
+            :disabled="userInput.length == 0 || sending || receiving" @click="sendMessage(userInput)">
             <template #icon>
               <Send />
             </template>

@@ -90,6 +90,7 @@ def get_history_messages(
                         sibling["content_type"] != Message.ContentTypes.TEXT,
                         "text" not in sibling["content"],
                         sibling["content"].get("text", "").strip(),
+                        sibling["author_type"] == Message.AuthorTypes.ASSISTANT and sibling["status"] == Message.StatusTypes.FAILED,
                     )
                 ):
                     sibling["create_time"] = int(sibling["create_time"])
@@ -100,15 +101,16 @@ def get_history_messages(
             current_message = cast(Message | None, current_message.parent)
         else:
             if current_message.parent is not None:
-                latest_child = model_serializer(
-                    Message.select()
-                    .where(Message.parent == current_message.parent)
+                latest_message = (Message.select()
+                    .where((Message.parent == current_message.parent) &
+                        ((Message.author_type != Message.AuthorTypes.ASSISTANT) | (Message.status != Message.StatusTypes.FAILED)))
                     .order_by(Message.create_time.desc())
-                    .first()
-                )
+                    .first())
+                latest_child = model_serializer(latest_message) if latest_message is not None else None
             else:
                 latest_child = model_serializer(current_message)
-            if any(
+            if latest_child and not (latest_child["author_type"] == Message.AuthorTypes.ASSISTANT and
+                latest_child["status"] == Message.StatusTypes.FAILED) and any(
                 (
                     latest_child["content_type"] != Message.ContentTypes.TEXT,
                     "text" not in latest_child["content"],

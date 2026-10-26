@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onMounted, nextTick } from 'vue'
+import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { Send, Link } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -22,6 +22,9 @@ const loading = ref(true)
 const route = useRoute()
 const router = useRouter()
 const sending = ref(false)
+let disposed = false
+const cancelCreate = () => { disposed = true; sending.value = false }
+onBeforeUnmount(cancelCreate)
 const agentId = route.params.agentId
 const agentData = ref({})
 
@@ -77,27 +80,25 @@ onMounted(() => {
 
 const conversationId = ref('tmp')
 const sendMessage = async () => {
-  if (!userInput.value) {
-    return
-  }
+  if (!userInput.value.trim() || sending.value || disposed) return
   sending.value = true
-  conversation.update_time = new Date().getTime()
-  const res = await conversationAPI('create', { conversation })
-  conversation.cid = res.data.cid
-  if (res.status != 200) {
-    message.error(t('workspace.chatSpace.send_message_failed'))
-    return
+  const content = userInput.value
+  const files = [...attachments.value]
+  try {
+    conversation.update_time = Date.now()
+    const res = await conversationAPI('create', { conversation })
+    if (disposed) return
+    if (res.status !== 200 || !res.data?.cid) throw new Error('create failed')
+    conversation.cid = res.data.cid
+    userChatsStore.addConversation(conversation)
+    userChatsStore.addUnsentChat({ content_type: 'TXT', content, attachments: files })
+    await router.push({ name: 'conversationDetail', params: { conversationId: res.data.cid } })
+    if (userInput.value === content) userInput.value = ''
+  } catch {
+    if (!disposed) message.error(t('workspace.chatSpace.send_message_failed'))
+  } finally {
+    sending.value = false
   }
-  userChatsStore.addConversation(conversation)
-  userChatsStore.addUnsentChat({
-    content_type: 'TXT',
-    content: userInput.value,
-    attachments: attachments.value,
-  })
-
-  await router.push({ name: 'conversationDetail', params: { conversationId: res.data.cid } })
-
-  userInput.value = ''
 }
 
 const selectSuggestions = (suggestion) => {
@@ -184,14 +185,14 @@ const handleDrop = (event) => {
         <a-tooltip :title="t('workspace.chatSpace.upload_attachments')">
           <UploaderFieldUse class="chat-attachment-btn" v-model="attachments" supportFileTypes="*.*" :acceptPaste="true"
             :multiple="true" :showUploadList="false" :singleButton="true"
-            :singleButtonProps="{ type: 'text', loading: sending }">
+            :singleButtonProps="{ type: 'text', disabled: sending }">
             <template #icon>
               <Link />
             </template>
           </UploaderFieldUse>
         </a-tooltip>
         <a-tooltip :title="t('workspace.chatSpace.send_message')">
-          <a-button type="primary" class="chat-send-btn" :loading="sending" :disabled="userInput.length == 0"
+          <a-button type="primary" class="chat-send-btn" :loading="sending" :disabled="userInput.length == 0 || sending"
             @click="sendMessage">
             <template #icon>
               <Send />

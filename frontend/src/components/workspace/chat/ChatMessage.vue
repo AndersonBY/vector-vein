@@ -18,6 +18,7 @@ import { messageAPI } from '@/api/chat'
 import { getWorkflowFailures, getWorkflowRunStatus, getWorkflowFailureSnapshot } from '@/utils/workflowFailures'
 
 const props = defineProps({
+  retryDisabled: { type: Boolean, default: false },
   loading: {
     type: Boolean,
     default: false,
@@ -99,6 +100,16 @@ if (props.expandWorkflowRecord) {
 
 const attachments = ref(props.attachments)
 const content = ref(props.content)
+watch(() => props.content, value => { content.value = value })
+const failedChat = computed(() => props.authorType === 'A' && props.status === 'F' &&
+  (props.contentType !== 'WKF' || !!props.metadata?.error))
+const chatError = computed(() => {
+  const error = props.metadata?.error
+  if (['CHAT_CONNECTION_FAILED', 'CHAT_CONNECTION_CLOSED', 'CHAT_TIMEOUT'].includes(error?.code)) {
+    return t(`workspace.chatSpace.${error.code.toLowerCase()}`)
+  }
+  return typeof error?.message === 'string' && error.message.trim() ? error.message : t('workspace.chatSpace.chat_response_failed')
+})
 
 const userChatsStore = useUserChatsStore()
 const { conversations } = storeToRefs(userChatsStore)
@@ -147,8 +158,8 @@ const workflowData = ref(props.workflowData)
 const failureSnapshot = computed(() => getWorkflowFailureSnapshot(
   workflowData.value?.data, props.metadata?.workflow_result
 ))
-const failedWorkflow = computed(() => recordStatus.value ? recordStatus.value === 'FAILED' :
-  !runningWorkflow.value && (['Z', 'F'].includes(props.status) || getWorkflowFailures(failureSnapshot.value).length > 0))
+const failedWorkflow = computed(() => props.contentType === 'WKF' && !failedChat.value && (recordStatus.value ? recordStatus.value === 'FAILED' :
+  !runningWorkflow.value && (['Z', 'F'].includes(props.status) || getWorkflowFailures(failureSnapshot.value).length > 0)))
 const displayedRecordStatus = computed(() => failedWorkflow.value ? 'FAILED' : recordStatus.value)
 watch(failedWorkflow, (failed) => {
   if (failed) activeKey.value = [`${props.mid}-workflow`]
@@ -277,7 +288,7 @@ const markdownRenderRef = ref()
 watch(() => props.content.text, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
     content.value.text = newVal
-    if (props.status == 'S') return
+    if (!['P', 'G'].includes(props.status)) return
     let markdownEl
     try {
       markdownEl = markdownRenderRef.value.$el
@@ -285,6 +296,7 @@ watch(() => props.content.text, async (newVal, oldVal) => {
       return
     }
     await nextTick(); // 确保DOM更新
+    if (!['P', 'G'].includes(props.status)) return
 
     // 移除之前可能存在的小黑点
     const existingDots = markdownEl.querySelectorAll('.typing-dot');
@@ -308,7 +320,7 @@ watch(() => props.content.text, async (newVal, oldVal) => {
 
 watch(() => props.status, async (newVal, oldVal) => {
   if (newVal !== oldVal) {
-    if (newVal == 'S') {
+    if (!['P', 'G'].includes(newVal)) {
       // 移除之前可能存在的小黑点
       let markdownEl
       try {
@@ -329,6 +341,7 @@ onUnmounted(() => {
 })
 
 const regenerate = () => {
+  if (props.retryDisabled) return
   emit('regenerate', props.mid)
 }
 
@@ -344,7 +357,7 @@ const deleteMessage = () => {
         <ChatAuthor class="chat-message-author" :author="author" :time="createTime" :key="createTime" />
       </div>
       <div class="chat-message-body">
-        <span class="typing-dot" v-if="loading" />
+        <span class="typing-dot" v-if="loading && ['P', 'G'].includes(status)" />
         <template v-else>
           <a-collapse v-if="content?.hasOwnProperty('reasoning_content') && content.reasoning_content.length > 0"
             :bordered="false">
@@ -360,12 +373,12 @@ const deleteMessage = () => {
           </a-collapse>
 
           <template v-if="content?.hasOwnProperty('text')">
-            <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" :checkFileCodeBlocks="true" />
+            <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" :checkFileCodeBlocks="!failedChat" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />
             <a-flex class="chat-message-footer" gap="small">
               <a-typography-paragraph :copyable="{ text: content.text }" />
-              <a-tooltip v-if="props.authorType == 'A'" :title="t('workspace.chatSpace.regenerate_message')">
-                <a-button type="text" size="small" @click="regenerate">
+              <a-tooltip v-if="props.authorType == 'A' && !failedChat" :title="t('workspace.chatSpace.regenerate_message')">
+                <a-button type="text" size="small" :disabled="retryDisabled" @click="regenerate">
                   <template #icon>
                     <Redo fill="#28c5e5" />
                   </template>
@@ -383,7 +396,11 @@ const deleteMessage = () => {
             </a-flex>
 
           </template>
-          <div class="workflow-container" v-if="contentType == 'WKF'">
+          <div v-if="failedChat" class="chat-response-error">
+            <p role="alert">{{ chatError }}</p>
+            <a-button size="small" :disabled="retryDisabled" @click="regenerate">{{ t('workspace.chatSpace.retry_response') }}</a-button>
+          </div>
+          <div class="workflow-container" v-if="contentType == 'WKF' && !failedChat">
             <a-collapse v-model:activeKey="activeKey" :bordered="false" @change="workflowPanelChange">
               <a-collapse-panel :key="`${props.mid}-workflow`">
 

@@ -172,6 +172,12 @@
   },
   "workspace": {
     "chatSpace": {
+      "chat_response_failed": "回复未能完成，请重试。",
+      "chat_connection_failed": "连接失败，请重试。",
+      "chat_connection_closed": "连接已中断，已保留收到的回复。",
+      "chat_timeout": "等待回复超时，请重试。",
+      "retry_response": "重试",
+
       "fetch_conversations_failed": "获取会话列表失败",
       "fetch_conversation_failed": "获取会话失败",
       "textarea_tip": "Ctrl + Enter 发送",

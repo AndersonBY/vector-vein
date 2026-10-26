@@ -4,11 +4,17 @@ import time
 import json
 import socket
 import asyncio
+from contextlib import suppress
+from uuid import UUID
+
+from models import Message
+from utilities.chat_responses import PENDING, failure_response, persist_response, terminal_frame
 from threading import Thread
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from websockets.asyncio.server import serve, ServerConnection
+from websockets.exceptions import ConnectionClosed
 from vv_llm.types import (
     NotGiven,
     NOT_GIVEN,
@@ -58,6 +64,8 @@ mprint = mprint_with_name(name="WebSocket Server")
 
 
 class WebSocketServer:
+    CHAT_IDLE_TIMEOUT = 180
+
     def __init__(self, host="localhost", start_port=8765):
         self.host = host
         self.port = self.find_available_port(start_port)
@@ -116,10 +124,84 @@ class WebSocketServer:
             await self.process_message(websocket, message, param)
 
     async def process_message(self, websocket: ServerConnection, message: str | bytes, param: str):
+        try:
+            request = json.loads(message)
+            mid = UUID(str(request["ai_message_mid"]))
+            cid = UUID(param)
+            assistant = Message.get_or_none((Message.mid == mid) & (Message.author_type == "A"))
+            if assistant is None or assistant.conversation.cid != cid:
+                raise ValueError("Invalid chat message")
+            supplied_cid = request.get("conversation", {}).get("cid")
+            if supplied_cid is not None and UUID(str(supplied_cid)) != cid:
+                raise ValueError("Invalid conversation")
+        except (ValueError, KeyError, TypeError, AttributeError):
+            await websocket.close(1008, "Invalid chat message")
+            return
+        if assistant.status not in PENDING:
+            if assistant.status in ("S", "W", "F"):
+                await websocket.send(json.dumps(terminal_frame(assistant), ensure_ascii=False))
+            else:
+                await websocket.close(1008, "Chat message already processed")
+            return
+        # Only one websocket may generate a pending assistant message.
+        claimed = Message.update(status="G").where((Message.mid == mid) & (Message.status == "P")).execute()
+        if not claimed:
+            return
+        state = {"text": "", "reasoning_content": ""}
+        generation = asyncio.create_task(self._generate_response(websocket, request, state))
+        disconnected = asyncio.create_task(websocket.wait_closed())
+        try:
+            done, _ = await asyncio.wait((generation, disconnected), return_when=asyncio.FIRST_COMPLETED)
+            if generation in done:
+                response = await generation
+            else:
+                generation.cancel()
+                with suppress(asyncio.CancelledError, Exception):
+                    await generation
+                response = failure_response("CHAT_CONNECTION_CLOSED", state,
+                    model=request.get("conversation", {}).get("model"))
+            assistant = persist_response(assistant, response)
+            with suppress(Exception):
+                await websocket.send(json.dumps(terminal_frame(assistant), ensure_ascii=False))
+        except asyncio.CancelledError:
+            persist_response(assistant, failure_response("CHAT_CONNECTION_CLOSED", state,
+                model=request.get("conversation", {}).get("model")))
+            raise
+        except Exception as exc:
+            code = ("CHAT_TIMEOUT" if isinstance(exc, TimeoutError) else
+                "CHAT_CONNECTION_CLOSED" if isinstance(exc, ConnectionClosed) else "CHAT_REQUEST_FAILED")
+            assistant = persist_response(assistant, failure_response(code, state, error=exc,
+                model=request.get("conversation", {}).get("model")))
+            with suppress(Exception):
+                await websocket.send(json.dumps(terminal_frame(assistant), ensure_ascii=False))
+        finally:
+            generation.cancel()
+            disconnected.cancel()
+            await asyncio.gather(generation, disconnected, return_exceptions=True)
+            provider = getattr(state.get("client"), "__dict__", {}).get("raw_client")
+            if provider is not None and hasattr(provider, "close"):
+                with suppress(Exception):
+                    await provider.close()
+            for resource in (state.get("response"), state.get("http_client")):
+                if resource is not None and hasattr(resource, "aclose"):
+                    with suppress(Exception):
+                        await resource.aclose()
+
+    async def _initial_response(self, awaitable):
+        return await asyncio.wait_for(awaitable, timeout=self.CHAT_IDLE_TIMEOUT)
+
+    async def _stream_chunks(self, response):
+        iterator = response.__aiter__()
+        while True:
+            try:
+                yield await asyncio.wait_for(anext(iterator), timeout=self.CHAT_IDLE_TIMEOUT)
+            except StopAsyncIteration:
+                return
+
+    async def _generate_response(self, websocket, request_data, state):
         user_settings = Settings()
         vv_llm_settings.load(user_settings.get("llm_settings"))
 
-        request_data = json.loads(message)
         settings = request_data["conversation"]["settings"]
         ai_message_mid = request_data["ai_message_mid"]
         history_messages = request_data["history_messages"]
@@ -168,11 +250,13 @@ class WebSocketServer:
                 title_backend = BackendType(title_backend.lower())
             summarize_conversation_title.delay(ai_message_mid, history_messages, title_backend, title_model)
 
-        client = create_async_chat_client(backend=backend, model=model, http_client=new_llm_http_client(is_async=True))
+        state["http_client"] = new_llm_http_client(is_async=True)
+        client = create_async_chat_client(backend=backend, model=model, http_client=state["http_client"])
+        state["client"] = client
 
         tool_call_data = request_data["conversation"]["tool_call_data"]
         if tool_call_data.get("workflows") or tool_call_data.get("templates"):
-            response = await client.create_stream(
+            response = await self._initial_response(client.create_stream(
                 messages=messages,
                 stream_options={"include_usage": True},
                 tools=get_tool_call_data(tool_call_data, simple=False),
@@ -181,9 +265,9 @@ class WebSocketServer:
                 thinking=thinking,
                 reasoning_effort=reasoning_effort,
                 extra_body=extra_body,
-            )
+            ))
         else:
-            response = await client.create_stream(
+            response = await self._initial_response(client.create_stream(
                 messages=messages,
                 stream_options={"include_usage": True},
                 temperature=temperature,
@@ -191,7 +275,8 @@ class WebSocketServer:
                 thinking=thinking,
                 reasoning_effort=reasoning_effort,
                 extra_body=extra_body,
-            )
+            ))
+        state["response"] = response
         mprint("Agent chat response created")
         full_content = ""
         full_reasoning_content = ""
@@ -199,13 +284,15 @@ class WebSocketServer:
         selected_workflow = {}
         workflow_invoke_step = ""
         start_generate_time = time.time()
-        async for chunk in response:
+        async for chunk in self._stream_chunks(response):
             if time.time() - start_generate_time > 1:
                 mprint("Agent chat chunk generate time use: ", time.time() - start_generate_time)
             start_generate_time = time.time()
 
             full_content += chunk.content if chunk.content is not None else ""
             full_reasoning_content += chunk.reasoning_content if chunk.reasoning_content is not None else ""
+            state["text"] = full_content
+            state["reasoning_content"] = full_reasoning_content
             if chunk.tool_calls and len(chunk.tool_calls) > 0:
                 workflow_invoke_step = "generating_params"
                 piece = chunk.tool_calls[0]
@@ -233,9 +320,7 @@ class WebSocketServer:
             )
 
         if tool_calls:
-            mprint("Agent chat tool_calls", tool_calls)
             function_name = tool_calls[0]["function"]["name"]
-            mprint("Agent chat function_name", function_name)
             selected_workflow = get_tool_related_workflow(
                 request_data["conversation"],
                 tool_call_data,
@@ -277,26 +362,7 @@ class WebSocketServer:
             },
             "model": model,
         }
-        cache.set(
-            f"chat_response:{ai_message_mid}",
-            json.dumps(response_data, ensure_ascii=False),
-            expire=60 * 60,
-        )
-
-        await websocket.send(
-            json.dumps(
-                {
-                    "title": conversation_title,
-                    "role": "assistant",
-                    "content": full_content,
-                    "reasoning_content": full_reasoning_content,
-                    "selected_workflow": selected_workflow,
-                    "model": model,
-                    "end": True,
-                },
-                ensure_ascii=False,
-            )
-        )
+        return response_data
 
     def start(self):
         self.thread = Thread(target=self._run_server, daemon=True)

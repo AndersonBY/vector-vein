@@ -1,0 +1,249 @@
+import assert from 'node:assert/strict'
+import test from 'node:test'
+import { readFile } from 'node:fs/promises'
+import { fileURLToPath } from 'node:url'
+import { createSSRApp, h, nextTick } from 'vue'
+import { createPinia } from 'pinia'
+import { renderToString } from 'vue/server-renderer'
+import { createI18n } from 'vue-i18n'
+import { createServer } from 'vite'
+import vue from '@vitejs/plugin-vue'
+
+const deferred = () => { let resolve, reject; const promise = new Promise((a, b) => { resolve = a; reject = b }); return { promise, resolve, reject } }
+const flush = async () => { for (let i = 0; i < 8; i++) await Promise.resolve(); await nextTick() }
+const assistant = (mid, status = 'S') => ({ mid, author_type: 'A', status, content_type: 'TXT',
+  create_time: 1, metadata: {}, content: { text: 'previous', reasoning_content: '' } })
+
+test('actual chat components preserve drafts, finalize failed attempts, target regeneration and render safe retryable history', async () => {
+  const previousWindow = globalThis.window, previousSocket = globalThis.WebSocket
+  const previousHarness = globalThis.__chatFailureHarness
+  const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+  Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: () => null } })
+  const sockets = [], calls = [], errors = []
+  let request = async () => ({ status: 500 })
+  class Socket {
+    sent = []
+    constructor() { sockets.push(this) }
+    send(value) { this.sent.push(value) }
+    close() { this.closed = true }
+    chunk(data) { this.onmessage?.({ data: JSON.stringify(data) }) }
+  }
+  globalThis.WebSocket = Socket
+  globalThis.window = { innerWidth: 1000, pywebview: { api: new Proxy({}, {
+    get: (_, action) => async payload => { calls.push({ action, payload }); return request(action, payload) },
+  }) } }
+  globalThis.__chatFailureHarness = { route: { params: { conversationId: 'cid', agentId: 'agent' }, query: {} },
+    router: { push: async () => {} }, errors }
+  const server = await createServer({
+    configFile: false, root: fileURLToPath(new URL('..', import.meta.url)),
+    plugins: [vue(), { name: 'chat-ui-fixtures', enforce: 'pre',
+    transform(source, id) {
+      if (!id.endsWith('.vue')) return
+      return source.replace(/from (['"])vue-router\1/g, 'from "virtual:chat-router"')
+        .replace(/from (['"])ant-design-vue\1/g, 'from "virtual:chat-ant"')
+        .replace(/from (['"])@\/utils\/util\1/g, 'from "virtual:chat-util"')
+        .replace(/from (['"])@\/utils\/common\1/g, 'from "virtual:chat-common"')
+        .replace(/from (['"])@\/components\/[^'"]+\.vue\1/g, 'from "virtual:chat-child:stub"')
+    }, resolveId(id) {
+      if (id.startsWith('virtual:chat-')) return '\0' + id.slice(8)
+
+      const normalized = id.replaceAll('\\', '/')
+      if (id === 'vue-router') return '\0chat-router'
+      if (id === 'ant-design-vue') return '\0chat-ant'
+      if (normalized.endsWith('/utils/util')) return '\0chat-util'
+      if (normalized.endsWith('/utils/common')) return '\0chat-common'
+      if (normalized.endsWith('.vue') && !['ConversationDetail.vue', 'ConversationNew.vue', 'ChatMessage.vue'].some(name => normalized.endsWith(name))) return `\0chat-child:${normalized}`
+    }, load(id) {
+      if (id === '\0chat-router') return 'export const useRoute = () => globalThis.__chatFailureHarness.route; export const useRouter = () => globalThis.__chatFailureHarness.router'
+      if (id === '\0chat-ant') return 'export const message = { error: value => globalThis.__chatFailureHarness.errors.push(value), success() {} }'
+      if (id === '\0chat-util') return 'export const navigateToElementBottom = () => {}'
+      if (id === '\0chat-common') return 'export const defaultSettings = { en: {}, "en-US": {} }'
+      if (id.startsWith('\0chat-child:')) return 'import {h} from "vue"; export default {props:["text"],setup: p => () => h("div",p.text || "")}'
+    } }],
+    resolve: { alias: { '@': fileURLToPath(new URL('../src', import.meta.url)), 'vue-router': '\0chat-router', 'ant-design-vue': '\0chat-ant' } },
+    server: { middlewareMode: true, hmr: false }, optimizeDeps: { noDiscovery: true }, appType: 'custom',
+  })
+  try {
+    const locale = JSON.parse(await readFile(new URL('../src/locales/en-US.json', import.meta.url), 'utf8'))
+    const render = async (path, props, exercise) => {
+      const component = (await server.ssrLoadModule(path)).default
+      const app = createSSRApp({ ...component, async setup(props, context) {
+        const bindings = component.setup(props, context)
+        await exercise(bindings)
+        return bindings
+      } }, props)
+      app.use(createPinia())
+      app.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': locale } }))
+      for (const name of ['AFlex', 'ATypographyTitle', 'ATypographyText', 'ATypographyParagraph', 'ASpin', 'ATooltip',
+        'AAvatar', 'AAlert', 'ATextarea', 'ACollapse', 'ACollapsePanel', 'APopconfirm', 'AButton']) {
+        app.component(name, { setup: (_, { slots }) => () => h(name === 'AButton' ? 'button' : 'div', slots.default?.()) })
+      }
+      return renderToString(app)
+    }
+    const detail = '/src/views/Workspace/Chat/ConversationDetail.vue'
+    const prepare = c => {
+      c.conversation.value = { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] }
+      c.userChatsStore.addConversation(c.conversation.value)
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      const pending = deferred()
+      request = () => pending.promise
+      c.userInput.value = 'keep draft'
+      c.attachments.value = ['local-file']
+      const send = c.sendMessage(c.userInput.value)
+      const count = calls.length
+      assert.equal(c.sending.value, true)
+      assert.equal(await c.sendMessage('duplicate'), false)
+      assert.equal(calls.length, count)
+      pending.reject(new Error('network'))
+      assert.equal(await send, false)
+      assert.equal(c.userInput.value, 'keep draft')
+      assert.deepEqual(c.attachments.value, ['local-file'])
+      assert.equal(c.sending.value, false)
+      assert.equal(c.messages.value.length, 0)
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      request = async (action, payload) => action === 'message__send'
+        ? { status: 200, data: { user_message_mid: 'user', ai_message_mid: 'attempt' } }
+        : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } }
+        : { status: 200, data: { ...assistant(payload.mid), content: { text: 'already completed' } } }
+      c.userInput.value = 'hello'
+      assert.equal(await c.sendMessage('hello'), true)
+      await flush()
+      const socket = sockets.at(-1)
+      socket.onopen()
+      socket.chunk({ content: 'partial', reasoning_content: 'thought' })
+      assert.equal(c.receiving.value, true)
+      const count = calls.length
+      await c.regenerate('previous', 0)
+      assert.equal(calls.length, count)
+      socket.onclose()
+      assert.equal(c.receiving.value, false)
+      assert.equal(c.messages.value[1][0].status, 'F')
+      assert.equal(c.messages.value[1][0].content.text, 'partial')
+      await flush()
+      assert.equal(c.messages.value[1][0].status, 'S')
+      assert.equal(c.messages.value[1][0].content.text, 'already completed')
+      assert.equal(c.sending.value, false)
+      assert.equal(socket.sent.length, 1)
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[assistant('old')], [assistant('last')]]
+      request = async action => action === 'message__regenerate'
+        ? { status: 200, data: { ai_message_mid: 'regenerated' } }
+        : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } }
+        : { status: 500 }
+      await c.regenerate('old', 0)
+      await flush()
+      const socket = sockets.at(-1)
+      socket.onopen()
+      socket.chunk({ end: true, mid: 'regenerated', status: 'F', error: { message: '<script>failure</script>' } })
+      await flush()
+      assert.equal(c.messages.value[0][1].mid, 'regenerated')
+      assert.equal(c.messages.value[0][1].status, 'F')
+      assert.equal(c.messages.value[1][0].mid, 'last')
+      assert.equal(c.messagePagination.get(0), 1)
+      assert.equal(c.receiving.value, false)
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      const pending = deferred()
+      request = action => action === 'message__send' ? pending.promise : Promise.resolve({ status: 200 })
+      const send = c.sendMessage('old conversation')
+      c.cancelAttempt()
+      c.conversationId.value = 'next-conversation'
+      pending.resolve({ status: 200, data: { ai_message_mid: 'stale', user_message_mid: 'stale-user' } })
+      await send
+      assert.equal(c.messages.value.length, 0)
+      assert.equal(c.sending.value, false)
+      assert.ok(calls.some(call => call.action === 'message__fail_notice' && call.payload.mid === 'stale' && call.payload.cid === 'cid'))
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[assistant('original')]]
+      const oldNotice = deferred()
+      let generation = 0
+      request = async action => action === 'message__regenerate'
+        ? { status: 200, data: { ai_message_mid: `attempt-${++generation}` } }
+        : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } }
+        : generation === 1 ? oldNotice.promise : { status: 500 }
+      await c.regenerate('original', 0)
+      await flush()
+      sockets.at(-1).chunk({ end: true, mid: 'attempt-1', status: 'S', content: 'first reply' })
+      await c.regenerate('attempt-1', 0)
+      await flush()
+      sockets.at(-1).chunk({ end: true, mid: 'attempt-2', status: 'F' })
+      oldNotice.resolve({ status: 200, data: { ...assistant('attempt-1'), content: { text: 'stale replacement' } } })
+      await flush()
+      assert.equal(c.messages.value[0][1].content.text, 'first reply')
+      assert.equal(c.messages.value[0][2].status, 'F')
+      assert.equal(c.receiving.value, false)
+    })
+    for (const response of [{ status: 500 }, new Error('create failed')]) {
+      await render('/src/views/Workspace/Chat/ConversationNew.vue', {}, async c => {
+        request = async () => { if (response instanceof Error) throw response; return response }
+        c.userInput.value = 'unsent'
+        c.attachments.value = ['file']
+        await c.sendMessage()
+        assert.equal(c.userInput.value, 'unsent')
+        assert.deepEqual(c.attachments.value, ['file'])
+        assert.equal(c.sending.value, false)
+        assert.equal(c.userChatsStore.unsentChats.length, 0)
+      })
+    }
+    await render('/src/views/Workspace/Chat/ConversationNew.vue', {}, async c => {
+      const pending = deferred()
+      request = () => pending.promise
+      c.userInput.value = 'leaving'
+      const send = c.sendMessage()
+      c.cancelCreate()
+      pending.resolve({ status: 200, data: { cid: 'late-created' } })
+      await send
+      assert.equal(c.userChatsStore.unsentChats.length, 0)
+      assert.equal(c.userChatsStore.conversations.length, 0)
+      assert.equal(c.userInput.value, 'leaving')
+      assert.equal(c.sending.value, false)
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.loading.value = true
+      request = async () => { throw new Error('history unavailable') }
+      assert.equal(await c.fetchConversation('cid'), false)
+      assert.equal(c.loading.value, false)
+      const pending = deferred()
+      request = () => pending.promise
+      const fetch = c.fetchConversation('cid')
+      c.conversationId.value = 'new-cid'
+      pending.resolve({ status: 200, data: { conversation: { cid: 'cid' }, messages: [[assistant('stale')]] } })
+      assert.equal(await fetch, false)
+      assert.equal(c.messages.value.length, 0)
+    })
+    let retries = 0
+    const failedProps = { cid: 'cid', mid: 'history', status: 'F', authorType: 'A', contentType: 'WKF', createTime: 1,
+      metadata: { selected_workflow: { wid: 'must-not-run' }, error: { message: '<img src=x onerror=alert(1)>' } },
+      content: { text: '', reasoning_content: '' }, onRegenerate: () => retries++ }
+    const history = await render('/src/components/workspace/chat/ChatMessage.vue', failedProps, async c => { c.regenerate() })
+    assert.equal(retries, 1)
+    assert.match(history, /&lt;img src=x onerror=alert\(1\)&gt;/)
+    assert.equal((history.match(/>Retry<\/button>/g) || []).length, 1)
+    assert.doesNotMatch(history, /run-workflow-button|typing-dot|<img/)
+    await render('/src/components/workspace/chat/ChatMessage.vue', { ...failedProps, retryDisabled: true }, async c => { c.regenerate() })
+    assert.equal(retries, 1)
+    const legacyFailure = await render('/src/components/workspace/chat/ChatMessage.vue', {
+      ...failedProps, contentType: 'TXT', metadata: {}, loading: true,
+    }, async () => {})
+    assert.match(legacyFailure, /Unable to complete the reply/)
+    assert.doesNotMatch(legacyFailure, /typing-dot|run-workflow-button/)
+  } finally {
+    await server.close()
+    globalThis.window = previousWindow
+    globalThis.WebSocket = previousSocket
+    if (storageDescriptor) Object.defineProperty(globalThis, 'localStorage', storageDescriptor)
+    else delete globalThis.localStorage
+    if (previousHarness === undefined) delete globalThis.__chatFailureHarness
+    else globalThis.__chatFailureHarness = previousHarness
+  }
+})
