@@ -49,6 +49,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check peer dependencies
+        run: pnpm peers check
+
       - name: Audit dependencies
         run: pnpm audit --audit-level low
 
