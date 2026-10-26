@@ -3,6 +3,7 @@ import { computed, ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
 import { message } from 'ant-design-vue'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
@@ -358,6 +359,8 @@ const nodeDescription = computed(() => {
               :options="fieldsData.llm_model.options" />
           </BaseField>
         </slot>
+        <ModelCapabilities :provider="fieldsData.model_provider?.value || (props.llmName === 'CustomModel' ? 'local' : LLM_NODE_PROVIDER_MAP[props.llmName])"
+          :model="fieldsData.llm_model?.value" />
 
         <BaseField :name="t('components.nodes.llms.common.stream')" name-only type="target"
           v-model:data="fieldsData.stream">

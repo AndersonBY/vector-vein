@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { RobotOne } from '@icon-park/vue-next'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import IconButton from '@/components/IconButton.vue'
 import { getChatModelOptions } from '@/utils/common'
 import { conversationAPI } from '@/api/chat'
@@ -25,7 +26,7 @@ const emit = defineEmits(['update:model', 'update:modelProvider'])
 
 const { t } = useI18n()
 const open = ref(false)
-const chatModelOptions = ref(getChatModelOptions())
+const chatModelOptions = computed(() => getChatModelOptions())
 
 const model = ref(props.model)
 const modelProvider = ref([props.modelProvider])
@@ -113,6 +114,7 @@ const modelChanged = async () => {
           </a-menu>
         </a-col>
       </a-row>
+      <ModelCapabilities :provider="modelProvider[0]" :model="modelSelection[0]" />
     </a-modal>
   </div>
 </template>
@@ -126,5 +128,7 @@ const modelChanged = async () => {
 
 .model-selection-modal .model-selection-menu {
   border-inline-end: none;
+  max-height: min(50vh, 420px);
+  overflow-y: auto;
 }
 </style>

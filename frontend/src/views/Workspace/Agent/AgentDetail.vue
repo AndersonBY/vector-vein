@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import { message } from 'ant-design-vue'
 import { EditTwo, CloseOne, Share } from '@icon-park/vue-next'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import AvatarUpload from '@/components/workspace/AvatarUpload.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import CopyButton from "@/components/CopyButton.vue"
@@ -38,7 +39,7 @@ const savedSelectedFlows = ref({
 const updateTime = computed(() => {
   return formatTime(agentData.value.update_time)
 })
-const chatModelOptions = ref(getChatModelOptions())
+const chatModelOptions = computed(() => getChatModelOptions())
 
 const loadAgentData = async (aid) => {
   loading.value = true
@@ -300,6 +301,7 @@ const modelChanged = async () => {
             </a-typography-title>
             <a-cascader style="width: 100%;" :disabled="!agentData.is_owner" v-model:value="modelSelection"
               :options="chatModelOptions" @change="modelChanged" />
+            <ModelCapabilities :provider="modelSelection[0]" :model="modelSelection[1]" />
           </div>
           <a-divider />
           <div class="system-prompt">

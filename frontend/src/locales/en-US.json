@@ -1,4 +1,16 @@
 {
+  "modelCapabilities": {
+    "title": "Model capabilities",
+    "native_multimodal": "Image input",
+    "function_call_available": "Native tools",
+    "response_format_available": "JSON mode",
+    "context_length": "Context",
+    "max_output_tokens": "Max output",
+    "yes": "Supported",
+    "no": "Unsupported",
+    "unknown": "Unknown",
+    "tools_hint": "Chat can try calling tools through prompts; workflow nodes require native tool support."
+  },
   "lang": "English",
   "meta": {
     "title": "VectorVein",
@@ -2129,6 +2141,13 @@
     }
   },
   "settings": {
+    "endpoint_priority": "Priority",
+    "endpoint_priority_tip": "Minimum 1. Lower numbers are tried first; equal priorities follow list order.",
+    "endpoint_priority_invalid": "Priority must be an integer of at least 1.",
+    "endpoint_move_up": "Move up within priority",
+    "endpoint_move_down": "Move down within priority",
+    "model_key_id_required": "Enter a model key and model ID.",
+
     "endpoints": "LLM API Endpoints",
     "llms": "Remote LLMs",
     "other": "Other",

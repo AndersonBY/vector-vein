@@ -5,7 +5,6 @@ import hashlib
 from copy import deepcopy
 from itertools import permutations, product
 import time
-import random
 from collections.abc import Generator
 from typing import Any, Iterable, Literal, Protocol, TypeGuard, cast, overload
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -32,6 +31,8 @@ from vv_llm.types import (
 )
 
 from utilities.config import Settings, cache
+from utilities.model_capabilities import validate_workflow_model
+from utilities.model_endpoints import available_workflow_endpoints, bind_workflow_endpoint
 from utilities.workflow.structured_output import make_validator, validate_output
 from utilities.workflow import Workflow
 from utilities.workflow_errors import MAX_MESSAGE_LENGTH, add_failure, node_failure
@@ -226,6 +227,12 @@ class BaseLLMTask:
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
 
+        self.model_settings = validate_workflow_model(
+            vv_llm_settings.get_backend(self.MODEL_TYPE).models[self.model],
+            tools=self.use_function_call and bool(self.functions) and self.function_call_mode != "none",
+            json_object=response_format == "json_object",
+            max_output_tokens=self.workflow.get_node_field_value(node_id, "max_output_tokens", 0),
+        )
         self.chat_client = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
@@ -233,15 +240,10 @@ class BaseLLMTask:
             http_client=new_llm_http_client(is_async=False),
         )
 
-        self.model_settings = self.chat_client.backend_settings.models[self.model]
-        budget = self.workflow.get_node_field_value(node_id, "max_output_tokens", 0)
-        if budget:
-            budget = int(budget)
-            if not 1 <= budget <= self.model_settings.context_length:
-                raise ValueError("Output token limit must fit the model context")
-            self.model_settings = self.model_settings.model_copy(update={"max_output_tokens": budget})
         if self.workflow.get_node_field_value(node_id, "endpoint_policy", "all") == "first":
-            self.model_settings = self.model_settings.model_copy(update={"endpoints": self.model_settings.endpoints[:1]})
+            self.model_settings = self.model_settings.model_copy(update={
+                "endpoints": available_workflow_endpoints(vv_llm_settings, self.model_settings.endpoints)[:1],
+            })
 
         if isinstance(self.input_prompt, str):
             self.prompts = [self.input_prompt]
@@ -250,7 +252,7 @@ class BaseLLMTask:
 
         self.tools: Iterable[ToolParam] | NotGiven = NOT_GIVEN
         self.tool_choice: ToolChoice | NotGiven = NOT_GIVEN
-        if self.use_function_call and self.model_settings.function_call_available:
+        if self.use_function_call and self.functions and self.function_call_mode != "none":
             if self.function_call_mode not in ("auto", "none"):
                 self.tool_choice = {"type": "function", "function": {"name": self.function_call_mode}}
             else:
@@ -382,8 +384,7 @@ class BaseLLMTask:
         stream_response: Generator[ChatCompletionDeltaMessage, Any, None] | None = None
         response: ChatCompletionMessage | None = None
         start_time = time.time()
-        endpoints = self.model_settings.endpoints.copy()
-        random.shuffle(endpoints)
+        endpoints = available_workflow_endpoints(vv_llm_settings, self.model_settings.endpoints)
         _chat_client: BaseChatClient = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
@@ -396,7 +397,7 @@ class BaseLLMTask:
                 endpoint = vv_llm_settings.get_endpoint(endpoint_id)
                 if not self.endpoint_available(endpoint):
                     continue
-                _chat_client.endpoint = endpoint
+                bind_workflow_endpoint(_chat_client, endpoint, endpoint_option, getattr(self.model_settings, "id", self.model))
                 if endpoint.endpoint_type and endpoint.endpoint_type.startswith("openai"):
                     backend_type = BackendType.OpenAI
                 else:

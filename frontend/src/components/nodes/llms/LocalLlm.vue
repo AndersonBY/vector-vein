@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { createTemplateData } from './LocalLlm'
 
@@ -45,5 +46,9 @@ fieldsData.value.llm_model.options = computed(() => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
-    translatePrefix="components.nodes.llms.LocalLlm" />
+    translatePrefix="components.nodes.llms.LocalLlm">
+    <template #afterInputs>
+      <ModelCapabilities provider="local" :model="fieldsData.llm_model?.value" />
+    </template>
+  </BaseNode>
 </template>

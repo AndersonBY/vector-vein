@@ -143,7 +143,7 @@ test('model replies, reasoning and errors render as escaped plain text in the re
       return bindings
     } })
     app.use(createI18n({ legacy: false, locale: 'en', messages: { en: messages } }))
-    for (const name of ['AForm', 'AFormItem', 'ATypographyTitle', 'ATypographyParagraph', 'ATypographyText', 'AButton', 'ATextarea', 'ASelect', 'AInput']) {
+    for (const name of ['ADivider', 'AForm', 'AFormItem', 'ATypographyTitle', 'ATypographyParagraph', 'ATypographyText', 'AButton', 'ATextarea', 'ASelect', 'AInput']) {
       app.component(name, { setup: (props, { slots }) => () => h('div', slots.default?.()) })
     }
     const html = await renderToString(app)
@@ -184,7 +184,7 @@ test('actual settings components send unsaved endpoint drafts and remote/custom 
         return bindings
       } }, props)
       app.use(createI18n({ legacy: false, locale: 'en', messages: { en: messages } }))
-      for (const name of ['AForm', 'AFormItem', 'ATypographyTitle', 'ATypographyParagraph', 'ATypographyText',
+      for (const name of ['ADivider', 'AForm', 'AFormItem', 'ATypographyTitle', 'ATypographyParagraph', 'ATypographyText',
         'AButton', 'ATextarea', 'ASelect', 'AInput', 'AModal', 'AFlex', 'AList', 'AListItem', 'ATooltip',
         'ASwitch', 'AInputNumber', 'ARow', 'ACol', 'ATag', 'AInputPassword', 'ATable', 'ASpace', 'APopover']) {
         app.component(name, { setup: (props, { slots }) => () => h('div', slots.default?.()) })
@@ -204,7 +204,7 @@ test('actual settings components send unsaved endpoint drafts and remote/custom 
         bindings.editEndpoint(0)
       })
       assert.match(html, /integration reply/)
-      assert.deepEqual(payloads.at(-1), { backend: backend || 'local', endpoint, model_id: expectedModel, message: 'Hi!' })
+      assert.deepEqual(payloads.at(-1), { backend: backend || 'local', endpoint, model_id: expectedModel, message: 'Hi' })
       assert.equal(JSON.stringify(settings), before)
     }
     const endpointSettings = (await server.ssrLoadModule('/src/components/settings/EndpointSettings.vue')).default

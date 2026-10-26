@@ -10,12 +10,13 @@ const props = defineProps({
   modelId: { type: String, default: '' },
   active: { type: Boolean, default: true },
   editableModel: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
   selectBackend: { type: Boolean, default: false },
 })
 const { t } = useI18n()
 const modelId = ref(props.modelId)
 const backend = ref(props.backend)
-const message = ref('Hi!')
+const message = ref(props.compact ? 'Hi' : 'Hi!')
 watch(() => props.modelId, value => { modelId.value = value })
 watch(() => props.backend, value => { backend.value = value })
 const backendOptions = computed(() => [
@@ -33,21 +34,23 @@ const { state, submit } = useModelEndpointTest(() => ({
 </script>
 
 <template>
-  <section class="model-endpoint-test" :aria-label="t('settings.test_model_endpoint')">
-    <a-typography-title :level="5">{{ t('settings.test_model_endpoint') }}</a-typography-title>
-    <a-typography-paragraph type="secondary">{{ t('settings.model_test_tip') }}</a-typography-paragraph>
-    <a-form layout="vertical">
+  <section class="model-endpoint-test" :class="{ compact }" :aria-label="t('settings.test_model_endpoint')">
+    <a-typography-title v-if="!compact" :level="5">{{ t('settings.test_model_endpoint') }}</a-typography-title>
+    <a-typography-paragraph v-if="!compact" type="secondary">{{ t('settings.model_test_tip') }}</a-typography-paragraph>
+    <a-divider v-if="compact" />
+    <a-form :layout="compact ? 'horizontal' : 'vertical'"
+      :label-col="compact ? { span: 8 } : undefined" :wrapper-col="compact ? { span: 16 } : undefined">
       <a-form-item v-if="selectBackend" :label="t('settings.model_test_backend')">
         <a-select v-model:value="backend" :options="backendOptions" />
       </a-form-item>
-      <a-form-item :label="t('settings.model_id')">
+      <a-form-item v-if="!compact || editableModel" :label="t('settings.model_id')">
         <a-input v-if="editableModel" v-model:value="modelId" />
         <a-typography-text v-else>{{ props.modelId }}</a-typography-text>
       </a-form-item>
       <a-form-item :label="t('settings.model_test_message')">
         <a-textarea v-model:value="message" :auto-size="{ minRows: 2, maxRows: 5 }" />
       </a-form-item>
-      <a-button :loading="state.loading" :disabled="!active || state.loading" @click="submit">
+      <a-button class="model-test-button" :loading="state.loading" :disabled="!active || state.loading" @click="submit">
         {{ t('settings.test_model_endpoint') }}
       </a-button>
     </a-form>
@@ -67,6 +70,7 @@ const { state, submit } = useModelEndpointTest(() => ({
 
 <style scoped>
 .model-endpoint-test { margin-top: 16px; }
+.compact .model-test-button, .compact .model-test-result { margin-left: 33.333333%; }
 .model-test-result { margin-top: 12px; overflow-wrap: anywhere; }
 .model-test-result pre { white-space: pre-wrap; font-family: inherit; }
 .model-test-result [role="alert"] { color: #cf1322; white-space: pre-wrap; }

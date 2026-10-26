@@ -1,7 +1,8 @@
 <script setup>
 import { computed, reactive, ref, toRaw } from "vue"
 import { useI18n } from 'vue-i18n'
-import { Edit, Delete } from '@icon-park/vue-next'
+import { message } from 'ant-design-vue'
+import { Edit, Delete, Up, Down } from '@icon-park/vue-next'
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import { deepCopy } from '@/utils/util'
 import ModelEndpointTest from '@/components/settings/ModelEndpointTest.vue'
@@ -46,21 +47,36 @@ const modelForm = reactive({
 
 const endpointModelForm = reactive({
   endpoint_id: '',
-  model_id: ''
+  model_id: '',
+  priority: 1,
 })
+const endpointEditIndex = ref(null)
+const endpointError = ref('')
+const endpointPriority = endpoint => typeof endpoint === 'string' ? 1 : endpoint.priority ?? 1
+const sortEndpoints = () => modelForm.endpoints.sort((left, right) => endpointPriority(left) - endpointPriority(right))
+const moveEndpoint = (index, direction) => {
+  const next = index + direction
+  if (!modelForm.endpoints[next] || endpointPriority(modelForm.endpoints[index]) !== endpointPriority(modelForm.endpoints[next])) return
+  const moved = modelForm.endpoints.splice(index, 1)[0]
+  modelForm.endpoints.splice(next, 0, moved)
+}
 
 const endpointModelModalOpen = ref(false)
 const testEndpoint = computed(() => props.endpoints.find(endpoint => endpoint.id === endpointModelForm.endpoint_id) || null)
 
 const addNewModel = () => {
+  resetModelForm()
+  modelEditIndex.value = null
   modelFormStatus.value = 'add'
   modelFormModalOpen.value = true
 }
 
 const editModel = (model, index) => {
+  resetModelForm()
   modelFormStatus.value = 'edit'
   modelEditIndex.value = index
   Object.assign(modelForm, deepCopy(toRaw(model)))
+  sortEndpoints()
   modelFormModalOpen.value = true
 }
 
@@ -69,6 +85,10 @@ const removeModel = (index) => {
 }
 
 const saveModel = () => {
+  if (!modelEditIndex.value?.trim() || !modelForm.id?.trim()) {
+    message.error(t('settings.model_key_id_required'))
+    return
+  }
   if (modelFormStatus.value === 'add') {
     llmSettings.value.models[modelEditIndex.value] = deepCopy(toRaw(modelForm))
     emit('addModel', modelEditIndex.value)
@@ -80,6 +100,8 @@ const saveModel = () => {
 }
 
 const resetModelForm = () => {
+  Object.keys(modelForm).forEach(key => delete modelForm[key])
+  endpointModelModalOpen.value = false
   Object.assign(modelForm, {
     id: '',
     endpoints: [],
@@ -96,39 +118,59 @@ const cancelModel = () => {
   resetModelForm()
 }
 
+const cancelEndpoint = () => {
+  endpointModelModalOpen.value = false
+  endpointEditIndex.value = null
+  endpointError.value = ''
+  Object.assign(endpointModelForm, { endpoint_id: '', model_id: '', priority: 1 })
+}
+
 const addEndpoint = () => {
-  endpointModelForm.endpoint_id = ''
-  endpointModelForm.model_id = ''
+  cancelEndpoint()
   endpointModelModalOpen.value = true
 }
 
 const saveEndpoint = () => {
-  if (endpointModelForm.model_id) {
-    modelForm.endpoints.push({
-      endpoint_id: endpointModelForm.endpoint_id,
-      model_id: endpointModelForm.model_id
-    })
-  } else {
-    modelForm.endpoints.push(endpointModelForm.endpoint_id)
+  if (!testEndpoint.value) {
+    endpointError.value = t('settings.select_endpoint')
+    return
   }
-  endpointModelModalOpen.value = false
+  if (!(endpointModelForm.model_id || modelForm.id)?.trim()) {
+    endpointError.value = t('settings.model_test_input_required')
+    return
+  }
+  if (!Number.isInteger(endpointModelForm.priority) || endpointModelForm.priority < 1) {
+    endpointError.value = t('settings.endpoint_priority_invalid')
+    return
+  }
+  const original = modelForm.endpoints[endpointEditIndex.value]
+  const endpoint = {
+    ...(typeof original === 'object' ? deepCopy(toRaw(original)) : {}),
+    endpoint_id: endpointModelForm.endpoint_id,
+    priority: endpointModelForm.priority,
+  }
+  if (endpointModelForm.model_id.trim()) endpoint.model_id = endpointModelForm.model_id.trim()
+  else delete endpoint.model_id
+  if (endpointEditIndex.value === null) modelForm.endpoints.push(endpoint)
+  else modelForm.endpoints.splice(endpointEditIndex.value, 1, endpoint)
+  sortEndpoints()
+  cancelEndpoint()
 }
 
-const removeEndpoint = (index) => {
-  modelForm.endpoints.splice(index, 1)
-}
+const removeEndpoint = index => modelForm.endpoints.splice(index, 1)
 
-const editEndpoint = (index) => {
+const editEndpoint = index => {
+  cancelEndpoint()
+  endpointEditIndex.value = index
   const endpoint = modelForm.endpoints[index]
-  if (typeof endpoint === 'string') {
-    endpointModelForm.endpoint_id = endpoint
-    endpointModelForm.model_id = ''
-  } else {
-    endpointModelForm.endpoint_id = endpoint.endpoint_id
-    endpointModelForm.model_id = endpoint.model_id
-  }
+  Object.assign(endpointModelForm, {
+    endpoint_id: typeof endpoint === 'string' ? endpoint : endpoint.endpoint_id,
+    model_id: typeof endpoint === 'string' ? '' : endpoint.model_id || '',
+    priority: endpointPriority(endpoint),
+  })
   endpointModelModalOpen.value = true
 }
+
 </script>
 
 <template>
@@ -178,18 +220,25 @@ const editEndpoint = (index) => {
               <a-list-item v-for="(endpoint, index) in modelForm.endpoints" :key="index">
                 <a-flex justify="space-between" style="width: 100%">
                   <span>
-                    {{ typeof endpoint === 'string' ? endpoint : `${endpoint.endpoint_id} (${endpoint.model_id})` }}
+                    {{ typeof endpoint === 'string' ? endpoint : `${endpoint.endpoint_id}${endpoint.model_id ? ` (${endpoint.model_id})` : ''}` }}
+                    <span> · {{ t('settings.endpoint_priority') }}: {{ endpointPriority(endpoint) }}</span>
                   </span>
                   <a-flex gap="small">
+                    <a-button type="text" size="small" :aria-label="t('settings.endpoint_move_up')"
+                      :disabled="index === 0 || endpointPriority(endpoint) !== endpointPriority(modelForm.endpoints[index - 1])"
+                      @click="moveEndpoint(index, -1)"><Up /></a-button>
+                    <a-button type="text" size="small" :aria-label="t('settings.endpoint_move_down')"
+                      :disabled="index === modelForm.endpoints.length - 1 || endpointPriority(endpoint) !== endpointPriority(modelForm.endpoints[index + 1])"
+                      @click="moveEndpoint(index, 1)"><Down /></a-button>
                     <a-tooltip :title="t('common.edit')">
-                      <a-button type="text" size="small" @click="editEndpoint(index)">
+                      <a-button type="text" size="small" :aria-label="t('common.edit')" @click="editEndpoint(index)">
                         <template #icon>
                           <Edit />
                         </template>
                       </a-button>
                     </a-tooltip>
                     <a-tooltip :title="t('common.delete')">
-                      <a-button type="text" size="small" danger @click="removeEndpoint(index)">
+                      <a-button type="text" size="small" danger :aria-label="t('common.delete')" @click="removeEndpoint(index)">
                         <template #icon>
                           <Delete />
                         </template>
@@ -221,7 +270,7 @@ const editEndpoint = (index) => {
         </a-form-item>
       </a-form>
     </a-modal>
-    <a-modal v-model:open="endpointModelModalOpen" :title="t('settings.endpoint_config')" @ok="saveEndpoint">
+    <a-modal v-model:open="endpointModelModalOpen" :title="t('settings.endpoint_config')" @ok="saveEndpoint" @cancel="cancelEndpoint">
       <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <a-form-item :label="t('settings.endpoint')">
           <a-select v-model:value="endpointModelForm.endpoint_id" :options="endpointOptions">
@@ -238,8 +287,12 @@ const editEndpoint = (index) => {
           <a-input v-model:value="endpointModelForm.model_id" :placeholder="modelForm.id" />
         </a-form-item>
 
+        <a-form-item :label="t('settings.endpoint_priority')" :extra="t('settings.endpoint_priority_tip')">
+          <a-input-number v-model:value="endpointModelForm.priority" :min="1" :precision="0" />
+        </a-form-item>
+        <p v-if="endpointError" role="alert">{{ endpointError }}</p>
       </a-form>
-      <ModelEndpointTest :endpoint="testEndpoint" :backend="backend"
+      <ModelEndpointTest compact :endpoint="testEndpoint" :backend="backend"
         :model-id="endpointModelForm.model_id || modelForm.id"
         :active="active && modelFormModalOpen && endpointModelModalOpen" />
     </a-modal>

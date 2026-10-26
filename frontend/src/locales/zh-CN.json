@@ -1,4 +1,16 @@
 {
+  "modelCapabilities": {
+    "title": "模型能力",
+    "native_multimodal": "图片输入",
+    "function_call_available": "原生工具",
+    "response_format_available": "JSON 模式",
+    "context_length": "上下文",
+    "max_output_tokens": "最大输出",
+    "yes": "支持",
+    "no": "不支持",
+    "unknown": "未知",
+    "tools_hint": "聊天可尝试通过提示词调用工具，工作流节点需要模型原生支持。"
+  },
   "lang": "中文",
   "meta": {
     "title": "向量脉络",
@@ -2128,6 +2140,13 @@
     }
   },
   "settings": {
+    "endpoint_priority": "优先级",
+    "endpoint_priority_tip": "最小为 1，数值越低越优先；同级按列表顺序尝试。",
+    "endpoint_priority_invalid": "优先级必须是大于或等于 1 的整数。",
+    "endpoint_move_up": "在同级中上移",
+    "endpoint_move_down": "在同级中下移",
+    "model_key_id_required": "请输入模型键名和模型 ID。",
+
     "endpoints": "大语言模型端点",
     "llms": "远程大语言模型",
     "other": "其他",

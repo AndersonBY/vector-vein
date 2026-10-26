@@ -1,5 +1,6 @@
 <script setup>
 import { onBeforeMount, ref, watch } from 'vue'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { hydrateTemplateModelField } from '@/utils/modelCatalog'
 import { createTemplateData } from './QwenVision'
@@ -40,5 +41,9 @@ watch(() => fieldsData.value.images_or_urls, () => {
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :data="props.data" :fieldsData="fieldsData"
     translatePrefix="components.nodes.mediaProcessing.QwenVision"
-    documentPath="/help/docs/media-processing#node-QwenVision" />
+    documentPath="/help/docs/media-processing#node-QwenVision">
+    <template #afterInputs>
+      <ModelCapabilities provider="Qwen" :model="fieldsData.llm_model?.value" />
+    </template>
+  </BaseNode>
 </template>

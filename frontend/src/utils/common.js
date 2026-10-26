@@ -1,3 +1,4 @@
+import { CHAT_PROVIDER_LABEL_MAP } from './modelProviders'
 /**
  * @Author: Bi Ying
  * @Date:   2022-07-19 14:45:35
@@ -34,24 +35,7 @@ const flattenModelOptions = (options, showProvider = true, valueType = 'String')
   return flattenedOptions;
 }
 
-const CHAT_PROVIDER_LABEL_MAP = {
-  anthropic: 'Anthropic',
-  baichuan: 'Baichuan',
-  deepseek: 'DeepSeek',
-  ernie: 'Ernie',
-  gemini: 'Gemini',
-  groq: 'Groq',
-  minimax: 'MiniMax',
-  mistral: 'Mistral',
-  moonshot: 'Moonshot',
-  openai: 'OpenAI',
-  qwen: 'Qwen',
-  stepfun: 'StepFun',
-  xai: 'xAI',
-  xiaomi: 'Xiaomi',
-  yi: 'Yi',
-  zhipuai: 'ZhiPuAI',
-}
+
 
 const getDynamicChatModelOptions = (settingData) => {
   const backends = settingData?.llm_settings?.backends

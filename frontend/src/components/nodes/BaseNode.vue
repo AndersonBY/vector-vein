@@ -287,6 +287,7 @@ const collapseChanged = (data) => {
                     :nameOnly="['', 'checkbox'].includes(fieldsData[field].field_type)" />
                 </a-tooltip>
               </template>
+              <slot name="afterInputs"></slot>
               <template v-for="(fields, group) in inputGroupFields">
                 <BaseFieldsCollapse :id="group" :collapse="fieldsData[fields[0]].group_collpased"
                   :name="group === 'default' ? t('common.more_settings') : t(`${translatePrefix}.group_${group}`)"

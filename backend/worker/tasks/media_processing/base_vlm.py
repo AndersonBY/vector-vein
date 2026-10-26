@@ -2,7 +2,6 @@
 # @Date:   2024-04-11 20:37:32
 import json
 import time
-import random
 from collections.abc import Generator
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from traceback import format_exc
@@ -30,6 +29,8 @@ from vv_llm.types import (
 )
 
 from utilities.config import Settings
+from utilities.model_capabilities import validate_workflow_model
+from utilities.model_endpoints import available_workflow_endpoints, bind_workflow_endpoint
 from utilities.workflow import Workflow
 from utilities.text_processing import extract_url
 from utilities.general import mprint_with_name, align_elements
@@ -128,6 +129,12 @@ class BaseVLMTask:
 
         user_settings = Settings()
         vv_llm_settings.load(user_settings.llm_settings)
+        self.model_settings = validate_workflow_model(
+            vv_llm_settings.get_backend(self.MODEL_TYPE).models[self.model],
+            images=bool(input_images if images_or_urls == "images" else input_urls),
+            json_object=response_format == "json_object",
+            max_output_tokens=self.workflow.get_node_field_value(node_id, "max_output_tokens", 0),
+        )
 
         if images_or_urls == "images":
             images = input_images
@@ -196,8 +203,6 @@ class BaseVLMTask:
         if self.MODEL_TYPE == BackendType.Anthropic:
             self.temperature = NOT_GIVEN
             self.top_p = NOT_GIVEN
-
-        self.model_settings = vv_llm_settings.get_backend(self.MODEL_TYPE).models[self.model]
 
         self.response_format: ResponseFormat | NotGiven = NOT_GIVEN
         if response_format == "json_object" and self.model_settings.response_format_available:
@@ -334,8 +339,7 @@ class BaseVLMTask:
         stream_response: Generator[ChatCompletionDeltaMessage, Any, None] | None = None
         response: ChatCompletionMessage | None = None
         start_time = time.time()
-        endpoints = self.model_settings.endpoints.copy()
-        random.shuffle(endpoints)
+        endpoints = available_workflow_endpoints(vv_llm_settings, self.model_settings.endpoints)
         _chat_client: BaseChatClient = create_chat_client(
             backend=self.MODEL_TYPE,
             model=self.model,
@@ -349,7 +353,7 @@ class BaseVLMTask:
                     continue
                 if self.thinking and endpoint.endpoint_type and endpoint.endpoint_type.startswith("openai"):  # TODO: openrouter 不支持 claude-3-7-sonnet 的 thinking 参数
                     continue
-                _chat_client.endpoint = endpoint
+                bind_workflow_endpoint(_chat_client, endpoint, endpoint_option, getattr(self.model_settings, "id", self.model))
                 try:
                     if self.stream:
                         stream_response = self._create_stream_completion(

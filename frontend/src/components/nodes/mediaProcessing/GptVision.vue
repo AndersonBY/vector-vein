@@ -1,5 +1,6 @@
 <script setup>
 import { onBeforeMount, ref, watch } from 'vue'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { hydrateTemplateModelField } from '@/utils/modelCatalog'
 import { createTemplateData } from './GptVision'
@@ -40,5 +41,9 @@ watch(() => fieldsData.value.images_or_urls, () => {
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
     translatePrefix="components.nodes.mediaProcessing.GptVision"
-    documentPath="/help/docs/media-processing#node-GptVision" />
+    documentPath="/help/docs/media-processing#node-GptVision">
+    <template #afterInputs>
+      <ModelCapabilities provider="OpenAI" :model="fieldsData.llm_model?.value" />
+    </template>
+  </BaseNode>
 </template>

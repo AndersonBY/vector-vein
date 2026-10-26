@@ -2,6 +2,7 @@
 import { ref, watch, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
+import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { createTemplateData } from './LocalVision'
 
@@ -53,5 +54,9 @@ fieldsData.value.llm_model.options = computed(() => {
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData" :data="props.data"
-    translatePrefix="components.nodes.mediaProcessing.LocalVision" />
+    translatePrefix="components.nodes.mediaProcessing.LocalVision">
+    <template #afterInputs>
+      <ModelCapabilities provider="local" :model="fieldsData.llm_model?.value" />
+    </template>
+  </BaseNode>
 </template>

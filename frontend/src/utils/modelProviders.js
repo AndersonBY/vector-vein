@@ -1,0 +1,18 @@
+export const CHAT_PROVIDER_LABEL_MAP = {
+  anthropic: 'Anthropic',
+  baichuan: 'Baichuan',
+  deepseek: 'DeepSeek',
+  ernie: 'Ernie',
+  gemini: 'Gemini',
+  groq: 'Groq',
+  minimax: 'MiniMax',
+  mistral: 'Mistral',
+  moonshot: 'Moonshot',
+  openai: 'OpenAI',
+  qwen: 'Qwen',
+  stepfun: 'StepFun',
+  xai: 'xAI',
+  xiaomi: 'Xiaomi',
+  yi: 'Yi',
+  zhipuai: 'ZhiPuAI',
+}
