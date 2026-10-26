@@ -85,7 +85,7 @@ function addModel(model) {
             </a-flex>
           </a-form-item>
           <LLMStandardSettings v-model="localModels" :filterModels="models" :endpoints="endpoints"
-            @addModel="addModel" />
+            :active="selectedModelFamily === family" @addModel="addModel" />
         </a-form>
       </a-tab-pane>
     </a-tabs>

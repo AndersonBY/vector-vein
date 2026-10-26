@@ -1,5 +1,6 @@
 """Bounded, redacted execution failures shared by desktop workflow consumers."""
 import re
+from urllib.parse import unquote, urlsplit
 
 
 MAX_FAILURES = 8
@@ -40,16 +41,28 @@ def _secret_values(value, sensitive=False, node_template=False):
             yield from _secret_values(item, sensitive)
     elif sensitive and isinstance(value, (str, int)) and str(value):
         yield str(value)
+        if isinstance(value, str):
+            if value.lower().startswith(("bearer ", "basic ")):
+                yield value.split(" ", 1)[1]
+            try:
+                url = urlsplit(value)
+                for part in (url.username, url.password):
+                    if part:
+                        yield part
+                        yield unquote(part)
+            except ValueError:
+                pass
 
 
-def redact_message(message, workflow_data=None):
+def redact_message(message, workflow_data=None, *, include_settings=True):
     text = str(message)
     sources = [workflow_data or {}]
-    try:
-        from utilities.config import Settings
-        sources.append(Settings().data)
-    except Exception:
-        pass
+    if include_settings:
+        try:
+            from utilities.config import Settings
+            sources.append(Settings().data)
+        except Exception:
+            pass
     secrets = {secret for source in sources for secret in _secret_values(source) if secret}
     for secret in sorted(secrets, key=len, reverse=True):
         text = text.replace(secret, "[REDACTED]")

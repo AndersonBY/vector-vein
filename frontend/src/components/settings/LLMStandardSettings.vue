@@ -4,8 +4,11 @@ import { useI18n } from 'vue-i18n'
 import { Edit, Delete } from '@icon-park/vue-next'
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import { deepCopy } from '@/utils/util'
+import ModelEndpointTest from '@/components/settings/ModelEndpointTest.vue'
 
 const props = defineProps({
+  backend: { type: String, default: 'local' },
+  active: { type: Boolean, default: true },
   endpoints: {
     type: Array,
     default: () => []
@@ -47,6 +50,7 @@ const endpointModelForm = reactive({
 })
 
 const endpointModelModalOpen = ref(false)
+const testEndpoint = computed(() => props.endpoints.find(endpoint => endpoint.id === endpointModelForm.endpoint_id) || null)
 
 const addNewModel = () => {
   modelFormStatus.value = 'add'
@@ -94,7 +98,7 @@ const cancelModel = () => {
 
 const addEndpoint = () => {
   endpointModelForm.endpoint_id = ''
-  endpointModelForm.model_id = modelEditIndex.value
+  endpointModelForm.model_id = ''
   endpointModelModalOpen.value = true
 }
 
@@ -231,10 +235,13 @@ const editEndpoint = (index) => {
             {{ t('settings.model_id') }}
             <QuestionPopover :contents="[t('settings.endpoint_model_id_tip')]" />
           </template>
-          <a-input v-model:value="endpointModelForm.model_id" placeholder="可选，留空则使用默认模型" />
+          <a-input v-model:value="endpointModelForm.model_id" :placeholder="modelForm.id" />
         </a-form-item>
 
       </a-form>
+      <ModelEndpointTest :endpoint="testEndpoint" :backend="backend"
+        :model-id="endpointModelForm.model_id || modelForm.id"
+        :active="active && modelFormModalOpen && endpointModelModalOpen" />
     </a-modal>
   </a-flex>
 </template>

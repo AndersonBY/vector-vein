@@ -22,6 +22,8 @@ from utilities.media_processing import get_screenshot
 from utilities.file_processing.files import read_file_content
 from utilities.config import config, Settings, cache, DEFAULT_SETTINGS
 from utilities.config.settings import normalize_embedding_backends, update_llm_settings_to_v2
+from utilities.llm_endpoint_test import run_model_endpoint_test
+from utilities.workflow_errors import redact_message
 
 
 def start_chat(agent_id: str, continue_chat: bool = False, with_screenshot: bool = False):
@@ -285,7 +287,16 @@ class SettingAPI:
             models = endpoint.model_list()
             return JResponse(data={"models": models})
         except Exception as error:
-            return JResponse(status=500, msg=str(error))
+            return JResponse(status=500, msg=redact_message(error, {"credentials": payload}, include_settings=False))
+
+    def test_model_endpoint(self, payload):
+        try:
+            return JResponse(data=run_model_endpoint_test(payload))
+        except Exception as error:
+            return JResponse(
+                status=400 if isinstance(error, ValueError) else 502,
+                msg=redact_message(error, {"credentials": payload}, include_settings=False),
+            )
 
     def read_local_document(self, payload):
         file_path = payload.get("file", "")

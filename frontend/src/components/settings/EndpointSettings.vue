@@ -5,6 +5,7 @@ import { message, Modal } from 'ant-design-vue'
 import { Delete } from '@icon-park/vue-next'
 import { deepCopy, hashObject } from '@/utils/util'
 import { settingAPI } from "@/api/user"
+import ModelEndpointTest from '@/components/settings/ModelEndpointTest.vue'
 
 const { t } = useI18n()
 
@@ -27,7 +28,7 @@ const defaultParams = {
 }
 const endpointForm = reactive(deepCopy(defaultParams))
 const originalFormHash = ref(0)
-const testingEndpoint = ref(false)
+const testBackend = computed(() => endpointForm.endpoint_type?.startsWith('anthropic') ? 'anthropic' : 'local')
 const endpointPresets = [
   { key: 'ollama', label: 'Ollama', api_base: 'http://127.0.0.1:11434/v1', endpoint_type: 'openai' },
   { key: 'lmstudio', label: 'LM Studio', api_base: 'http://127.0.0.1:1234/v1', endpoint_type: 'openai' },
@@ -147,36 +148,21 @@ const applyPreset = (preset) => {
   originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
 }
 
-const testEndpoint = async () => {
-  if (!endpointForm.api_base) {
-    message.error(t('settings.api_base_empty'))
-    return
-  }
-  testingEndpoint.value = true
-  const response = await settingAPI('list_models', {
-    api_key: endpointForm.api_key,
-    base_url: endpointForm.api_base,
-  })
-  if (response.status === 200) {
-    const modelCount = response?.data?.models?.data?.length || 0
-    message.success(t('settings.test_endpoint_success', { count: modelCount }))
-  } else {
-    message.error(response.msg || t('settings.test_endpoint_failed'))
-  }
-  testingEndpoint.value = false
-}
-
 const availableModelsState = reactive({
   listing: false,
   list: async () => {
     availableModelsState.listing = true
     try {
       const response = await settingAPI('list_models', { api_key: endpointForm.api_key, base_url: endpointForm.api_base })
+      if (response?.status !== 200) {
+        message.error(t('settings.list_models_failed'))
+        return
+      }
       availableModelsState.availableModels = (response?.data?.models?.data || []).map(item => ({ key: item.id, ...item }))
       availableModelsState.total = response?.data?.models?.data?.length || 0
       availableModelsState.modalOpen = true
     } catch (error) {
-      message.error(t('settings.list_models_failed') + ': ' + error.message)
+      message.error(t('settings.list_models_failed'))
       availableModelsState.modalOpen = false
     } finally {
       availableModelsState.listing = false
@@ -301,9 +287,6 @@ const availableModelsState = reactive({
         </a-form-item>
       </a-form>
       <a-flex justify="space-between" gap="small">
-        <a-button @click="testEndpoint" :loading="testingEndpoint">
-          {{ t('settings.test_endpoint') }}
-        </a-button>
         <a-button block @click="availableModelsState.list" :loading="availableModelsState.listing">
           {{ t('settings.list_models') }}
         </a-button>
@@ -334,6 +317,8 @@ const availableModelsState = reactive({
           </template>
         </a-modal>
       </a-flex>
+      <ModelEndpointTest :endpoint="endpointForm" :backend="testBackend" :active="!!endpointFormStatus"
+        editable-model select-backend />
     </a-col>
   </a-row>
 </template>
