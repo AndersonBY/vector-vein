@@ -153,7 +153,8 @@ class WorkflowAPI:
         workflow.version = int(workflow.version or 1) + 1
         workflow.save()
 
-        update_workflow_tool_call_data.delay(workflow_wid=workflow.wid.hex, force=title_changed)
+        if payload.get("refresh_tool_data", True):
+            update_workflow_tool_call_data.delay(workflow_wid=workflow.wid.hex, force=title_changed)
 
         return JResponse(data=model_serializer(workflow, manytomany=True))
 

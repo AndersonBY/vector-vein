@@ -566,7 +566,7 @@ class AgentAPI:
         description = payload.get("description", "")
         settings = payload.get("settings", {})
         model_provider = payload.get("model_provider", "OpenAI")
-        model = payload.get("model", "gpt-4o-mini")
+        model = payload.get("model", "gpt-5-nano")
 
         if avatar and not avatar.startswith("http://localhost"):
             avatar = static_file_server.get_static_file_url(avatar, "images/avatar")

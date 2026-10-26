@@ -21,6 +21,49 @@ export function createTemplateData() {
         "list": false,
         "field_type": "input"
       },
+      "content_format": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": "text",
+  "name": "content_format",
+  "display_name": "content_format",
+  "type": "str",
+  "list": false,
+  "field_type": "select",
+  "options": [
+    {
+      "value": "text",
+      "label": "Text / CSV / Markdown"
+    },
+    {
+      "value": "structured",
+      "label": "Structured JSON"
+    }
+  ]
+},
+      "template_file": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": "",
+  "name": "template_file",
+  "display_name": "template_file",
+  "type": "str",
+  "list": false,
+  "field_type": "input"
+},
+      "overwrite": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": false,
+  "name": "overwrite",
+  "display_name": "overwrite",
+  "type": "bool",
+  "list": false,
+  "field_type": "checkbox"
+},
       "content": {
         "required": true,
         "placeholder": "",
@@ -38,6 +81,7 @@ export function createTemplateData() {
         "show": false,
         "value": ".docx",
         "options": [
+          {"value": ".png", "label": ".png"},
           {
             "value": ".docx",
             "label": ".docx"

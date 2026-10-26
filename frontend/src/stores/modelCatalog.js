@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 
 import { settingAPI } from '@/api/user'
 
-const STORAGE_KEY = 'modelCatalogPayload'
+const STORAGE_KEY = 'modelCatalogPayload-v2'
 const STORAGE_TTL_MS = 30 * 60 * 1000
 
 const EMPTY_PAYLOAD = {
@@ -55,6 +55,7 @@ const prettifyProviderName = (providerKey) => {
     local: 'Local',
     mini_max: 'MiniMax',
     minimax: 'MiniMax',
+    mistral: 'Mistral',
     moonshot: 'Moonshot',
     open_ai: 'OpenAI',
     openai: 'OpenAI',
@@ -66,18 +67,21 @@ const prettifyProviderName = (providerKey) => {
     universal_llm: 'Universal LLM',
     x_ai: 'xAI',
     xai: 'xAI',
+    xiaomi: 'Xiaomi',
     yi: 'Yi',
-    zhipuai: 'ZhiPuAI',
     zhipuai: 'ZhiPuAI',
   }
   return providerNameMap[providerKey] || providerKey.replaceAll('_', ' ')
 }
 
-const getBackendModelEntries = (models) => {
+const getBackendModelEntries = (models, defaultModel) => {
   if (!models || typeof models !== 'object' || Array.isArray(models)) {
     return []
   }
-  return Object.entries(models).reverse()
+  return Object.entries(models)
+    .filter(([, model]) => model?.enabled !== false)
+    .reverse()
+    .sort(([left], [right]) => Number(right === defaultModel) - Number(left === defaultModel))
 }
 
 const buildCatalogPayload = (settingPayload) => {
@@ -105,13 +109,14 @@ const buildCatalogPayload = (settingPayload) => {
 
   Object.entries(backends).forEach(([providerKey, providerValue]) => {
     const backendModels = providerValue?.models || {}
-    const providerModels = getBackendModelEntries(backendModels).map(([modelKey, modelValue]) => {
+    const providerModels = getBackendModelEntries(backendModels, providerValue?.default_model).map(([modelKey, modelValue]) => {
       const endpointsForModel = Array.isArray(modelValue?.endpoints) ? modelValue.endpoints : []
       return {
         provider: providerKey,
         family: providerKey,
         key: modelKey,
         id: modelValue?.id || modelKey,
+        nativeMultimodal: modelValue?.native_multimodal === true,
         endpoints: endpointsForModel,
         endpointLabels: endpointsForModel.map((endpointId) => endpointMap[endpointId]?.id || endpointId),
         isCustom: false,
@@ -252,9 +257,10 @@ export const useModelCatalogStore = defineStore('modelCatalog', {
       return Object.entries(backends)
         .map(([providerKey, providerValue]) => {
           const providerLabel = prettifyProviderName(providerKey)
-          const children = getBackendModelEntries(providerValue?.models).map(([modelKey, modelValue]) => ({
+          const children = getBackendModelEntries(providerValue?.models, providerValue?.default_model).map(([modelKey, modelValue]) => ({
             value: modelKey,
             label: modelValue?.id || modelKey,
+            nativeMultimodal: modelValue?.native_multimodal === true,
           }))
           if (children.length === 0) {
             return null
@@ -269,6 +275,12 @@ export const useModelCatalogStore = defineStore('modelCatalog', {
     },
     llmNodeOptions() {
       return this.generalModelOptions
+    },
+    visionModelOptions() {
+      return this.generalModelOptions.map((provider) => ({
+        ...provider,
+        children: provider.children.filter((model) => model.nativeMultimodal),
+      })).filter((provider) => provider.children.length > 0)
     },
     embeddingModelOptions() {
       const backends = this.embeddingBackends || {}

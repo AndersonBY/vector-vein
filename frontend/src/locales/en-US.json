@@ -927,7 +927,10 @@
           "files": "File",
           "remove_image": "Remove image",
           "remove_url_and_email": "Remove url and email",
-          "output": "Output"
+          "output": "Output",
+          "output_format": "Output format",
+          "sheet_names": "Worksheet names",
+          "sheet_names_help": "One name per line; leave empty to read all sheets"
         },
         "FileUpload": {
           "title": "Select File",
@@ -1069,7 +1072,13 @@
           "stream": "Stream transmission",
           "function_call_output": "Function call output",
           "function_call_arguments": "Function call arguments",
-          "system_prompt": "System Prompt"
+          "system_prompt": "System Prompt",
+          "output_schema": "Output JSON Schema",
+          "output_schema_help": "Leave empty for ordinary text output. A schema enables local validation.",
+          "max_repairs": "Maximum schema repairs (0–2)",
+          "cache_results": "Reuse successful results for 30 days",
+          "cache_version": "Cache revision",
+          "run_stats": "Batch execution statistics"
         },
         "OpenAI": {
           "title": "OpenAI",
@@ -1472,7 +1481,10 @@
           "output_type_markdown": "Markdown",
           "output_type_html": "HTML",
           "show_local_file": "Show local file",
-          "output": "Output"
+          "output": "Output",
+          "content_format": "Content format",
+          "template_file": "DOCX template path (optional)",
+          "overwrite": "Replace existing output"
         },
         "Audio": {
           "title": "Audio",
@@ -1734,7 +1746,8 @@
           "output": "Return value",
           "console_msg": "Console message",
           "error_msg": "Error message",
-          "files": "Generated files"
+          "files": "Generated files",
+          "continue_on_error": "Continue on Python errors"
         },
         "ImageSearch": {
           "title": "Image search",

@@ -927,7 +927,10 @@
           "files": "文件",
           "remove_image": "移除图片",
           "remove_url_and_email": "移除链接和邮箱",
-          "output": "输出"
+          "output": "输出",
+          "output_format": "输出格式",
+          "sheet_names": "工作表名称",
+          "sheet_names_help": "每行一个名称；留空读取全部工作表"
         },
         "FileUpload": {
           "title": "选择文件",
@@ -1069,7 +1072,13 @@
           "stream": "流式传输",
           "function_call_output": "函数调用完整输出",
           "function_call_arguments": "函数调用参数值",
-          "system_prompt": "系统提示词"
+          "system_prompt": "系统提示词",
+          "output_schema": "输出 JSON Schema",
+          "output_schema_help": "留空时输出普通文本；填写后启用本地结构校验。",
+          "max_repairs": "结构修复次数上限（0–2）",
+          "cache_results": "复用 30 天内的成功结果",
+          "cache_version": "缓存修订号",
+          "run_stats": "批次执行统计"
         },
         "OpenAI": {
           "title": "OpenAI",
@@ -1472,7 +1481,10 @@
           "output_type_markdown": "Markdown",
           "output_type_html": "HTML",
           "show_local_file": "显示本地文件",
-          "output": "输出"
+          "output": "输出",
+          "content_format": "内容格式",
+          "template_file": "DOCX 模板路径（可选）",
+          "overwrite": "覆盖已有输出文件"
         },
         "Audio": {
           "title": "音频",
@@ -1734,7 +1746,8 @@
           "output": "返回值",
           "console_msg": "控制台消息",
           "error_msg": "报错消息",
-          "files": "生成文件"
+          "files": "生成文件",
+          "continue_on_error": "Python 出错后继续执行"
         },
         "ImageSearch": {
           "title": "图片搜索",

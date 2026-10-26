@@ -19,65 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "glm-4.6",
-        "options": [
-          {
-            "value": "glm-4.6",
-            "label": "glm-4.6"
-          },
-          {
-            "value": "glm-4.6-thinking",
-            "label": "glm-4.6-thinking"
-          },
-          {
-            "value": "glm-4.5",
-            "label": "glm-4.5"
-          },
-          {
-            "value": "glm-4.5-thinking",
-            "label": "glm-4.5-thinking"
-          },
-          {
-            "value": "glm-4.5-x",
-            "label": "glm-4.5-x"
-          },
-          {
-            "value": "glm-4.5-air",
-            "label": "glm-4.5-air",
-          },
-          {
-            "value": "glm-4.5-airx",
-            "label": "glm-4.5-airx",
-          },
-          {
-            "value": "glm-4.5-flash",
-            "label": "glm-4.5-flash",
-          },
-          {
-            "value": "glm-4-plus",
-            "label": "glm-4-plus",
-          },
-          {
-            "value": "glm-4-long",
-            "label": "glm-4-long",
-          },
-          {
-            "value": "glm-zero-preview",
-            "label": "glm-zero-preview",
-          },
-          {
-            "value": "glm-z1-air",
-            "label": "glm-z1-air",
-          },
-          {
-            "value": "glm-z1-airx",
-            "label": "glm-z1-airx",
-          },
-          {
-            "value": "glm-z1-flash",
-            "label": "glm-z1-flash",
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

@@ -19,65 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-sonnet-4-5-20250929",
-        "options": [
-          {
-            "value": "claude-sonnet-4-5-20250929-thinking",
-            "label": "claude-sonnet-4-5-20250929-thinking"
-          },
-          {
-            "value": "claude-sonnet-4-5-20250929",
-            "label": "claude-sonnet-4-5-20250929"
-          },
-          {
-            "value": "claude-haiku-4-5-20251001",
-            "label": "claude-haiku-4-5-20251001",
-          },
-          {
-            "value": "claude-opus-4-20250514-thinking",
-            "label": "claude-opus-4-20250514-thinking"
-          },
-          {
-            "value": "claude-opus-4-20250514",
-            "label": "claude-opus-4-20250514"
-          },
-          {
-            "value": "claude-sonnet-4-20250514-thinking",
-            "label": "claude-sonnet-4-20250514-thinking"
-          },
-          {
-            "value": "claude-sonnet-4-20250514",
-            "label": "claude-sonnet-4-20250514"
-          },
-          {
-            "value": "claude-3-7-sonnet-thinking",
-            "label": "claude-3-7-sonnet-thinking"
-          },
-          {
-            "value": "claude-3-7-sonnet",
-            "label": "claude-3-7-sonnet"
-          },
-          {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
-          },
-          {
-            "value": "claude-3-5-haiku",
-            "label": "claude-3-5-haiku"
-          },
-          {
-            "value": "claude-3-opus",
-            "label": "claude-3-opus"
-          },
-          {
-            "value": "claude-3-sonnet",
-            "label": "claude-3-sonnet"
-          },
-          {
-            "value": "claude-3-haiku",
-            "label": "claude-3-haiku"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",
@@ -142,9 +85,6 @@ export function createTemplateData() {
         "list": false,
         "field_type": "textarea",
         "is_output": true,
-        "condition": (fieldsData) => {
-          return fieldsData.llm_model.value === "claude-3-7-sonnet-thinking"
-        }
       },
     }
   }

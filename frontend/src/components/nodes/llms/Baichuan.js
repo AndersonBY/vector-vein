@@ -19,29 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "Baichuan3-Turbo",
-        "options": [
-          {
-            "value": "Baichuan4",
-            "label": "Baichuan4"
-          },
-          {
-            "value": "Baichuan3-Turbo",
-            "label": "Baichuan3-Turbo"
-          },
-          {
-            "value": "Baichuan3-Turbo-128k",
-            "label": "Baichuan3-Turbo-128k"
-          },
-          {
-            "value": "Baichuan2-Turbo",
-            "label": "Baichuan2-Turbo"
-          },
-          {
-            "value": "Baichuan2-53B",
-            "label": "Baichuan2-53B"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

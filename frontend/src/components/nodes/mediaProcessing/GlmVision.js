@@ -25,21 +25,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "glm-4.5v",
-        "options": [
-          {
-            "value": "glm-4.5v",
-            "label": "glm-4.5v",
-          },
-          {
-            "value": "glm-4v-plus",
-            "label": "glm-4v-plus",
-          },
-          {
-            "value": "glm-4v-flash",
-            "label": "glm-4v-flash",
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

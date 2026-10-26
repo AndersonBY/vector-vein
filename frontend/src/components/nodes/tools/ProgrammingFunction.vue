@@ -30,7 +30,7 @@ Object.entries(templateData.template).forEach(([key, value]) => {
   }
 })
 
-const reservedFieldNames = ['language', 'code', 'output', 'use_oversea_node', 'list_input', 'error_msg', 'console_msg', 'files']
+const reservedFieldNames = ['language', 'code', 'output', 'use_oversea_node', 'list_input', 'error_msg', 'console_msg', 'files', 'continue_on_error']
 
 const newFieldData = reactive({
   "required": true,
@@ -159,6 +159,9 @@ const editorModal = reactive({
             <a-checkbox v-model:checked="fieldsData.list_input.value">
             </a-checkbox>
           </template>
+        </BaseField>
+        <BaseField :name="t('components.nodes.tools.ProgrammingFunction.continue_on_error')" name-only type="target" v-model:data="fieldsData.continue_on_error">
+          <template #inline><a-checkbox v-model:checked="fieldsData.continue_on_error.value" /></template>
         </BaseField>
       </a-flex>
     </template>

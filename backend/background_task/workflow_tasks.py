@@ -6,6 +6,7 @@ import time
 import inspect
 import traceback
 import threading
+from copy import deepcopy
 
 from celery_worker import app, timer
 
@@ -143,6 +144,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
 
     def run_task(task: Dict[str, Any]):
         nonlocal has_failed_task
+        task_data = deepcopy(workflow_data)
         module, function = task["task_name"].split(".")
         node_id = task["node_id"]
         is_skipped = node_id in workflow_data.get("skipped_nodes", [])
@@ -151,7 +153,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
         start_time = time.time()
 
         try:
-            task_result = task_functions[module][function](workflow_data, node_id)
+            task_result = task_functions[module][function](task_data, node_id)
 
             # Record end time and calculate elapsed time
             end_time = time.time()
@@ -186,15 +188,15 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
             mprint.error(traceback.format_exc())
 
             # Try to save partial result with error info
-            if isinstance(workflow_data, dict):
-                if "node_run_time" not in workflow_data:
-                    workflow_data["node_run_time"] = {}
+            if isinstance(task_data, dict):
+                if "node_run_time" not in task_data:
+                    task_data["node_run_time"] = {}
                 # Mark failed node with 0 runtime
                 workflow_data["node_run_time"][node_id] = 0
 
             # Only report workflow status if we have a valid workflow
             try:
-                workflow = Workflow(workflow_data)
+                workflow = Workflow(task_data)
                 workflow.report_workflow_status(500, task["task_name"])
             except Exception as e:
                 mprint.error(f"Error in report_workflow_status: {e}")
@@ -207,18 +209,9 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
         threads.append(thread)
         thread.start()
 
-    # Wait for all threads to complete or any task to fail
-    while True:
-        if has_failed_task:
-            break
-        all_threads_finished = True
-        for thread in threads:
-            if thread.is_alive():
-                all_threads_finished = False
-                break
-        if all_threads_finished:
-            break
-        time.sleep(0.1)
+    # Drain active nodes before failing the batch; no background writes after failure.
+    for thread in threads:
+        thread.join()
 
     if has_failed_task:
         mprint.error(error_tasks)
@@ -290,7 +283,7 @@ def run_workflow(self, workflow_data: dict):
         task_chain = chain(*func_list, on_finish.s())
         result = task_chain(workflow.data)
 
-        mprint(f"Workflow {workflow_data.get('wid', 'unknown')} completed successfully")
+        mprint(f"Workflow {workflow_data.get('wid', 'unknown')} dispatched")
         return result
 
     except TaskRetry as e:

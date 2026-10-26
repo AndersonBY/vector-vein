@@ -12,6 +12,7 @@ from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.file_processing import get_files_contents, remove_markdown_image, remove_url_and_email
 from worker.tasks import task, timer
+from utilities.file_processing.structured import read_workbook, workbook_text
 
 
 @task
@@ -28,13 +29,26 @@ def file_loader(
     if isinstance(files, str):
         files = [files]
 
-    results = get_files_contents(files)
+    output_format = workflow.get_node_field_value(node_id, "output_format", "text")
+    sheet_names = workflow.get_node_field_value(node_id, "sheet_names", "")
+    if isinstance(sheet_names, str):
+        sheet_names = [name.strip() for name in sheet_names.splitlines() if name.strip()]
+    if output_format not in ("text", "structured"):
+        raise ValueError("File output format must be text or structured")
     output = []
-    for result in results:
-        if need_remove_image:
-            result = remove_markdown_image(result, 0)
-        if need_remove_url_and_email:
-            result = remove_url_and_email(result)
+    for file in files:
+        if Path(file).suffix.lower() == ".xlsx":
+            workbook = read_workbook(file, sheet_names)
+            result = workbook if output_format == "structured" else workbook_text(workbook)
+        else:
+            result = get_files_contents([file])[0]
+            if output_format == "structured":
+                result = {"source": str(Path(file).resolve()), "content": result}
+        if isinstance(result, str):
+            if need_remove_image:
+                result = remove_markdown_image(result, 0)
+            if need_remove_url_and_email:
+                result = remove_url_and_email(result)
         output.append(result)
 
     if len(files) == 1:

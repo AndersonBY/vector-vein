@@ -21,6 +21,38 @@ export function createTemplateData() {
         "list": false,
         "field_type": "file"
       },
+      "output_format": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": "text",
+  "name": "output_format",
+  "display_name": "output_format",
+  "type": "str",
+  "list": false,
+  "field_type": "select",
+  "options": [
+    {
+      "value": "text",
+      "label": "Text"
+    },
+    {
+      "value": "structured",
+      "label": "Structured JSON"
+    }
+  ]
+},
+      "sheet_names": {
+  "required": false,
+  "placeholder": "",
+  "show": false,
+  "value": "",
+  "name": "sheet_names",
+  "display_name": "sheet_names",
+  "type": "str",
+  "list": false,
+  "field_type": "textarea"
+},
       "remove_image": {
         "required": false,
         "placeholder": "",

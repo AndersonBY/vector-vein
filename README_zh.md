@@ -1,4 +1,4 @@
- [English](README_en.md) | 简体中文 | [日本語](README_ja.md)
+ [English](README.md) | 简体中文 | [日本語](README_ja.md)
 
  [![向量脉络](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
 
@@ -143,6 +143,14 @@ print(result['data'])  # 工作流输出
 ```
 
 启动 VectorVein 后，访问 `http://localhost:8787/docs` 查看详细的 API 文档。
+
+### 结构化数据与可靠执行
+
+从 v0.4.16 起，文件读取支持保留来源行号的多工作表 JSON，文档节点支持多表 XLSX、结构化 DOCX 和自动 PNG 图表。LLM 节点可配置 JSON Schema 校验、有限修复和逐项结果缓存；批次失败会阻止后续步骤。详见 [使用与复现说明](docs/reliable-workflows.md)。
+
+### 命令行工作流
+
+源码环境可用 `pdm run cli`，支持创建、验证、修改、运行工作流和查询运行结果；含 CLI 的桌面包另提供 `VectorVeinCLI` 控制台程序。支持独立工作区和外部模型配置，使用方式见 [CLI 文档](docs/cli.md)。
 
 ### 📖 基本概念
 

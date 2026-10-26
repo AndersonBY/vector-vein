@@ -3,7 +3,8 @@ authors = [{name = "MakerBi", email = "biying@vectorvein.com"}]
 dependencies = [
   "pywebview>=6.0.0",
   "httpx>=0.22.0",
-  "peewee>=3.16.2",
+  # peewee-migrate 1.x uses the Peewee 3 migration operation API.
+  "peewee>=3.16.2,<4",
   "pypdf>=3.8.1",
   "mammoth>=1.5.1",
   "openpyxl>=3.1.2",
@@ -26,9 +27,11 @@ dependencies = [
   "sqlparse>=0.5.0",
   "anthropic>=0.25.7",
   "pydantic>=2.7.1",
+  "jsonschema>=4.23,<5",
+  "matplotlib>=3.9,<3.11",
   "lxml[html_clean]>=5.2.1",
   "PyMuPDF>=1.24.5",
-  "peewee-migrate>=1.12.2",
+  "peewee-migrate>=1.12.2,<2",
   "websockets>=12.0",
   "diskcache>=5.6.3",
   "mss>=9.0.1",
@@ -41,7 +44,7 @@ dependencies = [
   "celery>=5.3.0",
   "fastapi>=0.110.0",
   "uvicorn>=0.28.0",
-  "vv-llm[bedrock,vertex]>=0.3.86",
+  "vv-llm[bedrock,vertex]>=0.7.4,<0.8",
   "sqlalchemy>=2.0",
   "qtpy>=2.4; sys_platform == \"linux\"",
   "PySide6>=6.8; sys_platform == \"linux\"",
@@ -50,7 +53,7 @@ description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
 requires-python = ">=3.10,<3.13"
-version = "0.4.14"
+version = "0.4.21"
 
 [tool.pdm]
 distribution = false
@@ -63,6 +66,7 @@ build.cmd = "python build.py -t p"
 build.env_file = ".env"
 dev.cmd = "python main.py"
 dev.env_file = ".env"
+cli = "python cli.py"
 fullstack-dev.cmd = "python run_fullstack_dev.py"
 fullstack-dev.env_file = ".env"
 test = "pytest tests"
@@ -83,3 +87,7 @@ dev = [
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-q"
+
+# Keep the original lint policy stable across Ruff default-rule changes.
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

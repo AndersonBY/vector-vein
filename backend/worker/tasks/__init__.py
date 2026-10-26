@@ -10,6 +10,7 @@ from typing import Callable, TypeVar, Optional, overload, Any, Union
 
 from celery_worker import app
 from celery import chain as celery_chain, group, chord
+from celery.exceptions import Retry
 
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
@@ -62,6 +63,8 @@ class Task:
 
         # Wrap original function to always report node status after execution
         def _wrapped(*args, **kwargs):
+            from utilities.workflow import Workflow
+
             workflow_data = kwargs.get("workflow_data")
             if workflow_data is None and args and isinstance(args[0], dict):
                 workflow_data = args[0]
@@ -70,18 +73,30 @@ class Task:
             if node_id is None and len(args) >= 2 and isinstance(args[1], str):
                 node_id = args[1]
 
-            skipped = False
             if workflow_data is not None and node_id and node_id in workflow_data.get("skipped_nodes", []):
-                skipped = True
                 mprint(f"<Node:{node_id}> Skip task {celery_task_name} due to conditional branch.")
                 result = workflow_data
             else:
-                result = func(*args, **kwargs)
+                try:
+                    try:
+                        result = func(*args, **kwargs)
+                    except TaskRetry as exc:
+                        retry_data = exc.task.copy()
+                        retry_data.pop("node_id", None)
+                        raise self.celery_task.retry(args=(retry_data, node_id), kwargs={}, countdown=exc.retry_delay, max_retries=self.max_retries)
+                except Retry:
+                    raise
+                except Exception:
+                    if workflow_data is not None:
+                        wf = Workflow(workflow_data)
+                        if node_id:
+                            wf.set_node_status(node_id, 500)
+                        wf.report_workflow_status(500, celery_task_name)
+                    raise
 
             try:
                 # Try best-effort to report node finished for UI progress
                 if node_id:
-                    from utilities.workflow import Workflow
                     wf = Workflow(result if isinstance(result, dict) else (args[0] if args else {}))
                     wf.report_node_status(node_id)
             except Exception as _e:

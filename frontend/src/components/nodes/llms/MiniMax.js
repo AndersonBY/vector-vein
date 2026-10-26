@@ -19,21 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "MiniMax-M2",
-        "options": [
-          {
-            "value": "MiniMax-M2",
-            "label": "MiniMax-M2"
-          },
-          {
-            "value": "MiniMax-M1",
-            "label": "MiniMax-M1"
-          },
-          {
-            "value": "MiniMax-Text-01",
-            "label": "MiniMax-Text-01"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

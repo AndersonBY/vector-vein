@@ -8,6 +8,7 @@ additional_imports = [
     "openai",
     "tiktoken",
     "httpx",
+    "httpx2",
     "anthropic",
     "pydantic",
     "PIL",

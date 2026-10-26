@@ -25,49 +25,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "claude-sonnet-4-5-20250929",
-        "options": [
-          {
-            "value": "claude-sonnet-4-5-20250929-thinking",
-            "label": "claude-sonnet-4-5-20250929-thinking"
-          },
-          {
-            "value": "claude-sonnet-4-5-20250929",
-            "label": "claude-sonnet-4-5-20250929"
-          },
-          {
-            "value": "claude-haiku-4-5-20251001",
-            "label": "claude-haiku-4-5-20251001",
-          },
-          {
-            "value": "claude-opus-4-20250514-thinking",
-            "label": "claude-opus-4-20250514-thinking"
-          },
-          {
-            "value": "claude-opus-4-20250514",
-            "label": "claude-opus-4-20250514"
-          },
-          {
-            "value": "claude-sonnet-4-20250514-thinking",
-            "label": "claude-sonnet-4-20250514-thinking"
-          },
-          {
-            "value": "claude-sonnet-4-20250514",
-            "label": "claude-sonnet-4-20250514"
-          },
-          {
-            "value": "claude-3-7-sonnet-thinking",
-            "label": "claude-3-7-sonnet-thinking"
-          },
-          {
-            "value": "claude-3-7-sonnet",
-            "label": "claude-3-7-sonnet"
-          },
-          {
-            "value": "claude-3-5-sonnet",
-            "label": "claude-3-5-sonnet"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

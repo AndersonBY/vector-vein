@@ -27,7 +27,9 @@ def add_request_record(product: str, cycle: int = 60) -> bool:
             request_records[product].popleft()
 
         if len(request_records[product]) > 0:
-            threading.Timer(interval=cycle, function=clear_expired_records, args=[product, cycle]).start()
+            timer = threading.Timer(interval=cycle, function=clear_expired_records, args=[product, cycle])
+            timer.daemon = True
+            timer.start()
         return True
 
 
@@ -64,7 +66,9 @@ def is_request_allowed(product: str, cycle: int, max_count: int, add_record: boo
 
         if add_record:
             request_records[product].append(current_time)
-            threading.Timer(cycle, clear_expired_records, [product, cycle]).start()
+            timer = threading.Timer(cycle, clear_expired_records, [product, cycle])
+            timer.daemon = True
+            timer.start()
         return True
 
 

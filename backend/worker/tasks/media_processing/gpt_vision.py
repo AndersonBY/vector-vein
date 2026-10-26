@@ -5,4 +5,4 @@ from .base_vlm import BaseVLMTask
 
 class GPTVisionTask(BaseVLMTask):
     MODEL_TYPE: BackendType = BackendType.OpenAI
-    DEFAULT_MODEL = "gpt-4o"
+    DEFAULT_MODEL = "gpt-5.5"

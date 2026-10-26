@@ -138,6 +138,13 @@ jobs:
         working-directory: backend
         run: ${{ matrix.pdm_install_command }}
 
+      - name: Check backend
+        working-directory: backend
+        run: |
+          pdm run test
+          pdm run ruff check . --select E4,E7,E9,F
+          pdm run python examples/reliable_report.py
+
       - name: Build frontend bundle
         working-directory: backend
         run: pdm run python build.py -t f
@@ -145,6 +152,16 @@ jobs:
       - name: Build desktop package
         working-directory: backend
         run: pdm run python build.py -t p -v "${{ steps.meta.outputs.version }}"
+
+      - name: Smoke-test packaged CLI
+        working-directory: backend
+        run: |
+          if [ -f cli.py ]; then
+            CLI="./dist/vector-vein/VectorVeinCLI"
+            if [ "${RUNNER_OS}" = "Windows" ]; then CLI="${CLI}.exe"; fi
+            "$CLI" --help
+            "$CLI" --workspace "${RUNNER_TEMP}/vectorvein-cli-smoke" init
+          fi
 
       - name: Upload packaged artifact
         uses: actions/upload-artifact@v7

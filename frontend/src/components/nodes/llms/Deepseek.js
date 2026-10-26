@@ -19,17 +19,8 @@ export function createTemplateData() {
         "required": false,
         "placeholder": "",
         "show": false,
-        "value": "deepseek-chat",
-        "options": [
-          {
-            "value": "deepseek-chat",
-            "label": "deepseek-chat"
-          },
-          {
-            "value": "deepseek-reasoner",
-            "label": "deepseek-reasoner"
-          },
-        ],
+        "value": "",
+        "options": [],
         "name": "llm_model",
         "display_name": "llm_model",
         "type": "str",

@@ -43,6 +43,13 @@ const showEditField = ref(false)
         </a-modal>
       </BaseField>
 
+      <BaseField :name="t('components.nodes.fileProcessing.FileLoader.output_format')" type="target" v-model:data="fieldsData.output_format">
+        <a-select v-model:value="fieldsData.output_format.value" :options="fieldsData.output_format.options" style="width: 100%" />
+      </BaseField>
+      <BaseField :name="t('components.nodes.fileProcessing.FileLoader.sheet_names')" type="target" v-model:data="fieldsData.sheet_names">
+        <a-textarea v-model:value="fieldsData.sheet_names.value" :placeholder="t('components.nodes.fileProcessing.FileLoader.sheet_names_help')" />
+      </BaseField>
+
       <BaseField :name="t('components.nodes.fileProcessing.FileLoader.remove_image')"
         :required="fieldsData.remove_image.required" type="target" v-model:data="fieldsData.remove_image" nameOnly />
 

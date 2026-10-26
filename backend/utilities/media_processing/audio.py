@@ -20,6 +20,7 @@ from openai._types import FileTypes
 from utilities.config import Settings, config
 from utilities.general import mprint_with_name
 from utilities.network import new_httpx_client
+from utilities.network.llm_client import new_llm_http_client
 
 
 OpenAIVoiceType = Literal["alloy", "echo", "fable", "onyx", "nova", "shimmer"]
@@ -415,7 +416,7 @@ class SpeechRecognitionClient:
                 client = OpenAI(
                     api_key=settings.get("asr.openai.api_key"),
                     base_url=settings.get("asr.openai.api_base"),
-                    http_client=new_httpx_client(is_async=False),
+                    http_client=new_llm_http_client(is_async=False),
                 )
                 model_id = settings.get("asr.openai.model", "whisper-1")
             self.provider = OpenAIProvider(client, model_id, _language)
