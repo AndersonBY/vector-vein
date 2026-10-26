@@ -12,6 +12,7 @@ from celery_worker import app, timer
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
+from utilities.workflow_timeline import merge_timeline, update_timeline
 from worker.tasks import chain, on_finish, TaskRetry, task
 from worker.tasks import (
     llms,
@@ -93,6 +94,10 @@ def merge_results(workflow_data_list: list, node_ids: list):
         if node is not None:
             nodes[node_id] = deepcopy(node)
         merged_data.setdefault("node_run_time", {}).update(data.get("node_run_time", {}))
+        for timeline_id, entry in data.get("node_timeline", {}).items():
+            previous = merged_data.setdefault("node_timeline", {}).get(timeline_id)
+            if previous is None or entry["status"] != "PENDING" and (previous["status"] == "PENDING" or (entry.get("finished_at") or 0) >= (previous.get("finished_at") or 0)):
+                merged_data["node_timeline"][timeline_id] = deepcopy(entry)
         for skipped in data.get("skipped_nodes", []):
             if skipped not in merged_data.setdefault("skipped_nodes", []):
                 merged_data["skipped_nodes"].append(skipped)
@@ -100,6 +105,7 @@ def merge_results(workflow_data_list: list, node_ids: list):
             add_failure(merged_data, failure)
     merged_data["nodes"] = list(nodes.values())
     merged_data.pop("_batch_collecting", None)
+    merge_timeline(merged_data)
     return merged_data
 
 
@@ -162,6 +168,7 @@ def batch_tasks(self, workflow_data: dict, tasks: list[Dict[str, Any]]):
             with result_lock:
                 results[node_id] = task_result
         except Exception as exc:
+            update_timeline(task_data, node_id, "FAILED")
             workflow = Workflow(task_data)
             workflow.set_node_status(node_id, 500)
             elapsed_time = time.time() - start_time
@@ -279,6 +286,7 @@ def run_workflow(self, workflow_data: dict):
             task_name = dispatch_task["task_name"] if dispatch_task else "workflow.run"
             if node_id:
                 workflow.set_node_status(node_id, 500)
+                update_timeline(workflow_data, node_id, "FAILED")
             add_failure(workflow_data, node_failure(exc, workflow_data, node_id, task_name))
         workflow.report_workflow_status(500, dispatch_task["task_name"] if dispatch_task else "workflow.run")
         raise

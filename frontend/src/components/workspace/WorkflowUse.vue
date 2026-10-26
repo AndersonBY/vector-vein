@@ -18,6 +18,7 @@ import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TableRenderer from "@/components/workspace/TableRenderer.vue"
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
+import WorkflowRunTimeline from "@/components/workspace/WorkflowRunTimeline.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
 import TextOutput from "@/components/TextOutput.vue"
 import {
@@ -182,19 +183,47 @@ onBeforeMount(async () => {
   loading.value = false
 })
 onBeforeUnmount(() => {
-  clearInterval(checkStatusTimer.value)
+  stopStatusPolling()
 })
 
 const wsPort = ref(null)
 
+let pollEpoch = 0
+const runSockets = new Set()
+const timelineSnapshot = ref({})
+const timelineFresh = ref(false)
+const showTimeline = ref(false)
+function stopStatusPolling() {
+  pollEpoch += 1
+  runSockets.forEach(socket => socket.close())
+  runSockets.clear()
+  clearInterval(checkStatusTimer.value)
+  checkStatusTimer.value = null
+  checkingStatus.value = false
+}
+function startStatusPolling() {
+  clearInterval(checkStatusTimer.value)
+  checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
+}
 const checkingStatus = ref(false)
 const checkWorkflowRunningStatus = async () => {
   if (checkingStatus.value) {
     return
   }
   checkingStatus.value = true
+  const epoch = pollEpoch
+  const rid = runRecordId.value
   try {
-    const statusResponse = await workflowAPI('check_status', { rid: runRecordId.value })
+    const statusResponse = await workflowAPI('check_status', { rid })
+    if (epoch !== pollEpoch || rid !== runRecordId.value) return
+    const snapshot = statusResponse.status === 202 ? statusResponse.data : statusResponse.data?.data
+    if (snapshot) {
+      timelineFresh.value = false
+      timelineSnapshot.value = { ...timelineSnapshot.value, ...snapshot, nodes: snapshot.nodes || timelineSnapshot.value.nodes }
+      if (statusResponse.status === 202 && snapshot.finished_nodes) {
+        timelineSnapshot.value.nodes = timelineSnapshot.value.nodes.map(node => snapshot.finished_nodes.find(item => item.id === node.id) || node)
+      }
+    }
     if (getWorkflowRunStatus(statusResponse) === 'FINISHED') {
       message.success(t('workspace.workflowSpace.run_workflow_success'))
       clearInterval(checkStatusTimer.value)
@@ -220,6 +249,7 @@ const checkWorkflowRunningStatus = async () => {
       showingRecord.value = true
 
     } else if (statusResponse.status == 202) {
+      recordStatus.value = ['RUNNING', 'QUEUED'].includes(statusResponse.msg) ? statusResponse.msg : 'RUNNING'
       const finishedNodes = statusResponse.data.finished_nodes ?? []
       outputNodes.value.forEach((node) => {
         const finishedNode = finishedNodes.find((item) => {
@@ -258,20 +288,28 @@ const checkWorkflowRunningStatus = async () => {
               wsPort.value = res.data.port
             }
 
+            if (epoch !== pollEpoch || rid !== runRecordId.value) return
             const chatSocket = new ReconnectingWebSocket(
-              `ws://localhost:${wsPort.value}/ws/workflow_node/${runRecordId.value}_${node.id}`,
+              `ws://localhost:${wsPort.value}/ws/workflow_node/${rid}_${node.id}`,
               null,
               { maxReconnectAttempts: 5 }
             );
+            runSockets.add(chatSocket)
 
             chatSocket.onopen = () => {
               chatSocket.send('start')
               console.log('连接成功')
             }
             chatSocket.onmessage = async (e) => {
+              if (epoch !== pollEpoch || rid !== runRecordId.value) {
+                chatSocket.close()
+                runSockets.delete(chatSocket)
+                return
+              }
               const data = JSON.parse(e.data)
               if (data.end) {
                 chatSocket.close()
+                runSockets.delete(chatSocket)
                 return
               }
               outputTextNodes.forEach((outputTextNode) => {
@@ -315,9 +353,10 @@ const checkWorkflowRunningStatus = async () => {
       showingRecord.value = true
     }
   } catch {
+    if (epoch !== pollEpoch || rid !== runRecordId.value) return
     message.error({ key: 'workflow-status', content: t('workspace.workflowSpace.check_workflow_status_retrying') })
   } finally {
-    checkingStatus.value = false
+    if (epoch === pollEpoch) checkingStatus.value = false
   }
 }
 
@@ -387,9 +426,6 @@ const runWorkflow = async (workflowVersion = null) => {
     }
   }
 
-  runRecordId.value = null
-  showingRecord.value = false
-  streamableNodes.value = []
   if (!checkFieldsValid(inputFields.value)) {
     return
   }
@@ -429,20 +465,39 @@ const runWorkflow = async (workflowVersion = null) => {
     }
     return node
   })
+  stopStatusPolling()
+  const epoch = pollEpoch
+  runRecordId.value = null
+  recordStatus.value = 'QUEUED'
+  showingRecord.value = false
+  showTimeline.value = false
+  streamableNodes.value = []
+  timelineFresh.value = true
+  timelineSnapshot.value = { nodes: deepCopy(workflowDataForRun.data.nodes).map(node => {
+    delete node.run_time
+    if (node.data) {
+      delete node.data.status
+      delete node.data.debug
+    }
+    return node
+  }) }
   running.value = true
   try {
     const response = await workflowAPI(props.isTemplate ? 'run-template' : 'run', workflowDataForRun)
+    if (epoch !== pollEpoch) return
     if (response.status == 200 && response.data?.rid) {
       message.success(t('workspace.workflowSpace.submit_workflow_success'))
       runRecordId.value = response.data.rid
-      checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
+      showingRecord.value = true
+      startStatusPolling()
     } else {
       message.error(t('workspace.workflowSpace.submit_workflow_failed'))
     }
   } catch {
+    if (epoch !== pollEpoch) return
     message.error(t('workspace.workflowSpace.submit_workflow_failed'))
   } finally {
-    if (!runRecordId.value) running.value = false
+    if (epoch === pollEpoch && !runRecordId.value) running.value = false
   }
 }
 
@@ -450,11 +505,16 @@ const showingRecord = ref(false)
 const recordStatus = ref('')
 
 function setWorkflowRecord(record) {
+  stopStatusPolling()
+  showTimeline.value = false
+  running.value = false
+  timelineFresh.value = false
+  timelineSnapshot.value = { ...record.data, nodes: Array.isArray(record.data?.nodes) ? record.data.nodes : deepCopy(savedWorkflow.value.data.nodes) }
   runRecordId.value = record.rid
   recordStatus.value = record.status
-  if (record.status == 'RUNNING') {
+  if (['RUNNING', 'QUEUED'].includes(record.status)) {
     running.value = true
-    checkStatusTimer.value = setInterval(checkWorkflowRunningStatus, 1000)
+    startStatusPolling()
   }
   currentWorkflow.value.data = {
     ...record.data,
@@ -503,6 +563,13 @@ defineExpose({
 })
 
 function clearWorkflow() {
+  stopStatusPolling()
+  showTimeline.value = false
+  running.value = false
+  showingRecord.value = false
+  runRecordId.value = null
+  recordStatus.value = ''
+  timelineSnapshot.value = {}
   setCurrentWorkflow(savedWorkflow.value)
 }
 </script>
@@ -514,6 +581,7 @@ function clearWorkflow() {
   <a-row :gutter="[16, 16]" class="main-use-container" v-else>
     <a-col :span="24" v-if="showingRecord">
       <WorkflowRecordStatusAlert :key="`${runRecordId}-${recordStatus}`"
+        :closable="!running"
         :recordWorkflowVersion="currentWorkflow.version" :status="recordStatus" :snapshot="currentWorkflow.data"
         @close="clearWorkflow" />
     </a-col>
@@ -612,6 +680,10 @@ function clearWorkflow() {
           {{ t('workspace.workflowSpace.outputs') }}
         </span>
         <a-space>
+          <a-button v-if="running || showingRecord" type="text" size="small" :aria-pressed="showTimeline"
+            @click="showTimeline = !showTimeline">
+            {{ t(showTimeline ? 'workspace.workflowSpace.hide_debug_details' : 'workspace.workflowSpace.show_debug_details') }}
+          </a-button>
           <a-button v-if="showingRecord && !isTemplate" type="text" size="small" @click="diagnosisRecord">
             <template #icon>
               <Eeg />
@@ -633,6 +705,7 @@ function clearWorkflow() {
           </a-tooltip>
         </a-space>
       </a-typography-title>
+      <WorkflowRunTimeline v-if="showTimeline && (running || showingRecord)" :snapshot="timelineSnapshot" :active="running" :status="recordStatus" :fresh="timelineFresh" />
       <a-flex vertical gap="small">
         <a-spin :spinning="running && !node.finished && node.field_type != 'typography-paragraph'"
           class="draggable-item" v-for="(node, index) in outputNodes" :key="`node-${node.id}-${index}`">

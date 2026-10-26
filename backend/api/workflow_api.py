@@ -22,6 +22,7 @@ from api.utils import (
     get_user_object_general,
 )
 from utilities.config import cache
+from utilities.workflow_timeline import read_timeline
 from utilities.workflow import WorkflowData, validate_cron_expression, get_next_run_time
 from utilities.file_processing import static_file_server
 from celery_tasks import update_workflow_tool_call_data
@@ -299,7 +300,7 @@ class WorkflowAPI:
             response = {"status": 200, "msg": record.status, "data": workflow_serializer_data}
             cache.set(f"workflow:record:{rid}", 200, 60 * 60)
         elif record.status in ("RUNNING", "QUEUED"):
-            response = {"status": 202, "msg": record.status, "data": {"finished_nodes": finished_nodes}}
+            response = {"status": 202, "msg": record.status, "data": {"finished_nodes": finished_nodes, "node_timeline": read_timeline({**record.data, "rid": rid})}}
         else:
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
@@ -414,7 +415,10 @@ class WorkflowRunRecordAPI:
         if status != 200 or not isinstance(record, WorkflowRunRecord):
             return JResponse(status=status, msg=msg)
 
+        active_timeline = read_timeline({**record.data, "rid": record.rid.hex}) if record.status in ("RUNNING", "QUEUED") else None
         record = model_serializer(record, manytomany=True)
+        if active_timeline is not None:
+            record["data"]["node_timeline"] = active_timeline
         return JResponse(data=record)
 
     def list(self, payload):

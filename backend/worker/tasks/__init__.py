@@ -15,6 +15,7 @@ from celery.exceptions import Retry
 from utilities.workflow import Workflow
 from utilities.general import mprint_with_name
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
+from utilities.workflow_timeline import update_timeline
 
 
 mprint = mprint_with_name(name="Workflow Task Server")
@@ -75,21 +76,34 @@ class Task:
                 node_id = args[1]
 
             if workflow_data is not None and node_id and node_id in workflow_data.get("skipped_nodes", []):
+                update_timeline(workflow_data, node_id, "SKIPPED")
                 mprint(f"<Node:{node_id}> Skip task {celery_task_name} due to conditional branch.")
                 result = workflow_data
             else:
                 start_time = time.time()
+                if workflow_data is not None and node_id:
+                    update_timeline(workflow_data, node_id, "RUNNING")
                 try:
                     try:
                         result = func(*args, **kwargs)
                     except TaskRetry as exc:
                         retry_data = exc.task.copy()
                         retry_data.pop("node_id", None)
-                        raise self.celery_task.retry(args=(retry_data, node_id), kwargs={}, countdown=exc.retry_delay, max_retries=self.max_retries)
+                        try:
+                            retry = self.celery_task.retry(args=(retry_data, node_id), kwargs={}, countdown=exc.retry_delay, max_retries=self.max_retries, throw=False)
+                        except Retry:
+                            update_timeline(retry_data, node_id, "WAITING")
+                            update_timeline(workflow_data, node_id, "WAITING")
+                            raise
+                        update_timeline(retry_data, node_id, "WAITING")
+                        workflow_data["node_timeline"] = retry_data["node_timeline"]
+                        raise retry
                 except Retry:
                     raise
                 except Exception as exc:
                     if workflow_data is not None:
+                        if node_id:
+                            update_timeline(workflow_data, node_id, "FAILED")
                         wf = Workflow(workflow_data)
                         if node_id:
                             wf.set_node_status(node_id, 500)
@@ -111,6 +125,7 @@ class Task:
                 # Try best-effort to report node finished for UI progress
                 if node_id:
                     result_data = result if isinstance(result, dict) else (workflow_data or {})
+                    update_timeline(result_data, node_id, "SKIPPED" if node_id in result_data.get("skipped_nodes", []) else "SUCCEEDED")
                     wf = Workflow(result_data)
                     if node_id not in result_data.get("skipped_nodes", []):
                         wf.set_node_status(node_id, 200)

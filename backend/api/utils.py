@@ -134,8 +134,10 @@ def run_workflow_common(
     workflow_version: str | int | None = None,
 ) -> str:
     from celery_tasks import run_workflow
+    from utilities.workflow_timeline import reset_run, initialize_timeline
     
     workflow_data["wid"] = workflow.wid.hex
+    reset_run(workflow_data)
 
     source_message = message.mid.hex if message is not None else None
 
@@ -149,6 +151,7 @@ def run_workflow_common(
         workflow_version=workflow_version or workflow.version,
     )
     workflow_data["rid"] = record.rid.hex
+    initialize_timeline(workflow_data)
 
     # Pre-mark status so UI can reflect queued state immediately
     try:

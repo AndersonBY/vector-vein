@@ -13,6 +13,7 @@ from models import WorkflowRunRecord, Message
 from utilities.config import cache
 from utilities.general import mprint_with_name
 from utilities.workflow_errors import workflow_error_payload
+from utilities.workflow_timeline import merge_timeline, update_timeline
 
 
 mprint = mprint_with_name(name="Workflow")
@@ -480,6 +481,7 @@ class Workflow:
 
         marking_nodes.add(node_id)
         self.workflow_data["skipped_nodes"].append(node_id)
+        update_timeline(self.workflow_data, node_id, "SKIPPED")
 
         for edge in self.edges:
             if edge["source"] == node_id:
@@ -517,6 +519,7 @@ class Workflow:
             if status != 200 and workflow_record.status == "FAILED" and workflow_record.data.get("failures"):
                 self.workflow_data = workflow_record.data
             workflow_record.status = "FINISHED" if status == 200 else "FAILED"
+            merge_timeline(self.workflow_data)
             workflow_record.data = self.workflow_data
             workflow_record.data.pop("_batch_collecting", None)
             if error_task and not workflow_record.data.get("error_task"):

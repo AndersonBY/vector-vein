@@ -5,6 +5,7 @@ import WorkflowFailureDetails from '@/components/workspace/WorkflowFailureDetail
 
 const props = defineProps({
   status: { type: String, required: true },
+  closable: { type: Boolean, default: true },
   snapshot: { type: Object, default: () => ({}) },
   recordWorkflowVersion: { type: [Number, null], default: null },
 })
@@ -16,7 +17,7 @@ const alertType = computed(() => ({
 </script>
 
 <template>
-  <a-alert :type="alertType" banner="" show-icon closable @close="emit('close')">
+  <a-alert :type="alertType" banner="" show-icon :closable="closable" @close="emit('close')">
     <template #message>
       <a-tooltip :title="t('workspace.workflowSpace.record_version')">
         <a-tag v-if="recordWorkflowVersion">v{{ recordWorkflowVersion }}</a-tag>
