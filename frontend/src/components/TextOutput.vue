@@ -1,6 +1,7 @@
 <script setup>
-import { ref, computed, onMounted, watch, nextTick, onBeforeUnmount, h, render } from 'vue'
-import { Copy } from '@icon-park/vue-next'
+import { ref, computed, onMounted, onBeforeUpdate, onUpdated, onBeforeUnmount, h, render } from 'vue'
+import { Copy, Check } from '@icon-park/vue-next'
+import { streamingMarkdownPlugin } from '@/utils/streamingMarkdown'
 import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'
 import markdownItKatexModule from '@vscode/markdown-it-katex'
@@ -15,7 +16,7 @@ import 'highlight.js/styles/monokai-sublime.css'
 
 const props = defineProps({
   text: {
-    type: String,
+    type: [String, Array, Object],
     default: '',
   },
   renderMarkdown: {
@@ -42,37 +43,15 @@ const props = defineProps({
 
 const { t } = useI18n()
 
-const innerText = computed(() => {
-  if (typeof props.text === 'string') {
-    const escapedText = escapeBrackets(escapeDollarNumber(props.text))
-    return escapedText
-  } else {
-    let processedText = ''
-    if (Array.isArray(props.text)) {
-      processedText = props.text.map(item => {
-        if (typeof item !== 'string') {
-          try {
-            return JSON.stringify(item)
-          } catch (error) {
-            return ''
-          }
-        }
-        return item
-      }).join('\n\n')
-    } else {
-      try {
-        processedText = JSON.stringify(props.text)
-      } catch (error) {
-        processedText = ''
-      }
-    }
-    try {
-      return escapeBrackets(escapeDollarNumber(processedText))
-    } catch (error) {
-      return ''
-    }
+function rawText(value) {
+  if (typeof value === 'string') return value
+  try {
+    return Array.isArray(value) ? value.map(rawText).join('\n\n') : JSON.stringify(value) || ''
+  } catch {
+    return ''
   }
-})
+}
+const innerText = computed(() => rawText(props.text))
 
 const titles = {
   tip: t('common.TIP'),
@@ -98,218 +77,180 @@ const markdownItLinkAttributesPlugin = (vueMarkdownItInstance) => {
   })
 }
 
-const plugins = [markdownItKatex, markdownitGitHubAlertsPlugin, markdownItLinkAttributesPlugin]
-
-function escapeDollarNumber(text) {
-  let escapedText = ''
-  for (let i = 0; i < text.length; i += 1) {
-    let char = text[i]
-    const nextChar = text[i + 1] || ' '
-    if (char === '$' && nextChar >= '0' && nextChar <= '9')
-      char = '\\$'
-    escapedText += char
-  }
-  return escapedText
-}
-
-function escapeBrackets(text) {
-  const pattern = /(```[\s\S]*?```|`.*?`)|\\\[([\s\S]*?[^\\])\\\]|\\\((.*?)\\\)/g
-  return text.replace(pattern, (match, codeBlock, squareBracket, roundBracket) => {
-    if (codeBlock)
-      return codeBlock
-    else if (squareBracket)
-      return `$$${squareBracket}$$`
-    else if (roundBracket)
-      return `$${roundBracket}$`
-    return match
-  })
-}
+const plugins = [markdownItKatex, md => streamingMarkdownPlugin(md, { copyLabel: t('components.copyButton.click_to_copy') }), markdownitGitHubAlertsPlugin, markdownItLinkAttributesPlugin]
 
 const markdownBodyClass = computed(() => typeof props.markdownBodyClass === 'string' ? [props.markdownBodyClass] : props.markdownBodyClass)
 const markdownRef = ref(null)
 
-const highlightCodeBlocks = () => {
-  if (markdownRef.value) {
-    const blocks = markdownRef.value.$el.querySelectorAll('pre code')
-    blocks.forEach((block, index) => {
-      if (block.parentNode.classList.contains('code-block')) {
-        return
-      }
+const mounts = new Map()
+const timers = new Set()
+const copyButtons = new Set()
+let alive = true
 
-      hljs.highlightElement(block)
-      block.classList.add('custom-scrollbar', 'hljs')
+function setCodeVisible(wrapper, visible) {
+  wrapper.style.background = visible ? '' : 'transparent'
+  wrapper.querySelector('pre').style.display = visible ? '' : 'none'
+  wrapper.querySelector('.header').style.display = visible ? '' : 'none'
+}
 
-      const wrapper = document.createElement('div')
-      const header = document.createElement('div')
-      const lang = document.createElement('span')
-      const copyContainer = document.createElement('div')
-
-      wrapper.className = 'code-block'
-      header.className = 'header'
-      lang.className = 'language'
-      copyContainer.className = 'copy-container'
-
-      const blockClassList = Array.from(block.classList)
-      const language = blockClassList.find(c => c.startsWith('language-'))
-      lang.textContent = language ? language.split('-')[1] : ''
-
-      header.appendChild(lang)
-      header.appendChild(copyContainer)
-      wrapper.appendChild(header)
-      block.parentNode.insertBefore(wrapper, block)
-      wrapper.appendChild(block)
-
-      const createCopyIcon = () => h(Copy, {
-        theme: 'outline',
-        size: '18',
-        fill: '#fff',
-        class: 'copy-icon',
-        onClick: () => {
-          const textToCopy = block.textContent.replace(/\n$/, '');
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            render(h('span', { class: 'copied-text' }, 'Copied!'), copyContainer)
-            setTimeout(() => {
-              renderCopyIcon()
-            }, 1000)
-          }).catch(err => {
-            console.error('Failed to copy text: ', err)
-          })
-        }
-      })
-
-      const renderCopyIcon = () => {
-        render(createCopyIcon(), copyContainer)
-      }
-
-      renderCopyIcon()
-    })
+function prepareUpdate() {
+  for (const timer of timers) clearTimeout(timer)
+  timers.clear()
+  for (const button of copyButtons) render(null, button)
+  copyButtons.clear()
+  for (const { wrapper, container } of mounts.values()) {
+    container.remove()
+    setCodeVisible(wrapper, true)
   }
 }
 
-const renderMermaidCodeBlock = () => {
-  if (!markdownRef.value || !props.renderMermaid) return
+function cleanup() {
+  prepareUpdate()
+  for (const { container } of mounts.values()) render(null, container)
+  mounts.clear()
+}
 
-  const codeBlocks = markdownRef.value.$el.querySelectorAll('pre code.language-mermaid')
-  codeBlocks.forEach(block => {
-    try {
-      // 创建一个容器替换原始代码块
-      const container = document.createElement('div')
-      container.className = 'mermaid-container'
+function renderCopyIcon(button, copied = false) {
+  const label = t(copied ? 'components.copyButton.copy_success' : 'components.copyButton.click_to_copy')
+  button.setAttribute('aria-label', label)
+  button.setAttribute('title', label)
+  render(h(copied ? Check : Copy, { class: 'copy-icon', size: '18' }), button)
+  copyButtons.add(button)
+}
 
-      // 获取父元素的父元素（pre的父元素）
-      const preParent = block.parentNode.parentNode
-
-      // 将容器插入到pre元素之前
-      preParent.insertBefore(container, block.parentNode)
-
-      // 渲染MermaidRenderer组件
-      render(h(MermaidRenderer, {
-        content: block.textContent,
-        downloadTitle: t('components.workspace.mindmapRenderer.download_svg')
-      }), container)
-
-      // 隐藏原始pre元素
-      block.parentNode.style.display = 'none'
-    } catch (error) {
-      console.error('Error rendering mermaid block:', error)
-      // 如果渲染失败，保留原始代码块
-      if (block.parentNode) {
-        block.parentNode.style.display = ''
-      }
-      // 添加错误提示
-      const errorDiv = document.createElement('div')
-      errorDiv.className = 'mermaid-error'
-      errorDiv.style.color = 'red'
-      errorDiv.textContent = `Mermaid rendering error: ${error.message}`
-      if (block.parentNode && block.parentNode.parentNode) {
-        block.parentNode.parentNode.insertBefore(errorDiv, block.parentNode)
-      }
+function enhanceMarkdown() {
+  const root = markdownRef.value?.$el
+  if (!alive || !root?.querySelectorAll) { cleanup(); return }
+  root.querySelectorAll('.copy-container').forEach(button => renderCopyIcon(button))
+  root.querySelectorAll('pre code').forEach(block => {
+    if (!block.dataset.highlighted && !block.classList.contains('language-mermaid')) hljs.highlightElement(block)
+    block.classList.add('custom-scrollbar', 'hljs')
+  })
+  const used = new Set()
+  if (props.renderMermaid) root.querySelectorAll('.code-block[data-mermaid="true"]').forEach((wrapper, index) => {
+    const key = `${index}:${wrapper.dataset.code}`
+    used.add(key)
+    let mounted = mounts.get(key)
+    if (mounted) {
+      mounted.wrapper = wrapper
+      wrapper.appendChild(mounted.container)
+      if (mounted.rendered) setCodeVisible(wrapper, false)
+      return
     }
+    const container = document.createElement('div')
+    container.className = 'mermaid-container'
+    wrapper.appendChild(container)
+    mounted = { wrapper, container, rendered: false }
+    mounts.set(key, mounted)
+    render(h(MermaidRenderer, {
+      content: decodeURIComponent(wrapper.dataset.code),
+      downloadTitle: t('components.workspace.mindmapRenderer.download_svg'),
+      onRendered: () => {
+        mounted.rendered = true
+        setCodeVisible(mounted.wrapper, false)
+      },
+    }), container)
   })
+  for (const [key, { container }] of mounts) {
+    if (used.has(key)) continue
+    render(null, container)
+    container.remove()
+    mounts.delete(key)
+  }
 }
 
-onMounted(() => {
-  nextTick(() => {
-    highlightCodeBlocks()
-    renderMermaidCodeBlock()
-  })
-})
-
-watch(() => props.text, () => {
-  nextTick(() => {
-    highlightCodeBlocks()
-    renderMermaidCodeBlock()
-  })
-})
-
-onBeforeUnmount(() => {
-  if (markdownRef.value) {
-    // 清理代码块
-    const codeBlocks = markdownRef.value.$el.querySelectorAll('.code-block')
-    codeBlocks.forEach(block => {
-      const copyContainer = block.querySelector('.copy-container')
-      if (copyContainer) {
-        render(null, copyContainer)
-      }
-      block.remove()
-    })
-
-    // 清理Mermaid容器
-    const mermaidContainers = markdownRef.value.$el.querySelectorAll('.mermaid-container')
-    mermaidContainers.forEach(container => {
-      render(null, container)
-      container.remove()
-    })
-
-    // 清理Mermaid错误信息
-    const mermaidErrors = markdownRef.value.$el.querySelectorAll('.mermaid-error')
-    mermaidErrors.forEach(error => {
-      error.remove()
-    })
+async function copyCode(event) {
+  const button = event.target.closest?.('.copy-container')
+  const wrapper = button?.closest('.code-block')
+  if (!wrapper) return
+  try {
+    await navigator.clipboard.writeText(decodeURIComponent(wrapper.dataset.code))
+    if (!alive || !button.isConnected) return
+    renderCopyIcon(button, true)
+    const timer = setTimeout(() => {
+      timers.delete(timer)
+      renderCopyIcon(button)
+    }, 1000)
+    timers.add(timer)
+  } catch (error) {
+    console.error('Failed to copy text:', error)
   }
-})
+}
+
+onMounted(enhanceMarkdown)
+onBeforeUpdate(prepareUpdate)
+onUpdated(enhanceMarkdown)
+onBeforeUnmount(() => { alive = false; cleanup() })
 </script>
 
 <template>
-  <div :class="wrapperClass">
+  <div :class="wrapperClass" @click="copyCode">
     <template v-if="renderMarkdown">
       <vue-markdown ref="markdownRef" :source="innerText" :options="{ html: true, linkify: true }" :plugins="plugins"
         class="markdown-body custom-hljs custom-scrollbar" :class="markdownBodyClass" />
       <a-typography-paragraph v-if="showCopy" :copyable="{ text: innerText }">
       </a-typography-paragraph>
     </template>
-    <a-typography-paragraph :copyable="showCopy ? false : { text: innerText }" v-else>
+    <a-typography-paragraph :copyable="showCopy ? { text: innerText } : false" v-else>
       {{ innerText }}
     </a-typography-paragraph>
   </div>
 </template>
 
 <style>
-.code-block .header {
+.markdown-body .code-block {
+  margin: 1em 0;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #23241f;
+}
+
+.markdown-body .code-block .header {
+  background-color: #343541;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 5px 10px;
-  background-color: #f0f0f0;
+  color: #d9d9e3;
+  padding: 8px 16px;
+}
+
+.code-block .language {
+  font-size: 12px;
+  line-height: 1;
 }
 
 .code-block .copy-container {
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  color: #fff;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .code-block .copy-icon {
   transition: opacity 0.3s;
-  cursor: pointer;
 }
 
 .code-block .copy-icon:hover {
   opacity: 0.7;
 }
 
-.code-block .copied-text {
-  font-size: 12px;
+.markdown-body .code-block pre,
+.markdown-body .code-block code {
+  margin: 0;
+  padding: 0;
+  border-radius: 0;
+}
+
+.markdown-body .code-block code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+  background: #23241f;
+  color: #f8f8f2;
 }
 
 .mermaid-container {

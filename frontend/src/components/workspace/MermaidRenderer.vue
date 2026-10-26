@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { Download, Copy, Check } from '@icon-park/vue-next'
 import { Flex, Tooltip, Button } from 'ant-design-vue'
 import { saveAs } from 'file-saver'
@@ -22,10 +22,14 @@ const props = defineProps({
 })
 
 mermaid.initialize({ startOnLoad: false, securityLevel: "loose" })
+const emit = defineEmits(['rendered'])
+let epoch = 0
+let copyTimer
 const mermaidRef = ref()
 const content = ref(props.content)
 
 const update = async () => {
+  const current = ++epoch
   if (!content.value) {
     return
   }
@@ -34,10 +38,12 @@ const update = async () => {
   // 渲染Mermaid
   try {
     const { svg } = await mermaid.render(props.id, mermaidCode)
+    if (current !== epoch || !mermaidRef.value) return
     mermaidRef.value.innerHTML = svg
+    emit('rendered')
   } catch (error) {
-    console.error('Mermaid rendering error:', error)
-    mermaidRef.value.innerHTML = `<div style="color:red">Mermaid rendering error: ${error.message}</div>`
+    if (current !== epoch || !mermaidRef.value) return
+    mermaidRef.value.textContent = `Mermaid rendering error: ${error.message}`
   }
 }
 
@@ -65,11 +71,13 @@ const copyMermaidCode = () => {
   // 设置复制状态为真，并在1秒后恢复
   isCopied.value = true
   copyTip.value = 'Copied'
-  setTimeout(() => {
+  clearTimeout(copyTimer)
+  copyTimer = setTimeout(() => {
     isCopied.value = false
     copyTip.value = 'Copy Mermaid Code'
   }, 1000)
 }
+onBeforeUnmount(() => { epoch++; clearTimeout(copyTimer) })
 </script>
 
 <template>
