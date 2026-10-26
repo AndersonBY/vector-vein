@@ -1728,6 +1728,32 @@
         }
       },
       "tools": {
+        "HttpRequest": {
+          "title": "HTTP 请求",
+          "description": "发送 HTTP 请求，在工作流中使用响应结果。",
+          "method": "请求方法",
+          "url": "URL",
+          "headers": "请求头（JSON）",
+          "headers_tip": "填写以请求头名称为键的 JSON 对象，或连接对象。",
+          "query_params": "查询参数（JSON）",
+          "query_params_tip": "填写以查询参数名称为键的 JSON 对象，或连接对象。",
+          "body_type": "请求体格式",
+          "body_type_none": "无请求体",
+          "body_type_json": "JSON",
+          "body_type_text": "文本",
+          "body_type_form": "表单",
+          "body": "请求体",
+          "body_tip": "JSON 格式可填写有效 JSON 或连接 JSON 值；表单格式可填写 JSON 对象或连接对象。选择无请求体时忽略此项。",
+          "timeout": "超时（秒）",
+          "follow_redirects": "跟随重定向",
+          "fail_on_http_error": "HTTP 错误时失败",
+          "fail_on_http_error_tip": "收到 HTTP 4xx 或 5xx 响应时停止此节点。关闭后可查看其响应输出。",
+          "status_code": "状态码",
+          "response_headers": "响应头",
+          "response_body": "响应文本",
+          "response_json": "响应 JSON",
+          "response_json_tip": "解析后的 JSON 值；响应不是有效 JSON 时为 null。"
+        },
         "title": "工具",
         "ProgrammingFunction": {
           "title": "编程函数",

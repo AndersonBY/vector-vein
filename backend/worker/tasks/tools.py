@@ -25,6 +25,7 @@ from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_
 from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
 from utilities.network import headers, new_httpx_client
+from utilities.http_request import perform_http_request
 from worker.tasks import task, timer
 
 
@@ -32,6 +33,22 @@ mprint = mprint_with_name(name="Tools Tasks")
 
 # ponytail: serialize legacy working-directory file collection; use isolated workers if throughput matters.
 _PYTHON_FILE_LOCK = RLock()
+
+
+@task
+@timer
+def http_request(workflow_data: dict, node_id: str):
+    workflow = Workflow(workflow_data)
+    for field, value in (("status_code", None), ("response_headers", {}), ("response_body", ""), ("response_json", None)):
+        workflow.update_node_field_value(node_id, field, value)
+    defaults = {"url": "", "method": "GET", "headers": "{}", "query_params": "{}", "body_type": "none", "body": "", "timeout": 30, "follow_redirects": False, "fail_on_http_error": True}
+    options = {field: workflow.get_node_field_value(node_id, field, default) for field, default in defaults.items()}
+    result = perform_http_request(**options)
+    for field, value in result.items():
+        workflow.update_node_field_value(node_id, field, value)
+    if options["fail_on_http_error"] and result["status_code"] >= 400:
+        raise RuntimeError(f"HTTP request returned status {result['status_code']}")
+    return workflow.data
 
 SKIPPING_FIELDS = [
     "language",

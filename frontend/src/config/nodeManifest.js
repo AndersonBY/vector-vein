@@ -45,6 +45,14 @@ export const nodeCategoryOptions = nodeCategoryManifest.map((item) => ({
 // Runtime registration still relies on import.meta.glob while the manifest
 // acts as the single source of truth for desktop in-scope node metadata.
 export const plannedNodeManifest = {
+  HttpRequest: {
+    category: 'tools',
+    frontendComponent: 'HttpRequest',
+    backendTask: 'tools.http_request',
+    featureFlag: null,
+    tags: ['http', 'api', 'request'],
+    status: 'available',
+  },
   ScheduleTrigger: {
     category: 'triggers',
     frontendComponent: 'ScheduleTrigger',

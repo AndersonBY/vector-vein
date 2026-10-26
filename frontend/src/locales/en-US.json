@@ -1728,6 +1728,32 @@
         }
       },
       "tools": {
+        "HttpRequest": {
+          "title": "HTTP request",
+          "description": "Send an HTTP request and use its response in your workflow.",
+          "method": "Method",
+          "url": "URL",
+          "headers": "Headers (JSON)",
+          "headers_tip": "Enter a JSON object with header names as keys, or connect an object.",
+          "query_params": "Query parameters (JSON)",
+          "query_params_tip": "Enter a JSON object with parameter names as keys, or connect an object.",
+          "body_type": "Body format",
+          "body_type_none": "No body",
+          "body_type_json": "JSON",
+          "body_type_text": "Text",
+          "body_type_form": "Form",
+          "body": "Request body",
+          "body_tip": "For JSON, enter valid JSON or connect a JSON value. For form data, enter a JSON object or connect an object. No body ignores this field.",
+          "timeout": "Timeout (seconds)",
+          "follow_redirects": "Follow redirects",
+          "fail_on_http_error": "Fail on HTTP errors",
+          "fail_on_http_error_tip": "Stop this node on HTTP 4xx or 5xx responses. Disable to inspect their response outputs.",
+          "status_code": "Status code",
+          "response_headers": "Response headers",
+          "response_body": "Response text",
+          "response_json": "Response JSON",
+          "response_json_tip": "Parsed JSON of any type; null if the response is not valid JSON."
+        },
         "title": "Tools",
         "ProgrammingFunction": {
           "title": "Programming function",
