@@ -17,6 +17,7 @@ from utilities.general import mprint_with_name
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure
 from utilities.workflow_timeline import update_timeline
 from utilities.workflow_stopping import guarded_execution, stop_requested, request_stop, WorkflowStopped
+from utilities.workflow_feedback import WorkflowPaused, request_pause, pause_requested
 
 
 mprint = mprint_with_name(name="Workflow Task Server")
@@ -91,8 +92,17 @@ class Task:
                     except WorkflowStopped:
                         request_stop(workflow_data.get("rid"))
                         return workflow_data
+                    except WorkflowPaused as exc:
+                        request_pause(workflow_data, node_id if not exc.child_rid else None, exc.child_rid)
+                        update_timeline(workflow_data, node_id, "WAITING")
+                        wf = Workflow(workflow_data)
+                        wf.set_node_status(node_id, 102)
+                        return wf.data
                     except TaskRetry as exc:
                         if stop_requested(workflow_data):
+                            return exc.task
+                        if pause_requested(workflow_data):
+                            update_timeline(exc.task, node_id, "WAITING")
                             return exc.task
                         retry_data = exc.task.copy()
                         retry_data.pop("node_id", None)

@@ -432,6 +432,9 @@
       "move_to_trash": "Move to trash",
       "move_to_trash_success": "Moved to trash",
       "move_to_trash_failed": "Failed to move to trash",
+      "continue_workflow": "Continue run",
+      "resume_workflow_failed": "Unable to continue. Please retry.",
+      "paused_workflow_action": "Open the workflow to provide feedback and continue.",
       "stop_workflow": "Stop run",
       "stop_workflow_failed": "Unable to stop the run. Please retry.",
       "stopping_description": "Waiting for the current node to finish. Following nodes will not run.",
@@ -863,6 +866,7 @@
         "status_running": "Running",
         "status_finished": "Finished",
         "status_failed": "Failed",
+        "status_paused": "Waiting for human feedback",
         "status_stopping": "Stopping",
         "status_stopped": "Stopped",
         "check_record": "Check record",
@@ -1956,7 +1960,7 @@
         },
         "HumanFeedback": {
           "title": "Human feedback",
-          "description": "Collect operator confirmation, notes, or extra context before continuing.",
+          "description": "Pause execution for human feedback, then continue the same run.",
           "hint_message": "Hint message",
           "human_input": "Human input",
           "output": "Output"

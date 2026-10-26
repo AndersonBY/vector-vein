@@ -20,7 +20,7 @@ import { workflowRunRecordAPI } from "@/api/workflow"
 const { t } = useI18n()
 const loading = ref(true)
 const stoppingRecords = reactive(new Set())
-const activeStatuses = ['QUEUED', 'RUNNING', 'STOPPING']
+const activeStatuses = ['QUEUED', 'RUNNING', 'STOPPING', 'PAUSED']
 let refreshTimer
 let listEpoch = 0
 
@@ -57,6 +57,7 @@ const onClose = () => {
 
 const emit = defineEmits(['open-record'])
 const statusOptions = [
+  { text: t('components.workspace.workflowRunRecordsDrawer.status_paused'), value: 'PAUSED' },
   { text: t('components.workspace.workflowRunRecordsDrawer.status_not_started'), value: 'NOT_STARTED' },
   { text: t('components.workspace.workflowRunRecordsDrawer.status_queued'), value: 'QUEUED' },
   { text: t('components.workspace.workflowRunRecordsDrawer.status_running'), value: 'RUNNING' },
@@ -220,7 +221,7 @@ const scheduleRefresh = () => {
 watch(open, scheduleRefresh)
 onBeforeUnmount(() => { clearTimeout(refreshTimer); listEpoch++ })
 const stopWorkflowRunRecord = async (record) => {
-  if (!['QUEUED', 'RUNNING'].includes(record.status) || stoppingRecords.has(record.rid)) return
+  if (!['QUEUED', 'RUNNING', 'PAUSED'].includes(record.status) || stoppingRecords.has(record.rid)) return
   stoppingRecords.add(record.rid)
   try {
     const response = await workflowRunRecordAPI('stop', { rid: record.rid })

@@ -69,7 +69,7 @@ def api_client(monkeypatch):
     return TestClient(server.fastapi_app)
 
 
-def test_fastapi_stop_delegates_and_stopped_wait_is_terminal(monkeypatch):
+def test_fastapi_stop_delegates_and_waiting_states_are_truthful(monkeypatch):
     import utilities.config
 
     monkeypatch.setattr(utilities.config, "cache", MemoryCache())
@@ -96,6 +96,12 @@ def test_fastapi_stop_delegates_and_stopped_wait_is_terminal(monkeypatch):
     server.workflow_run_record_api.get = lambda payload: {"status": 200, "data": {"status": "STOPPING", "data": {}}}
     checked = client.post("/api/workflow/check-status", json={"rid": "stopped-run"}).json()
     assert checked["status"] == 202 and checked["msg"] == "STOPPING"
+    server.workflow_run_record_api.get = lambda payload: {"status": 200, "data": {
+        "status": "PAUSED", "data": {"pending_feedback_nodes": ["review"]}}}
+    checked = client.post("/api/workflow/check-status", json={"rid": "stopped-run"}).json()
+    assert checked["status"] == 102 and checked["msg"] == "PAUSED"
+    waited = client.post("/api/workflow/run", json={"wid": "workflow-id", "wait_for_completion": True}).json()
+    assert waited["status"] == 102 and waited["data"]["pending_feedback_nodes"] == ["review"]
 
 
 @pytest.mark.parametrize("path,payload", [

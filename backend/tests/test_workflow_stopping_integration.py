@@ -9,6 +9,7 @@ def test_cooperative_stopping_and_terminal_races(tmp_path):
     script = r'''
 import sys
 import threading
+import time
 from copy import deepcopy
 from pathlib import Path
 sys.path.insert(0, sys.argv[1])
@@ -139,6 +140,13 @@ try:
     thread = threading.Thread(target=lambda: runner.run_workflow.run(parallel_data))
     thread.start()
     assert started.wait(15)
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        quick_node = next(n for n in saved(parallel).data['nodes'] if n['id'] == 'parallel-quick')
+        if quick_node['data']['template']['output']['value']:
+            break
+        time.sleep(.01)
+    assert quick_node['data']['template']['output']['value']
     assert request_stop(parallel.rid.hex).status == 'STOPPING'
     release.set(); thread.join(20)
     assert not thread.is_alive()

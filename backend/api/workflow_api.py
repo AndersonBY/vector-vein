@@ -295,12 +295,13 @@ class WorkflowAPI:
             return JResponse(status=404, msg="record not found")
 
         record = record_qs.first()
-        if record.status in ("FINISHED", "STOPPED"):
+        if record.status in ("FINISHED", "STOPPED", "PAUSED"):
             workflow_serializer_data = model_serializer(record.workflow, manytomany=True)
             workflow_serializer_data["data"] = record.data
             workflow_serializer_data["version"] = record.workflow_version
-            response = {"status": 200, "msg": record.status, "data": workflow_serializer_data}
-            cache.set(f"workflow:record:{rid}", 200, 60 * 60)
+            status_code = 102 if record.status == "PAUSED" else 200
+            response = {"status": status_code, "msg": record.status, "data": workflow_serializer_data}
+            cache.set(f"workflow:record:{rid}", status_code, 60 * 60)
         elif record.status in ("RUNNING", "QUEUED", "STOPPING"):
             response = {"status": 202, "msg": record.status, "data": {"finished_nodes": finished_nodes, "node_timeline": read_timeline({**record.data, "rid": rid})}}
         else:
@@ -312,6 +313,9 @@ class WorkflowAPI:
 
     def stop(self, payload):
         return WorkflowRunRecordAPI().stop(payload)
+
+    def resume(self, payload):
+        return WorkflowRunRecordAPI().resume(payload)
 
     def add_to_fast_access(self, payload):
         status, msg, workflow = get_user_object_general(
@@ -424,6 +428,18 @@ def _artifact_snapshot(record):
 
 class WorkflowRunRecordAPI:
     name = "workflow_run_record"
+
+    def resume(self, payload):
+        try:
+            rid = UUID(str(payload.get("rid"))).hex
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="invalid run id")
+        status, msg, record = get_user_object_general(WorkflowRunRecord, rid=rid)
+        if status != 200 or not isinstance(record, WorkflowRunRecord):
+            return JResponse(status=status, msg=msg)
+        from utilities.workflow_feedback import resume_run
+        status, msg, record = resume_run(rid, payload.get("human_feedback_nodes"))
+        return JResponse(status=status, msg=msg, data=model_serializer(record, manytomany=True) if record else {})
 
     def stop(self, payload):
         try:

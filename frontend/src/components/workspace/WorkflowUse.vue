@@ -252,7 +252,22 @@ const checkWorkflowRunningStatus = async () => {
       }
       showingRecord.value = true
 
+    } else if (statusResponse.status === 102 && statusResponse.msg === 'PAUSED') {
+      recordStatus.value = 'PAUSED'
+      running.value = false
+      showingRecord.value = true
+      currentWorkflow.value = statusResponse.data
+      currentWorkflow.value.data.ui = savedWorkflow.value.data?.ui || {}
+      await loadPendingFeedbackRuns(currentWorkflow.value.data, epoch, rid)
+      if (epoch !== pollEpoch || rid !== runRecordId.value) return
+      const uiDesign = currentWorkflow.value.data.ui_design
+      if (uiDesign) outputNodes.value = uiDesign.output_nodes || outputNodes.value
+      else outputNodes.value.forEach(node => {
+        const updated = currentWorkflow.value.data.nodes?.find(item => item.id === node.id)
+        if (updated) node.data = updated.data
+      })
     } else if (statusResponse.status == 202) {
+      running.value = true
       recordStatus.value = ['RUNNING', 'QUEUED', 'STOPPING'].includes(statusResponse.msg) ? statusResponse.msg : 'RUNNING'
       const finishedNodes = statusResponse.data.finished_nodes ?? []
       outputNodes.value.forEach((node) => {
@@ -371,7 +386,7 @@ const checkStatusTimer = ref(null)
 const runRecordId = ref(null)
 const stopRequest = ref(null)
 const stopWorkflow = async () => {
-  if (!runRecordId.value || !['QUEUED', 'RUNNING'].includes(recordStatus.value) || stopRequest.value === runRecordId.value) return
+  if (!runRecordId.value || !['QUEUED', 'RUNNING', 'PAUSED'].includes(recordStatus.value) || stopRequest.value === runRecordId.value || resumeRequest.value === runRecordId.value) return
   const rid = runRecordId.value
   const epoch = pollEpoch
   stopRequest.value = rid
@@ -388,6 +403,75 @@ const stopWorkflow = async () => {
     if (epoch === pollEpoch && rid === runRecordId.value) message.error(t('workspace.workflowSpace.stop_workflow_failed'))
   } finally {
     if (stopRequest.value === rid) stopRequest.value = null
+  }
+}
+const feedbackDrafts = reactive({})
+const feedbackRunRecords = ref([])
+const resumeRequest = ref(null)
+const activeRun = computed(() => ['QUEUED', 'RUNNING', 'PAUSED', 'STOPPING'].includes(recordStatus.value))
+const pendingFeedbackNodes = computed(() => {
+  if (recordStatus.value !== 'PAUSED') return []
+  return [{rid: runRecordId.value, data: currentWorkflow.value.data}, ...feedbackRunRecords.value].flatMap(record => {
+    const ids = record.data?.pending_feedback_nodes || []
+    return (record.data?.nodes || []).filter(node => node.type === 'HumanFeedback' && ids.includes(node.id)).map(node => ({
+      ...node, feedbackRid: record.rid, draftKey: record.rid === runRecordId.value ? node.id : `${record.rid}:${node.id}`,
+    }))
+  })
+})
+const loadPendingFeedbackRuns = async (snapshot, epoch, rid) => {
+  const records = []
+  const load = async data => {
+    for (const childRid of data?.pending_feedback_runs || []) {
+      if (records.some(record => record.rid === childRid) || childRid === rid) continue
+      const response = await workflowRunRecordAPI('get', {rid: childRid})
+      if (epoch !== pollEpoch || rid !== runRecordId.value) return
+      if (response.status === 200) {
+        records.push(response.data)
+        await load(response.data.data)
+      }
+    }
+  }
+  await load(snapshot)
+  if (epoch === pollEpoch && rid === runRecordId.value) feedbackRunRecords.value = records
+}
+const feedbackReadyRuns = computed(() => {
+  if (recordStatus.value !== 'PAUSED') return []
+  return [{rid:runRecordId.value,data:currentWorkflow.value.data}, ...feedbackRunRecords.value]
+    .filter(record => record.data?.feedback_resume_ready).map(record => record.rid)
+})
+const canContinue = computed(() => pendingFeedbackNodes.value.length > 0 || feedbackReadyRuns.value.length > 0)
+const resumeWorkflow = async () => {
+  const rid = runRecordId.value
+  if (recordStatus.value !== 'PAUSED' || !rid || resumeRequest.value === rid || stopRequest.value === rid || !canContinue.value) return
+  const feedback = pendingFeedbackNodes.value.map(node => ({node_id: node.id, rid: node.feedbackRid, draftKey: node.draftKey, content: feedbackDrafts[node.draftKey] || ''}))
+  if (feedback.some(node => !node.content.trim())) {
+    message.error(t('workspace.workflowSpace.human_feedback_required'))
+    return
+  }
+  const epoch = pollEpoch
+  resumeRequest.value = rid
+  try {
+    for (const feedbackRid of new Set([...feedback.map(node => node.rid), ...feedbackReadyRuns.value])) {
+      const nodes = feedback.filter(node => node.rid === feedbackRid)
+      const response = await workflowAPI('resume', {rid: feedbackRid, human_feedback_nodes: nodes.map(node => ({node_id: node.node_id, content: node.content}))})
+      if (epoch !== pollEpoch || rid !== runRecordId.value) return
+      if (response.status !== 200) {
+        message.error(response.msg || t('workspace.workflowSpace.resume_workflow_failed'))
+        return
+      }
+      nodes.forEach(node => { delete feedbackDrafts[node.draftKey] })
+      if (feedbackRid === rid) {
+        recordStatus.value = response.data.status
+        running.value = ['QUEUED', 'RUNNING', 'STOPPING'].includes(recordStatus.value)
+      }
+    }
+    stopStatusPolling()
+    startStatusPolling()
+    await checkWorkflowRunningStatus()
+  } catch {
+    if (epoch === pollEpoch && rid === runRecordId.value) message.error(t('workspace.workflowSpace.resume_workflow_failed'))
+  } finally {
+    if (resumeRequest.value === rid) resumeRequest.value = null
   }
 }
 const hasButtonTrigger = computed(() => triggerNodes.value.some((node) => node.type === 'ButtonTrigger'))
@@ -431,7 +515,7 @@ const openScheduleManager = async () => {
 }
 
 const runWorkflow = async (workflowVersion = null) => {
-  if (running.value) return
+  if (running.value || activeRun.value) return
   let workflowDataForRun = deepCopy(savedWorkflow.value)
   if (savedWorkflow.value.version !== null && currentWorkflow.value.version !== null && savedWorkflow.value.version !== currentWorkflow.value.version) {
     if (workflowVersion === null) {
@@ -455,11 +539,6 @@ const runWorkflow = async (workflowVersion = null) => {
   if (!checkFieldsValid(inputFields.value)) {
     return
   }
-  const invalidHumanFeedbackNode = humanFeedbackNodes.value.find((node) => !node.data?.template?.human_input?.value)
-  if (invalidHumanFeedbackNode) {
-    message.error(t('workspace.workflowSpace.human_feedback_required'))
-    return
-  }
   // Iterate all nodes from workflowDataForRun, update the value of fields that are shown from currentWorkflow
   // 这样做的目的是如果每次都直接提交currentWorkflow的话，由于currentWorkflow是会被运行结果更新的，如果一旦更新后再次提交
   // 有些字段的类型就直接发生改变了，运行会报错
@@ -475,14 +554,7 @@ const runWorkflow = async (workflowVersion = null) => {
           }
         })
       }
-      const feedbackNode = humanFeedbackNodes.value.find((item) => item.id === node.id)
-      if (feedbackNode?.data?.template) {
-        Object.keys(feedbackNode.data.template).forEach((field) => {
-          if (node.data.template?.[field]) {
-            node.data.template[field].value = feedbackNode.data.template[field].value
-          }
-        })
-      }
+
     })
   }
   outputNodes.value.forEach((node) => {
@@ -492,6 +564,7 @@ const runWorkflow = async (workflowVersion = null) => {
   })
   stopStatusPolling()
   const epoch = pollEpoch
+  Object.keys(feedbackDrafts).forEach(id => { delete feedbackDrafts[id] })
   runRecordId.value = null
   recordStatus.value = 'QUEUED'
   showingRecord.value = false
@@ -530,6 +603,8 @@ const showingRecord = ref(false)
 const recordStatus = ref('')
 
 function setWorkflowRecord(record) {
+  if (record.rid !== runRecordId.value) Object.keys(feedbackDrafts).forEach(id => { delete feedbackDrafts[id] })
+  feedbackRunRecords.value = []
   stopStatusPolling()
   artifactsRevision.value++
   showTimeline.value = false
@@ -538,8 +613,8 @@ function setWorkflowRecord(record) {
   timelineSnapshot.value = { ...record.data, nodes: Array.isArray(record.data?.nodes) ? record.data.nodes : deepCopy(savedWorkflow.value.data.nodes) }
   runRecordId.value = record.rid
   recordStatus.value = record.status
-  if (['RUNNING', 'QUEUED', 'STOPPING'].includes(record.status)) {
-    running.value = true
+  if (['RUNNING', 'QUEUED', 'STOPPING', 'PAUSED'].includes(record.status)) {
+    running.value = record.status !== 'PAUSED'
     startStatusPolling()
   }
   currentWorkflow.value.data = {
@@ -607,7 +682,7 @@ function clearWorkflow() {
   <a-row :gutter="[16, 16]" class="main-use-container" v-else>
     <a-col :span="24" v-if="showingRecord">
       <WorkflowRecordStatusAlert :key="`${runRecordId}-${recordStatus}`"
-        :closable="!running"
+        :closable="!activeRun"
         :recordWorkflowVersion="currentWorkflow.version" :status="recordStatus" :snapshot="currentWorkflow.data"
         @close="clearWorkflow" />
     </a-col>
@@ -665,34 +740,38 @@ function clearWorkflow() {
             </a-flex>
           </a-card>
 
-          <a-flex v-if="humanFeedbackNodes.length > 0" vertical gap="small" class="human-feedback-nodes-container">
+          <a-flex v-if="pendingFeedbackNodes.length > 0" vertical gap="small">
             <a-typography-title :level="5" style="margin-bottom: 0;">
-              {{ t('workspace.workflowSpace.human_feedback') }}
+              {{ t('components.workspace.workflowRunRecordsDrawer.status_paused') }}
             </a-typography-title>
-            <a-card v-for="node in humanFeedbackNodes" :key="node.id" size="small">
+            <a-card v-for="node in pendingFeedbackNodes" :key="node.draftKey" size="small">
+              <a-typography-text strong>{{ node.data?.title || t('components.nodes.controlFlows.HumanFeedback.title') }}</a-typography-text>
               <a-typography-paragraph v-if="node.data?.template?.hint_message?.value" type="secondary">
                 {{ node.data.template.hint_message.value }}
               </a-typography-paragraph>
-              <a-textarea v-model:value="node.data.template.human_input.value"
+              <a-textarea v-model:value="feedbackDrafts[node.draftKey]" :aria-label="node.data?.title || t('components.nodes.controlFlows.HumanFeedback.title')" :disabled="resumeRequest === runRecordId || stopRequest === runRecordId"
                 :autoSize="{ minRows: 3, maxRows: 10 }"
                 :placeholder="t('workspace.workflowSpace.human_feedback_placeholder')" />
             </a-card>
           </a-flex>
 
-          <a-button v-if="running && runRecordId" danger block :loading="stopRequest === runRecordId"
-            :disabled="recordStatus === 'STOPPING'" @click="stopWorkflow">
+          <a-button v-if="canContinue" type="primary" block :loading="resumeRequest === runRecordId" :disabled="stopRequest === runRecordId" @click="resumeWorkflow">
+            {{ t('workspace.workflowSpace.continue_workflow') }}
+          </a-button>
+          <a-button v-if="activeRun && runRecordId" danger block :loading="stopRequest === runRecordId"
+            :disabled="recordStatus === 'STOPPING' || resumeRequest === runRecordId" @click="stopWorkflow">
             {{ t(recordStatus === 'STOPPING' ? 'components.workspace.workflowRunRecordsDrawer.status_stopping' : 'workspace.workflowSpace.stop_workflow') }}
           </a-button>
           <template v-for="(node) in triggerNodes" :key="`node-${node.id}`">
             <a-button type="primary" block @click="runWorkflow(null)" :loading="running"
-              v-if="node.type == 'ButtonTrigger' && !(running && runRecordId)">
+              v-if="node.type == 'ButtonTrigger' && !(activeRun && runRecordId)">
               <template #icon>
                 <PlayOne />
               </template>
               {{ node.data.template.button_text.value }}
             </a-button>
           </template>
-          <a-button v-if="!hasButtonTrigger && !(running && runRecordId)" type="primary" ghost block @click="runWorkflow(null)" :loading="running">
+          <a-button v-if="!hasButtonTrigger && !(activeRun && runRecordId)" type="primary" ghost block @click="runWorkflow(null)" :loading="running">
             <template #icon>
               <PlayOne />
             </template>
@@ -830,12 +909,7 @@ function clearWorkflow() {
   color: #005b79;
 }
 
-.human-feedback-nodes-container {
-  border: 3px solid #28c5e5;
-  border-radius: 10px;
-  padding: 16px;
-  background: rgba(40, 197, 229, 0.04);
-}
+
 
 .schedule-overview-card {
   border-radius: 14px;

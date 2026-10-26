@@ -432,6 +432,9 @@
       "move_to_trash": "移入回收站",
       "move_to_trash_success": "已移入回收站",
       "move_to_trash_failed": "移入回收站失败",
+      "continue_workflow": "继续运行",
+      "resume_workflow_failed": "继续运行失败，请重试",
+      "paused_workflow_action": "打开工作流，填写反馈后继续运行",
       "stop_workflow": "停止运行",
       "stop_workflow_failed": "停止运行失败，请重试",
       "stopping_description": "正在等待当前节点结束，后续节点将不再运行",
@@ -863,6 +866,7 @@
         "status_running": "运行中",
         "status_finished": "已完成",
         "status_failed": "运行失败",
+        "status_paused": "等待人工反馈",
         "status_stopping": "停止中",
         "status_stopped": "已停止",
         "check_record": "查看记录",
@@ -1956,7 +1960,7 @@
         },
         "HumanFeedback": {
           "title": "人工反馈",
-          "description": "在继续执行前收集人工确认、备注或补充说明。",
+          "description": "执行到此节点时等待人工反馈，提交后继续当前运行。",
           "hint_message": "提示信息",
           "human_input": "人工输入",
           "output": "输出"

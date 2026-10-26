@@ -11,6 +11,8 @@ import vue from '@vitejs/plugin-vue'
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r }); return { promise, resolve } }
 
 test('workflow stop guards duplicate and stale requests, retries failures, and preserves terminal output', async () => {
+  const previousInterval = globalThis.setInterval
+  globalThis.setInterval = () => 123
   const previous = globalThis.__stopHarness
   const calls = [], notices = []
   let request = async () => ({ status: 500 })
@@ -80,6 +82,47 @@ test('workflow stop guards duplicate and stale requests, retries failures, and p
       assert.equal(c.outputNodes.value[0].data.template.text.value,'')
       assert.equal(c.running.value,false)
 
+      const feedbackNode = id => ({id,type:'HumanFeedback',category:'controlFlows',data:{template:{human_input:{value:''},hint_message:{value:'<script>hint</script>'}}}})
+      const pausedRecord = {rid:'paused',status:'PAUSED',data:{nodes:[feedbackNode('first'),feedbackNode('later'),definition],pending_feedback_nodes:['first']}}
+      c.setWorkflowRecord(pausedRecord)
+      assert.equal(c.running.value,false)
+      assert.deepEqual(c.pendingFeedbackNodes.value.map(node => node.id),['first'])
+      const beforeBlank = calls.length
+      c.feedbackDrafts.first = '  '
+      await c.resumeWorkflow(); assert.equal(calls.length,beforeBlank)
+      c.feedbackDrafts.first = 'approved'
+      request = async () => {throw Error('offline')}
+      await c.resumeWorkflow()
+      assert.equal(c.feedbackDrafts.first,'approved'); assert.equal(c.recordStatus.value,'PAUSED')
+      const resumePending = deferred(); request = () => resumePending.promise
+      const resume = c.resumeWorkflow(); const resumeCalls = calls.length
+      await c.resumeWorkflow(); assert.equal(calls.length,resumeCalls)
+      c.setWorkflowRecord({...pausedRecord,rid:'different'})
+      resumePending.resolve({status:200,data:{status:'RUNNING'}}); await resume
+      assert.equal(c.runRecordId.value,'different'); assert.equal(c.recordStatus.value,'PAUSED')
+      c.feedbackDrafts.first = 'new draft'
+      request = async (action,payload) => action === 'resume'
+        ? (assert.deepEqual(payload,{rid:'different',human_feedback_nodes:[{node_id:'first',content:'new draft'}]}),{status:200,data:{status:'RUNNING'}})
+        : {status:202,msg:'RUNNING',data:{finished_nodes:[]}}
+      await c.resumeWorkflow()
+      assert.equal(c.recordStatus.value,'RUNNING'); assert.equal(c.feedbackDrafts.first,undefined)
+      c.setWorkflowRecord(pausedRecord)
+      request = async action => action === 'stop' ? {status:200,data:{status:'STOPPED'}}
+        : {status:200,msg:'STOPPED',data:pausedRecord}
+      await c.stopWorkflow(); assert.equal(c.recordStatus.value,'STOPPED')
+      c.setWorkflowRecord({...pausedRecord,data:{...pausedRecord.data,pending_feedback_nodes:[],pending_feedback_runs:['child']}})
+      request = async action => action === 'get' ? {status:200,data:{...pausedRecord,rid:'child',data:{nodes:[feedbackNode('first')],pending_feedback_nodes:['first']}}} : {status:102,msg:'PAUSED',data:{...pausedRecord,data:{...pausedRecord.data,pending_feedback_nodes:[],pending_feedback_runs:['child']}}}
+      await c.checkWorkflowRunningStatus()
+      assert.equal(c.pendingFeedbackNodes.value[0].feedbackRid,'child')
+      c.currentWorkflow.value.data = {nodes:[],feedback_resume_ready:true}
+      c.feedbackRunRecords.value = []
+      assert.equal(c.canContinue.value,true)
+      request = async (action,payload) => action === 'resume'
+        ? (assert.deepEqual(payload,{rid:c.runRecordId.value,human_feedback_nodes:[]}),{status:200,data:{status:'RUNNING'}})
+        : {status:202,msg:'RUNNING',data:{finished_nodes:[]}}
+      await c.resumeWorkflow()
+      assert.equal(c.recordStatus.value,'RUNNING')
+      c.stopStatusPolling()
       exercised = true
       return () => null
     } }, { workflow: {data:{nodes:[]}} })
@@ -112,5 +155,5 @@ test('workflow stop guards duplicate and stale requests, retries failures, and p
     }})
     drawerApp.use(createI18n({legacy:false,locale:'en',missingWarn:false,fallbackWarn:false,messages:{en:{}}}))
     await renderToString(drawerApp)
-  } finally { await server.close(); globalThis.__stopHarness = previous }
+  } finally { await server.close(); globalThis.setInterval = previousInterval; globalThis.__stopHarness = previous }
 })

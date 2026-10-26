@@ -260,6 +260,19 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
         assert.equal(appended, 0)
         assert.equal(c.content.value.text, 'partial output')
       })
+      await render('/src/components/workspace/chat/ChatMessage.vue', {
+        ...failedProps,status:'S',metadata:{selected_workflow:{type:'Workflow',wid:'wf',params:{}}},onAppendAnswer:() => appended++,
+      }, async c => {
+        request = async action => action === 'message__run_workflow' ? {status:200,data:{rid:'paused-chat'}}
+          : {status:102,msg:'PAUSED',data:{data:{nodes:[],pending_feedback_nodes:['feedback']}}}
+        await c.runWorkflow(); await poll()
+        assert.equal(c.recordStatus.value,'PAUSED'); assert.equal(c.runningWorkflow.value,false)
+        assert.equal(c.showingRecord.value,true); assert.equal(appended,0)
+        const before = calls.length; await c.runWorkflow(); assert.equal(calls.length,before)
+        request = async action => action === 'workflow__check_status' ? {status:200,data:{data:{nodes:[]}}}
+          : {status:200,data:{content:{text:'continued'}}}
+        await poll(); assert.equal(c.recordStatus.value,'FINISHED'); assert.equal(appended,1)
+      })
     } finally { globalThis.setInterval = previousInterval }
     const legacyFailure = await render('/src/components/workspace/chat/ChatMessage.vue', {
       ...failedProps, contentType: 'TXT', metadata: {}, loading: true,

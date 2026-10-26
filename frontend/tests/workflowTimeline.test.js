@@ -71,7 +71,7 @@ test('poll lifecycle invalidates late requests, retries errors, and never stacks
   assert.equal(sockets.size, 0)
   assert.match(source, /if \(epoch !== pollEpoch \|\| rid !== runRecordId.value\) return/)
   assert.match(source, /if \(epoch === pollEpoch\) checkingStatus.value = false/)
-  assert.match(source, /\['RUNNING', 'QUEUED', 'STOPPING'\]\.includes\(record.status\)/)
+  assert.match(source, /\['RUNNING', 'QUEUED', 'STOPPING', 'PAUSED'\]\.includes\(record.status\)/)
 })
 
 test('real polling code ignores late history responses and retries a temporary network failure', async () => {
@@ -83,6 +83,7 @@ test('real polling code ignores late history responses and retries a temporary n
   const ref = value => ({ value })
   const api = () => new Promise((resolve, reject) => requests.push({ resolve, reject }))
   const harness = new Function('ref', 'workflowAPI', 'getWorkflowRunStatus', 'setInterval', 'clearInterval', `
+    const running = ref(true);
     const runRecordId = ref('first'), checkStatusTimer = ref(null), outputNodes = ref([]), recordStatus = ref('RUNNING');
     const message = {error() {}}, t = value => value;
     ${polling}
@@ -140,4 +141,10 @@ test('explicit stopped timeline entries retain their cancellation state and meas
   } }, {status:'STOPPED',now:10000})
   assert.equal(row.status,'STOPPED')
   assert.equal(row.elapsed,2)
+})
+
+test('paused checkpoints keep future nodes pending without advancing feedback wait clocks', () => {
+  const rows = getWorkflowTimeline({nodes, node_timeline:{a:{status:'WAITING',started_at:1000},b:{status:'PENDING'}}}, {status:'PAUSED',now:10000})
+  assert.deepEqual(rows.map(row => row.status),['WAITING','PENDING','PENDING'])
+  assert.equal(rows[0].elapsed,null)
 })

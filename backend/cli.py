@@ -194,9 +194,14 @@ def execute(args):
         apply_inputs(data, read_json(args.inputs))
     validate_data(data)
     data["related_workflows"] = WorkflowData(data).related_workflows
+    from utilities.workflow_timeline import reset_run, initialize_timeline
+    reset_run(data)
     model = WorkflowModel.get_by_id(args.wid)
     record = WorkflowRunRecord.create(workflow=model, workflow_version=model.version, data=data, status="RUNNING", run_from=WorkflowRunRecord.RunFromTypes.CLI)
     data.update(wid=model.wid.hex, rid=record.rid.hex)
+    record.data = data
+    record.save()
+    initialize_timeline(data)
     print(json.dumps({"event": "run_started", "rid": record.rid.hex}), file=sys.stderr, flush=True)
     app.conf.update(task_always_eager=True, task_eager_propagates=False)
     try:
@@ -206,7 +211,7 @@ def execute(args):
             result.get(propagate=True)
     except (Exception, KeyboardInterrupt) as exc:
         record = WorkflowRunRecord.get_by_id(record.rid)
-        if record.status not in ("FAILED", "STOPPING", "STOPPED"):
+        if record.status not in ("FAILED", "STOPPING", "STOPPED", "PAUSED"):
             from utilities.workflow import Workflow
             from utilities.workflow_errors import add_failure, node_failure
             failed_data = {**record.data, "rid": record.rid.hex}

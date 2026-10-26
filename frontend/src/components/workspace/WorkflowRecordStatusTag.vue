@@ -13,6 +13,7 @@ const statusColor = {
   NOT_STARTED: 'purple',
   QUEUED: 'orange',
   RUNNING: 'blue',
+  PAUSED: 'orange',
   FINISHED: 'green',
   FAILED: 'red',
   STOPPING: 'orange',

@@ -35,6 +35,7 @@ export function getWorkflowTaskTitleKey(taskName) {
 }
 
 export function getWorkflowRunStatus(response) {
+  if (response?.status === 102 || response?.msg === 'PAUSED' || response?.data?.status === 'PAUSED') return ''
   if (response?.msg === 'STOPPED' || response?.data?.status === 'STOPPED') return 'STOPPED'
   if (response?.status === 500 || response?.data?.status === 'FAILED' ||
       getWorkflowFailures(response?.data?.data).length > 0) return 'FAILED'

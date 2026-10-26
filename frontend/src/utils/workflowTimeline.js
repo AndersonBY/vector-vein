@@ -25,8 +25,8 @@ export function getWorkflowTimeline(snapshot = {}, { active = false, status = ''
       else if (node.data?.status === 200) state = 'SUCCEEDED'
       else if (node.data?.status === 202 && active) state = 'RUNNING'
     }
-    if (!state) state = active ? 'PENDING' : failed ? 'NOT_RUN' : 'UNKNOWN'
-    if (state === 'PENDING' && !active) state = failed ? 'NOT_RUN' : 'UNKNOWN'
+    if (!state) state = active || status === 'PAUSED' ? 'PENDING' : failed ? 'NOT_RUN' : 'UNKNOWN'
+    if (state === 'PENDING' && !active && status !== 'PAUSED') state = failed ? 'NOT_RUN' : 'UNKNOWN'
     let elapsed = duration
     if (elapsed === null && startedAt !== null && finishedAt !== null) elapsed = Math.max(0, (finishedAt - startedAt) / 1000)
     if (elapsed === null && active && ['RUNNING', 'WAITING'].includes(state) && startedAt !== null) elapsed = Math.max(0, (now - startedAt) / 1000)

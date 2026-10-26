@@ -45,11 +45,24 @@ def _finish_stopping(rid):
     record = _record(rid)
     if record is None or record.status != "STOPPING" or cache.get(_key(rid, "active"), 0):
         return
-    if any((child := _record(child_id)) and child.status not in TERMINAL
-           for child_id in cache.get(_key(rid, "children"), [])):
+    children = [_record(child_id) for child_id in cache.get(_key(rid, "children"), [])]
+    if any(child and child.status not in TERMINAL for child in children):
         return
     data = deepcopy(record.data)
     merge_timeline(data)
+    failed = next((child for child in children if child and child.status == "FAILED"), None)
+    if failed:
+        from utilities.workflow import Workflow
+        from utilities.workflow_errors import add_failure
+        for failure in failed.data.get("failures", []):
+            add_failure(data, failure)
+        Workflow(data).report_workflow_status(500, "workflow.child")
+        from utilities.workflow_feedback import wake_parent
+        wake_parent(rid)
+        parent = cache.get(_key(rid, "parent"))
+        if parent:
+            _finish_stopping(parent)
+        return
     for node_id, entry in list(data.get("node_timeline", {}).items()):
         if entry.get("status") in ("PENDING", "WAITING", "RUNNING"):
             update_timeline(data, node_id, "STOPPED")
@@ -63,6 +76,8 @@ def _finish_stopping(rid):
         except Exception:
             # The run's durable terminal state must survive chat projection failure.
             pass
+        from utilities.workflow_feedback import wake_parent
+        wake_parent(rid)
         parent = cache.get(_key(rid, "parent"))
         if parent:
             _finish_stopping(parent)
@@ -79,7 +94,10 @@ def request_stop(rid):
             for child in cache.get(_key(rid, "children"), []):
                 request_stop(child)
             _finish_stopping(rid)
-        return _record(rid)
+        result = _record(rid)
+    from utilities.workflow_feedback import wake_parent
+    wake_parent(rid)
+    return result
 
 
 def register_child(parent_rid, child_rid):
@@ -104,6 +122,7 @@ def guarded_execution(func):
     """Admit work atomically with stop; retain completed results before draining."""
     @wraps(func)
     def wrapped(*args, **kwargs):
+        from utilities.workflow_feedback import CHECKPOINT_FIELDS, finish_pausing, pause_requested, wake_parent
         data = kwargs.get("workflow_data")
         if data is None:
             data = next((arg for arg in args if isinstance(arg, dict)), None)
@@ -113,9 +132,12 @@ def guarded_execution(func):
             node_id = args[1]
         with cache.transact():
             record = _record(rid)
-            if record is not None and record.status in (*TERMINAL, "STOPPING"):
+            stale = record is not None and data.get("feedback_generation", 0) != record.data.get("feedback_generation", 0)
+            waiting = record is not None and (record.status == "PAUSED" or record.data.get("_feedback_waiting") and not data.get("_batch_collecting"))
+            completed = record is not None and node_id and record.data.get("node_timeline", {}).get(node_id, {}).get("status") in ("SUCCEEDED", "SKIPPED")
+            if record is not None and (record.status in (*TERMINAL, "STOPPING") or stale or waiting or completed):
                 _clear_continuation()
-                return data
+                return deepcopy(record.data) if stale or completed else data
             if record is not None:
                 cache.set(_key(rid, "active"), cache.get(_key(rid, "active"), 0) + 1)
         result = None
@@ -137,15 +159,27 @@ def guarded_execution(func):
                                 saved.setdefault(field, {}).update(snapshot.get(field, {}))
                         elif isinstance(result, dict):
                             saved = deepcopy(snapshot)
+                        for field in CHECKPOINT_FIELDS:
+                            if field in current.data:
+                                saved[field] = deepcopy(current.data[field])
+                        saved["rid"] = rid
+                        if snapshot.get("wid"):
+                            saved["wid"] = snapshot["wid"]
                         saved.pop("_batch_collecting", None)
                         merge_timeline(saved)
                         WorkflowRunRecord.update(data=saved).where(
                             WorkflowRunRecord.rid == rid, ~WorkflowRunRecord.status.in_(TERMINAL)).execute()
                     cache.set(_key(rid, "active"), max(0, cache.get(_key(rid, "active"), 1) - 1))
                     _finish_stopping(rid)
-                    if stop_requested({"rid": rid}):
+                    finish_pausing(rid)
+                    if stop_requested({"rid": rid}) or pause_requested({"rid": rid}):
                         _clear_continuation()
                     parent = cache.get(_key(rid, "parent"))
                     if parent:
                         _finish_stopping(parent)
+                wake_parent(rid)
+                current = _record(rid)
+                if current and current.status == "PAUSED":
+                    for child in current.data.get("pending_feedback_runs", []):
+                        wake_parent(child)
     return wrapped

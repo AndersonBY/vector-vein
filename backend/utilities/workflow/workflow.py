@@ -518,6 +518,10 @@ class Workflow:
                 workflow_record = WorkflowRunRecord.get(WorkflowRunRecord.rid == self.record_id)
                 if workflow_record.status in ("FINISHED", "FAILED", "STOPPED"):
                     return True
+                if status == 200 and (workflow_record.status == "PAUSED" or workflow_record.data.get("_feedback_waiting")):
+                    from utilities.workflow_feedback import finish_pausing
+                    finish_pausing(self.record_id)
+                    return True
                 if status == 200 and workflow_record.status == "STOPPING":
                     from utilities.workflow_stopping import _finish_stopping
                     _finish_stopping(self.record_id)
@@ -546,6 +550,7 @@ class Workflow:
                 source_message_mid = workflow_record.source_message
                 source_message = Message.get(mid=source_message_mid)
                 if source_message.status == Message.StatusTypes.RUNNING_WORKFLOW:
+                    source_message.metadata["recordStatus"] = workflow_record.status
                     # 如果是从聊天中调用的工作流，运行完成后先更新 message
                     # If the workflow is called from a chat, update the message first after running
                     if status == 200:

@@ -144,6 +144,7 @@ def test_failed_chat_metadata_is_json_error_and_record_is_saved_first(monkeypatc
     assert Workflow(data).report_workflow_status(500, "tools.example")
     assert events == ["record", "cache", "message"]
     assert record.status == "FAILED" and message.status == "Z"
+    assert message.metadata["recordStatus"] == "FAILED"
     payload = json.loads(message.metadata["workflow_result"])
     assert payload["failures"][0]["message"] == "offline"
     assert payload["next_action"] == "inspect_error" and payload["replay_safety"] == "unknown"

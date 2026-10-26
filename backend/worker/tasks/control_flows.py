@@ -20,6 +20,7 @@ from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.workflow_errors import WorkflowExecutionError, workflow_error_payload
 from utilities.workflow_stopping import WorkflowStopped
+from utilities.workflow_feedback import WorkflowPaused
 from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 
@@ -325,6 +326,8 @@ def workflow_selector(
         raise Exception("Selected workflow run record not found")
     if record.status == "STOPPED":
         raise WorkflowStopped()
+    if record.status == "PAUSED":
+        raise WorkflowPaused(record.rid.hex)
     if record.status in ("RUNNING", "QUEUED", "STOPPING"):
         workflow_selector.retry(workflow.data, node_id, retry_delay=1)
     if record.status != "FINISHED":
@@ -353,7 +356,13 @@ def human_feedback(
     node_id: str,
 ):
     workflow = Workflow(workflow_data)
-    human_input = workflow.get_node_field_value(node_id, "human_input", "")
+    workflow.get_node_field_value(node_id, "hint_message", "")
+    human_input = workflow_data.get("feedback_answers", {}).get(node_id)
+    if human_input is None:
+        workflow.update_node_field_value(node_id, "human_input", "")
+        workflow.update_node_field_value(node_id, "output", "")
+        raise WorkflowPaused()
+    workflow.update_node_field_value(node_id, "human_input", human_input)
     workflow.update_node_field_value(node_id, "output", human_input)
     return workflow.data
 
@@ -500,6 +509,8 @@ def workflow_loop(
         record = WorkflowRunRecord.select().join(WorkflowModel).where(WorkflowRunRecord.rid == record_id).first()
         if record.status == "STOPPED":
             raise WorkflowStopped()
+        if record.status == "PAUSED":
+            raise WorkflowPaused(record.rid.hex)
         if record.status in ("RUNNING", "QUEUED", "STOPPING"):
             workflow_loop.retry(workflow.data, node_id, retry_delay=1)
         elif record.status != "FINISHED":

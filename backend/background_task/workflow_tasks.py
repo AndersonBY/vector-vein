@@ -255,8 +255,16 @@ def run_workflow(self, workflow_data: dict):
 
         tasks = workflow.get_layer_sorted_task_order()
         func_list = []
+        completed = {node_id for node_id, entry in workflow_data.get("node_timeline", {}).items()
+                     if entry.get("status") in ("SUCCEEDED", "SKIPPED")}
 
         for task_item in tasks:
+            if isinstance(task_item, list):
+                task_item = [item for item in task_item if item["node_id"] not in completed]
+                if not task_item:
+                    continue
+            elif task_item["node_id"] in completed:
+                continue
             if isinstance(task_item, list):  # Parallel tasks
                 group_tasks = batch_tasks.s(task_item)
                 func_list.append(group_tasks)

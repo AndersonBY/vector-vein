@@ -96,3 +96,8 @@ test('stopped responses remain cancellation even with partial node failures', ()
   ]) assert.equal(getWorkflowRunStatus(response), 'STOPPED')
   assert.equal(getWorkflowRunStatus({ status: 202, msg: 'STOPPING' }), '')
 })
+
+test('paused workflow snapshots remain nonterminal, even with previous partial failure evidence', () => {
+  assert.equal(getWorkflowRunStatus({status:200,data:{status:'PAUSED'}}), '')
+  assert.equal(getWorkflowRunStatus({status:102,msg:'PAUSED',data:{data:{failures:[{message:'partial'}]}}}), '')
+})

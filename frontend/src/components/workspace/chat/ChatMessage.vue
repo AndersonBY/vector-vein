@@ -166,7 +166,7 @@ watch(failedWorkflow, (failed) => {
 }, { immediate: true })
 const checkingStatus = ref(false)
 const runWorkflow = async () => {
-  if (runningWorkflow.value) return
+  if (runningWorkflow.value || ['PAUSED', 'RUNNING', 'STOPPING'].includes(recordStatus.value)) return
   runningWorkflow.value = true
   clearInterval(checkStatusTimer.value)
   recordStatus.value = ''
@@ -195,38 +195,7 @@ const runWorkflow = async () => {
       message.success(t('workspace.workflowSpace.submit_workflow_success'))
       runRecordId.value = newRecordId
       emit('update:status', 'R')
-      checkStatusTimer.value = setInterval(async () => {
-        if (checkingStatus.value) return
-        checkingStatus.value = true
-        try {
-          const response = await workflowAPI('check_status', { rid: newRecordId })
-          const status = getWorkflowRunStatus(response)
-          if (!status) return
-          clearInterval(checkStatusTimer.value)
-          recordStatus.value = status
-          workflowData.value = response.data || {}
-          runRecordId.value = newRecordId // runRecordId 放在 workflowData 改变后改变，强迫 WorkflowRecordShow 根据新数据重新渲染
-          runningWorkflow.value = false
-          showingRecord.value = true
-          emit('update:status', status === 'FINISHED' ? 'S' : 'Z')
-          activeKey.value = [`${props.mid}-workflow`]
-          if (status !== 'STOPPED') message[status === 'FAILED' ? 'error' : 'success'](t(
-            `workspace.workflowSpace.${status === 'FAILED' ? 'run_workflow_failed' : 'run_workflow_success'}`
-          ))
-          try {
-            const msgResponse = await messageAPI('get', { mid: props.mid })
-            if (msgResponse.status == 200) content.value = msgResponse.data.content
-          } catch {
-            message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
-          }
-          if (status === 'FINISHED') emit('append-answer', props.mid)
-        } catch {
-          message.error({ key: `workflow-status-${props.mid}`,
-            content: t('workspace.workflowSpace.check_workflow_status_retrying') })
-        } finally {
-          checkingStatus.value = false
-        }
-      }, 1000)
+      checkStatusTimer.value = setInterval(pollWorkflowStatus, 1000)
     } else {
       message.error(t('workspace.workflowSpace.submit_workflow_failed'))
     }
@@ -235,6 +204,53 @@ const runWorkflow = async () => {
   } finally {
     if (!submitted) runningWorkflow.value = false
   }
+}
+const pollWorkflowStatus = async () => {
+  if (checkingStatus.value) return
+  checkingStatus.value = true
+  try {
+    const response = await workflowAPI('check_status', { rid: runRecordId.value })
+    if (response.status === 102 && response.msg === 'PAUSED') {
+      recordStatus.value = 'PAUSED'
+      workflowData.value = response.data
+      runningWorkflow.value = false
+      showingRecord.value = true
+      activeKey.value = [`${props.mid}-workflow`]
+      return
+    }
+    if (response.status === 202) {
+      recordStatus.value = response.msg
+      runningWorkflow.value = response.msg !== 'PAUSED'
+    }
+    const status = getWorkflowRunStatus(response)
+    if (!status) return
+    clearInterval(checkStatusTimer.value)
+    recordStatus.value = status
+    workflowData.value = response.data || {}
+    runRecordId.value = response.data?.rid || runRecordId.value // runRecordId 放在 workflowData 改变后改变，强迫 WorkflowRecordShow 根据新数据重新渲染
+    runningWorkflow.value = false
+    showingRecord.value = true
+    emit('update:status', status === 'FINISHED' ? 'S' : 'Z')
+    activeKey.value = [`${props.mid}-workflow`]
+    if (status !== 'STOPPED') message[status === 'FAILED' ? 'error' : 'success'](t(
+      `workspace.workflowSpace.${status === 'FAILED' ? 'run_workflow_failed' : 'run_workflow_success'}`
+    ))
+    try {
+      const msgResponse = await messageAPI('get', { mid: props.mid })
+      if (msgResponse.status == 200) content.value = msgResponse.data.content
+    } catch {
+      message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+    }
+    if (status === 'FINISHED') emit('append-answer', props.mid)
+  } catch {
+    message.error({ key: `workflow-status-${props.mid}`,
+      content: t('workspace.workflowSpace.check_workflow_status_retrying') })
+  } finally {
+    checkingStatus.value = false
+  }
+}
+if (recordStatus.value === 'PAUSED' && runRecordId.value) {
+  checkStatusTimer.value = setInterval(pollWorkflowStatus, 1000)
 }
 const alertType = computed(() => {
   if (displayedRecordStatus.value == 'FINISHED') {
@@ -275,12 +291,21 @@ const workflowPanelChange = async (key) => {
 }
 if (props.expandWorkflowRecord || failedWorkflow.value) workflowPanelChange(activeKey.value)
 
-const navigateToWorkflowRecord = () => {
-  if (props.metadata.selected_workflow.type == 'Workflow') {
-    router.push({ name: 'WorkflowUse', params: { workflowId: props.metadata.selected_workflow.wid }, query: { rid: runRecordId.value } })
-
-  } else {
-    message.error(t('workspace.agentSpace.cant_open_template_record'))
+const navigateToWorkflowRecord = async () => {
+  try {
+    let wid = props.metadata.selected_workflow?.type === 'Workflow' ? props.metadata.selected_workflow.wid : ''
+    if (!wid && runRecordId.value) {
+      const response = await workflowRunRecordAPI('get', {rid: runRecordId.value})
+      if (response.status !== 200) {
+        message.error(response.msg || t('workspace.workflowSpace.get_workflow_record_failed'))
+        return
+      }
+      wid = response.data.workflow?.wid
+    }
+    if (wid) await router.push({name:'WorkflowUse',params:{workflowId:wid},query:{rid:runRecordId.value}})
+    else message.error(t('workspace.agentSpace.cant_open_template_record'))
+  } catch {
+    message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
   }
 }
 
@@ -457,7 +482,10 @@ const deleteMessage = () => {
                         </a-tooltip>
                       </a-flex>
                     </template>
-                    <template v-if="failedWorkflow" #description>
+                    <template v-if="displayedRecordStatus === 'PAUSED'" #description>
+                      <a-button type="link" size="small" @click="navigateToWorkflowRecord">{{ t('workspace.workflowSpace.paused_workflow_action') }}</a-button>
+                    </template>
+                    <template v-else-if="failedWorkflow" #description>
                       <WorkflowFailureDetails :snapshot="failureSnapshot" />
                     </template>
                   </a-alert>

@@ -24,6 +24,7 @@ from utilities.workflow import Workflow
 from utilities.workflow_artifacts import register_artifact
 from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
 from utilities.workflow_stopping import WorkflowStopped
+from utilities.workflow_feedback import WorkflowPaused
 from utilities.general import Retry, mprint_with_name
 from utilities.media_processing import get_screenshot
 from utilities.network import headers, new_httpx_client
@@ -490,6 +491,8 @@ def workflow_invoke(
             record = WorkflowRunRecord.select().join(WorkflowModel).where(WorkflowRunRecord.rid == record_id).first()
             if record.status == "STOPPED":
                 raise WorkflowStopped()
+            if record.status == "PAUSED":
+                raise WorkflowPaused(record.rid.hex)
             if record.status in ("RUNNING", "QUEUED", "STOPPING"):
                 continue
             elif record.status != "FINISHED":

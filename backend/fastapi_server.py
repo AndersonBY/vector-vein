@@ -215,6 +215,9 @@ class FastAPIServer:
                         record_data = record_result["data"]
                         status = record_data.get("status", "RUNNING")
 
+                        if status == "PAUSED":
+                            return StandardResponse(status=102, msg=status, data=record_data.get("data", {}))
+
                         if status in ("FINISHED", "STOPPED"):
                             # Get workflow output
                             output_data = record_data.get("data", {})
@@ -259,6 +262,9 @@ class FastAPIServer:
 
                 record = record_result["data"]
                 status = record.get("status", "RUNNING")
+
+                if status == "PAUSED":
+                    return StandardResponse(status=102, msg=status, data=record.get("data", {}))
 
                 if status in ("RUNNING", "QUEUED", "STOPPING"):
                     # Keep returning partial progress

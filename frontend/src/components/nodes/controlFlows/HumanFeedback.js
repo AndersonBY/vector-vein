@@ -1,6 +1,6 @@
 export function createTemplateData() {
   return {
-    description: "Collect human confirmation or notes before continuing.",
+    description: "Pause execution for human feedback, then continue the same run.",
     task_name: "control_flows.human_feedback",
     has_inputs: true,
     template: {
