@@ -123,11 +123,11 @@ const editField = () => {
     <Handle v-if="nameOnly" :class="['handle', `${props.type}-handle`]" :id="id" :type="props.type"
       :position="props.type == 'target' ? Position.Left : Position.Right" :connectable-start="props.type != 'target'"
       :connectable-end="props.type == 'target'" />
-    <div style="position: relative;">
+    <div :style="{ position: $slots.inline && !$slots.default ? 'static' : 'relative' }">
       <div class="template-item-field-content">
         <slot>
         </slot>
-        <template v-if="!$slots.default && !innerData.is_output">
+        <template v-if="!$slots.default && !$slots.inline && !innerData.is_output">
           <a-select v-if="innerData.field_type == 'select'" v-model:value="innerData.value" class="nodrag"
             :options="innerData.options" style="width: 100%;" />
           <a-textarea v-model:value="innerData.value" class="nodrag" :autoSize="{ minRows: 2, maxRows: 30 }"

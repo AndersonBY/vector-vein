@@ -220,7 +220,8 @@ class WebSocketServer:
         temperature = NOT_GIVEN
         max_tokens = None
 
-        reasoning_effort: NotGiven | str = NOT_GIVEN
+        from utilities.model_selection import parse_reasoning_effort
+        reasoning_effort = parse_reasoning_effort(settings.get("reasoning_effort", "default"))
         extra_body: dict = {}
 
         model_settings = vv_llm_settings.get_backend(backend=backend)

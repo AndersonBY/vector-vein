@@ -287,6 +287,10 @@
       "delete_message_success": "Delete message success"
     },
     "agentSpace": {
+      "save_failed": "Could not save the agent. Your changes are kept; please retry.",
+      "invalid_model_selection": "Choose an available provider and model before saving.",
+      "load_failed": "Could not load the agent.",
+      "retry": "Retry",
       "my_agents": "My AI agent",
       "public_agents": "Public AI agent",
       "hero_description": "Manage local agents, linked workflows, and shortcut-driven chat from one desktop workspace.",
@@ -809,7 +813,31 @@
     }
   },
   "components": {
+    "model_picker": {
+      "title": "Model and reasoning settings",
+      "default": "Default",
+      "high_performance": "High performance",
+      "low_cost": "Low cost",
+      "custom": "Custom",
+      "custom_description": "Choose a provider and model manually",
+      "not_configured": "Configure in Settings → Model presets",
+      "reasoning": "Reasoning effort",
+      "invalid_preferences": "A model preset uses a disabled or missing model. Choose another model or clear the preset.",
+      "preferences_title": "Model presets",
+      "preferences_help": "Assign models to Default, High performance and Low cost. Selecting a preset saves that model; changing presets does not replace existing agent, chat or workflow selections. Empty presets are disabled.",
+      "settings_save_failed": "Could not save settings. Your changes are kept; please retry.",
+      "effort_default": "Default",
+      "effort_none": "Off",
+      "effort_minimal": "Minimal",
+      "effort_low": "Low",
+      "effort_medium": "Medium",
+      "effort_high": "High",
+      "effort_xhigh": "Extra high",
+      "effort_max": "Max"
+},
     "model_selector": {
+      "search": "Search providers, model names or IDs",
+      "select_provider": "Select a provider",
       "provider": "Provider",
       "family": "Model family",
       "select_model": "Select or search models",

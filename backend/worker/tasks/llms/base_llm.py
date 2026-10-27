@@ -32,6 +32,7 @@ from vv_llm.types import (
 
 from utilities.config import Settings, cache
 from utilities.model_capabilities import validate_workflow_model
+from utilities.model_selection import parse_reasoning_effort
 from utilities.model_endpoints import available_workflow_endpoints, bind_workflow_endpoint
 from utilities.workflow.structured_output import make_validator, validate_output
 from utilities.workflow import Workflow
@@ -211,7 +212,7 @@ class BaseLLMTask:
             self.model = user_settings.llm_settings["backends"][self.MODEL_TYPE.value]["default_model"]
 
         self.thinking: ThinkingConfigParam | None | NotGiven = NOT_GIVEN
-        self.reasoning_effort: ReasoningEffort | None | NotGiven = NOT_GIVEN
+        self.reasoning_effort = parse_reasoning_effort(self.workflow.get_node_field_value(node_id, "reasoning_effort", "default"))
         self.extra_body: dict = {}
         if self.workflow.get_node_field_value(node_id, "thinking_enabled", None) is False:
             if self.MODEL_TYPE == BackendType.DeepSeek:

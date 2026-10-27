@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeMount, reactive, ref } from 'vue'
-import ModelSelector from '@/components/ModelSelector.vue'
+import ModelSelect from '@/components/ModelSelect.vue'
 import { useModelCatalogStore } from '@/stores/modelCatalog'
 import { message } from 'ant-design-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
@@ -75,7 +75,7 @@ const removeWorkflowCandidate = (workflowId) => {
         </BaseField>
 
         <BaseField name="Selection Model" type="target" v-model:data="fieldsData.llm_model">
-          <ModelSelector v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
+          <ModelSelect v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
             :loading="modelCatalogStore.loading" :ready="catalogReady" />
         </BaseField>
 

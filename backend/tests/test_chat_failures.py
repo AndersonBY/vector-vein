@@ -231,6 +231,8 @@ def test_actual_generation_persists_success_tools_and_partial_failures(pending, 
                 closed.append("response")
         class Client:
             async def create_stream(self, **kwargs):
+                from vv_llm.types import NOT_GIVEN
+                assert kwargs["reasoning_effort"] == ("high" if mode in ("success", "tools") else NOT_GIVEN)
                 if mode == "initial_timeout":
                     await asyncio.sleep(10)
                 return chunks()
@@ -244,7 +246,10 @@ def test_actual_generation_persists_success_tools_and_partial_failures(pending, 
         server = chat.WebSocketServer()
         server.CHAT_IDLE_TIMEOUT = 0.1
         websocket = Socket()
-        await server.process_message(websocket, json.dumps(request(pending)), pending.conversation.cid.hex)
+        payload = request(pending)
+        if mode in ("success", "tools"):
+            payload["conversation"]["settings"]["reasoning_effort"] = "high"
+        await server.process_message(websocket, json.dumps(payload), pending.conversation.cid.hex)
         saved = Message.get_by_id(pending.mid)
         assert saved.status == expected
         assert saved.content["text"] == ("" if mode == "initial_timeout" else "answer")

@@ -2,7 +2,7 @@
 import { computed, onBeforeMount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useModelCatalogStore } from '@/stores/modelCatalog'
-import ModelSelector from '@/components/ModelSelector.vue'
+import ModelSelect from '@/components/ModelSelect.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
@@ -52,12 +52,12 @@ watch(() => fieldsData.value.images_or_urls, () => {
     <template #field-llm_model>
       <BaseField :name="t('components.nodes.mediaProcessing.QwenVision.llm_model')" :required="fieldsData.llm_model.required"
         type="target" v-model:data="fieldsData.llm_model">
-        <ModelSelector v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
+        <ModelSelect v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
           :loading="modelCatalogStore.loading" :ready="catalogReady" />
       </BaseField>
     </template>
     <template #afterInputs>
-      <ModelCapabilities provider="Qwen" :model="fieldsData.llm_model?.value" />
+      <ModelCapabilities style="margin: 8px 12px 0;" provider="Qwen" :model="fieldsData.llm_model?.value" />
     </template>
   </BaseNode>
 </template>

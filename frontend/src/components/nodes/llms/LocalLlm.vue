@@ -2,7 +2,7 @@
 import { ref, computed, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useModelCatalogStore } from '@/stores/modelCatalog'
-import ModelSelector from '@/components/ModelSelector.vue'
+import ModelSelect from '@/components/ModelSelect.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
@@ -61,12 +61,12 @@ const familyUnavailable = computed(() => catalogReady.value && fieldsData.value.
     </template>
     <template #field-llm_model>
       <BaseField :name="t('components.nodes.llms.common.llm_model')" type="target" v-model:data="fieldsData.llm_model">
-        <ModelSelector v-model="fieldsData.llm_model.value" :options="modelOptions"
+        <ModelSelect v-model="fieldsData.llm_model.value" :options="modelOptions"
           :loading="modelCatalogStore.loading" :ready="catalogReady" />
       </BaseField>
     </template>
     <template #afterInputs>
-      <ModelCapabilities provider="local" :model="fieldsData.llm_model?.value" />
+      <ModelCapabilities style="margin: 8px 12px 0;" provider="local" :model="fieldsData.llm_model?.value" />
     </template>
   </BaseNode>
 </template>

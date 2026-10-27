@@ -102,3 +102,16 @@ def test_supported_workflow_options_are_forwarded(monkeypatch, configured):
 def test_output_budget_without_configured_cap_still_checks_context(configured, budget):
     with pytest.raises(WorkflowInputError):
         validate_workflow_model(configured.model_copy(update={"max_output_tokens": None}), max_output_tokens=budget)
+
+
+@pytest.mark.parametrize("effort", ["default", "high", "none", "max"])
+def test_workflow_reasoning_reaches_both_completion_paths(monkeypatch, configured, effort):
+    calls = []
+    client = SimpleNamespace(create_completion=lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(base_llm, "create_chat_client", lambda **_: client)
+    monkeypatch.setattr(base_llm, "new_llm_http_client", lambda **_: None)
+    task = base_llm.BaseLLMTask(workflow(prompt="hello", temperature=0.5, reasoning_effort=effort), "node")
+    task._create_stream_completion(client, [], BackendType.OpenAI, 10)
+    task._create_completion_response(client, [], BackendType.OpenAI, 10)
+    assert len(calls) == 2
+    assert all(call["reasoning_effort"] == (NOT_GIVEN if effort == "default" else effort) for call in calls)

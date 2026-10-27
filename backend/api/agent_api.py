@@ -734,6 +734,24 @@ class AgentAPI:
         if status != 200 or agent is None:
             return JResponse(status=status, msg=msg)
 
+        from models import WorkflowTemplate
+
+        relations = {}
+        for key, model, id_field in (
+            ("related_workflows", Workflow, Workflow.wid),
+            ("related_templates", WorkflowTemplate, WorkflowTemplate.tid),
+        ):
+            if key not in payload:
+                continue
+            values = payload[key]
+            try:
+                if not isinstance(values, list) or any(not isinstance(value, str) for value in values):
+                    raise ValueError
+                ids = [uuid.UUID(value).hex for value in values]
+            except (ValueError, TypeError, AttributeError):
+                return JResponse(status=400, msg=f"Invalid '{key}': expected a list of UUIDs")
+            relations[key] = list(model.select().where(id_field.in_(ids)))
+
         avatar = payload.get("avatar", "")
         if avatar and not avatar.startswith("http://localhost"):
             agent.avatar = static_file_server.get_static_file_url(avatar, "images/avatar")
@@ -745,17 +763,14 @@ class AgentAPI:
         agent.model = payload.get("model", agent.model)
         agent.model_provider = payload.get("model_provider", agent.model_provider)
 
-        agent.related_workflows.clear()
-        agent.related_templates.clear()
-
-        related_workflows = payload.get("related_workflows", [workflow.wid for workflow in agent.related_workflows])
-        # related_templates = payload.get("related_templates", [template.tid for template in agent.related_templates])
-
-        workflows = Workflow.select().where(Workflow.wid.in_(related_workflows))
-        agent.related_workflows.add(list(workflows))
-        agent.version += 1
-        agent.update_time = datetime.now()
-        agent.save()
+        with Agent._meta.database.atomic():
+            for key, related in relations.items():
+                relation = getattr(agent, key)
+                relation.clear()
+                relation.add(related)
+            agent.version += 1
+            agent.update_time = datetime.now()
+            agent.save()
 
         return JResponse(data={**model_serializer(agent, manytomany=True), "is_owner": True})
 

@@ -92,6 +92,7 @@ DEFAULT_SETTINGS = {
     },
     "microphone_device": 0,
     "shortcuts": {},
+    "model_preferences": {},
     "tts": {
         "piper": {"api_base": "http://localhost:5000"},
         "reecho": {"api_key": "", "voices": []},

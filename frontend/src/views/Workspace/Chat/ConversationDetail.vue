@@ -520,7 +520,7 @@ const deleteMessage = async (mid, groupIndex) => {
           <SettingsPopoverShow :key="conversationId" :settings="conversation.settings" />
           <WorkflowsPopoverShow :key="conversationId" :selectedFlows="selectedWorkflows" />
           <ModelSelectButton :key="conversationId" :cid="conversationId" v-model:model="conversation.model"
-            v-model:modelProvider="conversation.model_provider" />
+            v-model:modelProvider="conversation.model_provider" v-model:settings="conversation.settings" />
           <AudioReplySettingButton :key="conversationId" v-model:audioReply="conversation.settings.agent_audio_reply"
             v-model:audioVoice="conversation.settings.agent_audio_voice" />
         </template>

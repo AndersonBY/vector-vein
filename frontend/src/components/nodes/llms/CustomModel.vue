@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeMount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ModelSelector from '@/components/ModelSelector.vue'
+import ModelSelect from '@/components/ModelSelect.vue'
 import BaseLLMComponent from './_BaseLLM.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import { createTemplateData } from './CustomModel.js'
@@ -61,7 +61,7 @@ onBeforeMount(async () => {
           <small v-if="familyUnavailable" role="status">{{ t('components.model_selector.family_unavailable') }}</small>
         </BaseField>
         <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target" v-model:data="fieldsData.llm_model">
-          <ModelSelector v-model="fieldsData.llm_model.value" :options="modelOptions"
+          <ModelSelect v-model="fieldsData.llm_model.value" :options="modelOptions"
             :loading="modelCatalogStore.loading" :ready="catalogReady" />
         </BaseField>
       </a-flex>

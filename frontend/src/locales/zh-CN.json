@@ -287,6 +287,10 @@
       "delete_message_success": "删除消息成功"
     },
     "agentSpace": {
+      "save_failed": "Agent 保存失败，已保留你的修改，请重试。",
+      "invalid_model_selection": "请选择可用的服务商和模型后再保存。",
+      "load_failed": "Agent 加载失败。",
+      "retry": "重试",
       "my_agents": "我的 AI Agent",
       "public_agents": "公开 AI Agent",
       "hero_description": "在桌面端统一管理本地 Agent、关联工作流和快捷键触发入口。",
@@ -809,7 +813,31 @@
     }
   },
   "components": {
+    "model_picker": {
+      "title": "模型与推理设置",
+      "default": "默认",
+      "high_performance": "高性能优先",
+      "low_cost": "低成本优先",
+      "custom": "自定义",
+      "custom_description": "手动选择模型提供商和模型",
+      "not_configured": "请先在设置 → 模型预设中配置",
+      "reasoning": "推理强度",
+      "invalid_preferences": "模型预设包含停用或缺失的模型，请重新选择或清空。",
+      "preferences_title": "模型预设",
+      "preferences_help": "为默认、高性能优先和低成本优先指定模型。选择预设时会保存对应模型；调整预设不会覆盖已有 Agent、聊天或工作流的选择。留空的预设不可选择。",
+      "settings_save_failed": "设置保存失败，已保留修改，请重试。",
+      "effort_default": "默认",
+      "effort_none": "关闭",
+      "effort_minimal": "最小",
+      "effort_low": "低",
+      "effort_medium": "中",
+      "effort_high": "高",
+      "effort_xhigh": "极高",
+      "effort_max": "最大"
+},
     "model_selector": {
+      "search": "搜索服务商、模型名称或 ID",
+      "select_provider": "请选择服务商",
       "provider": "提供商",
       "family": "模型系列",
       "select_model": "选择或搜索模型",

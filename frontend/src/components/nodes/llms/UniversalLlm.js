@@ -17,5 +17,8 @@ export function createTemplateData() {
   }
   template.template.llm_model.value = ''
   template.template.llm_model.options = []
+  for (const [name, value] of [['model_preference', 'custom'], ['reasoning_effort', 'default']]) {
+    template.template[name] = { name, display_name: name, value, show: false, type: 'str', field_type: 'input' }
+  }
   return template
 }

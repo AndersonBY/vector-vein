@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { AddOne, ReduceOne, Edit } from '@/icons'
 import { message } from 'ant-design-vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
-import ModelSelector from '@/components/ModelSelector.vue'
+import ModelSelect from '@/components/ModelSelect.vue'
 import { useModelCatalogStore } from '@/stores/modelCatalog'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -55,6 +55,7 @@ const props = defineProps({
 
 const { t, te } = useI18n()
 const reliabilityTemplate = { template: {
+  reasoning_effort: { value: 'default', name: 'reasoning_effort', display_name: 'reasoning_effort', show: false, type: 'str', field_type: 'select', options: ['default', 'none', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'].map(value => ({value, label: value})) },
   "output_schema": {
     "required": false,
     "placeholder": "",
@@ -359,11 +360,11 @@ const nodeDescription = computed(() => {
         <slot name="modelSelection">
           <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target"
             v-model:data="fieldsData.llm_model">
-            <ModelSelector v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
+            <ModelSelect v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
               :loading="modelCatalogStore.loading" :ready="catalogReady" />
           </BaseField>
         </slot>
-        <ModelCapabilities :provider="fieldsData.model_provider?.value || (props.llmName === 'CustomModel' ? 'local' : LLM_NODE_PROVIDER_MAP[props.llmName])"
+        <ModelCapabilities class="node-model-capabilities" :provider="fieldsData.model_provider?.value || (props.llmName === 'CustomModel' ? 'local' : LLM_NODE_PROVIDER_MAP[props.llmName])"
           :model="fieldsData.llm_model?.value" />
 
         <BaseField :name="t('components.nodes.llms.common.stream')" name-only type="target"
@@ -563,3 +564,8 @@ const nodeDescription = computed(() => {
     </template>
   </BaseNode>
 </template>
+
+<style scoped>
+.node-model-capabilities { margin: 8px 12px 0; font-size: 12px; }
+.node-model-capabilities :deep(.limits) { gap: 8px 16px; }
+</style>

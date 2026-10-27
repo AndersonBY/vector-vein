@@ -242,6 +242,11 @@ class SettingAPI:
             setting_data = {}
         setting_data = update_llm_settings_to_v2(setting_data)
         normalize_embedding_backends(setting_data)
+        from utilities.model_selection import validate_model_preferences
+        try:
+            validate_model_preferences(setting_data)
+        except ValueError as error:
+            return JResponse(status=400, msg=str(error))
         setting.data = setting_data
         setting.save()
         config.save("data_path", setting.data.get("data_path", "./data"))

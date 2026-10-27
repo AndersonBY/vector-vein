@@ -1,10 +1,11 @@
 <script setup>
-import { ref, reactive, onBeforeMount, computed } from "vue"
+import { ref, reactive, onBeforeMount, onBeforeUnmount, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import { message } from 'ant-design-vue'
 import { EditTwo, CloseOne, Share } from '@/icons'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
+import ModelPicker from '@/components/ModelPicker.vue'
 import AvatarUpload from '@/components/workspace/AvatarUpload.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import CopyButton from "@/components/CopyButton.vue"
@@ -15,19 +16,22 @@ import TextOutput from "@/components/TextOutput.vue"
 import logoUrl from "@/assets/logo.svg"
 import { hashObject, formatTime, deepCopy } from "@/utils/util"
 import { getChatModelOptions, websiteBase, agentVoiceOptions } from '@/utils/common'
+import { hasModelOption } from '@/utils/modelSelection'
 import { agentAPI } from '@/api/chat'
 import { workflowAPI } from "@/api/workflow"
 import { officialSiteAPI } from '@/api/remote'
 
 const { t } = useI18n()
 const loading = ref(true)
+const loadFailed = ref(false)
+const saving = ref(false)
+let generation = 0
 const route = useRoute()
 const router = useRouter()
 const agentId = ref(route.params.agentId)
 const fromSource = ref(route.query.from)
 const agentData = ref({})
 const savedAgentData = ref({})
-const modelSelection = ref([])
 const selectedFlows = ref({
   workflows: {},
   templates: {},
@@ -40,42 +44,50 @@ const updateTime = computed(() => {
   return formatTime(agentData.value.update_time)
 })
 const chatModelOptions = computed(() => getChatModelOptions())
+const providerOptions = computed(() => chatModelOptions.value.map(item => ({
+  value: item.value, label: item.labelText || (typeof item.label === 'string' ? item.label : item.value),
+})))
+const modelOptions = computed(() => chatModelOptions.value.find(item => item.value === agentData.value.model_provider)?.children || [])
+const validModelSelection = computed(() => hasModelOption(providerOptions.value, agentData.value.model_provider) && hasModelOption(modelOptions.value, agentData.value.model))
+
+const flowsFromAgent = agent => ({
+  workflows: Object.fromEntries((agent.related_workflows || []).map(workflow => [workflow.wid, workflow])),
+  templates: Object.fromEntries((agent.related_templates || []).map(template => [template.tid, template])),
+})
 
 const loadAgentData = async (aid) => {
+  const version = ++generation
   loading.value = true
+  loadFailed.value = false
+  saving.value = false
+  modifyAgentModal.modifyLoading = false
+  modifyAgentModal.open = false
   agentId.value = aid
-  let response
-  if (fromSource.value == 'public') {
-    response = await officialSiteAPI('get_agent', { aid: agentId.value })
-  } else {
-    response = await agentAPI('get', { aid: agentId.value })
-  }
-  if (response.status == 200) {
+  try {
+    const response = fromSource.value === 'public'
+      ? await officialSiteAPI('get_agent', { aid })
+      : await agentAPI('get', { aid })
+    if (version !== generation) return
+    if (response.status !== 200 || !response.data?.aid) throw new Error('Agent load failed')
     agentData.value = response.data
-    modelSelection.value = [agentData.value.model_provider, agentData.value.model]
-    modifyAgentModal.form.avatar = agentData.value.avatar
-    modifyAgentModal.form.name = agentData.value.name
-    modifyAgentModal.form.description = agentData.value.description
     savedAgentData.value = deepCopy(agentData.value)
-
-    selectedFlows.value.workflows = response.data.related_workflows.reduce((obj, workflow) => {
-      obj[workflow.wid] = workflow
-      return obj
-    }, {})
-    selectedFlows.value.templates = response.data.related_templates.reduce((obj, template) => {
-      obj[template.tid] = template
-      return obj
-    }, {})
+    selectedFlows.value = flowsFromAgent(response.data)
     savedSelectedFlows.value = deepCopy(selectedFlows.value)
-  } else {
-    message.error(response.msg)
+  } catch {
+    if (version === generation) loadFailed.value = true
+  } finally {
+    if (version === generation) loading.value = false
   }
-  loading.value = false
 }
 
 onBeforeMount(async () => {
   await loadAgentData(route.params.agentId)
 })
+watch(() => [route.params.agentId, route.query.from], () => {
+  fromSource.value = route.query.from
+  loadAgentData(route.params.agentId)
+})
+onBeforeUnmount(() => { generation++ })
 
 onBeforeRouteLeave((to, from, next) => {
   if (!agentData.value.is_owner) {
@@ -87,7 +99,7 @@ onBeforeRouteLeave((to, from, next) => {
     if (result) {
       next()
     } else {
-      return
+      next(false)
     }
   } else {
     next()
@@ -104,67 +116,81 @@ const modifyAgentModal = reactive({
     description: '',
   },
   ok: async () => {
+    if (!agentData.value.is_owner || saving.value || modifyAgentModal.modifyLoading || loading.value || loadFailed.value) return
+    const version = generation
     modifyAgentModal.modifyLoading = true
     try {
-      modifyFormRef.value.validate()
+      try {
+        await modifyFormRef.value.validate()
+      } catch {
+        return
+      }
+      if (version !== generation) return
+      const submitted = deepCopy(modifyAgentModal.form)
       const response = await agentAPI('update', {
         aid: agentId.value,
-        avatar: modifyAgentModal.form.avatar,
-        name: modifyAgentModal.form.name,
-        description: modifyAgentModal.form.description,
+        ...submitted,
       })
-      modifyAgentModal.modifyLoading = false
-      if (response.status == 200) {
-        agentData.value = response.data
-        savedAgentData.value = deepCopy(agentData.value)
-        message.success(t('common.save_success'))
-        modifyAgentModal.open = false
-      } else {
-        message.error(response.msg)
+      if (version !== generation) return
+      if (response.status !== 200 || !response.data?.aid) throw new Error('Agent save failed')
+      for (const key of ['avatar', 'name', 'description', 'version', 'update_time']) {
+        agentData.value[key] = response.data[key]
+        savedAgentData.value[key] = response.data[key]
       }
-    } catch (error) {
-      console.error(error)
-      return
+      message.success(t('common.save_success'))
+      if (JSON.stringify(modifyAgentModal.form) === JSON.stringify(submitted)) modifyAgentModal.open = false
+    } catch {
+      if (version === generation) message.error(t('workspace.agentSpace.save_failed'))
+    } finally {
+      if (version === generation) modifyAgentModal.modifyLoading = false
     }
-    modifyAgentModal.open = false
   },
 })
+const openModifyAgent = () => {
+  if (!agentData.value.is_owner || saving.value || modifyAgentModal.modifyLoading) return
+  modifyAgentModal.form = {
+    avatar: agentData.value.avatar, name: agentData.value.name, description: agentData.value.description,
+  }
+  modifyAgentModal.open = true
+}
 
-const saving = ref(false)
 const save = async () => {
+  if (!agentData.value.is_owner || saving.value || modifyAgentModal.modifyLoading || loading.value || loadFailed.value) return
+  if (!validModelSelection.value) {
+    message.error(t('workspace.agentSpace.invalid_model_selection'))
+    return
+  }
+  const version = generation
+  const submitted = deepCopy(agentData.value)
+  const submittedFlows = deepCopy(selectedFlows.value)
   saving.value = true
-  const workflowIds = Object.keys(selectedFlows.value.workflows)
-  const templateIds = Object.keys(selectedFlows.value.templates)
-  const response = await agentAPI('update', {
-    aid: agentId.value,
-    ...agentData.value,
-    related_workflows: workflowIds,
-    related_templates: templateIds,
-  })
-  if (response.status == 200) {
-    agentData.value = response.data
-    savedAgentData.value = deepCopy(agentData.value)
-
-    selectedFlows.value.workflows = response.data.related_workflows.reduce((obj, workflow) => {
-      obj[workflow.wid] = workflow
-      return obj
-    }, {})
-    selectedFlows.value.templates = response.data.related_templates.reduce((obj, template) => {
-      obj[template.tid] = template
-      return obj
-    }, {})
-    savedSelectedFlows.value = deepCopy(selectedFlows.value)
-
+  const workflowIds = Object.keys(submittedFlows.workflows)
+  try {
+    const response = await agentAPI('update', {
+      ...submitted,
+      aid: agentId.value,
+      related_workflows: workflowIds,
+      related_templates: Object.keys(submittedFlows.templates),
+    })
+    if (version !== generation) return
+    if (response.status !== 200 || !response.data?.aid) throw new Error('Agent save failed')
+    savedAgentData.value = deepCopy(response.data)
+    savedSelectedFlows.value = deepCopy(flowsFromAgent(response.data))
+    if (JSON.stringify(agentData.value) === JSON.stringify(submitted) && JSON.stringify(selectedFlows.value) === JSON.stringify(submittedFlows)) {
+      agentData.value = deepCopy(savedAgentData.value)
+      selectedFlows.value = deepCopy(savedSelectedFlows.value)
+    }
     let successMessageContent = t('common.save_success')
-    if ((agentData.value.shared || agentData.value.is_public) && workflowIds.length > 0) {
+    if ((response.data.shared || response.data.is_public) && workflowIds.length > 0) {
       successMessageContent += ' ' + t('workspace.agentSpace.workflows_converted_to_templates')
     }
 
     message.success(successMessageContent)
-  } else {
-    message.error(response.msg)
+  } catch {
+    if (version === generation) message.error(t('workspace.agentSpace.save_failed'))
+  } finally {
+    if (version === generation) saving.value = false
   }
-  saving.value = false
 }
 
 const duplicating = ref(false)
@@ -211,12 +237,8 @@ const removeTemplate = (template) => {
 }
 
 const navigateToChat = () => {
+  if (saving.value || modifyAgentModal.modifyLoading) return
   router.push({ name: 'conversationNew', params: { agentId: agentId.value } })
-}
-
-const modelChanged = async () => {
-  agentData.value.model = modelSelection.value[1]
-  agentData.value.model_provider = modelSelection.value[0]
 }
 </script>
 
@@ -224,7 +246,7 @@ const modelChanged = async () => {
   <div class="main-container" style="justify-content: center;" v-if="loading">
     <a-spin />
   </div>
-  <div class="main-container" v-else>
+  <div class="main-container" v-else-if="!loadFailed">
     <div class="header">
       <a-flex gap="small">
         <img :src="agentData?.avatar ? `${agentData.avatar}` : logoUrl" alt="avatar" class="avatar" />
@@ -234,7 +256,7 @@ const modelChanged = async () => {
               {{ agentData.name }}
             </a-typography-title>
             <a-tooltip :title="t('workspace.agentSpace.modify_agent')">
-              <a-button type="text" @click="modifyAgentModal.open = true" v-if="agentData.is_owner">
+              <a-button type="text" @click="openModifyAgent" :disabled="saving || modifyAgentModal.modifyLoading" v-if="agentData.is_owner">
                 <template #icon>
                   <EditTwo />
                 </template>
@@ -247,11 +269,13 @@ const modelChanged = async () => {
               </template>
             </CopyButton>
             <a-modal :title="t('workspace.agentSpace.modify_agent')" @ok="modifyAgentModal.ok"
-              :confirm-loading="modifyAgentModal.createLoading" v-model:open="modifyAgentModal.open">
+              :confirm-loading="modifyAgentModal.modifyLoading" v-model:open="modifyAgentModal.open"
+              :cancel-button-props="{ disabled: modifyAgentModal.modifyLoading }"
+              :closable="!modifyAgentModal.modifyLoading" :mask-closable="!modifyAgentModal.modifyLoading" :keyboard="!modifyAgentModal.modifyLoading">
               <a-flex justify="center" style="margin: 24px 0;">
                 <AvatarUpload v-model="modifyAgentModal.form.avatar" />
               </a-flex>
-              <a-form ref="modifyFormRef" :model="agentData" layout="vertical">
+              <a-form ref="modifyFormRef" :model="modifyAgentModal.form" layout="vertical">
                 <a-form-item :label="t('workspace.agentSpace.agent_name')" name="name"
                   :rules="[{ required: true, message: t('workspace.agentSpace.agent_name_required') }]">
                   <a-input v-model:value="modifyAgentModal.form.name"
@@ -272,10 +296,11 @@ const modelChanged = async () => {
         </a-flex>
       </a-flex>
       <a-space>
-        <a-button v-if="fromSource != 'public'" @click="navigateToChat">
+        <a-button v-if="fromSource != 'public'" @click="navigateToChat" :disabled="saving || modifyAgentModal.modifyLoading">
           {{ t('workspace.agentSpace.chat_with_agent') }}
         </a-button>
-        <a-button v-if="agentData.is_owner" type="primary" @click="save" :loading="saving">
+        <a-button v-if="agentData.is_owner" type="primary" @click="save" :loading="saving"
+          :disabled="!validModelSelection || modifyAgentModal.modifyLoading">
           {{ t('common.save') }}
         </a-button>
         <a-tooltip v-else :title="t('workspace.agentSpace.duplicate_as_mine')">
@@ -295,13 +320,16 @@ const modelChanged = async () => {
       <a-row :gutter="[16, 16]" justify="center">
         <a-col :xs="24" :md="agentData.is_owner ? 8 : 16">
           <div class="system-prompt">
-            <a-typography-title :level="4">
-              {{ t('workspace.agentSpace.model_select') }}
-              <QuestionPopover :content="[t('workspace.agentSpace.model_select_tip')]" />
-            </a-typography-title>
-            <a-cascader style="width: 100%;" :disabled="!agentData.is_owner" v-model:value="modelSelection"
-              :options="chatModelOptions" @change="modelChanged" />
-            <ModelCapabilities :provider="modelSelection[0]" :model="modelSelection[1]" />
+            <div class="model-selection-header">
+              <a-typography-title :level="4" class="model-selection-title">
+                {{ t('workspace.agentSpace.model_select') }}
+                <QuestionPopover :content="[t('workspace.agentSpace.model_select_tip')]" />
+              </a-typography-title>
+              <ModelPicker class="model-selection-picker" v-model:model="agentData.model" v-model:model-provider="agentData.model_provider"
+                v-model:preference="agentData.settings.model_preference" v-model:reasoning-effort="agentData.settings.reasoning_effort"
+                :options="chatModelOptions" :disabled="!agentData.is_owner" />
+            </div>
+            <ModelCapabilities :provider="agentData.model_provider" :model="agentData.model" />
           </div>
           <a-divider />
           <div class="system-prompt">
@@ -403,9 +431,18 @@ const modelChanged = async () => {
       </a-row>
     </div>
   </div>
+  <a-result v-else status="error" :title="t('workspace.agentSpace.load_failed')">
+    <template #extra>
+      <a-button @click="loadAgentData(agentId)">{{ t('workspace.agentSpace.retry') }}</a-button>
+    </template>
+  </a-result>
 </template>
 
 <style scoped>
+.model-selection-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.model-selection-title { margin: 0; flex-shrink: 0; }
+.model-selection-picker { min-width: 0; max-width: 60%; }
+
 .main-container {
   display: flex;
   flex-direction: column;

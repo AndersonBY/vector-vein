@@ -1,7 +1,8 @@
 <script setup>
 import { computed, onBeforeMount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import ModelSelector from '@/components/ModelSelector.vue'
+import { useVueFlow } from '@vue-flow/core'
+import ModelPicker from '@/components/ModelPicker.vue'
 import BaseLLMComponent from './_BaseLLM.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import { createTemplateData } from './UniversalLlm.js'
@@ -22,6 +23,14 @@ const props = defineProps({
 const fieldsData = ref(props.data.template)
 const modelCatalogStore = useModelCatalogStore()
 const { t } = useI18n()
+const { edges } = useVueFlow()
+const showProviderField = computed(() => {
+  const field = fieldsData.value.model_provider
+  const handle = field?.id || field?.name || 'model_provider'
+  return field?.show || edges.value.some(edge =>
+    (edge.source === props.id && edge.sourceHandle === handle) ||
+    (edge.target === props.id && edge.targetHandle === handle))
+})
 const catalogReady = computed(() => modelCatalogStore.loaded && !modelCatalogStore.loading && !modelCatalogStore.loadError)
 
 const providerOptions = computed(() => (modelCatalogStore.generalModelOptions || []).map((provider) => ({
@@ -36,8 +45,6 @@ const modelOptions = computed(() => {
     label: item.label,
   }))
 })
-const providerUnavailable = computed(() => catalogReady.value && fieldsData.value.model_provider?.value &&
-  !providerOptions.value.some((item) => item.value === fieldsData.value.model_provider.value))
 
 onBeforeMount(async () => {
   mergeTemplateIntoFields(fieldsData, createTemplateData())
@@ -53,16 +60,23 @@ onBeforeMount(async () => {
     :functionCallAvailable="true">
     <template #modelSelection>
       <a-flex vertical gap="small">
-        <BaseField :name="t('components.model_selector.provider')" type="target" v-model:data="fieldsData.model_provider">
-          <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData.model_provider.value" :options="providerOptions"
-            show-search option-filter-prop="label" @change="fieldsData.llm_model.value = ''" />
-          <small v-if="providerUnavailable" role="status">{{ t('components.model_selector.provider_unavailable') }}</small>
+        <BaseField v-if="showProviderField" :name="t('components.model_selector.provider')" type="target" v-model:data="fieldsData.model_provider">
+          <a-typography-text>{{ fieldsData.model_provider.value }}</a-typography-text>
         </BaseField>
-        <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target" v-model:data="fieldsData.llm_model">
-          <ModelSelector v-model="fieldsData.llm_model.value" :options="modelOptions"
-            :loading="modelCatalogStore.loading" :ready="catalogReady" />
+        <BaseField class="inline-model-field" :name="t('components.nodes.llms.common.llm_model')" required type="target" v-model:data="fieldsData.llm_model">
+          <template #inline>
+            <ModelPicker class="inline-model-picker" v-model:model="fieldsData.llm_model.value" v-model:model-provider="fieldsData.model_provider.value"
+              v-model:preference="fieldsData.model_preference.value" v-model:reasoning-effort="fieldsData.reasoning_effort.value"
+              :options="modelCatalogStore.generalModelOptions"
+              :loading="modelCatalogStore.loading" :ready="catalogReady" />
+          </template>
         </BaseField>
       </a-flex>
     </template>
   </BaseLLMComponent>
 </template>
+
+<style scoped>
+.inline-model-picker { margin-left: auto; max-width: calc(100% - 84px); }
+.inline-model-field :deep(.show-in-use-interface-checkbox) { flex-grow: 0; }
+</style>

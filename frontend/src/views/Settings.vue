@@ -27,9 +27,13 @@ import LLMTabsSettings from "@/components/settings/LLMTabsSettings.vue"
 import EmbeddingTabsSettings from "@/components/settings/EmbeddingTabsSettings.vue"
 import TTSSettings from "@/components/settings/TTSSettings.vue"
 import { getChatModelOptions } from '@/utils/common'
+import { CHAT_PROVIDER_LABEL_MAP } from '@/utils/modelProviders'
 import { hashObject } from "@/utils/util"
 import { settingAPI, hardwareAPI } from "@/api/user"
 import QuestionPopover from "@/components/QuestionPopover.vue"
+import ModelPreferenceSettings from '@/components/settings/ModelPreferenceSettings.vue'
+import { MODEL_PREFERENCES, validModelPair } from '@/utils/modelPreferences'
+import { deepCopy } from '@/utils/util'
 import CustomLLMSettings from "@/components/settings/CustomLLMSettings.vue"
 
 const { t } = useI18n()
@@ -69,7 +73,8 @@ onBeforeMount(async () => {
 
   const userData = res.data.data || {}
   settingForm.id = res.data.id
-  settingForm.data = { ...defaultSettingsResp.data, ...userData }
+  settingForm.data = deepCopy({ ...defaultSettingsResp.data, ...userData })
+  settingForm.data.model_preferences ||= {}
 
   // Merge API settings from response
   if (res.data.api) {
@@ -112,16 +117,45 @@ const selectFolder = async (settingsKey) => {
 
 const saving = ref(false)
 const saveSetting = async (updateShortcuts = false) => {
+  if (saving.value) return
+  if (!validPreferences.value) {
+    selectedKeys.value = ['model_preferences']
+    message.error(t('components.model_picker.invalid_preferences'))
+    return
+  }
   saving.value = true
-  userSettings.setSetting(toRaw(settingForm))
-  await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts })
-  modelCatalogStore.setPayloadFromSettings({ data: toRaw(settingForm.data) })
-  message.success(t('settings.save_success'))
-  saving.value = false
-  chatModelOptions.value = getChatModelOptions()
-  savedSettingsHash.value = hashObject(settingForm.data)
+  try {
+    const response = await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts === true })
+    if (response.status !== 200) throw new Error('Settings update failed')
+    const saved = response.data || { id: settingForm.id, data: deepCopy(toRaw(settingForm.data)) }
+    userSettings.setSetting(saved)
+    modelCatalogStore.setPayloadFromSettings(saved)
+    message.success(t('settings.save_success'))
+    chatModelOptions.value = getChatModelOptions()
+    savedSettingsHash.value = hashObject(settingForm.data)
+  } catch {
+    message.error(t('components.model_picker.settings_save_failed'))
+  } finally {
+    saving.value = false
+  }
 }
 
+const preferenceOptions = computed(() => {
+  // Use the settings draft so newly enabled models can be assigned before saving.
+  const backends = settingForm.data.llm_settings?.backends || {}
+  const options = Object.entries(backends).filter(([key]) => key !== 'local').map(([key, backend]) => ({
+    value: key, label: CHAT_PROVIDER_LABEL_MAP[key] || key, children: Object.entries(backend.models || {}).filter(([, model]) => model.enabled !== false).map(([value, model]) => ({value, label: model.id || value})),
+  })).filter(provider => provider.children.length)
+  for (const [family, models] of Object.entries(settingForm.data.custom_llms || {})) {
+    const children = models.filter(model => backends.local?.models?.[model]?.enabled !== false).map(value => ({ value, label: value }))
+    if (children.length) options.push({ value: '_local__' + family, label: family, children })
+  }
+  return options.map(provider => ({...provider, value: provider.value.startsWith('_local__') ? provider.value : CHAT_PROVIDER_LABEL_MAP[provider.value] || provider.value}))
+})
+const validPreferences = computed(() => MODEL_PREFERENCES.every(key => {
+  const value = settingForm.data.model_preferences?.[key]
+  return !value || (!value.model && !value.model_provider) || validModelPair(preferenceOptions.value, value.model_provider, value.model)
+}))
 const selectedKeys = ref(['endpoints'])
 const collapsed = ref(false)
 const sidebarHover = ref(false)
@@ -165,6 +199,10 @@ watch(selectedKeys, () => {
               <Robot />
             </template>
             {{ t('settings.llms') }}
+          </a-menu-item>
+          <a-menu-item key="model_preferences">
+            <template #icon><Robot /></template>
+            {{ t('components.model_picker.preferences_title') }}
           </a-menu-item>
           <a-menu-item key="custom_llms">
             <template #icon>
@@ -257,6 +295,11 @@ watch(selectedKeys, () => {
           </template>
           <LLMTabsSettings v-if="settingForm.data.llm_settings?.backends && settingForm.data.llm_settings?.endpoints"
             v-model="settingForm.data.llm_settings.backends" :endpoints="settingForm.data.llm_settings.endpoints" />
+        </a-card>
+
+        <a-card v-show="selectedKeys == 'model_preferences'" :title="t('components.model_picker.preferences_title')" :loading="loading">
+          <template #extra><a-button type="primary" @click="saveSetting" :loading="saving" :disabled="!validPreferences">{{ t('settings.save') }}</a-button></template>
+          <ModelPreferenceSettings v-if="!loading" v-model="settingForm.data.model_preferences" :options="preferenceOptions" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'custom_llms'" :title="t('settings.custom_llms')" :loading="loading">
