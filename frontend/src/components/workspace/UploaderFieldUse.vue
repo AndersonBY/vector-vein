@@ -72,6 +72,7 @@ const emit = defineEmits(['update:firstFile'])
 const files = defineModel()
 const fileList = ref([])
 const uploading = ref(false)
+let disposed = false
 
 watch(() => files.value, (newValue) => {
   if (typeof files.value === 'string') {
@@ -118,6 +119,7 @@ onMounted(async () => {
   if (props.acceptPaste) document.addEventListener('paste', pasteUpload)
 })
 onBeforeUnmount(() => {
+  disposed = true
   if (props.acceptPaste) document.removeEventListener('paste', pasteUpload)
 })
 
@@ -133,6 +135,7 @@ const pasteUpload = (event) => {
         reader.onloadend = async () => {
           const base64data = reader.result
           const file = await window.pywebview.api.save_image(base64data)
+          if (disposed) return
           files.value.push(file)
           fileList.value.push({
             uid: uuidv4(),
@@ -197,6 +200,7 @@ const selectFile = async (e) => {
   uploading.value = true
   try {
     const selectedFiles = await window.pywebview.api.open_file_dialog(props.multiple)
+    if (disposed) return
     if (!selectedFiles) {
       return
     }

@@ -20,6 +20,12 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
   const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: { getItem: () => null } })
   const sockets = [], calls = [], errors = []
+  const savedDrafts = new Map(), draftCalls = []
+  let draftRequest = async payload => {
+    const key = `${payload.aid}:${payload.cid || 'new'}`
+    if ('text' in payload) savedDrafts.set(key, structuredClone(payload))
+    return { status: 200, data: savedDrafts.get(key) || { text: '', attachments: [] } }
+  }
   let request = async () => ({ status: 500 })
   class Socket {
     sent = []
@@ -30,7 +36,10 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
   }
   globalThis.WebSocket = Socket
   globalThis.window = { innerWidth: 1000, addEventListener() {}, removeEventListener() {}, pywebview: { api: new Proxy({}, {
-    get: (_, action) => async payload => { calls.push({ action, payload }); return request(action, payload) },
+    get: (_, action) => async payload => {
+      if (action === 'conversation__draft') { draftCalls.push(payload); return draftRequest(payload) }
+      calls.push({ action, payload }); return request(action, payload)
+    },
   }) } }
   globalThis.__chatFailureHarness = { route: reactive({ params: { conversationId: 'cid', agentId: 'agent' }, query: {} }),
     router: { push: async () => {}, replace: async () => {} }, errors }
@@ -81,6 +90,74 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       return renderToString(app)
     }
     const detail = '/src/views/Workspace/Chat/ConversationDetail.vue'
+    await render(detail, {}, async c => {
+      const store = c.userChatsStore
+      await store.saveDraft('agent', 'first', 'draft A', ['a.txt'])
+      await store.saveDraft('agent', 'second', 'draft B', ['b.txt'])
+      await store.saveDraft('agent', '', 'new A', ['new.txt'])
+      await store.saveDraft('other-agent', '', 'new B', [])
+      assert.equal(store.getDraft('agent', 'first').text, 'draft A')
+      assert.equal(store.getDraft('agent', 'second').text, 'draft B')
+      assert.equal(store.getDraft('agent').text, 'new A')
+      assert.equal(store.getDraft('other-agent').text, 'new B')
+      const pending = deferred(), original = draftRequest
+      draftRequest = payload => 'text' in payload ? original(payload) : pending.promise
+      const load = store.loadDraft('agent', 'late-load')
+      await store.saveDraft('agent', 'late-load', 'edited while loading', ['new-file'])
+      pending.resolve({ status: 200, data: { text: 'outdated disk draft', attachments: ['old-file'] } })
+      await load
+      assert.equal(store.getDraft('agent', 'late-load').text, 'edited while loading')
+      assert.deepEqual(store.getDraft('agent', 'late-load').attachments, ['new-file'])
+      draftRequest = original
+      const slow = deferred()
+      let writes = 0
+      draftRequest = payload => ++writes === 1 ? slow.promise : original(payload)
+      const first = store.saveDraft('agent', 'ordered', 'submitted', ['sent-file'])
+      await flush()
+      const second = store.saveDraft('agent', 'ordered', 'later edit', ['sent-file', 'next-file'])
+      const clear = store.clearSubmittedDraft('agent', 'ordered', 'submitted', ['sent-file'])
+      await flush()
+      assert.equal(writes, 1)
+      slow.resolve({ status: 200 })
+      await Promise.all([first, second, clear])
+      assert.equal(savedDrafts.get('agent:ordered').text, 'later edit')
+      assert.deepEqual(savedDrafts.get('agent:ordered').attachments, ['next-file'])
+      draftRequest = original
+      store.addUnsentChat({ aid: 'agent', cid: 'first', content: 'only first' })
+      store.addUnsentChat({ aid: 'agent', cid: 'second', content: 'only second' })
+      store.deleteConversation('first')
+      assert.equal(store.drafts['agent:first'], undefined)
+      assert.equal(store.unsentChats.length, 1)
+      assert.equal(store.unsentChats[0].cid, 'second')
+      assert.equal(store.getDraft('agent', 'second').text, 'draft B')
+    })
+    await render(detail, {}, async c => {
+      const restored = await c.userChatsStore.loadDraft('agent', 'second')
+      assert.equal(restored.text, 'draft B')
+      assert.deepEqual(restored.attachments, ['b.txt'])
+      const original = draftRequest
+      draftRequest = async () => ({ status: 503 })
+      await assert.rejects(c.userChatsStore.saveDraft('agent', 'retry', 'keep on error', ['retry.txt']))
+      assert.equal(c.userChatsStore.getDraft('agent', 'retry').text, 'keep on error')
+      draftRequest = original
+      await c.userChatsStore.saveDraft('agent', 'retry', 'saved after retry', ['retry.txt'])
+      assert.equal(savedDrafts.get('agent:retry').text, 'saved after retry')
+    })
+    await render(detail, {}, async c => {
+      const pending = deferred(), original = request
+      request = async action => {
+        assert.equal(action, 'get_drop_file_path')
+        return pending.promise
+      }
+      c.handleDrop({ preventDefault() {}, dataTransfer: { items: [{ kind: 'file', getAsFile: () => ({ name: 'late.txt' }) }] } })
+      c.conversationId.value = 'after-drop'
+      c.userInput.value = 'other conversation'
+      pending.resolve('late.txt')
+      await flush()
+      assert.deepEqual(c.attachments.value, [])
+      assert.equal(c.userInput.value, 'other conversation')
+      request = original
+    })
     const prepare = c => {
       c.conversation.value = { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] }
       c.userChatsStore.addConversation(c.conversation.value)
@@ -235,6 +312,9 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(calls.length, count)
       pending.resolve({ status: 200, data: { cid: 'forked' } })
       await fork
+      assert.equal(savedDrafts.get('agent:forked').text, 'unsent draft')
+      assert.deepEqual(savedDrafts.get('agent:forked').attachments, ['local-file'])
+      assert.equal(c.userChatsStore.getDraft('agent', 'cid').text, 'unsent draft')
       assert.deepEqual(navigations.at(-1), { name: 'conversationDetail', params: { agentId: 'agent', conversationId: 'forked' } })
       assert.equal(c.forking.value, false)
       assert.equal(c.userInput.value, 'unsent draft')
@@ -582,7 +662,10 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       messages: [[assistant(mid)]], selected_message_path: [mid], focused_message_mid: mid,
     } })
     try {
+      savedDrafts.clear()
       mountedApp.mount({})
+      mountedDetail.userInput.value = 'original conversation draft'
+      mountedDetail.attachments.value = ['original.txt']
       const route = globalThis.__chatFailureHarness.route
       route.params.conversationId = 'next-cid'
       route.query.mid = 'next-mid'
@@ -602,18 +685,35 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(mountedDetail.messages.value[0][0].mid, 'current')
       assert.equal(mountedDetail.focusedMessageMid.value, '')
       assert.equal(mountedDetail.loading.value, false)
+      assert.equal(mountedDetail.userInput.value, '')
+      assert.deepEqual(mountedDetail.attachments.value, [])
+      mountedDetail.userInput.value = 'next conversation draft'
+      mountedDetail.attachments.value = ['next.txt']
+      route.params.conversationId = 'cid'
+      await flush()
+      assert.equal(mountedDetail.userInput.value, 'original conversation draft')
+      assert.deepEqual(mountedDetail.attachments.value, ['original.txt'])
+      historyRequests.at(-1).resolve(historyResponse('cid', 'original'))
+      await flush()
+      route.params.conversationId = 'next-cid'
+      await flush()
+      assert.equal(mountedDetail.userInput.value, 'next conversation draft')
+      assert.deepEqual(mountedDetail.attachments.value, ['next.txt'])
+      historyRequests.at(-1).resolve(historyResponse('next-cid', 'current'))
+      await flush()
+      const priorHistoryCount = historyRequests.length
       mountedDetail.messages.value = [[assistant('old-visible'), assistant('new-visible')]]
       mountedDetail.messagePagination.set(0, 1)
       mountedDetail.receiving.value = true
       route.query.mid = 'old-visible'
       await flush()
-      assert.equal(historyRequests.length, 3)
+      assert.equal(historyRequests.length, priorHistoryCount)
       assert.equal(mountedDetail.messagePagination.get(0), 1)
       mountedDetail.receiving.value = false
       await flush()
-      assert.equal(historyRequests.length, 4)
-      assert.deepEqual(historyRequests[3].payload, { cid: 'next-cid', mid: 'old-visible' })
-      historyRequests[3].resolve(historyResponse('next-cid', 'old-visible'))
+      assert.equal(historyRequests.length, priorHistoryCount + 1)
+      assert.deepEqual(historyRequests.at(-1).payload, { cid: 'next-cid', mid: 'old-visible' })
+      historyRequests.at(-1).resolve(historyResponse('next-cid', 'old-visible'))
       await flush()
       assert.equal(mountedDetail.messages.value[0][0].mid, 'old-visible')
       delete route.query.mid

@@ -4,8 +4,8 @@ import { Send, Edit, Link, Plus, HandleSquare } from '@/icons'
 import { message, theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
+import { useChatDraft } from '@/utils/useChatDraft'
 import { createChatConnection, replaceChatMessage, terminalChatMessage } from '@/utils/chatConnection'
 import ChatMessage from '@/components/workspace/chat/ChatMessage.vue'
 import ScrollEndButton from '@/components/ScrollEndButton.vue'
@@ -34,7 +34,7 @@ const selectedWorkflows = reactive({
 })
 
 const userChatsStore = useUserChatsStore()
-const { unsentChats } = storeToRefs(userChatsStore)
+const { userInput, attachments, draftOwner } = useChatDraft(agentId, conversationId)
 
 const wsPort = ref(null)
 const routeMid = () => typeof route.query.mid === 'string' ? route.query.mid : Array.isArray(route.query.mid) ? route.query.mid[0] || '' : ''
@@ -97,7 +97,7 @@ watch([() => route.params.conversationId, () => route.query.mid], async ([cid], 
     loading.value = true
     messages.value = []
     focusedMessageMid.value = ''
-    await fetchConversation(cid)
+    if (await fetchConversation(cid)) await sendPendingChat(cid)
     return
   }
   const mid = routeMid()
@@ -128,16 +128,10 @@ const updateWidth = () => {
 }
 
 onBeforeMount(async () => {
-  if (unsentChats.value.length == 0) {
-    loading.value = true
-  }
+  loading.value = true
   const fetched = await fetchConversation(conversationId.value)
   if (disposed || !fetched) return
-  if (unsentChats.value.length > 0) {
-    attachments.value = unsentChats.value[0].attachments
-    userInput.value = unsentChats.value[0].content
-    if (await sendMessage(userInput.value, true)) userChatsStore.clearUnsentChats()
-  }
+  await sendPendingChat(conversationId.value)
   nextTick(() => {
     if (chatBodyElementRef.value) {
       chatBodyElementRef.value.addEventListener('scroll', handleScroll)
@@ -158,19 +152,26 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
-  // Expose for Python usage.
-  window.setAttachments = (files) => {
-    attachments.value = files
-  }
-
   window.addEventListener('resize', updateWidth)
 })
 
 const sending = ref(false)
 const conversation = ref({ settings: { agent_audio_reply: false } })
 const messages = ref([])
-const userInput = ref('')
-const attachments = ref([])
+const sendPendingChat = async cid => {
+  const pending = userChatsStore.unsentChats.find(item => item.cid === cid && item.aid === agentId.value)
+  if (!pending) return
+  userChatsStore.clearUnsentChats(cid)
+  // Recover the target draft before sending the one-time new-chat handoff.
+  try {
+    await userChatsStore.loadDraft(agentId.value, cid)
+  } catch {
+    message.error(t('workspace.chatSpace.draft_save_failed'))
+    return
+  }
+  if (disposed || cid !== conversationId.value) return
+  await sendMessage(pending.content, true, pending.attachments)
+}
 const canFork = computed(() => !!conversation.value.cid && conversation.value.cid === conversationId.value && !loading.value && !sending.value &&
   !receiving.value && !forking.value)
 
@@ -194,6 +195,8 @@ const forkConversation = async mid => {
       message.error(t(`workspace.chatSpace.${res.code === 'CONVERSATION_BUSY' ? 'fork_busy' : 'fork_failed'}`))
       return
     }
+    await userChatsStore.saveDraft(agentId.value, res.data.cid, userInput.value, [...attachments.value])
+    if (!current()) return
     await router.push({ name: 'conversationDetail', params: { agentId: agentId.value, conversationId: res.data.cid } })
   } catch {
     if (current()) message.error(t('workspace.chatSpace.fork_failed'))
@@ -401,27 +404,32 @@ const beginAssistant = (data, epoch, cid, groupIndex) => {
   void sendWebsocketMsg({ ...data, user_timezone: Intl.DateTimeFormat().resolvedOptions().timeZone }, epoch, cid)
 }
 
-const sendMessage = async (content, needTitle = false) => {
+const sendMessage = async (content, needTitle = false, submittedFiles = attachments.value) => {
   if (!content?.trim() || loading.value || sending.value || receiving.value || forking.value || disposed) return false
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
-  const files = [...attachments.value]
+  const files = [...submittedFiles]
+  const aid = agentId.value
   const groupIndex = messages.value.findLastIndex(group => group.some(item => item.mid !== 'tmp'))
   const parentMid = messages.value[groupIndex]?.[messagePagination.get(groupIndex) ?? (messages.value[groupIndex].length - 1)]?.mid ?? null
   try {
     const res = await messageAPI('send', { need_title: needTitle, parent_mid: parentMid,
       cid, content, content_type: 'TXT', attachments: files })
+    if (res.status === 200 && res.data?.ai_message_mid) {
+      void userChatsStore.clearSubmittedDraft(aid, cid, content, files)
+        .catch(() => message.error(t('workspace.chatSpace.draft_save_failed')))
+    }
     if (!currentAttempt(epoch)) {
-      if (res.status === 200) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
-        code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
+      if (res.status === 200) {
+        void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
+          code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
+      }
       return false
     }
     if (res.status !== 200 || !res.data?.ai_message_mid) throw new Error('send failed')
     messages.value.push([{ loading: false, mid: res.data.user_message_mid, status: 'S', author_type: 'U',
       content_type: 'TXT', create_time: Date.now(), metadata: {}, content: { text: content }, attachments: files }])
-    if (userInput.value === content) userInput.value = ''
-    attachments.value = attachments.value.filter(file => !files.includes(file))
     beginAssistant(res.data, epoch, cid)
     void clearSearchTarget().catch(() => {})
     return true
@@ -493,6 +501,7 @@ const handleDragLeave = (event) => {
 }
 
 const handleDrop = (event) => {
+  const owner = draftOwner.value
   event.preventDefault()
   isDragging.value = false
   const items = event.dataTransfer.items
@@ -501,6 +510,7 @@ const handleDrop = (event) => {
     if (item.kind === 'file') {
       const { name } = item.getAsFile()
       window.pywebview.api.get_drop_file_path(name).then(dropFilePath => {
+        if (disposed || owner !== draftOwner.value) return
         attachments.value.push(dropFilePath)
         message.success(t('components.workspace.uploaderFieldUse.upload_success', { file: name }))
       })
@@ -654,10 +664,10 @@ const deleteMessage = async (mid, groupIndex) => {
         <a-textarea v-model:value="userInput" :placeholder="t('workspace.chatSpace.textarea_tip')"
           :auto-size="{ minRows: 2, maxRows: 10 }" style="padding-right: 7rem;"
           @keyup.ctrl.enter="sendMessage(userInput)" />
-        <RecordingButton class="chat-recording-btn" :transcribe="true" v-model:text="userInput"
+        <RecordingButton :key="conversationId" class="chat-recording-btn" :transcribe="true" v-model:text="userInput"
           @finished="sendMessage" />
         <a-tooltip :title="t('workspace.chatSpace.upload_attachments')">
-          <UploaderFieldUse class="chat-attachment-btn" v-model="attachments" supportFileTypes="*.*" :acceptPaste="true"
+          <UploaderFieldUse :key="conversationId" class="chat-attachment-btn" v-model="attachments" supportFileTypes="*.*" :acceptPaste="true"
             :multiple="true" :showUploadList="false" :singleButton="true"
             :singleButtonProps="{ type: 'text', disabled: sending || receiving }">
             <template #icon>

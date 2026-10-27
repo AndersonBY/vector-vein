@@ -225,6 +225,7 @@
       "send_message": "发送消息",
       "send": "发送",
       "send_message_failed": "发送消息失败",
+      "draft_save_failed": "草稿读取或保存失败，请保留当前输入后重试",
       "new_chat": "新的聊天",
       "how_can_i_help_you_today": "有什么可以帮您的吗？",
       "share_chat": "分享聊天",

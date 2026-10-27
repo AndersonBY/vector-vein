@@ -1,10 +1,11 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { computed, ref, reactive, onBeforeMount, onBeforeUnmount, nextTick } from 'vue'
 import { Send, Link } from '@/icons'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from "vue-router"
 import { useUserChatsStore } from '@/stores/userChats'
+import { useChatDraft } from '@/utils/useChatDraft'
 import WorkflowsPopoverShow from '@/components/workspace/chat/WorkflowsPopoverShow.vue'
 import SettingsPopoverShow from '@/components/workspace/chat/SettingsPopoverShow.vue'
 import ModelSelectButton from '@/components/workspace/chat/ModelSelectButton.vue'
@@ -25,13 +26,13 @@ const sending = ref(false)
 let disposed = false
 const cancelCreate = () => { disposed = true; sending.value = false }
 onBeforeUnmount(cancelCreate)
-const agentId = route.params.agentId
+const agentId = computed(() => route.params.agentId)
 const agentData = ref({})
 
 const userChatsStore = useUserChatsStore()
 
 const conversation = reactive({
-  aid: agentId,
+  aid: agentId.value,
   cid: '',
   title: t('workspace.chatSpace.new_chat'),
   settings: defaultSettings[locale.value],
@@ -40,8 +41,7 @@ const conversation = reactive({
   update_time: new Date().getTime(),
 })
 const messages = ref([])
-const userInput = ref('')
-const attachments = ref([])
+const { userInput, attachments, draftOwner } = useChatDraft(agentId)
 const selectedFlows = reactive({
   workflows: {},
   templates: {},
@@ -50,7 +50,8 @@ const selectedFlows = reactive({
 const chatBodyElement = ref(null)
 
 onBeforeMount(async () => {
-  const response = await agentAPI('get', { aid: agentId })
+  const response = await agentAPI('get', { aid: agentId.value })
+  if (disposed) return
   if (response.status == 200) {
     agentData.value = response.data
     conversation.settings = agentData.value.settings
@@ -71,19 +72,13 @@ onBeforeMount(async () => {
   })
 })
 
-onMounted(() => {
-  // Expose for Python usage.
-  window.setAttachments = (files) => {
-    attachments.value = files
-  }
-})
-
 const conversationId = ref('tmp')
 const sendMessage = async () => {
   if (!userInput.value.trim() || sending.value || disposed) return
   sending.value = true
   const content = userInput.value
   const files = [...attachments.value]
+  const aid = agentId.value
   try {
     conversation.update_time = Date.now()
     const res = await conversationAPI('create', { conversation })
@@ -91,9 +86,15 @@ const sendMessage = async () => {
     if (res.status !== 200 || !res.data?.cid) throw new Error('create failed')
     conversation.cid = res.data.cid
     userChatsStore.addConversation(conversation)
-    userChatsStore.addUnsentChat({ content_type: 'TXT', content, attachments: files })
-    await router.push({ name: 'conversationDetail', params: { conversationId: res.data.cid } })
-    if (userInput.value === content) userInput.value = ''
+    await userChatsStore.saveDraft(aid, res.data.cid, content, files)
+    if (disposed) return
+    userChatsStore.addUnsentChat({ aid, cid: res.data.cid, content_type: 'TXT', content, attachments: files })
+    await router.push({ name: 'conversationDetail', params: { agentId: aid, conversationId: res.data.cid } })
+    await userChatsStore.clearSubmittedDraft(aid, '', content, files)
+    if (!disposed) {
+      if (userInput.value === content) userInput.value = ''
+      attachments.value = attachments.value.filter(file => !files.includes(file))
+    }
   } catch {
     if (!disposed) message.error(t('workspace.chatSpace.send_message_failed'))
   } finally {
@@ -123,6 +124,7 @@ const handleDragLeave = (event) => {
 }
 
 const handleDrop = (event) => {
+  const owner = draftOwner.value
   event.preventDefault()
   isDragging.value = false
   const items = event.dataTransfer.items
@@ -131,6 +133,7 @@ const handleDrop = (event) => {
     if (item.kind === 'file') {
       const { name } = item.getAsFile()
       window.pywebview.api.get_drop_file_path(name).then(dropFilePath => {
+        if (disposed || owner !== draftOwner.value) return
         attachments.value.push(dropFilePath)
         message.success(t('components.workspace.uploaderFieldUse.upload_success', { file: name }))
       })

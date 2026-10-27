@@ -225,6 +225,7 @@
       "send_message": "Send message",
       "send": "Send",
       "send_message_failed": "Send message failed",
+      "draft_save_failed": "Could not load or save the draft. Keep your current input and try again.",
       "new_chat": "New chat",
       "how_can_i_help_you_today": "How can I help you today?",
       "share_chat": "Share chat",

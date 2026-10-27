@@ -47,6 +47,7 @@ async function harness(initial = agent()) {
     '@/utils/common': 'export const getChatModelOptions=()=>globalThis.__agentSettingsTest.catalog.generalModelOptions; export const websiteBase=""; export const agentVoiceOptions=[]; export const defaultSettings={en:{}}',
     '@/stores/modelCatalog': 'export const useModelCatalogStore=()=>globalThis.__agentSettingsTest.catalog',
     '@/stores/userChats': 'export const useUserChatsStore=()=>({})',
+    '@/utils/useChatDraft': 'import {ref} from "vue"; export const useChatDraft=()=>({userInput:ref(""),attachments:ref([]),draftOwner:ref([])})',
     '@/api/chat': 'export const agentAPI=async(action,payload)=>{const t=globalThis.__agentSettingsTest;if(action!=="get")t.calls.push(payload);return t.request(action,payload)}; export const conversationAPI=async()=>({status:500})',
     '@/api/workflow': 'export const workflowAPI=async()=>({status:500})', '@/api/remote': 'export const officialSiteAPI=async()=>({status:500})',
     '@/icons': 'export const EditTwo={render:()=>null},CloseOne=EditTwo,Share=EditTwo,Send=EditTwo,Link=EditTwo,CheckOne=EditTwo,Down=EditTwo',

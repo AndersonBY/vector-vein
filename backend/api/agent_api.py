@@ -10,6 +10,7 @@ from models import (
     Message,
     Workflow,
     Conversation,
+    ChatDraft,
     model_serializer,
     WorkflowRunRecord,
 )
@@ -48,6 +49,35 @@ def _serialize_conversation_state(conversation: Conversation) -> dict[str, Any]:
 
 class ConversationAPI:
     name = "conversation"
+
+    def draft(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid draft")
+        try:
+            aid = uuid.UUID(str(payload.get("aid", "")))
+            cid = uuid.UUID(str(payload["cid"])) if payload.get("cid") else None
+            if "text" in payload and (not isinstance(payload["text"], str)
+                    or not isinstance(payload.get("attachments"), list)
+                    or any(not isinstance(path, str) for path in payload["attachments"])):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid draft")
+        scope = f"{aid.hex}:{cid.hex if cid else 'new'}"
+        with ChatDraft._meta.database.atomic():
+            agent = Agent.get_or_none(Agent.aid == aid)
+            conversation = Conversation.get_or_none((Conversation.cid == cid) & (Conversation.agent == aid)) if cid else None
+            if agent is None or (cid and conversation is None):
+                return JResponse(status=404)
+            if "text" in payload:
+                if not payload["text"] and not payload["attachments"]:
+                    ChatDraft.delete().where(ChatDraft.scope == scope).execute()
+                else:
+                    ChatDraft.insert(scope=scope, agent=agent, conversation=conversation,
+                                     text=payload["text"], attachments=payload["attachments"]).on_conflict_replace().execute()
+                return JResponse()
+            draft = ChatDraft.get_or_none(ChatDraft.scope == scope)
+            return JResponse(data={"text": draft.text if draft else "",
+                                   "attachments": draft.attachments if draft else []})
 
     def fork(self, payload):
         if not isinstance(payload, dict):
@@ -349,7 +379,9 @@ class ConversationAPI:
         if conversation is None:
             return JResponse(status=404)
 
-        conversation.delete_instance(recursive=True)
+        with Conversation._meta.database.atomic():
+            ChatDraft.delete().where(ChatDraft.conversation == conversation).execute()
+            conversation.delete_instance(recursive=True)
 
         return JResponse()
 

@@ -290,7 +290,7 @@ const checkScreenSize = () => {
         <div class="footer-settings">
         </div>
       </div>
-      <router-view></router-view>
+      <router-view :key="agentId"></router-view>
     </div>
   </div>
 </template>

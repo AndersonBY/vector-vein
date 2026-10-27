@@ -72,6 +72,14 @@ class Conversation(BaseModel):
         return self.cid.hex
 
 
+class ChatDraft(BaseModel):
+    scope = CharField(primary_key=True, max_length=65)
+    agent = ForeignKeyField(Agent, backref="chat_drafts")
+    conversation = ForeignKeyField(Conversation, null=True, backref="chat_drafts", on_delete="CASCADE")
+    text = TextField(default="")
+    attachments = JSONField(default=list)
+
+
 class Message(BaseModel):
     class AuthorTypes:
         SYSTEM = "S"
