@@ -196,6 +196,8 @@ def execute(args):
     data["related_workflows"] = WorkflowData(data).related_workflows
     from utilities.workflow_timeline import reset_run, initialize_timeline
     reset_run(data)
+    from utilities.workflow_recovery import claim_execution
+    claim_execution(data)
     model = WorkflowModel.get_by_id(args.wid)
     record = WorkflowRunRecord.create(workflow=model, workflow_version=model.version, data=data, status="RUNNING", run_from=WorkflowRunRecord.RunFromTypes.CLI)
     data.update(wid=model.wid.hex, rid=record.rid.hex)

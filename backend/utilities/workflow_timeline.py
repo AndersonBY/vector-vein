@@ -26,6 +26,7 @@ def _entry(node):
 
 
 def reset_run(data):
+    data.pop("_execution_owners", None)
     for key in ("failures", "error_task", "error_type", "skipped_nodes", "node_run_time", "node_timeline", "original_workflow_data", "async_tasks", "__node_id_map", "_batch_collecting", "pending_feedback_nodes", "pending_feedback_runs", "feedback_answers", "feedback_generation", "_feedback_waiting", "feedback_resume_ready"):
         data.pop(key, None)
     for node in data.get("nodes", []):

@@ -139,7 +139,9 @@ def run_workflow_common(
     source_message = message.mid.hex if message is not None else None
 
     from utilities.workflow_stopping import register_child, request_stop, stop_requested
-    with cache.transact():
+    from utilities.workflow_recovery import claim_execution
+    claim_execution(workflow_data)
+    with cache.transact(), WorkflowRunRecord._meta.database.atomic():
         record: WorkflowRunRecord = WorkflowRunRecord.create(
             workflow=workflow,
             data=workflow_data,
@@ -152,6 +154,10 @@ def run_workflow_common(
         workflow_data["rid"] = record.rid.hex
         record.data = workflow_data
         record.save()
+        if message is not None:
+            message.metadata = {**message.metadata, "record_id": record.rid.hex, "recordStatus": "RUNNING"}
+            message.status = Message.StatusTypes.RUNNING_WORKFLOW
+            message.save()
         if parent_rid:
             register_child(parent_rid, record.rid.hex)
             if stop_requested({"rid": parent_rid}):

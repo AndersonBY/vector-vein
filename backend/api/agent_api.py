@@ -521,6 +521,10 @@ class MessageAPI:
         )
 
     def append_answer(self, payload):
+        with cache.transact(), Message._meta.database.atomic():
+            return self._append_answer(payload)
+
+    def _append_answer(self, payload):
         cid = payload.get("cid")
         conversation = Conversation.get_or_none(Conversation.cid == cid)
         if not conversation:
@@ -531,11 +535,22 @@ class MessageAPI:
         if not parent_message:
             return JResponse(status=404)
 
-        history_messages = get_history_messages(
-            start_message=parent_message,
-            count=None,
-            all_children=False,
-        )
+        record_id = payload.get("record_id")
+        if record_id is not None:
+            try:
+                record_id = uuid.UUID(str(record_id)).hex
+            except (ValueError, TypeError):
+                return JResponse(status=400)
+            record = WorkflowRunRecord.get_or_none(WorkflowRunRecord.rid == record_id)
+            if (record is None or record.status != "FINISHED" or record.run_from != "CHAT" or
+                record.source_message != parent_message.mid or parent_message.metadata.get("record_id") != record_id):
+                return JResponse(status=409, msg="Workflow result is not ready")
+            from utilities.workflow_messages import project_workflow_message
+            project_workflow_message(record)
+            if (conversation.current_message != parent_message.mid or
+                any(child.metadata.get("workflow_record_id") == record_id for child in
+                    Message.select().where(Message.parent == parent_message.mid))):
+                return JResponse(data={"already_appended": True})
 
         ai_message = Message.create(
             conversation=conversation,
@@ -543,6 +558,7 @@ class MessageAPI:
             content_type=Message.ContentTypes.TEXT,
             content={"text": ""},
             parent=parent_message,
+            metadata={"workflow_record_id": record_id} if record_id else {},
         )
 
         conversation.current_message = ai_message.mid
@@ -702,10 +718,6 @@ class MessageAPI:
             message=message,
             run_from=WorkflowRunRecord.RunFromTypes.CHAT,
         )
-
-        message.metadata.update({"record_id": record_rid})
-        message.status = Message.StatusTypes.RUNNING_WORKFLOW
-        message.save()
 
         return JResponse(msg="success", data={"rid": record_rid})
 

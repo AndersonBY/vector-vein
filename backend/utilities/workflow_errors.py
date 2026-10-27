@@ -98,7 +98,7 @@ def workflow_error_payload(record):
             failures.append({
                 "node_id": redact_message(failure.get("node_id", ""), data)[:200],
                 "task_name": redact_message(failure.get("task_name", ""), data)[:200],
-                "code": "INVALID_ARGUMENT" if failure.get("code") == "INVALID_ARGUMENT" else "NODE_EXECUTION_FAILED",
+                "code": failure.get("code") if failure.get("code") in ("INVALID_ARGUMENT", "WORKFLOW_INTERRUPTED") else "NODE_EXECUTION_FAILED",
                 "exception_type": redact_message(failure.get("exception_type", ""), data)[:200],
                 "message": redact_message(failure.get("message", "Workflow execution failed"), data),
             })

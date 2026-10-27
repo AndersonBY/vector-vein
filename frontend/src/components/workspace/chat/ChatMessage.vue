@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
+import { ref, watch, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { Share, LoadingFour, Redo, Delete, BranchTwo, Edit } from '@/icons'
@@ -192,8 +192,18 @@ watch(failedWorkflow, (failed) => {
   if (failed) activeKey.value = [`${props.mid}-workflow`]
 }, { immediate: true })
 const checkingStatus = ref(false)
+let disposed = false
+let workflowEpoch = 0
+let appendedRecordId = ''
+const currentWorkflow = (epoch, mid, cid) => !disposed && epoch === workflowEpoch && mid === props.mid && cid === props.cid
+const startPolling = () => {
+  clearInterval(checkStatusTimer.value)
+  checkStatusTimer.value = setInterval(pollWorkflowStatus, 1000)
+}
 const runWorkflow = async () => {
-  if (runningWorkflow.value || ['PAUSED', 'RUNNING', 'STOPPING'].includes(recordStatus.value)) return
+  if (disposed || runningWorkflow.value || ['PAUSED', 'QUEUED', 'RUNNING', 'STOPPING'].includes(recordStatus.value)) return
+  const epoch = ++workflowEpoch, mid = props.mid, cid = props.cid
+  checkingStatus.value = false
   runningWorkflow.value = true
   clearInterval(checkStatusTimer.value)
   recordStatus.value = ''
@@ -215,28 +225,32 @@ const runWorkflow = async () => {
       })
     }
 
+    if (!currentWorkflow(epoch, mid, cid)) return
     const newRecordId = response.data?.rid
 
     if (response.status == 200 && newRecordId) {
       submitted = true
       message.success(t('workspace.workflowSpace.submit_workflow_success'))
       runRecordId.value = newRecordId
+      recordStatus.value = 'RUNNING'
       emit('update:status', 'R')
-      checkStatusTimer.value = setInterval(pollWorkflowStatus, 1000)
+      startPolling()
     } else {
       message.error(t('workspace.workflowSpace.submit_workflow_failed'))
     }
   } catch {
-    message.error(t('workspace.workflowSpace.submit_workflow_failed'))
+    if (currentWorkflow(epoch, mid, cid)) message.error(t('workspace.workflowSpace.submit_workflow_failed'))
   } finally {
-    if (!submitted) runningWorkflow.value = false
+    if (currentWorkflow(epoch, mid, cid) && !submitted) runningWorkflow.value = false
   }
 }
 const pollWorkflowStatus = async () => {
-  if (checkingStatus.value) return
+  if (disposed || checkingStatus.value || !runRecordId.value) return
+  const epoch = workflowEpoch, mid = props.mid, cid = props.cid, rid = runRecordId.value
   checkingStatus.value = true
   try {
-    const response = await workflowAPI('check_status', { rid: runRecordId.value })
+    const response = await workflowAPI('check_status', { rid })
+    if (!currentWorkflow(epoch, mid, cid) || rid !== runRecordId.value) return
     if (response.status === 102 && response.msg === 'PAUSED') {
       recordStatus.value = 'PAUSED'
       workflowData.value = response.data
@@ -248,9 +262,16 @@ const pollWorkflowStatus = async () => {
     if (response.status === 202) {
       recordStatus.value = response.msg
       runningWorkflow.value = response.msg !== 'PAUSED'
+      workflowData.value = { ...workflowData.value, rid, status: response.msg,
+        data: { ...workflowData.value?.data, ...response.data } }
+      if (Array.isArray(workflowData.value.data.nodes)) {
+        const finished = response.data?.finished_nodes || []
+        workflowData.value.data.nodes = workflowData.value.data.nodes.map(node => finished.find(item => item.id === node.id) || node)
+      }
     }
     const status = getWorkflowRunStatus(response)
     if (!status) return
+    const wasActive = ['QUEUED', 'RUNNING', 'STOPPING', 'PAUSED'].includes(recordStatus.value) || props.status === 'R'
     clearInterval(checkStatusTimer.value)
     recordStatus.value = status
     workflowData.value = response.data || {}
@@ -258,27 +279,42 @@ const pollWorkflowStatus = async () => {
     runningWorkflow.value = false
     showingRecord.value = true
     emit('update:status', status === 'FINISHED' ? 'S' : 'Z')
-    activeKey.value = [`${props.mid}-workflow`]
-    if (status !== 'STOPPED') message[status === 'FAILED' ? 'error' : 'success'](t(
+    if (status === 'FAILED') activeKey.value = [`${props.mid}-workflow`]
+    if (wasActive && status !== 'STOPPED') message[status === 'FAILED' ? 'error' : 'success'](t(
       `workspace.workflowSpace.${status === 'FAILED' ? 'run_workflow_failed' : 'run_workflow_success'}`
     ))
     try {
       const msgResponse = await messageAPI('get', { mid: props.mid })
+      if (!currentWorkflow(epoch, mid, cid) || rid !== runRecordId.value) return
       if (msgResponse.status == 200) content.value = msgResponse.data.content
     } catch {
-      message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+      if (currentWorkflow(epoch, mid, cid)) message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
     }
-    if (status === 'FINISHED') emit('append-answer', props.mid)
+    if (currentWorkflow(epoch, mid, cid) && rid === runRecordId.value && status === 'FINISHED' && appendedRecordId !== rid) {
+      appendedRecordId = rid
+      emit('append-answer', mid, rid)
+    }
   } catch {
-    message.error({ key: `workflow-status-${props.mid}`,
+    if (currentWorkflow(epoch, mid, cid)) message.error({ key: `workflow-status-${props.mid}`,
       content: t('workspace.workflowSpace.check_workflow_status_retrying') })
   } finally {
-    checkingStatus.value = false
+    if (currentWorkflow(epoch, mid, cid)) checkingStatus.value = false
   }
 }
-if (recordStatus.value === 'PAUSED' && runRecordId.value) {
-  checkStatusTimer.value = setInterval(pollWorkflowStatus, 1000)
-}
+onMounted(() => {
+  watch([() => props.mid, () => props.cid, () => props.metadata?.record_id], () => {
+    workflowEpoch++
+    checkingStatus.value = false
+    loadingWorkflowRecord.value = false
+    clearInterval(checkStatusTimer.value)
+    runRecordId.value = props.metadata?.record_id || ''
+    recordStatus.value = props.metadata?.recordStatus || ''
+    runningWorkflow.value = ['QUEUED', 'RUNNING', 'STOPPING'].includes(recordStatus.value) || props.status === 'R'
+    if (props.contentType !== 'WKF' || props.anonymous || !runRecordId.value) return
+    startPolling()
+    void pollWorkflowStatus()
+  }, { immediate: true })
+})
 const alertType = computed(() => {
   if (displayedRecordStatus.value == 'FINISHED') {
     return 'success'
@@ -291,6 +327,7 @@ const alertType = computed(() => {
   }
 })
 const setWorkflowRecord = (record) => {
+  if (['FINISHED', 'FAILED', 'STOPPED'].includes(recordStatus.value) && record.status !== recordStatus.value) return
   workflowData.value = record
   runRecordId.value = record.rid
   recordStatus.value = record.status
@@ -299,20 +336,22 @@ const setWorkflowRecord = (record) => {
 
 const loadingWorkflowRecord = ref(false)
 const workflowPanelChange = async (key) => {
-  if (key.length > 0 && !loadingWorkflowRecord.value && !runningWorkflow.value &&
-      Object.keys(workflowData.value).length == 0 && props.metadata?.record_id?.length > 0) {
+  if (key.length > 0 && !loadingWorkflowRecord.value &&
+      !Array.isArray(workflowData.value?.data?.nodes) && runRecordId.value) {
     loadingWorkflowRecord.value = true
+    const epoch = workflowEpoch, mid = props.mid, cid = props.cid
     try {
-      const recordRequest = await workflowRunRecordAPI('get', { rid: props.metadata.record_id })
+      const recordRequest = await workflowRunRecordAPI('get', { rid: runRecordId.value })
+      if (!currentWorkflow(epoch, mid, cid)) return
       if (recordRequest.status == 200 && recordRequest.data) {
         setWorkflowRecord(recordRequest.data)
       } else {
         message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
       }
     } catch {
-      message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
+      if (currentWorkflow(epoch, mid, cid)) message.error(t('workspace.workflowSpace.get_workflow_record_failed'))
     } finally {
-      loadingWorkflowRecord.value = false
+      if (currentWorkflow(epoch, mid, cid)) loadingWorkflowRecord.value = false
     }
   }
 }
@@ -387,6 +426,8 @@ watch(() => props.status, async (newVal, oldVal) => {
 })
 
 onUnmounted(() => {
+  disposed = true
+  workflowEpoch++
   if (checkStatusTimer.value) {
     clearInterval(checkStatusTimer.value)
   }

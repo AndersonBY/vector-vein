@@ -9,6 +9,7 @@ const props = defineProps({
 const { t, te } = useI18n()
 const failures = computed(() => getWorkflowFailures(props.snapshot))
 const nodeTitle = (failure) => {
+  if (failure.code === 'WORKFLOW_INTERRUPTED') return t('workspace.workflowSpace.interrupted_title')
   const key = getWorkflowTaskTitleKey(failure.taskName)
   return failure.nodeName || (key && te(key) ? t(key) : failure.taskName) ||
     t('workspace.workflowSpace.failure_unknown_node')
@@ -23,7 +24,7 @@ const nodeTitle = (failure) => {
       <div v-if="failure.code || failure.exceptionType">
         {{ [failure.code, failure.exceptionType].filter(Boolean).join(' · ') }}
       </div>
-      <div class="workflow-failure-cause">{{ failure.message || t('workspace.workflowSpace.failure_no_details') }}</div>
+      <div class="workflow-failure-cause">{{ failure.code === 'WORKFLOW_INTERRUPTED' ? t('workspace.workflowSpace.interrupted_message') : failure.message || t('workspace.workflowSpace.failure_no_details') }}</div>
     </div>
     <div v-if="failures.length === 0">{{ t('workspace.workflowSpace.failure_no_details') }}</div>
     <div>{{ t('workspace.workflowSpace.failure_rerun_hint') }}</div>

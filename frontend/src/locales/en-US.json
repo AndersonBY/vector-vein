@@ -432,6 +432,8 @@
       "failure_no_details": "This record has no detailed error message.",
       "failure_rerun_hint": "Fix the problem, then run again. Earlier steps may already have made changes.",
       "check_workflow_status_retrying": "Unable to check workflow status. Retrying…",
+      "interrupted_title": "Execution interrupted",
+      "interrupted_message": "The previous execution process exited before this workflow finished. Completed outputs and files are retained. Check the results before deciding whether to run it again.",
       "maximize_output": "Maximize output area",
       "normalize_output": "Restore output area size",
       "related_workflows": "Related workflows",

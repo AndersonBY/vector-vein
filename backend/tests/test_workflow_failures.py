@@ -6,6 +6,7 @@ import pytest
 
 from utilities.workflow import Workflow
 from utilities.workflow import workflow as workflow_module
+from utilities import workflow_messages
 from utilities.workflow_errors import (
     WorkflowExecutionError, WorkflowInputError, add_failure, node_failure, workflow_error_payload,
 )
@@ -138,9 +139,17 @@ def test_failed_chat_metadata_is_json_error_and_record_is_saved_first(monkeypatc
     data = workflow_data("node")
     add_failure(data, node_failure(RuntimeError("offline"), data, "node", "tools.example"))
     record, events = install_record(monkeypatch, data)
-    message = SimpleNamespace(status="R", metadata={}, save=lambda: events.append("message"))
-    monkeypatch.setattr(workflow_module, "Message", SimpleNamespace(
-        get=lambda **kwargs: message, StatusTypes=SimpleNamespace(RUNNING_WORKFLOW="R", WORKFLOW_FAILED="Z", SUCCESS="S")))
+    record.rid = SimpleNamespace(hex="run-1")
+    message = SimpleNamespace(mid="message-1", status="R", metadata={"record_id": "run-1"})
+    def update(**kwargs):
+        def execute():
+            events.append("message")
+            message.status, message.metadata = kwargs["status"], kwargs["metadata"]
+            return 1
+        return SimpleNamespace(where=lambda *args: SimpleNamespace(execute=execute))
+    monkeypatch.setattr(workflow_messages, "Message", SimpleNamespace(
+        mid="mid", metadata="metadata", get_or_none=lambda *args: message, update=update,
+        StatusTypes=SimpleNamespace(RUNNING_WORKFLOW="R", WORKFLOW_FAILED="Z", SUCCESS="S")))
     assert Workflow(data).report_workflow_status(500, "tools.example")
     assert events == ["record", "cache", "message"]
     assert record.status == "FAILED" and message.status == "Z"
@@ -153,7 +162,7 @@ def test_failed_chat_metadata_is_json_error_and_record_is_saved_first(monkeypatc
 def test_message_projection_failure_does_not_lose_persisted_failure(monkeypatch):
     data = workflow_data("node")
     record, events = install_record(monkeypatch, data)
-    monkeypatch.setattr(workflow_module, "Message", SimpleNamespace(get=lambda **kwargs: (_ for _ in ()).throw(RuntimeError())))
+    monkeypatch.setattr(workflow_messages.Message, "get_or_none", lambda *args: (_ for _ in ()).throw(RuntimeError()))
     assert Workflow(data).report_workflow_status(500, "tools.example")
     assert record.status == "FAILED" and events == ["record", "cache"]
 

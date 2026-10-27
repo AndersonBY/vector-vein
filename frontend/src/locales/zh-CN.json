@@ -432,6 +432,8 @@
       "failure_no_details": "此记录没有详细错误信息。",
       "failure_rerun_hint": "修复问题后再运行。前面的步骤可能已经产生了实际变更。",
       "check_workflow_status_retrying": "暂时无法查询运行状态，正在重试…",
+      "interrupted_title": "运行中断",
+      "interrupted_message": "上次执行进程已退出，工作流未能完成。已完成的输出和文件已保留；请检查结果后决定是否重新运行。",
       "maximize_output": "最大化输出区域",
       "normalize_output": "恢复输出区域尺寸",
       "related_workflows": "相关工作流",

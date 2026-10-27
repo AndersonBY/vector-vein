@@ -2,17 +2,15 @@
 # @Date:   2023-04-13 18:51:34
 import uuid
 import time
-import json
 from copy import deepcopy
 from datetime import datetime
 from typing import List, Any, Union
 from functools import cached_property
 
 from models import Workflow as WorkflowModel
-from models import WorkflowRunRecord, Message
+from models import WorkflowRunRecord
 from utilities.config import cache
 from utilities.general import mprint_with_name
-from utilities.workflow_errors import workflow_error_payload
 from utilities.workflow_timeline import merge_timeline, update_timeline
 
 
@@ -546,24 +544,8 @@ class Workflow:
             return False
 
         try:
-            if workflow_record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
-                source_message_mid = workflow_record.source_message
-                source_message = Message.get(mid=source_message_mid)
-                if source_message.status == Message.StatusTypes.RUNNING_WORKFLOW:
-                    source_message.metadata["recordStatus"] = workflow_record.status
-                    # 如果是从聊天中调用的工作流，运行完成后先更新 message
-                    # If the workflow is called from a chat, update the message first after running
-                    if status == 200:
-                        output_contents = WorkflowData(workflow_record.data).output_contents
-                        source_message.metadata["workflow_result"] = "\n\n".join(
-                            f"# {item['title']}\n{item['value']}" if item["title"] else f"{item['value']}"
-                            for item in output_contents
-                        )
-                        source_message.status = Message.StatusTypes.SUCCESS
-                    else:
-                        source_message.metadata["workflow_result"] = json.dumps(workflow_error_payload(workflow_record), ensure_ascii=False)
-                        source_message.status = Message.StatusTypes.WORKFLOW_FAILED
-                    source_message.save()
+            from utilities.workflow_messages import project_workflow_message
+            project_workflow_message(workflow_record)
         except Exception as e:
             mprint.error(f"Workflow message update failed: {type(e).__name__}")
         return True

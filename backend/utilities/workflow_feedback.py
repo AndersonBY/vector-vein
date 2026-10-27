@@ -72,6 +72,8 @@ def finish_pausing(rid):
 
 def _activate(record, answers):
     data = deepcopy(record.data)
+    from utilities.workflow_recovery import claim_execution
+    claim_execution(data)
     data.setdefault("feedback_answers", {}).update(answers)
     for node in data.get("nodes", []):
         if node["id"] in answers:

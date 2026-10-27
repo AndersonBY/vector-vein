@@ -38,8 +38,10 @@ failure observed after a stop request; cancellation does not hide errors.
 Stopping does not kill worker processes or interrupt arbitrary Python, network,
 model, media, or external service calls. It does not reverse external side
 effects. An unresponsive admitted node keeps the run `STOPPING`. Active counts
-are persistent rather than time-limited: an abruptly terminated worker requires
-operational investigation and is never silently reported as drained. This
+are persistent rather than time-limited. On desktop restart, runs whose recorded
+execution processes have all exited are finalized as interrupted failures; see
+[Workflow execution recovery](workflow-recovery.md). Unknown or live execution
+owners are never silently reported as drained. This
 protocol applies to the current local Celery runner and does not copy the
 server reference implementation's credit settlement or worker-kill behavior.
 

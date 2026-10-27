@@ -754,6 +754,10 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
         : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } } : { status: 200 }
       await c.onAppendAnswer('workflow')
       await flush()
+      assert.deepEqual(c.messages.value.map(group => group[0].mid), ['root', 'workflow', 'other-tail'])
+      c.messages.value.pop()
+      await c.onAppendAnswer('workflow', 'finished-run')
+      await flush()
       assert.deepEqual(c.messages.value.map(group => group[0].mid), ['root', 'workflow', 'continued'])
       c.cancelAttempt()
     })
@@ -908,6 +912,28 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       globalThis.__chatFailureHarness.route.params.conversationId = 'cid'
       globalThis.__chatFailureHarness.route.query = {}
     }
+    let deferredDetail
+    request = async action => action === 'conversation__get' ? historyResponse('cid','workflow')
+      : action === 'message__append_answer' ? {status:200,data:{ai_message_mid:'continued'}}
+      : action === 'setting__get_port' ? {status:200,data:{port:9999}} : {status:200}
+    const deferredApp = renderer.createApp({setup(props,context) {
+      deferredDetail = detailComponent.setup(props,context)
+      return () => h('div')
+    }})
+    deferredApp.use(createPinia())
+    deferredApp.provide(ssrContextKey,{})
+    deferredApp.use(createI18n({legacy:false,locale:'en-US',messages:{'en-US':locale}}))
+    try {
+      deferredApp.mount({})
+      await flush()
+      deferredDetail.loading.value = true
+      await deferredDetail.onAppendAnswer('workflow','finished-run')
+      assert.equal(deferredDetail.messages.value.length,1)
+      deferredDetail.loading.value = false
+      await flush()
+      assert.equal(deferredDetail.messages.value.at(-1)[0].mid,'continued')
+      assert.equal(calls.findLast(item=>item.action==='message__append_answer').payload.record_id,'finished-run')
+    } finally { deferredApp.unmount() }
     let retries = 0
     const edits = []
     const questionProps = { cid: 'cid', mid: 'user-question', authorType: 'U', contentType: 'TXT', status: 'S',
@@ -1033,6 +1059,75 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
           : {status:200,data:{content:{text:'continued'}}}
         await poll(); assert.equal(c.recordStatus.value,'FINISHED'); assert.equal(appended,1)
       })
+      const component = (await server.ssrLoadModule('/src/components/workspace/chat/ChatMessage.vue')).default
+      const mountWorkflow = props => {
+        let c
+        const app = renderer.createApp({ setup(p, context) {
+          c = component.setup(props, context)
+          return () => h('div')
+        } }, props)
+        app.use(createPinia())
+        app.provide(ssrContextKey, {})
+        app.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': locale } }))
+        app.mount({})
+        return { c, app }
+      }
+      const restoredEvents = []
+      const restoredProps = reactive({ ...failedProps, status:'R', metadata:{record_id:'restored',recordStatus:'RUNNING'},
+        onAppendAnswer:(...args) => restoredEvents.push(args) })
+      const pending = deferred()
+      let checks = 0
+      request = async action => {
+        if (action === 'workflow__check_status') { checks++; return pending.promise }
+        return {status:200,data:{content:{text:'restored output'}}}
+      }
+      const restored = mountWorkflow(restoredProps)
+      try {
+        await poll()
+        assert.equal(checks,1, 'mount immediately queries without overlapping interval requests')
+        pending.resolve({status:202,msg:'RUNNING',data:{finished_nodes:[],node_timeline:{a:{status:'RUNNING'}}}})
+        await flush()
+        assert.equal(restored.c.runningWorkflow.value,true)
+        assert.deepEqual(restored.c.activeKey.value,[], 'progress stays collapsed')
+        assert.equal(restored.c.workflowData.value.data.node_timeline.a.status,'RUNNING')
+        request = async action => action === 'workflow__check_status'
+          ? {status:200,msg:'FINISHED',data:{data:{nodes:[]}}}
+          : {status:200,data:{content:{text:'restored output'}}}
+        await poll(); await poll()
+        assert.deepEqual(restoredEvents,[['history','restored']])
+        assert.equal(restored.c.runningWorkflow.value,false)
+        assert.equal(restored.c.content.value.text,'restored output')
+        assert.deepEqual(restored.c.activeKey.value,[])
+        restored.c.setWorkflowRecord({rid:'restored',status:'RUNNING',data:{nodes:[{id:'stale'}]}})
+        assert.equal(restored.c.recordStatus.value,'FINISHED', 'late record reads cannot regress a terminal run')
+        assert.deepEqual(restored.c.workflowData.value.data.nodes,[])
+        const stale = deferred()
+        request = async () => stale.promise
+        restoredProps.metadata = {record_id:'next-run',recordStatus:'RUNNING'}
+        await flush()
+        restored.app.unmount()
+        stale.resolve({status:200,msg:'FINISHED',data:{data:{nodes:[]}}})
+        await flush()
+        assert.equal(restoredEvents.length,1, 'leaving the chat invalidates in-flight results')
+      } finally { restored.app.unmount() }
+      request = async action => action === 'workflow__check_status'
+        ? {status:500,msg:'FAILED',data:{data:{nodes:[],failures:[{code:'WORKFLOW_INTERRUPTED'}]}}}
+        : {status:200,data:{content:{text:''}}}
+      const interrupted = mountWorkflow({...restoredProps,metadata:{record_id:'interrupted',recordStatus:'RUNNING'}})
+      await flush()
+      assert.equal(interrupted.c.recordStatus.value,'FAILED')
+      assert.equal(interrupted.c.runningWorkflow.value,false)
+      assert.equal(restoredEvents.length,1)
+      interrupted.app.unmount()
+      const lateSubmission = deferred()
+      request = async () => lateSubmission.promise
+      const submitted = mountWorkflow({...failedProps,status:'S',metadata:{selected_workflow:{type:'Workflow',wid:'wf',params:{}}},
+        'onUpdate:status':() => restoredEvents.push('unexpected')})
+      const submission = submitted.c.runWorkflow()
+      submitted.app.unmount()
+      lateSubmission.resolve({status:200,data:{rid:'late'}})
+      await submission
+      assert.equal(restoredEvents.length,1)
     } finally { globalThis.setInterval = previousInterval }
     const legacyFailure = await render('/src/components/workspace/chat/ChatMessage.vue', {
       ...failedProps, contentType: 'TXT', metadata: {}, loading: true,

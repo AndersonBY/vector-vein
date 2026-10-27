@@ -139,6 +139,11 @@ def guarded_execution(func):
                 _clear_continuation()
                 return deepcopy(record.data) if stale or completed else data
             if record is not None:
+                from utilities.workflow_recovery import claim_execution, OWNERS
+                data[OWNERS] = record.data.get(OWNERS, [])
+                claim_execution(data)
+                saved = {**record.data, OWNERS: data[OWNERS]}
+                WorkflowRunRecord.update(data=saved).where(WorkflowRunRecord.rid == rid).execute()
                 cache.set(_key(rid, "active"), cache.get(_key(rid, "active"), 0) + 1)
         result = None
         try:
@@ -166,6 +171,7 @@ def guarded_execution(func):
                         if snapshot.get("wid"):
                             saved["wid"] = snapshot["wid"]
                         saved.pop("_batch_collecting", None)
+                        saved[OWNERS] = list(current.data.get(OWNERS, []))
                         merge_timeline(saved)
                         WorkflowRunRecord.update(data=saved).where(
                             WorkflowRunRecord.rid == rid, ~WorkflowRunRecord.status.in_(TERMINAL)).execute()

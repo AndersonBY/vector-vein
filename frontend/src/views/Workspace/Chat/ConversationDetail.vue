@@ -449,7 +449,7 @@ const sendMessage = async (content, needTitle = false, submittedFiles = attachme
   }
 }
 
-const requestAssistant = async (action, mid, groupIndex, editedContent) => {
+const requestAssistant = async (action, mid, groupIndex, editedContent, recordId) => {
   if (loading.value || sending.value || receiving.value || forking.value || deletingMid.value || disposed) return
   const group = messages.value[groupIndex]
   const original = group?.[messagePagination.get(groupIndex) ?? (group.length - 1)]
@@ -460,10 +460,15 @@ const requestAssistant = async (action, mid, groupIndex, editedContent) => {
   const epoch = ++attemptEpoch
   const cid = conversationId.value
   try {
-    const res = await messageAPI(action, { cid, mid, ...(action === 'edit' ? { content: editedContent } : {}) })
+    const res = await messageAPI(action, { cid, mid, ...(action === 'edit' ? { content: editedContent } : {}),
+      ...(recordId ? { record_id: recordId } : {}) })
     if (!currentAttempt(epoch)) {
-      if (res.status === 200) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
+      if (res.status === 200 && res.data?.ai_message_mid) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
         code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
+      return
+    }
+    if (res.status === 200 && res.data?.already_appended) {
+      await fetchConversation(cid)
       return
     }
     if (res.status !== 200 || !res.data?.ai_message_mid || (action === 'edit' && !res.data.user_message_mid)) throw new Error('request failed')
@@ -485,7 +490,23 @@ const requestAssistant = async (action, mid, groupIndex, editedContent) => {
     if (currentAttempt(epoch)) { sending.value = false; editingMid.value = '' }
   }
 }
-const onAppendAnswer = mid => requestAssistant('append_answer', mid)
+let pendingWorkflowAnswer = null
+const onAppendAnswer = (mid, recordId) => {
+  const tail = messages.value.at(-1)
+  const index = messages.value.length - 1
+  if (tail?.[messagePagination.get(index) ?? (tail.length - 1)]?.mid !== mid) return
+  if (loading.value) {
+    pendingWorkflowAnswer = { mid, recordId, cid: conversationId.value }
+    return
+  }
+  return requestAssistant('append_answer', mid, undefined, undefined, recordId)
+}
+watch(loading, value => {
+  if (value || !pendingWorkflowAnswer) return
+  const pending = pendingWorkflowAnswer
+  pendingWorkflowAnswer = null
+  if (pending.cid === conversationId.value) void onAppendAnswer(pending.mid, pending.recordId)
+})
 
 const editable = reactive({
   onEnd: async () => {

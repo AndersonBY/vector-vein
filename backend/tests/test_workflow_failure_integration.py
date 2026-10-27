@@ -70,18 +70,15 @@ try:
         def broken(*args, **kwargs):
             raise RuntimeError("chat projection unavailable")
 
-        message = SimpleNamespace(status="R", metadata={}, save=broken)
-        replacement = SimpleNamespace(get=broken if operation == "lookup" else lambda **kwargs: message,
-                                      StatusTypes=SimpleNamespace(RUNNING_WORKFLOW="R", WORKFLOW_FAILED="Z", SUCCESS="S"))
-        with patch("utilities.workflow.workflow.Message", replacement):
+        message = SimpleNamespace(mid=record.rid, status="R", metadata={"record_id": record.rid.hex})
+        with patch("utilities.workflow_messages.Message.get_or_none",
+                   side_effect=broken if operation == "lookup" else lambda *args: message), \
+             patch("utilities.workflow_messages.Message.update", side_effect=broken):
             assert Workflow(deepcopy(data)).report_workflow_status(500, "tools.example")
         database.close()
         saved = WorkflowRunRecord.get_by_id(record.rid)
         assert saved.status == "FAILED"
         assert saved.data["failures"][0]["message"] == "original failure"
-        if operation == "save":
-            assert message.status == "Z"
-            assert json.loads(message.metadata["workflow_result"])["status"] == "FAILED"
         results.append(operation)
     print(json.dumps(results))
 finally:

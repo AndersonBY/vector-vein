@@ -52,6 +52,8 @@ class MainServer:
         # Initialize database
         run_migrations()
         create_tables()
+        from utilities.workflow_recovery import recover_interrupted_runs
+        recover_interrupted_runs()
 
         mprint(f"TIKTOKEN_CACHE_DIR: {os.environ['TIKTOKEN_CACHE_DIR']}")
         mprint(f"Debug: {self.DEBUG}")
