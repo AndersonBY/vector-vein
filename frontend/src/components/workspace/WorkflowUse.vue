@@ -22,6 +22,7 @@ import WorkflowRunTimeline from "@/components/workspace/WorkflowRunTimeline.vue"
 import WorkflowRunArtifacts from "@/components/workspace/WorkflowRunArtifacts.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
 import TextOutput from "@/components/TextOutput.vue"
+import HtmlPreview from "@/components/HtmlPreview.vue"
 import {
   hasShowFields,
   checkFieldsValid,
@@ -823,7 +824,7 @@ function clearWorkflow() {
       </a-typography-title>
       <WorkflowRunTimeline v-if="showTimeline && (running || showingRecord)" :snapshot="timelineSnapshot" :active="running" :status="recordStatus" :fresh="timelineFresh" />
       <a-flex vertical gap="small">
-        <a-spin :spinning="running && node.type !== 'Document' && !node.finished && node.field_type != 'typography-paragraph'"
+        <a-spin :spinning="running && !['Document', 'Html'].includes(node.type) && !node.finished && node.field_type != 'typography-paragraph'"
           v-show="node.type !== 'Document' || !Array.isArray(node.data?.artifacts) || !node.data.artifacts.some(artifact => artifact?.path === node.data.template?.output?.value)"
           class="draggable-item" v-for="(node, index) in outputNodes" :key="`node-${node.id}-${index}`">
           <div v-if="node.type == 'Text'">
@@ -863,7 +864,7 @@ function clearWorkflow() {
           </div>
 
           <div v-else-if="node.type == 'Html'">
-            <iframe class="html-iframe" :src="node.data.template.output.value" />
+            <HtmlPreview :url="node.data.template.output.value" :title="node.data.title || ''" :pending="running && !node.finished" />
           </div>
 
           <div v-else>
@@ -903,13 +904,6 @@ function clearWorkflow() {
 
 .ui-special-item {
   margin-bottom: 24px;
-}
-
-.html-iframe {
-  border: 2px solid #dedede;
-  border-radius: 10px;
-  width: 100%;
-  min-height: 80vh;
 }
 
 .text-output-title {

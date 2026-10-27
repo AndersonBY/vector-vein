@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from "vue"
+import { computed } from "vue"
 import { Dot } from '@/icons'
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
@@ -7,7 +7,9 @@ import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"
 import EchartsRenderer from "@/components/workspace/EchartsRenderer.vue"
 import TableRenderer from "@/components/workspace/TableRenderer.vue"
 import TextOutput from "@/components/TextOutput.vue"
+import HtmlPreview from "@/components/HtmlPreview.vue"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'
+import { deepCopy } from '@/utils/util'
 
 const props = defineProps({
   workflowData: {
@@ -16,8 +18,7 @@ const props = defineProps({
   }
 })
 
-const uiDesign = getUIDesignFromWorkflow(props.workflowData)
-const outputNodes = ref(uiDesign.outputNodes)
+const outputNodes = computed(() => getUIDesignFromWorkflow(deepCopy(props.workflowData)).outputNodes)
 </script>
 
 <template>
@@ -71,7 +72,7 @@ const outputNodes = ref(uiDesign.outputNodes)
 
       <template v-else-if="node.type == 'Html'">
         <a-col :span="24">
-          <iframe class="html-iframe" :src="node.data.template.output.value" style="width: 100%;min-height: 50vh;" />
+          <HtmlPreview :url="node.data.template.output.value" :title="node.data.title || ''" />
         </a-col>
       </template>
 
@@ -87,13 +88,6 @@ const outputNodes = ref(uiDesign.outputNodes)
 </template>
 
 <style scoped>
-.html-iframe {
-  border: 2px solid #dedede;
-  border-radius: 10px;
-  width: 100%;
-  min-height: 80vh;
-}
-
 .text-output-title {
   color: #005b79;
 }

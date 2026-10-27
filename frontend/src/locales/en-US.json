@@ -183,6 +183,15 @@
       "load_failed": "Could not load the workflow preview.",
       "retry": "Retry"
     },
+    "htmlPreview": {
+      "title": "HTML preview",
+      "loading": "Loading preview",
+      "load_failed": "Unable to load HTML preview",
+      "retry": "Retry",
+      "expand": "Expand preview",
+      "restore": "Exit expanded preview",
+      "fullscreen_failed": "Unable to expand preview. Please try again."
+    },
     "chatSpace": {
       "search_placeholder": "Search chat history",
       "search_results": "Search results ({count})",

@@ -8,7 +8,7 @@ import shutil
 import hashlib
 import threading
 from pathlib import Path
-from urllib.parse import unquote, urlparse
+from urllib.parse import quote, unquote, urlparse
 from http.server import SimpleHTTPRequestHandler, HTTPServer
 
 from utilities.config import config
@@ -40,10 +40,6 @@ class StaticFileServer:
                 file_path = str(Path(static_folder_path, path.strip("/")))
                 return file_path
 
-            def do_GET(self):
-                self.path = unquote(self.path)
-                super().do_GET()
-
         self.static_folder_path = Path(static_folder_path)
         self.request_handler_class = MyRequestHandler
         self.static_file_server = None
@@ -51,7 +47,8 @@ class StaticFileServer:
 
     @staticmethod
     def get_file_url(file_path):
-        return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{file_path}"
+        path = quote(str(file_path).replace("\\", "/"), safe="/:")
+        return f"http://{StaticFileServer.host}:{StaticFileServer.port}/{path}"
 
     def start(self, block: bool = False):
         if self.static_file_server is None:
