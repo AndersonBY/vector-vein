@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Setting } from '@icon-park/vue-next'
+import { Setting } from '@/icons'
 
 const { t } = useI18n()
 const temperatureNumber = defineModel()

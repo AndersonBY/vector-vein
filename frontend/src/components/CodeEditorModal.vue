@@ -6,7 +6,7 @@ import { python } from '@codemirror/lang-python'
 import { oneDark } from '@codemirror/theme-one-dark'
 import { EditorView } from "@codemirror/view"
 import { Codemirror } from 'vue-codemirror'
-import { FileCode } from '@icon-park/vue-next'
+import { FileCode } from '@/icons'
 
 defineComponent({
   name: 'CodeEditorModal',

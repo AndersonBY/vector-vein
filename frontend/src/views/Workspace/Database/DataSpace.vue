@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { Search } from '@icon-park/vue-next'
+import { Search } from '@/icons'
 import VectorDatabaseTable from "@/components/workspace/database/VectorDatabaseTable.vue"
 import RelationalDatabaseTable from '@/components/workspace/database/RelationalDatabaseTable.vue'
 import WorkspacePageHero from '@/components/workspace/WorkspacePageHero.vue'

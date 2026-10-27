@@ -14,7 +14,7 @@ import {
   Delete,
   ListOne,
   ViewGridCard,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"

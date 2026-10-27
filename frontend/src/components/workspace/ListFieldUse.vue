@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne } from '@/icons'
 
 const listValue = defineModel()
 

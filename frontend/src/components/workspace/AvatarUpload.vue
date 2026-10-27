@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { InboxOut, LoadingFour } from '@icon-park/vue-next'
+import { InboxOut, LoadingFour } from '@/icons'
 import { message } from 'ant-design-vue'
 
 const props = defineProps({

@@ -1,7 +1,7 @@
 <script setup>
 import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne } from '@/icons'
 import BaseField from '@/components/nodes/BaseField.vue'
 
 const props = defineProps({

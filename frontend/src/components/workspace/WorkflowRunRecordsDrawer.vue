@@ -12,7 +12,7 @@ import {
   Timeline,
   ListNumbers,
   HourglassFull,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { formatTime } from "@/utils/util"
 import WorkflowRecordsStatusTag from "@/components/workspace/WorkflowRecordStatusTag.vue"
 import { workflowRunRecordAPI } from "@/api/workflow"

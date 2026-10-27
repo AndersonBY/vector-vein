@@ -2,7 +2,7 @@
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
+import { AddOne, ReduceOne, Edit } from '@/icons'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'

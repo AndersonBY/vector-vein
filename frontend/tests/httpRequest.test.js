@@ -50,7 +50,7 @@ test('HTTP request is exposed by the manifest with complete English and Chinese 
   const server = await createServer({
     configFile: false, root: fileURLToPath(new URL('..', import.meta.url)),
     resolve: { alias: { '@': fileURLToPath(new URL('../src', import.meta.url)) } },
-    server: { middlewareMode: true }, optimizeDeps: { noDiscovery: true }, appType: 'custom',
+    server: { middlewareMode: true, hmr: false }, optimizeDeps: { noDiscovery: true }, appType: 'custom',
   })
   try {
     const { plannedNodeManifest } = await server.ssrLoadModule('/src/config/nodeManifest.js')
@@ -66,7 +66,10 @@ test('HTTP request is exposed by the manifest with complete English and Chinese 
     const labels = messages.components.nodes.tools.HttpRequest
     for (const name of ['title', 'description', ...Object.keys(createTemplateData().template),
       ...['none', 'json', 'text', 'form'].map(value => `body_type_${value}`),
-      'headers_tip', 'query_params_tip', 'body_tip', 'fail_on_http_error_tip', 'response_json_tip']) {
+      'headers_tip', 'query_params_tip', 'body_tip', 'fail_on_http_error_tip', 'response_json_tip',
+      'rows_mode', 'key_column', 'value_column', 'value_type', 'text_value', 'add_pair', 'remove_pair',
+      'connected_value', 'body_unused', 'typed_value_tip', 'invalid_json', 'object_required', 'duplicate_key',
+      'empty_key', 'invalid_header', 'query_value', 'form_value']) {
       assert.equal(typeof labels[name], 'string', `${locale}: ${name}`)
       assert.ok(labels[name].length > 0)
     }

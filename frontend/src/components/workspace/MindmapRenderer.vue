@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUpdated, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { DownPicture, MindMapping } from '@icon-park/vue-next'
+import { DownPicture, MindMapping } from '@/icons'
 import { Transformer } from 'markmap-lib/no-plugins'
 import { pluginFrontmatter } from 'markmap-lib/plugins'
 import { Markmap, loadCSS, loadJS } from 'markmap-view'

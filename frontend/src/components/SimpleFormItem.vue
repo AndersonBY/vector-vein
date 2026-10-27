@@ -1,5 +1,5 @@
 <script setup>
-import { Correct, Error } from '@icon-park/vue-next'
+import { Correct, Error } from '@/icons'
 
 const value = defineModel()
 

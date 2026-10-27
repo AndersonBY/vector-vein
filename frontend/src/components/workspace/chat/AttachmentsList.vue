@@ -1,5 +1,5 @@
 <script setup>
-import { FileSuccess, Close } from '@icon-park/vue-next'
+import { FileSuccess, Close } from '@/icons'
 
 const props = defineProps({
   removable: {

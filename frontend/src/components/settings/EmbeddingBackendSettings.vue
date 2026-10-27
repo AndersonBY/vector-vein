@@ -2,7 +2,7 @@
 import { computed, reactive, ref, toRaw, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Edit, Delete } from '@icon-park/vue-next'
+import { Edit, Delete } from '@/icons'
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import { deepCopy } from '@/utils/util'
 

@@ -2,7 +2,7 @@
 import { onBeforeMount, ref, reactive, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { WholeSiteAccelerator, TagOne, Time, FullSelection } from '@icon-park/vue-next'
+import { WholeSiteAccelerator, TagOne, Time, FullSelection } from '@/icons'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import InputSearch from "@/components/InputSearch.vue"
 import TextOutput from "@/components/TextOutput.vue"

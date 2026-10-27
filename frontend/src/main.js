@@ -15,7 +15,7 @@ import i18n from '@/locales/index'
 import { getPageTitle } from '@/utils/title'
 
 import 'ant-design-vue/dist/reset.css'
-import '@icon-park/vue-next/styles/index.css'
+import '@/icons/icons.css'
 
 const app = createApp(App)
 

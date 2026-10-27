@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, shallowRef, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Code, CodeDownload, Copy } from '@icon-park/vue-next'
+import { Code, CodeDownload, Copy } from '@/icons'
 import { python } from '@codemirror/lang-python'
 import { javascript } from '@codemirror/lang-javascript'
 import { oneDark } from '@codemirror/theme-one-dark'

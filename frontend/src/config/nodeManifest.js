@@ -14,7 +14,7 @@ import {
   RadarThree,
   CircleFourLine,
   CoordinateSystem,
-} from '@icon-park/vue-next'
+} from '@/icons'
 
 import { FEATURE_FLAGS } from '@/config/featureFlags'
 import { localNodeCategoryManifest, localPlannedNodeManifest } from '@/config/localNodeManifest'

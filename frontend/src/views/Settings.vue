@@ -17,7 +17,7 @@ import {
   Communication,
   DatabaseNetworkPoint,
   Api,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useModelCatalogStore } from '@/stores/modelCatalog'

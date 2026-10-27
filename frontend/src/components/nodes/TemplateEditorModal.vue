@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Edit, BookmarkOne } from '@icon-park/vue-next'
+import { Edit, BookmarkOne } from '@/icons'
 
 const props = defineProps({
   fields: {

@@ -13,7 +13,7 @@ import {
   FileCabinet,
   LoadingFour,
   DatabaseSetting,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 import { formatTime } from '@/utils/util'
 

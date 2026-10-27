@@ -2,7 +2,7 @@
 import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
-import { Edit } from '@icon-park/vue-next'
+import { Edit } from '@/icons'
 import { nonFormItemsTypes } from '@/utils/workflow'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'

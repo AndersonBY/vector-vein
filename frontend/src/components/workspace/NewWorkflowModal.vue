@@ -1,7 +1,7 @@
 <script setup>
 import { ref, defineComponent } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne } from '@icon-park/vue-next'
+import { AddOne } from '@/icons'
 
 defineComponent({
   name: 'NewWorkflowModal',

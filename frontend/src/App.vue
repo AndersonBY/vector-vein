@@ -280,8 +280,8 @@ body {
   padding-top: 0;
 }
 
-.ant-btn>.i-icon+span,
-.ant-btn>span+.i-icon {
+.ant-btn>.vv-icon+span,
+.ant-btn>span+.vv-icon {
   margin-inline-start: 8px;
 }
 

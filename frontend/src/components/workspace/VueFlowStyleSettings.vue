@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NodeRound } from '@icon-park/vue-next'
+import { NodeRound } from '@/icons'
 
 const emit = defineEmits(['save'])
 

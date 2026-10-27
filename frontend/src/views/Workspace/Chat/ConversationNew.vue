@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { Send, Link } from '@icon-park/vue-next'
+import { Send, Link } from '@/icons'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter, useRoute } from "vue-router"

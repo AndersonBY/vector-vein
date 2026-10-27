@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { message } from 'ant-design-vue'
-import { DoubleRight, DoubleLeft } from '@icon-park/vue-next'
+import { DoubleRight, DoubleLeft } from '@/icons'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"

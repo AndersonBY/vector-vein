@@ -1,0 +1,12 @@
+.vv-icon {
+  display: inline-block;
+  vertical-align: -0.125em;
+}
+
+.vv-icon-spin {
+  animation: vv-icon-spin 1s linear infinite;
+}
+
+@keyframes vv-icon-spin {
+  to { transform: rotate(360deg); }
+}

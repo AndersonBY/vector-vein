@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Refresh } from '@icon-park/vue-next'
+import { Refresh } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserRelationalDatabasesStore } from "@/stores/userRelationalDatabase"
 import BaseNode from '@/components/nodes/BaseNode.vue'

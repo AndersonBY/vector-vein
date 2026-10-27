@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne } from '@/icons'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import { createTemplateData } from './TextReplace'

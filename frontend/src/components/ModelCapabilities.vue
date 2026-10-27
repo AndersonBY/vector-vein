@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { theme, Tooltip } from 'ant-design-vue'
-import { Check, CloseSmall, Help } from '@icon-park/vue-next'
+import { Check, CloseSmall, Help } from '@/icons'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { resolveModelCapabilities } from '@/utils/modelCapabilities'
 
@@ -69,7 +69,7 @@ const featureDescription = key => {
 .features { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0; padding: 0; list-style: none; }
 .feature { display: inline-flex; align-items: center; gap: 6px; color: var(--capability-secondary); }
 .feature.supported { color: var(--capability-text); }
-.feature.supported :deep(.i-icon) { color: var(--capability-accent); }
+.feature.supported :deep(.vv-icon) { color: var(--capability-accent); }
 .feature:focus-visible { outline: 2px solid var(--capability-accent); outline-offset: 4px; border-radius: 2px; }
 .limits { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 12px 0 0; }
 .limits > div { display: flex; align-items: baseline; gap: 10px; }

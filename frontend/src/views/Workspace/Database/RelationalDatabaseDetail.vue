@@ -10,7 +10,7 @@ import {
   LoadingFour,
   Delete,
   Upload,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import SQLInteract from '@/components/workspace/database/SQLInteract.vue'
 import { formatTime } from '@/utils/util'
 import { statusColorMap } from '@/utils/common'

@@ -23,7 +23,7 @@ test('workflow stop guards duplicate and stale requests, retries failures, and p
       if (!['WorkflowUse.vue', 'WorkflowRunRecordsDrawer.vue'].some(name => id.endsWith(name))) return
       return source.replace(/from (['"])(@[^'"]+|vue-router|ant-design-vue)\1/g, (all, quote, name) => {
         if (!name.startsWith('@/') && !['vue-router', 'ant-design-vue'].includes(name)) return all
-        if (name === '@/utils/workflowFailures') return all
+        if (['@/utils/workflowFailures', '@/icons', '@/components/nodes/tools/_httpRequestShared.js'].includes(name)) return all
         return `from "virtual:stop:${name}"`
       })
     }, resolveId(id) { if (id.startsWith('virtual:stop:')) return '\0' + id }, load(id) {
@@ -81,6 +81,17 @@ test('workflow stop guards duplicate and stale requests, retries failures, and p
       await c.checkWorkflowRunningStatus()
       assert.equal(c.outputNodes.value[0].data.template.text.value,'')
       assert.equal(c.running.value,false)
+
+      const invalidHttp = { id: 'request', type: 'HttpRequest', data: { template: { query_params: { value: '{' } } } }
+      c.savedWorkflow.value = { version: 1, data: { nodes: [invalidHttp, definition] } }
+      c.currentWorkflow.value = { version: 1, data: { nodes: [invalidHttp, definition] } }
+      c.outputNodes.value = [{ ...definition, finished: true, data: { template: { text: { value: 'retained until a valid run' } } } }]
+      const beforeInvalid = calls.length
+      await c.runWorkflow()
+      assert.equal(calls.length, beforeInvalid)
+      assert.equal(c.running.value, false)
+      assert.equal(c.outputNodes.value[0].data.template.text.value, 'retained until a valid run')
+      assert.match(notices.at(-1)[1], /query_params.*invalid_json/)
 
       const feedbackNode = id => ({id,type:'HumanFeedback',category:'controlFlows',data:{template:{human_input:{value:''},hint_message:{value:'<script>hint</script>'}}}})
       const pausedRecord = {rid:'paused',status:'PAUSED',data:{nodes:[feedbackNode('first'),feedbackNode('later'),definition],pending_feedback_nodes:['first']}}

@@ -38,15 +38,15 @@ importers:
       '@dagrejs/dagre':
         specifier: ^3.1.1
         version: 3.1.1
-      '@icon-park/vue-next':
-        specifier: ^1.4.2
-        version: 1.4.2(vue@3.5.44)
       '@liripeng/vue-audio-player':
         specifier: ^2.0.4
         version: 2.0.4
       '@makerbi/xmind-generator':
         specifier: ^1.0.1
         version: 1.0.1
+      '@phosphor-icons/vue':
+        specifier: ^2.2.1
+        version: 2.2.1(vue@3.5.44)
       '@vscode/markdown-it-katex':
         specifier: ^1.1.2
         version: 1.1.2
@@ -363,12 +363,6 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
-  '@icon-park/vue-next@1.4.2':
-    resolution: {integrity: sha512-+QklF255wkfBOabY+xw6FAI0Bwln/RhdwCunNy/9sKdKuChtaU67QZqU67KGAvZUTeeBgsL+yaHHxqfQeGZXEQ==}
-    engines: {node: '>= 8.0.0', npm: '>= 5.0.0'}
-    peerDependencies:
-      vue: 3.x
-
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
 
@@ -455,6 +449,12 @@ packages:
 
   '@oxc-project/types@0.154.0':
     resolution: {integrity: sha512-KYOUGQFlLWR+s4QMV2Q9ko38TZm7EdO87Qm7rvZLqk/webse/cDjtyxKhg/47l0byCbs/k46LT8qc4PKjAikzA==}
+
+  '@phosphor-icons/vue@2.2.1':
+    resolution: {integrity: sha512-3RNg1utc2Z5RwPKWFkW3eXI/0BfQAwXgtFxPUPeSzi55jGYUq16b+UqcgbKLazWFlwg5R92OCLKjDiJjeiJcnA==}
+    engines: {node: '>=14'}
+    peerDependencies:
+      vue: '>=3.2.39'
 
   '@pkgr/core@0.2.9':
     resolution: {integrity: sha512-QNqXyfVS2wm9hweSYD2O7F0G06uurj9kZ96TRQE5Y9hU7+tgdZwIkbAKc5Ocy1HxEY2kuDQa6cQ1WRs/O5LFKA==}
@@ -2413,10 +2413,6 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@icon-park/vue-next@1.4.2(vue@3.5.44)':
-    dependencies:
-      vue: 3.5.44
-
   '@iconify/types@2.0.0': {}
 
   '@iconify/utils@3.1.4':
@@ -2518,6 +2514,10 @@ snapshots:
       '@chevrotain/types': 11.1.2
 
   '@oxc-project/types@0.154.0': {}
+
+  '@phosphor-icons/vue@2.2.1(vue@3.5.44)':
+    dependencies:
+      vue: 3.5.44
 
   '@pkgr/core@0.2.9': {}
 

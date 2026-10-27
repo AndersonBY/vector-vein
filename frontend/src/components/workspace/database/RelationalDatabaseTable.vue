@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { LoadingFour, Delete, Add } from '@icon-park/vue-next'
+import { LoadingFour, Delete, Add } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserRelationalDatabasesStore } from "@/stores/userRelationalDatabase"
 import { statusColorMap } from '@/utils/common'

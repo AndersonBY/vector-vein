@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, computed, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { DocDetail, DatabaseSetting, FileCabinet, TableFile, Plus, Delete } from '@icon-park/vue-next'
+import { DocDetail, DatabaseSetting, FileCabinet, TableFile, Plus, Delete } from '@/icons'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import { databaseColumnTypes } from '@/utils/common'
 import { relationalDatabaseAPI, relationalDatabaseTableAPI } from '@/api/database'

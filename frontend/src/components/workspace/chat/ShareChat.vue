@@ -2,7 +2,7 @@
 import { ref, reactive, watch, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Share, LinkOne } from '@icon-park/vue-next'
+import { Share, LinkOne } from '@/icons'
 import ChatMessage from '@/components/workspace/chat/ChatMessage.vue'
 import CopyButton from '@/components/CopyButton.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'

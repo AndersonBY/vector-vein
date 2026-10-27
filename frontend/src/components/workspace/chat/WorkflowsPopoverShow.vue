@@ -1,7 +1,7 @@
 <script setup>
 import { reactive, watch } from "vue"
 import { useI18n } from 'vue-i18n'
-import { WholeSiteAccelerator } from '@icon-park/vue-next'
+import { WholeSiteAccelerator } from '@/icons'
 import IconButton from '@/components/IconButton.vue'
 
 const props = defineProps({

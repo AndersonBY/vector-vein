@@ -2,7 +2,7 @@
 import { ref, reactive, toRaw, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
-import { Delete } from '@icon-park/vue-next'
+import { Delete } from '@/icons'
 import { deepCopy, hashObject } from '@/utils/util'
 import { settingAPI } from "@/api/user"
 import ModelEndpointTest from '@/components/settings/ModelEndpointTest.vue'

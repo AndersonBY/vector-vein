@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { HandleSquare, Voice } from '@icon-park/vue-next'
+import { HandleSquare, Voice } from '@/icons'
 import { message } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { hardwareAPI } from '@/api/user'

@@ -2,7 +2,7 @@
 import { onBeforeMount, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { WholeSiteAccelerator, TagOne, Time } from '@icon-park/vue-next'
+import { WholeSiteAccelerator, TagOne, Time } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'

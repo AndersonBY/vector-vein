@@ -2,7 +2,7 @@
 import { ref, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
-import { ExpandLeft, ExpandRight } from '@icon-park/vue-next'
+import { ExpandLeft, ExpandRight } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 

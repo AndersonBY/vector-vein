@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { RobotOne } from '@icon-park/vue-next'
+import { RobotOne } from '@/icons'
 import { useRouter } from "vue-router"
 import ModelTag from '@/components/workspace/chat/ModelTag.vue'
 import { formatTime } from '@/utils/util'

@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router"
 import { message } from 'ant-design-vue'
-import { EditTwo, CloseOne, Share } from '@icon-park/vue-next'
+import { EditTwo, CloseOne, Share } from '@/icons'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import AvatarUpload from '@/components/workspace/AvatarUpload.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'

@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, toRaw } from "vue"
-import { Delete } from '@icon-park/vue-next'
+import { Delete } from '@/icons'
 import { useI18n } from 'vue-i18n'
 import { deepCopy } from '@/utils/util'
 

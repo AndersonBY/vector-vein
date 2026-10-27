@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Edit } from '@icon-park/vue-next'
+import { Edit } from '@/icons'
 import LLMStandardSettings from "@/components/settings/LLMStandardSettings.vue"
 
 const props = defineProps({

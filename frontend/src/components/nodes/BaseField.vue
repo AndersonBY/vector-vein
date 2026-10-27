@@ -2,7 +2,7 @@
 import { watch, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Handle, Position } from '@vue-flow/core'
-import { CloseOne, Edit, PreviewOpen, PreviewCloseOne, Info } from '@icon-park/vue-next'
+import { CloseOne, Edit, PreviewOpen, PreviewCloseOne, Info } from '@/icons'
 import TemperatureInput from '@/components/nodes/TemperatureInput.vue'
 
 const props = defineProps({

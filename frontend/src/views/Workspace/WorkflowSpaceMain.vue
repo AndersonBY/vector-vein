@@ -2,7 +2,7 @@
 import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { User, MoreApp } from '@icon-park/vue-next'
+import { User, MoreApp } from '@/icons'
 import { getFullUrl } from "@/utils/util"
 import MyWorkflows from '@/components/workspace/MyWorkflows.vue'
 import WorkflowTemplatesMarket from "@/components/workspace/WorkflowTemplatesMarket.vue"

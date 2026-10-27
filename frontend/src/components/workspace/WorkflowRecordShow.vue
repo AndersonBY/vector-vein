@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue"
-import { Dot } from '@icon-park/vue-next'
+import { Dot } from '@/icons'
 import AudioPlayer from "@/components/workspace/AudioPlayer.vue"
 import MindmapRenderer from "@/components/workspace/MindmapRenderer.vue"
 import MermaidRenderer from "@/components/workspace/MermaidRenderer.vue"

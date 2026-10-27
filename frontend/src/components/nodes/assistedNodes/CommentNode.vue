@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from 'vue'
-import { Delete } from '@icon-park/vue-next'
+import { Delete } from '@/icons'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import { NodeResizer } from '@vue-flow/node-resizer'
 import { createTemplateData } from './CommentNode'

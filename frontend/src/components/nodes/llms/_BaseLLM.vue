@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne, ReduceOne, Edit } from '@icon-park/vue-next'
+import { AddOne, ReduceOne, Edit } from '@/icons'
 import { message } from 'ant-design-vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'

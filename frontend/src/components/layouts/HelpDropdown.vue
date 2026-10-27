@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, onBeforeMount } from "vue"
-import { Help } from '@icon-park/vue-next'
+import { Help } from '@/icons'
 import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import TextOutput from "@/components/TextOutput.vue"

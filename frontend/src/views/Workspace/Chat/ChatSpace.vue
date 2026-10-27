@@ -2,7 +2,7 @@
 import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, watch, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit, More, Delete, ExpandLeft, ExpandRight } from '@icon-park/vue-next'
+import { Edit, More, Delete, ExpandLeft, ExpandRight } from '@/icons'
 import { Modal, message, TypographyTitle } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'

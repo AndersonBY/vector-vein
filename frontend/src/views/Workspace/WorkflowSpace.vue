@@ -3,7 +3,7 @@ import { ref, nextTick, watch, onBeforeMount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { Home, Star, More, Delete, ExpandLeft, ExpandRight, AlarmClock } from '@icon-park/vue-next'
+import { Home, Star, More, Delete, ExpandLeft, ExpandRight, AlarmClock } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"

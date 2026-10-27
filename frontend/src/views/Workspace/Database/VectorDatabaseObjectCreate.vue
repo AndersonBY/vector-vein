@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { message } from 'ant-design-vue'
-import { DocDetail, DatabaseSetting, FileCabinet, Check, Close } from '@icon-park/vue-next'
+import { DocDetail, DatabaseSetting, FileCabinet, Check, Close } from '@/icons'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import QuestionPopover from '@/components/QuestionPopover.vue'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'

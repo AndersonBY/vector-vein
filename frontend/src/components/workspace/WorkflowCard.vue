@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue"
 import { useI18n } from 'vue-i18n'
-import { BranchTwo, More, Share, Copy, Delete, Star } from '@icon-park/vue-next'
+import { BranchTwo, More, Share, Copy, Delete, Star } from '@/icons'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import { getRandomInt } from '@/utils/util'
 import { backgroundColors } from '@/utils/common'

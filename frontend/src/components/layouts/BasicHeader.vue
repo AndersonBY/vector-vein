@@ -14,7 +14,7 @@ import {
   DatabaseSetting,
   ApplicationMenu,
   WholeSiteAccelerator,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import logoUrl from "@/assets/logo.svg"

@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
 import { message } from 'ant-design-vue'
-import { DocDetail, DatabaseSetting, FileCabinet, Check, Close, Edit } from '@icon-park/vue-next'
+import { DocDetail, DatabaseSetting, FileCabinet, Check, Close, Edit } from '@/icons'
 import TextOutput from '@/components/TextOutput.vue'
 import { databaseAPI, databaseObjectAPI } from '@/api/database'
 

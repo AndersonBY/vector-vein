@@ -1,7 +1,7 @@
 <script setup>
 import { reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Delete } from '@icon-park/vue-next'
+import { Delete } from '@/icons'
 import { workflowTagAPI } from "@/api/workflow"
 
 const { t } = useI18n()

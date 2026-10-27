@@ -1,6 +1,6 @@
 <script setup>
 import { ref } from "vue"
-import { Help, Share } from '@icon-park/vue-next'
+import { Help, Share } from '@/icons'
 
 const props = defineProps({
   contents: {

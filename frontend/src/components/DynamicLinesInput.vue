@@ -1,5 +1,5 @@
 <script setup>
-import { AddOne, ReduceOne } from '@icon-park/vue-next'
+import { AddOne, ReduceOne } from '@/icons'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()

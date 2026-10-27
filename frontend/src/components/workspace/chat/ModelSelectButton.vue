@@ -2,7 +2,7 @@
 import { ref, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { RobotOne } from '@icon-park/vue-next'
+import { RobotOne } from '@/icons'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import IconButton from '@/components/IconButton.vue'
 import { getChatModelOptions } from '@/utils/common'

@@ -3,7 +3,7 @@ import { onBeforeMount, onBeforeUnmount, ref, reactive, h } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { Modal, message, TypographyTitle } from 'ant-design-vue'
-import { Down } from '@icon-park/vue-next'
+import { Down } from '@/icons'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowRunRecordsDrawer from "@/components/workspace/WorkflowRunRecordsDrawer.vue"

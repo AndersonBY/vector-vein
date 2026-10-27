@@ -3,7 +3,7 @@ import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTi
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { message } from 'ant-design-vue'
-import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne, ConnectionPoint, Connection, Robot, Undo, Redo } from '@icon-park/vue-next'
+import { Left, Caution, Save, Code, Bug, LayoutFive, MenuFoldOne, MenuUnfoldOne, ConnectionPoint, Connection, Robot, Undo, Redo } from '@/icons'
 import { cloneDeep } from 'lodash-es'
 import { VueFlow, useVueFlow } from '@vue-flow/core'
 import { MiniMap } from '@vue-flow/minimap'

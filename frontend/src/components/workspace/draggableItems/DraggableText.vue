@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { Delete } from '@icon-park/vue-next'
+import { Delete } from '@/icons'
 import MarkdownEditor from '@/components/MarkdownEditor.vue'
 
 const { t } = useI18n()

@@ -1,6 +1,6 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { More } from '@icon-park/vue-next'
+import { More } from '@/icons'
 import { useRouter } from "vue-router"
 import { formatTime } from '@/utils/util'
 import logoUrl from "@/assets/logo.svg"

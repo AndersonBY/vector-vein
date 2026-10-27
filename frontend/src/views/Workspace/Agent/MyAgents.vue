@@ -3,7 +3,7 @@ import { ref, reactive, onBeforeMount, h, onMounted, onBeforeUnmount } from "vue
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import { message, TypographyTitle, Modal } from 'ant-design-vue'
-import { Plus } from '@icon-park/vue-next'
+import { Plus } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
 import AvatarUpload from '@/components/workspace/AvatarUpload.vue'

@@ -13,7 +13,7 @@ import {
   Save,
   AddItem,
   Refresh,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import UploaderFieldUse from '@/components/workspace/UploaderFieldUse.vue'
 import { relationalDatabaseAPI, relationalDatabaseTableAPI, relationalDatabaseTableRecordAPI } from '@/api/database'
 

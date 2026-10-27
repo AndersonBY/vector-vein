@@ -1,6 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUpdate, onUpdated, onBeforeUnmount, h, render } from 'vue'
-import { Copy, Check } from '@icon-park/vue-next'
+import { Copy, Check } from '@/icons'
 import { streamingMarkdownPlugin } from '@/utils/streamingMarkdown'
 import { useI18n } from 'vue-i18n'
 import VueMarkdown from 'vue-markdown-render'

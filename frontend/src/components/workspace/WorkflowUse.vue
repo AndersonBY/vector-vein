@@ -3,7 +3,7 @@ import { onBeforeMount, onBeforeUnmount, ref, reactive, computed } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@icon-park/vue-next'
+import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@/icons'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -34,6 +34,7 @@ import { settingAPI } from '@/api/user'
 import { workflowAPI, workflowRunRecordAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
 import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
 import { getWorkflowRunStatus } from '@/utils/workflowFailures'
+import { findHttpRequestError } from '@/components/nodes/tools/_httpRequestShared.js'
 
 const props = defineProps({
   workflow: {
@@ -556,6 +557,12 @@ const runWorkflow = async (workflowVersion = null) => {
       }
 
     })
+  }
+  const httpError = findHttpRequestError(workflowDataForRun.data)
+  if (httpError) {
+    const prefix = 'components.nodes.tools.HttpRequest'
+    message.error(`${httpError.node.data.title || t(`${prefix}.title`)} · ${t(`${prefix}.${httpError.field}`)}: ${t(`${prefix}.${httpError.error}`)}`)
+    return
   }
   outputNodes.value.forEach((node) => {
     const definition = workflowDataForRun.data.nodes.find(item => item.id === node.id)

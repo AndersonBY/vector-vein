@@ -1,7 +1,7 @@
 <script setup>
 import { watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { CloseOne, Search } from '@icon-park/vue-next'
+import { CloseOne, Search } from '@/icons'
 
 const searchText = defineModel()
 const { t } = useI18n()

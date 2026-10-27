@@ -87,7 +87,7 @@ test('TextOutput preserves diagram hosts, copies raw input and disposes removed 
   const { parse, compileScript } = await import('vue/compiler-sfc')
   const { readFile } = await import('node:fs/promises')
   const { default: VueMarkdown } = await import('vue-markdown-render')
-  const { Copy, Check } = await import('@icon-park/vue-next')
+  const { Copy, Check } = await import('../src/icons/index.js')
   const source = await readFile(new URL('../src/components/TextOutput.vue', import.meta.url), 'utf8')
   const compiled = compileScript(parse(source).descriptor, { id: 'text-output-test', inlineTemplate: true }).content
   const decode = text => text.replaceAll('&quot;', '"').replaceAll('&amp;', '&').replaceAll('&#39;', "'").replaceAll('&lt;', '<').replaceAll('&gt;', '>')

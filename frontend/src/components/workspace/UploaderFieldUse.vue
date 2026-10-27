@@ -10,7 +10,7 @@ import {
   FileZip,
   FileSuccess,
   ImageFiles,
-} from '@icon-park/vue-next'
+} from '@/icons'
 import { message } from 'ant-design-vue'
 import { v4 as uuidv4 } from 'uuid'
 

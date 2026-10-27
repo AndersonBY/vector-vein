@@ -1,7 +1,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Acoustic, CloseRemind } from '@icon-park/vue-next'
+import { Acoustic, CloseRemind } from '@/icons'
 import IconButton from '@/components/IconButton.vue'
 import SimpleFormItem from '@/components/SimpleFormItem.vue'
 import { agentVoiceOptions } from '@/utils/common'

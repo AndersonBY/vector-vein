@@ -1,6 +1,6 @@
 <script setup>
 import { ref, reactive, nextTick } from 'vue'
-import { DirectionAdjustmentThree, Edit, Lightning } from '@icon-park/vue-next'
+import { DirectionAdjustmentThree, Edit, Lightning } from '@/icons'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
 import { VueDraggable, useDraggable } from 'vue-draggable-plus'

@@ -3,7 +3,7 @@ import { onBeforeMount, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import { message } from 'ant-design-vue'
-import { Left, Search } from '@icon-park/vue-next'
+import { Left, Search } from '@/icons'
 import { databaseAPI } from '@/api/database'
 
 const { t } = useI18n()

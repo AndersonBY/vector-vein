@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { AddOne, Delete } from '@icon-park/vue-next'
+import { AddOne, Delete } from '@/icons'
 import { useI18n } from 'vue-i18n'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
 import BaseNode from '@/components/nodes/BaseNode.vue'

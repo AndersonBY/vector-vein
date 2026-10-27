@@ -2,7 +2,7 @@
 import { ref, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Setting, CloseOne } from '@icon-park/vue-next'
+import { Setting, CloseOne } from '@/icons'
 import { shortcutAPI } from '@/api/user'
 
 const props = defineProps({

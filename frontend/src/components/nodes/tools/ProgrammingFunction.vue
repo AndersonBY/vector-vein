@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { AddOne } from '@icon-park/vue-next'
+import { AddOne } from '@/icons'
 import { message } from 'ant-design-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'

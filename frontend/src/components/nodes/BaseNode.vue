@@ -1,6 +1,6 @@
 <script setup>
 import { watch, ref } from 'vue'
-import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen, LinkInterrupt, LinkFour, Edit } from '@icon-park/vue-next'
+import { Delete, Copy, CheckOne, CloseOne, Help, BookOpen, LinkInterrupt, LinkFour, Edit } from '@/icons'
 import { useI18n } from 'vue-i18n'
 import { useVueFlow } from '@vue-flow/core'
 import { useNodeMessagesStore } from '@/stores/nodeMessages'
@@ -282,12 +282,14 @@ const collapseChanged = (data) => {
               <template v-for="field in inputFields">
                 <a-tooltip :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''"
                   placement="left" :class="{ 'hide-field': fieldsData[field].hide }">
+                  <slot :name="`field-${field}`" :field="fieldsData[field]">
                   <ListField v-if="fieldsData[field].field_type == 'list'" :name="t(`${translatePrefix}.${field}`)"
                     :required="fieldsData[field].required" type="target" v-model:data="fieldsData[field]">
                   </ListField>
                   <BaseField v-else :name="t(`${translatePrefix}.${field}`)" :required="fieldsData[field].required"
                     type="target" v-model:data="fieldsData[field]"
                     :nameOnly="['', 'checkbox'].includes(fieldsData[field].field_type)" />
+                  </slot>
                 </a-tooltip>
               </template>
               <slot name="afterInputs"></slot>
@@ -298,12 +300,14 @@ const collapseChanged = (data) => {
                   <template v-for="field in fields">
                     <a-tooltip :title="fieldsData[field].has_tooltip ? t(`${translatePrefix}.${field}_tip`) : ''"
                       placement="left" :class="{ 'hide-field': fieldsData[field].hide }">
+                      <slot :name="`field-${field}`" :field="fieldsData[field]">
                       <ListField v-if="fieldsData[field].field_type == 'list'" :name="t(`${translatePrefix}.${field}`)"
                         :required="fieldsData[field].required" type="target" v-model:data="fieldsData[field]">
                       </ListField>
                       <BaseField v-else :name="t(`${translatePrefix}.${field}`)" :required="fieldsData[field].required"
                         type="target" v-model:data="fieldsData[field]"
                         :nameOnly="['', 'checkbox'].includes(fieldsData[field].field_type)" />
+                      </slot>
                     </a-tooltip>
                   </template>
                 </BaseFieldsCollapse>

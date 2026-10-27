@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Share, LoadingFour, Redo, Delete } from '@icon-park/vue-next'
+import { Share, LoadingFour, Redo, Delete } from '@/icons'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'

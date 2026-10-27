@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
-import { Download, Copy, Check } from '@icon-park/vue-next'
+import { Download, Copy, Check } from '@/icons'
 import { Flex, Tooltip, Button } from 'ant-design-vue'
 import { saveAs } from 'file-saver'
 import mermaid from "mermaid"

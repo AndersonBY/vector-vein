@@ -1,6 +1,6 @@
 <script setup>
 import { ref, watch } from 'vue'
-import { PlayOne, Pause, Download } from '@icon-park/vue-next'
+import { PlayOne, Pause, Download } from '@/icons'
 import VueAudioPlayer from '@liripeng/vue-audio-player'
 import axios from 'axios'
 

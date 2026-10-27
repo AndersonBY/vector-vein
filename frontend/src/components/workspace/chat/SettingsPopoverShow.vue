@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from "vue"
 import { useI18n } from 'vue-i18n'
-import { Setting } from '@icon-park/vue-next'
+import { Setting } from '@/icons'
 import IconButton from '@/components/IconButton.vue'
 import SimpleFormItem from '@/components/SimpleFormItem.vue'
 import TextOutput from "@/components/TextOutput.vue"

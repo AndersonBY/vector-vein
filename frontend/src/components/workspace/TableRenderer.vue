@@ -1,6 +1,6 @@
 <script setup>
 import { watch, ref, computed } from 'vue'
-import { Download } from '@icon-park/vue-next'
+import { Download } from '@/icons'
 import xlsx from "json-as-xlsx"
 
 const props = defineProps({
