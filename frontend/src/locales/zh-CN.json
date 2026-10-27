@@ -193,6 +193,11 @@
       "fullscreen_failed": "无法放大预览，请重试"
     },
     "chatSpace": {
+      "fork_conversation": "创建分支",
+      "fork_description": "从此回复创建分支",
+      "fork_title": "{title} · 分支",
+      "fork_failed": "创建对话分支失败，请重试",
+      "fork_busy": "对话仍在生成回复或运行工作流，请结束后再创建分支",
       "search_placeholder": "搜索聊天记录",
       "search_results": "搜索结果（{count}）",
       "search_no_results": "没有找到相关聊天",

@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Share, LoadingFour, Redo, Delete } from '@/icons'
+import { Share, LoadingFour, Redo, Delete, BranchTwo } from '@/icons'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
@@ -18,6 +18,9 @@ import { messageAPI } from '@/api/chat'
 import { getWorkflowFailures, getWorkflowRunStatus, getWorkflowFailureSnapshot } from '@/utils/workflowFailures'
 
 const props = defineProps({
+  forkable: { type: Boolean, default: false },
+  forkDisabled: { type: Boolean, default: false },
+  forkLoading: { type: Boolean, default: false },
   retryDisabled: { type: Boolean, default: false },
   loading: {
     type: Boolean,
@@ -89,7 +92,12 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:status', 'append-answer', 'regenerate', 'delete'])
+const emit = defineEmits(['update:status', 'append-answer', 'regenerate', 'delete', 'fork'])
+const canForkReply = computed(() => props.forkable && props.authorType === 'A' && !props.forkDisabled &&
+  !props.forkLoading && !props.loading && !['P', 'G', 'R'].includes(props.status))
+const forkReply = () => {
+  if (canForkReply.value) emit('fork', props.mid)
+}
 
 const { t } = useI18n()
 const router = useRouter()
@@ -399,26 +407,6 @@ const deleteMessage = () => {
           <template v-if="content?.hasOwnProperty('text')">
             <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" :checkFileCodeBlocks="!failedChat" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />
-            <a-flex class="chat-message-footer" gap="small">
-              <a-typography-paragraph :copyable="{ text: content.text }" />
-              <a-tooltip v-if="props.authorType == 'A' && !failedChat" :title="t('workspace.chatSpace.regenerate_message')">
-                <a-button type="text" size="small" :disabled="retryDisabled" @click="regenerate">
-                  <template #icon>
-                    <Redo fill="#28c5e5" />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip :title="t('workspace.chatSpace.delete_message')">
-                <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" @confirm="deleteMessage">
-                  <a-button type="text" size="small" danger>
-                    <template #icon>
-                      <Delete />
-                    </template>
-                  </a-button>
-                </a-popconfirm>
-              </a-tooltip>
-            </a-flex>
-
           </template>
           <div v-if="failedChat" class="chat-response-error">
             <p role="alert">{{ chatError }}</p>
@@ -496,6 +484,27 @@ const deleteMessage = () => {
           </div>
         </template>
         <AttachmentsList :model-value="props.attachments" :removable="false" />
+        <a-flex v-if="!loading && (content?.hasOwnProperty('text') || authorType === 'A')" class="chat-message-footer" gap="small">
+          <a-typography-paragraph v-if="content?.hasOwnProperty('text')" :copyable="{ text: content.text }" />
+          <a-tooltip v-if="authorType === 'A' && !failedChat" :title="t('workspace.chatSpace.regenerate_message')">
+            <a-button type="text" size="small" :disabled="retryDisabled" @click="regenerate">
+              <template #icon><Redo fill="#28c5e5" /></template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip v-if="forkable && authorType === 'A'" :title="t('workspace.chatSpace.fork_description')">
+            <a-button type="text" size="small" :aria-label="t('workspace.chatSpace.fork_conversation')"
+              :loading="forkLoading" :disabled="!canForkReply" @click="forkReply">
+              <template #icon><BranchTwo fill="#28c5e5" /></template>
+            </a-button>
+          </a-tooltip>
+          <a-tooltip :title="t('workspace.chatSpace.delete_message')">
+            <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" @confirm="deleteMessage">
+              <a-button type="text" size="small" danger>
+                <template #icon><Delete /></template>
+              </a-button>
+            </a-popconfirm>
+          </a-tooltip>
+        </a-flex>
       </div>
     </div>
   </div>

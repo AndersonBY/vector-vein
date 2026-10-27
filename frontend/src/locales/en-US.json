@@ -193,6 +193,11 @@
       "fullscreen_failed": "Unable to expand preview. Please try again."
     },
     "chatSpace": {
+      "fork_conversation": "Fork conversation",
+      "fork_description": "Branch from this reply",
+      "fork_title": "{title} · Fork",
+      "fork_failed": "Could not fork the conversation. Please retry.",
+      "fork_busy": "Wait for the reply or workflow to finish before forking.",
       "search_placeholder": "Search chat history",
       "search_results": "Search results ({count})",
       "search_no_results": "No matching chats",

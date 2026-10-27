@@ -75,7 +75,7 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       app.use(createPinia())
       app.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': locale } }))
       for (const name of ['AFlex', 'ATypographyTitle', 'ATypographyText', 'ATypographyParagraph', 'ASpin', 'ATooltip',
-        'AAvatar', 'AAlert', 'ATextarea', 'ACollapse', 'ACollapsePanel', 'APopconfirm', 'AButton']) {
+        'AAvatar', 'AAlert', 'ATextarea', 'ACollapse', 'ACollapsePanel', 'APopconfirm', 'AButton', 'ASpace']) {
         app.component(name, { setup: (_, { slots }) => () => h(name === 'AButton' ? 'button' : 'div', slots.default?.()) })
       }
       return renderToString(app)
@@ -85,6 +85,90 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       c.conversation.value = { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] }
       c.userChatsStore.addConversation(c.conversation.value)
     }
+    const navigations = []
+    globalThis.__chatFailureHarness.router.push = async location => { navigations.push(location) }
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.conversation.value.title = 'original'
+      c.userInput.value = 'unsent draft'
+      c.attachments.value = ['local-file']
+      c.messages.value = [[assistant('saved')]]
+      const pending = deferred()
+      request = (action, payload) => {
+        assert.equal(action, 'conversation__fork')
+        assert.deepEqual(payload, { source_cid: 'cid', source_mid: 'saved', title: 'original · Fork' })
+        return pending.promise
+      }
+      const fork = c.forkConversation('saved')
+      assert.equal(c.forking.value, true)
+      assert.equal(c.canFork.value, false)
+      const count = calls.length
+      await c.forkConversation('saved')
+      assert.equal(await c.sendMessage('blocked during fork'), false)
+      await c.regenerate('saved', 0)
+      assert.equal(calls.length, count)
+      pending.resolve({ status: 200, data: { cid: 'forked' } })
+      await fork
+      assert.deepEqual(navigations.at(-1), { name: 'conversationDetail', params: { agentId: 'agent', conversationId: 'forked' } })
+      assert.equal(c.forking.value, false)
+      assert.equal(c.userInput.value, 'unsent draft')
+      assert.deepEqual(c.attachments.value, ['local-file'])
+      assert.equal(c.conversation.value.cid, 'cid')
+      assert.equal(c.messages.value[0][0].mid, 'saved')
+    })
+    for (const response of [{ status: 500 }, { status: 200, data: {} },
+      { status: 409, code: 'CONVERSATION_BUSY' }, new Error('connection')]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = [[assistant('saved')]]
+        const count = navigations.length, errorCount = errors.length
+        c.userInput.value = 'keep draft'
+        request = async () => { if (response instanceof Error) throw response; return response }
+        await c.forkConversation('saved')
+        assert.equal(c.forking.value, false)
+        assert.equal(c.canFork.value, true)
+        assert.equal(navigations.length, count)
+        assert.equal(errors.length, errorCount + 1)
+        assert.equal(c.userInput.value, 'keep draft')
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      const count = calls.length
+      c.conversation.value.cid = 'not-the-loaded-conversation'
+      assert.equal(c.canFork.value, false)
+      await c.forkConversation('saved')
+      c.conversation.value.cid = 'cid'
+      for (const field of ['loading', 'sending', 'receiving']) {
+        c[field].value = true
+        assert.equal(c.canFork.value, false)
+        await c.forkConversation('saved')
+        c[field].value = false
+      }
+      for (const status of ['P', 'G', 'R']) {
+        c.messages.value = [[assistant('busy', status)]]
+        await c.forkConversation('busy')
+      }
+      assert.equal(calls.length, count)
+      c.messages.value = [[assistant('failed', 'F')]]
+      assert.equal(c.canFork.value, true)
+      c.messages.value = [[{ ...assistant('user'), author_type: 'U' }]]
+      await c.forkConversation('user')
+      await c.forkConversation('not-in-conversation')
+      assert.equal(calls.length, count)
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[assistant('saved')]]
+      const count = navigations.length
+      const pending = deferred()
+      request = () => pending.promise
+      const fork = c.forkConversation('saved')
+      c.conversationId.value = 'other-conversation'
+      pending.resolve({ status: 200, data: { cid: 'late-copy' } })
+      await fork
+      assert.equal(navigations.length, count)
+    })
     await render(detail, {}, async c => {
       prepare(c)
       const pending = deferred()
@@ -290,12 +374,39 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(mountedDetail.messages.value[0][0].mid, 'current')
       assert.equal(mountedDetail.focusedMessageMid.value, '')
       assert.equal(mountedDetail.loading.value, false)
+      const lateFork = deferred()
+      const count = navigations.length
+      request = () => lateFork.promise
+      const pendingFork = mountedDetail.forkConversation('current')
+      assert.equal(mountedDetail.forking.value, true)
+      mountedApp.unmount()
+      lateFork.resolve({ status: 200, data: { cid: 'after-unmount' } })
+      await pendingFork
+      assert.equal(navigations.length, count)
     } finally {
       mountedApp.unmount()
       globalThis.__chatFailureHarness.route.params.conversationId = 'cid'
       globalThis.__chatFailureHarness.route.query = {}
     }
     let retries = 0
+    const forkedMessages = []
+    const replyProps = { cid: 'cid', mid: 'old-version', authorType: 'A', contentType: 'TXT', status: 'S',
+      createTime: 1, content: { text: 'earlier answer' }, metadata: {}, forkable: true, onFork: mid => forkedMessages.push(mid) }
+    const replyHtml = await render('/src/components/workspace/chat/ChatMessage.vue', replyProps, async c => { c.forkReply() })
+    assert.deepEqual(forkedMessages, ['old-version'])
+    assert.match(replyHtml, /aria-label="Fork conversation"/)
+    for (const overrides of [{ forkDisabled: true }, { forkLoading: true }, { loading: true },
+      { status: 'P' }, { status: 'G' }, { status: 'R' }, { authorType: 'U' }, { forkable: false }]) {
+      const html = await render('/src/components/workspace/chat/ChatMessage.vue', { ...replyProps, ...overrides }, async c => { c.forkReply() })
+      if (overrides.authorType === 'U' || overrides.forkable === false) assert.doesNotMatch(html, /aria-label="Fork conversation"/)
+    }
+    assert.deepEqual(forkedMessages, ['old-version'])
+    const workflowReply = await render('/src/components/workspace/chat/ChatMessage.vue', {
+      ...replyProps, mid: 'workflow-reply', contentType: 'WKF', content: {},
+      metadata: { selected_workflow: { title: 'completed workflow', params: {} } },
+    }, async c => { c.forkReply() })
+    assert.deepEqual(forkedMessages, ['old-version', 'workflow-reply'])
+    assert.match(workflowReply, /aria-label="Fork conversation"/)
     const failedProps = { cid: 'cid', mid: 'history', status: 'F', authorType: 'A', contentType: 'WKF', createTime: 1,
       metadata: { selected_workflow: { wid: 'must-not-run' }, error: { message: '<img src=x onerror=alert(1)>' } },
       content: { text: '', reasoning_content: '' }, onRegenerate: () => retries++ }

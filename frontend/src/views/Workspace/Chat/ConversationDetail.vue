@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
+import { computed, ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
 import { Send, Edit, Link, Plus } from '@/icons'
 import { message, theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
@@ -40,6 +40,9 @@ const wsPort = ref(null)
 const routeMid = () => typeof route.query.mid === 'string' ? route.query.mid : Array.isArray(route.query.mid) ? route.query.mid[0] || '' : ''
 const focusedMessageMid = ref('')
 let fetchVersion = 0
+const forking = ref(false)
+const forkingMid = ref('')
+let forkVersion = 0
 
 const fetchConversation = async (cid, mid = routeMid()) => {
   const version = ++fetchVersion
@@ -76,6 +79,8 @@ const fetchConversation = async (cid, mid = routeMid()) => {
 watch([() => route.params.conversationId, () => route.query.mid], async ([cid], [oldCid]) => {
   if (!cid) return
   if (cid !== oldCid) {
+    forkVersion++
+    forking.value = false
     cancelAttempt()
     conversationId.value = cid
     loading.value = true
@@ -131,6 +136,7 @@ onBeforeMount(async () => {
 
 onBeforeUnmount(() => {
   disposed = true
+  forkVersion++
   fetchVersion++
   cancelAttempt()
   if (chatBodyElementRef.value) {
@@ -154,6 +160,36 @@ const conversation = ref({ settings: { agent_audio_reply: false } })
 const messages = ref([])
 const userInput = ref('')
 const attachments = ref([])
+const canFork = computed(() => !!conversation.value.cid && conversation.value.cid === conversationId.value && !loading.value && !sending.value &&
+  !receiving.value && !forking.value)
+
+const forkConversation = async mid => {
+  if (!canFork.value || disposed) return
+  const selected = messages.value.flat().find(item => item.mid === mid)
+  if (!selected || selected.author_type !== 'A' || ['P', 'G', 'R'].includes(selected.status)) return
+  forking.value = true
+  forkingMid.value = mid
+  const version = ++forkVersion
+  const cid = conversationId.value
+  const current = () => !disposed && version === forkVersion && cid === conversationId.value
+  try {
+    const res = await conversationAPI('fork', {
+      source_cid: cid,
+      source_mid: mid,
+      title: t('workspace.chatSpace.fork_title', { title: conversation.value.title }).slice(0, 512),
+    })
+    if (!current()) return
+    if (res.status !== 200 || !res.data?.cid) {
+      message.error(t(`workspace.chatSpace.${res.code === 'CONVERSATION_BUSY' ? 'fork_busy' : 'fork_failed'}`))
+      return
+    }
+    await router.push({ name: 'conversationDetail', params: { agentId: agentId.value, conversationId: res.data.cid } })
+  } catch {
+    if (current()) message.error(t('workspace.chatSpace.fork_failed'))
+  } finally {
+    if (current()) forking.value = false
+  }
+}
 
 const userScrolled = ref(false)
 
@@ -305,7 +341,7 @@ const beginAssistant = (data, epoch, cid, groupIndex) => {
 }
 
 const sendMessage = async (content, needTitle = false) => {
-  if (!content?.trim() || loading.value || sending.value || receiving.value || disposed) return false
+  if (!content?.trim() || loading.value || sending.value || receiving.value || forking.value || disposed) return false
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
@@ -335,7 +371,7 @@ const sendMessage = async (content, needTitle = false) => {
 }
 
 const requestAssistant = async (action, mid, groupIndex) => {
-  if (loading.value || sending.value || receiving.value || disposed) return
+  if (loading.value || sending.value || receiving.value || forking.value || disposed) return
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
@@ -475,12 +511,14 @@ const deleteMessage = async (mid, groupIndex) => {
               :class="{ 'message-focused': focusedMessageMid === currentMessage.mid }"
               :style="{ '--message-focus-color': token.colorPrimary, '--message-focus-background': token.colorPrimaryBg }">
             <ChatMessage :loading="currentMessage.loading" :cid="conversationId"
-              :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
+              forkable :fork-disabled="!canFork" :fork-loading="forking && forkingMid === currentMessage.mid"
+              :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving || forking" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
               :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
               :metadata="currentMessage.metadata" :content="currentMessage.content"
               :workflowInvokeStep="currentMessage.workflow_invoke_step" :attachments="currentMessage?.attachments"
               :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
               @append-answer="onAppendAnswer" @regenerate="regenerate(currentMessage.mid, groupIndex)"
+              @fork="forkConversation(currentMessage.mid)"
               @delete="deleteMessage(currentMessage.mid, groupIndex)" />
             </div>
 
@@ -542,7 +580,7 @@ const deleteMessage = async (mid, groupIndex) => {
         </a-tooltip>
         <a-tooltip :title="t('workspace.chatSpace.send_message')">
           <a-button type="primary" class="chat-send-btn" :loading="sending"
-            :disabled="userInput.length == 0 || loading || sending || receiving" @click="sendMessage(userInput)">
+            :disabled="userInput.length == 0 || loading || sending || receiving || forking" @click="sendMessage(userInput)">
             <template #icon>
               <Send />
             </template>
@@ -581,6 +619,8 @@ const deleteMessage = async (mid, groupIndex) => {
 }
 
 .main-container .chat-header {
+  gap: 12px;
+  flex-wrap: wrap;
   padding: 14px 20px;
   border-bottom: var(--border-color);
   position: relative;

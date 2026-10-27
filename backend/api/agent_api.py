@@ -49,6 +49,66 @@ def _serialize_conversation_state(conversation: Conversation) -> dict[str, Any]:
 class ConversationAPI:
     name = "conversation"
 
+    def fork(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid fork parameters")
+        try:
+            cid = uuid.UUID(str(payload.get("source_cid", "")))
+            mid = uuid.UUID(str(payload.get("source_mid", "")))
+            title = payload.get("title")
+            if title is not None and (not isinstance(title, str) or not title.strip() or len(title) > 512):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid fork parameters")
+
+        with Conversation._meta.database.atomic():
+            source = Conversation.get_or_none(Conversation.cid == cid)
+            if source is None or source.agent_id is None:
+                return JResponse(status=404, msg="Conversation not found")
+            agent = Agent.get_or_none(Agent.aid == source.agent_id)
+            if agent is None:
+                return JResponse(status=404, msg="Conversation agent not found")
+            messages = list(Message.select().where(Message.conversation == source)
+                            .order_by(Message.create_time, Message.mid))
+            by_id = {item.mid: item for item in messages}
+            selected = by_id.get(mid)
+            if selected is None:
+                return JResponse(status=404, msg="Message not found in conversation")
+            if selected.author_type != Message.AuthorTypes.ASSISTANT:
+                return JResponse(status=400, msg="Fork requires an assistant reply")
+            ordered = []
+            seen = set()
+            while mid is not None:
+                if mid in seen or mid not in by_id:
+                    return JResponse(status=409, msg="Invalid conversation message graph")
+                seen.add(mid)
+                item = by_id[mid]
+                if item.status in (*PENDING, Message.StatusTypes.RUNNING_WORKFLOW):
+                    return JResponse(status=409, code="CONVERSATION_BUSY", msg="Selected context is still running")
+                ordered.append(item)
+                mid = item.parent_id
+
+            # Bind to the current Agent version so opening the copy preserves this snapshot.
+            target = Conversation.create(
+                agent=agent, agent_version=agent.version, user=source.user_id,
+                title=title.strip() if title is not None else f"{source.title[:505]} · Fork",
+                brief=source.brief, settings=source.settings,
+                model=source.model, model_provider=source.model_provider,
+            )
+            target.related_workflows.add(list(source.related_workflows))
+            target.related_templates.add(list(source.related_templates))
+            parent = None
+            for item in reversed(ordered):
+                parent = Message.create(
+                    conversation=target, parent=parent,
+                    author_type=item.author_type, content_type=item.content_type, status=item.status,
+                    content=item.content, metadata=item.metadata, attachments=item.attachments,
+                    create_time=item.create_time, update_time=item.update_time,
+                )
+            target.current_message = parent.mid
+            target.save()
+            return JResponse(data={"cid": target.cid.hex})
+
     def search(self, payload):
         if not isinstance(payload, dict):
             return JResponse(status=400, msg="Invalid search parameters")
@@ -240,6 +300,10 @@ class ConversationAPI:
 
         if conversation is None:
             return JResponse(status=404)
+        if "settings" in payload:
+            if not isinstance(payload["settings"], dict):
+                return JResponse(status=400, msg="Invalid conversation settings")
+            conversation.settings = payload["settings"]
 
         conversation.title = payload.get("title", conversation.title)
         conversation.model = payload.get("model", conversation.model)
