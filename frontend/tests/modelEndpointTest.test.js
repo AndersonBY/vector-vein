@@ -209,7 +209,7 @@ test('actual settings components send unsaved endpoint drafts and remote/custom 
     }
     const endpointSettings = (await server.ssrLoadModule('/src/components/settings/EndpointSettings.vue')).default
     const endpoints = []
-    await render(endpointSettings, { endpoints, localModels: { models: {} }, modelFamilyMap: {} }, bindings => {
+    await render(endpointSettings, { endpoints, localModels: { models: {} }, modelFamilyMap: {}, saveSettings: async () => true }, bindings => {
       bindings.resetForm()
       Object.assign(bindings.endpointForm, endpoint, { id: 'unsaved-endpoint', api_base: 'http://127.0.0.1:9999/v1',
         credentials: '{"project_id":"unsaved-project"}' })

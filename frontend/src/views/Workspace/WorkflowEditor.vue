@@ -985,27 +985,22 @@ const llmNodesCount = computed(() => {
             <a-typography-link @click="exitConfirm" style="text-wrap: nowrap;">
               <Left />
               {{ t('common.back') }}
-
-              <a-modal v-model:open="exitModalOpen">
-                <template #title>
-                  <a-typography-text type="warning">
-                    <Caution />
-                    {{ t('common.back') }}
-                  </a-typography-text>
-                </template>
-
-                {{ t('workspace.workflowEditor.exit_not_saved_confirm') }}
-
-                <template #footer>
-                  <a-button @click="exitNoSave">
-                    {{ t('workspace.workflowEditor.exit_without_save') }}
-                  </a-button>
-                  <a-button type="primary" @click="saveAndExit">
-                    {{ t('workspace.workflowEditor.save_and_exit') }}
-                  </a-button>
-                </template>
-              </a-modal>
             </a-typography-link>
+            <a-modal v-model:open="exitModalOpen">
+              <template #title>{{ t('settings.unsaved_changes') }}</template>
+
+              {{ t('workspace.workflowEditor.exit_not_saved_confirm') }}
+
+              <template #footer>
+                <a-button @click="exitModalOpen = false">{{ t('common.cancel') }}</a-button>
+                <a-button @click="exitNoSave">
+                  {{ t('workspace.workflowEditor.exit_without_save') }}
+                </a-button>
+                <a-button type="primary" @click="saveAndExit">
+                  {{ t('workspace.workflowEditor.save_and_exit') }}
+                </a-button>
+              </template>
+            </a-modal>
 
             <a-typography-text class="title" :ellipsis="true" :editable="{ triggerType: ['text', 'icon'] }"
               v-model:content="currentWorkflow.title" />

@@ -80,12 +80,8 @@ const router = useRouter()
     </div>
     <a-divider style="margin: 16px 0;" />
     <div class="card-footer">
-      <span class="tag">
-      </span>
       <a-typography-text type="secondary" class="time">{{ formatTime(updateTime) }}</a-typography-text>
-    </div>
-    <div v-if="showChat" class="card-footer footer-hover-container">
-      <a-button type="primary" @click.stop="router.push({ name: 'conversationNew', params: { agentId: aid } })">
+      <a-button v-if="showChat" size="small" @click.stop="router.push({ name: 'conversationNew', params: { agentId: aid } })">
         {{ t('workspace.agentSpace.chat_with_agent') }}
       </a-button>
     </div>
@@ -117,6 +113,7 @@ const router = useRouter()
 }
 
 .info {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -164,37 +161,8 @@ const router = useRouter()
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  height: 28px;
+  min-height: 28px;
+  flex-wrap: wrap;
 }
 
-.tag {
-  line-height: 2;
-}
-
-.tag-status-false {
-  background-color: #2db7f5;
-  color: #fff;
-}
-
-.tag-status-true {
-  background-color: #87d068;
-  color: #fff;
-}
-
-.footer-hover-container {
-  display: flex;
-  justify-content: flex-start;
-  gap: 8px;
-  position: absolute;
-  bottom: 14px;
-  left: 0;
-  right: 0;
-  padding: 16px;
-  transition: transform 0.3s ease-in-out;
-  transform: translateY(150%);
-}
-
-.agent-card:hover .footer-hover-container {
-  transform: translateY(0);
-}
 </style>

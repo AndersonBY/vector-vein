@@ -1,8 +1,8 @@
 <script setup>
-import { onBeforeMount, onBeforeUnmount, ref, reactive, h } from "vue"
+import { onBeforeMount, onBeforeUnmount, ref, reactive } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { Modal, message, TypographyTitle } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import { Down } from '@/icons'
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import ImageCarousel from "@/components/ImageCarousel.vue"
@@ -86,14 +86,10 @@ const setWorkflowRecord = (record) => {
 
 const deleteWorkflow = async () => {
   Modal.confirm({
-    title: h(
-      TypographyTitle,
-      { type: 'danger', level: 3, style: { marginBottom: 0 } },
-      () => t('workspace.workflowSpace.delete_confirm')
-    ),
-    okText: t('common.yes'),
+    title: t('workspace.workflowSpace.delete_confirm'),
+    okText: t('workspace.workflowSpace.move_to_trash'),
     okType: 'danger',
-    cancelText: t('common.no'),
+    cancelText: t('common.cancel'),
     maskClosable: true,
     async onOk() {
       const response = await workflowAPI('delete', { wid: currentWorkflow.value.wid })

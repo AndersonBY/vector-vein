@@ -3,6 +3,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { settingAPI } from '@/api/user'
 import { useModelEndpointTest } from '@/utils/modelEndpointTest'
+import { CHAT_PROVIDER_LABEL_MAP } from '@/utils/modelProviders'
 
 const props = defineProps({
   endpoint: { type: Object, default: null },
@@ -22,7 +23,7 @@ watch(() => props.backend, value => { backend.value = value })
 const backendOptions = computed(() => [
   { value: 'local', label: t('settings.model_test_local_backend') },
   ...['openai', 'anthropic', 'deepseek', 'qwen', 'gemini', 'moonshot', 'zhipuai', 'minimax',
-    'mistral', 'yi', 'baichuan', 'groq', 'ernie', 'stepfun', 'xai'].map(value => ({ value, label: value })),
+    'mistral', 'yi', 'baichuan', 'groq', 'ernie', 'stepfun', 'xai'].map(value => ({ value, label: CHAT_PROVIDER_LABEL_MAP[value] || value })),
 ])
 const { state, submit } = useModelEndpointTest(() => ({
   endpoint: props.endpoint,

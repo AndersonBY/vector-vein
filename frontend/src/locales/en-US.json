@@ -140,7 +140,7 @@
     "workflow_template": "Workflow template",
     "chat": "Chat",
     "confirm_leave": "You have not saved yet, confirm to leave?",
-    "publiced": "Publiced",
+    "publiced": "Public",
     "not_publiced": "Private",
     "shared": "Shared",
     "not_shared": "Not shared",
@@ -168,7 +168,8 @@
     "NOTE": "Note",
     "IMPORTANT": "Important",
     "WARNING": "Warning",
-    "CAUTION": "Caution"
+    "CAUTION": "Caution",
+    "expand": "Expand"
   },
   "workspace": {
     "canvasPreview": {
@@ -218,7 +219,6 @@
       "chat_connection_closed": "The connection was interrupted. Your partial reply has been kept.",
       "chat_timeout": "The reply timed out. Please try again.",
       "retry_response": "Retry",
-
       "fetch_conversations_failed": "Fetch conversations failed",
       "fetch_conversation_failed": "Fetch conversation failed",
       "textarea_tip": "Ctrl + Enter send",
@@ -247,7 +247,7 @@
       "update_settings_failed": "Update settings failed",
       "agent_settings": "Agent settings",
       "system_prompt": "System prompt",
-      "system_prompt_description": "You can use system prompts to describe the personality of your assistant, define what the model should and should not respond to, and define the format of the model's response.",
+      "system_prompt_description": "Set the assistant’s role, response style and output format.",
       "auto_run_workflow": "Auto run workflow",
       "auto_run_workflow_description": "When the AI determines that it needs to run a workflow to complete the task, it will automatically run the workflow and return the result.",
       "use_workflow": "Use workflow",
@@ -306,7 +306,7 @@
       "retry": "Retry",
       "my_agents": "My AI agent",
       "public_agents": "Public AI agent",
-      "hero_description": "Manage local agents, linked workflows, and shortcut-driven chat from one desktop workspace.",
+      "hero_description": "Create and configure agents, or start a chat.",
       "hero_agent_count": "Agents",
       "hero_agent_count_tip": "Agents currently loaded in this view.",
       "hero_search_ready": "Search mode",
@@ -328,10 +328,10 @@
       "duplicate_as_mine": "Duplicate as mine",
       "duplicate_agent_success": "Duplicate agent success",
       "add_templates": "Add templates",
-      "add_templates_to_your_workflows": "Do you want to add the workflow templates in this Agent as your personal workflows? After adding, you can review the workflow run records. If not added, this Agent will not be associated with any workflows and will require manual handling by you.",
+      "add_templates_to_your_workflows": "Copy linked templates into My workflows and link them to this agent. Otherwise, link workflows manually later.",
       "modify_agent": "Modify agent",
       "system_prompt": "System prompt",
-      "system_prompt_tip": "System prompts are special messages used to guide AI behavior, which allow developers to define the style and tasks of artificial intelligence within a certain range, making it more customizable and adaptable to various use cases.  You can use {'{{'}time{'}}'} as a time variable to tell the Agent the current time.",
+      "system_prompt_tip": "Set the agent’s role, response style and output format. Use {'{{'}time{'}}'} for the current time.",
       "opening_dialog": "Opening dialog",
       "opening_question_suggestions": "Opening question suggestions",
       "opening_question_suggestions_tip": "Give a few optional opening questions so that users can start the conversation quickly.",
@@ -348,7 +348,7 @@
       "toggle_agent_is_public_false": "Cancel public agent",
       "toggle_agent_is_public_false_content": "After canceling the public, other users will not be able to find the agent on the community public page.",
       "workflow_become_template_warning": "Your personal workflow will be automatically converted to a workflow template for other users to use.",
-      "database_access_control_warning": "If the workflow used by your Agent involves knowledge base search, please pay attention to confirm the permission of the database. If the database is private, after converting to a workflow template, the user needs to create the database by himself. If you want users to use the database you have created directly, pay attention to change the database permission to public read.",
+      "database_access_control_warning": "Workflows using private databases require other users to create their own. To share an existing database, confirm its contents can be public before making it publicly readable.",
       "workflows_converted_to_templates": "Workflows converted to templates",
       "copy_agent_share_link": "Copy agent share link",
       "model_select": "AI model select",
@@ -383,7 +383,6 @@
       "timeline_stopped": "Stopped",
       "timeline_not_run": "Not run",
       "timeline_unknown": "Unknown",
-
       "workflow_index": "Workflow index",
       "user_fast_access_workflows": "Fast access workflows",
       "add_new_workflow": "Add new workflow",
@@ -407,7 +406,7 @@
       "run": "Run",
       "edit": "Edit",
       "delete": "Delete",
-      "delete_confirm": "Confirm to delete the workflow?",
+      "delete_confirm": "Move this workflow to the trash? You can restore it later.",
       "delete_success": "Delete success",
       "delete_failed": "Delete failed",
       "save_success": "Save success",
@@ -519,7 +518,7 @@
       "schedule_last_run_status": "Last status",
       "schedule_latest_run": "Open latest run",
       "trash": "Trash",
-      "trash_description": "Soft-deleted workflows stay here until they are restored or purged.",
+      "trash_description": "Restore deleted workflows or delete them permanently.",
       "trash_count": "Trash items",
       "trash_count_tip": "Workflows currently marked as deleted.",
       "trash_empty": "Trash is empty",
@@ -532,7 +531,8 @@
       "purge_confirm": "Delete this workflow permanently? This action cannot be undone.",
       "purge_success": "Permanent delete success",
       "purge_failed": "Permanent delete failed",
-      "deleted_at": "Deleted at"
+      "deleted_at": "Deleted at",
+      "error_details": "Technical details"
     },
     "workflowEditor": {
       "exit_not_saved_confirm": "Workflow not saved, confirm exit?",
@@ -589,7 +589,7 @@
       "no_workflows_1": "You have not added or created a workflow yet",
       "no_workflows_2": "Add a workflow here",
       "hero_title": "Local automation workspace",
-      "hero_description": "A desktop command center for creating, running, scheduling, and recovering workflows.",
+      "hero_description": "Create and run workflows, manage schedules and run history.",
       "stat_workflows": "Workflows",
       "stat_workflows_tip": "Available local workflows in the current account.",
       "stat_fast_access": "Fast access",
@@ -648,7 +648,7 @@
       "relational_database": "Relational database",
       "relational_database_description": "Relational database is a database based on the relational model, which can be used to store and retrieve structured data.",
       "hero_title": "Data and file workspace",
-      "hero_description": "Bring local databases, document debugging, and file workbench flows into one desktop entry point.",
+      "hero_description": "Manage local databases and test vector search.",
       "document_query_test": "Document query test",
       "document_query_description": "Load a local document and search snippets to validate extraction and chunking results.",
       "document_query_matches": "Matches",
@@ -694,7 +694,7 @@
       "embedding_provider_azure_tip": "If the OpenAI type in the settings is Azure, the deployment name of Azure Embedding in the settings is used.",
       "embedding_provider_text_embeddings_inference_tip": "text-embeddings-inference needs to be deployed by yourself, see details",
       "embedding_provider_settings_tip": "Available backends and models come from Settings > Embedding models.",
-      "embedding_provider_custom_tip": "Configure custom providers in the embedding settings with vv-llm request and response mappings.",
+      "embedding_provider_custom_tip": "Configure custom embedding request and response mappings under Settings > Embedding models.",
       "embedding_models": "Embedding models",
       "embedding_size": "Embedding size"
     },
@@ -737,7 +737,8 @@
       "affected_rows": "Affected rows {rows}",
       "max_show_rows": "Up to 1000 rows of data can be displayed on the page",
       "force_refresh_database": "Force refresh database",
-      "result_n": "Result {n}"
+      "result_n": "Result {n}",
+      "object_id": "Object ID"
     },
     "databaseObjectCreate": {
       "add_object": "Add object",
@@ -849,7 +850,7 @@
       "effort_high": "High",
       "effort_xhigh": "Extra high",
       "effort_max": "Max"
-},
+    },
     "model_selector": {
       "search": "Search providers, model names or IDs",
       "select_provider": "Select a provider",
@@ -920,7 +921,8 @@
         "upload_success": "{file} selected",
         "upload_failed": "{file} upload failed",
         "uploader_text": "Click or drag file to this area to upload",
-        "uploader_hint": "Currently supported file types: {fileTypes}"
+        "uploader_hint": "Currently supported file types: {fileTypes}",
+        "select_failed": "Could not select files. Please try again."
       },
       "mindmapRenderer": {
         "download_svg": "Download svg file",
@@ -2267,7 +2269,6 @@
     "endpoint_move_up": "Move up within priority",
     "endpoint_move_down": "Move down within priority",
     "model_key_id_required": "Enter a model key and model ID.",
-
     "endpoints": "LLM API Endpoints",
     "llms": "Remote LLMs",
     "other": "Other",
@@ -2359,7 +2360,7 @@
     "shortcut_not_set": "Shortcut not set",
     "shortcut_conflict": "Shortcut conflict, please check and modify (same or included): {key1} and {key2}",
     "embedding_models": "Embedding models",
-    "embedding_settings_tip": "Embedding backends now use vv-llm endpoint bindings and model mappings. Configure provider models here, and use request/response mappings for custom embedding services.",
+    "embedding_settings_tip": "Configure embedding models and their endpoints for vector search. For custom interfaces, edit the request and response mappings.",
     "tts": "Text-To-Speech",
     "web_search": "Web search",
     "stability_key": "Stability Key",
@@ -2386,13 +2387,14 @@
     "embedding_default_endpoint": "Default endpoint",
     "embedding_default_endpoint_tip": "Used when a model does not explicitly bind any endpoints.",
     "embedding_protocol": "Embedding protocol",
-    "embedding_protocol_tip": "Select the vv-llm protocol adapter used by the upstream embedding service.",
+    "custom_http_protocol": "Custom HTTP interface",
+    "embedding_protocol_tip": "Select the API protocol used by the embedding service.",
     "embedding_dimensions": "Default dimensions",
     "embedding_dimensions_tip": "Optional dimension override for this model. The vector database dialog uses it as the default size.",
     "embedding_request_mapping": "Request mapping",
-    "embedding_request_mapping_tip": "Optional JSON for custom_json_http requests. Leave empty to use vv-llm defaults.",
+    "embedding_request_mapping_tip": "Only needed for custom HTTP interfaces. Leave empty to use the default request format.",
     "embedding_response_mapping": "Response mapping",
-    "embedding_response_mapping_tip": "Optional JSON for custom_json_http responses. Set data_path and field_map when the upstream response is non-standard.",
+    "embedding_response_mapping_tip": "For a non-standard response, configure data_path and field_map to read the embedding vectors.",
     "json_object_optional": "Optional JSON object",
     "api_base_empty": "API Base cannot be empty",
     "max_output_tokens": "Max output tokens",
@@ -2434,7 +2436,11 @@
     "moonshot": "Moonshot",
     "proxy": "Proxy",
     "endpoint_type": "Endpoint type",
-    "endpoint_type_default": "Default"
+    "endpoint_type_default": "Default",
+    "cancel_endpoint_edit": "Cancel editing",
+    "endpoint_id_duplicate": "This endpoint name is already in use.",
+    "unsaved_notice": "Unsaved changes",
+    "leave_unsaved_confirm": "Your changes have not been saved. Leave settings?"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "Youthful Male Voice",

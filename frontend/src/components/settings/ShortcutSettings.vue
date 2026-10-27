@@ -83,7 +83,7 @@ watch(shortcuts, (newVal) => {
       </a-empty>
     </a-flex>
     <a-flex v-else vertical align="center" gap="large">
-      <a-alert message="Tips" type="info" show-icon>
+      <a-alert :message="t('common.TIP')" type="info" show-icon>
         <template #description>
           <a-typography-paragraph :content="t('settings.toggle_recording')" />
           <a-typography-paragraph :content="t('settings.recording_using_shorcut_tip')" />

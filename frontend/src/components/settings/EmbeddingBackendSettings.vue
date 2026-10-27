@@ -17,11 +17,11 @@ const { t } = useI18n()
 const backendSettings = defineModel()
 
 const protocolOptions = [
-  { label: 'openai_embeddings', value: 'openai_embeddings' },
-  { label: 'cohere_embed_v2', value: 'cohere_embed_v2' },
-  { label: 'voyage_embeddings_v1', value: 'voyage_embeddings_v1' },
-  { label: 'siliconflow', value: 'siliconflow' },
-  { label: 'custom_json_http', value: 'custom_json_http' },
+  { label: 'OpenAI Embeddings', value: 'openai_embeddings' },
+  { label: 'Cohere Embed v2', value: 'cohere_embed_v2' },
+  { label: 'Voyage Embeddings v1', value: 'voyage_embeddings_v1' },
+  { label: 'SiliconFlow', value: 'siliconflow' },
+  { label: t('settings.custom_http_protocol'), value: 'custom_json_http' },
 ]
 
 const ensureBackendSettings = () => {

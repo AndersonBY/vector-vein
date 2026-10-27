@@ -34,7 +34,7 @@ const time = value => value === null ? '—' : new Date(value).toLocaleTimeStrin
         <table>
           <thead><tr><th>{{ t('workspace.workflowSpace.timeline_node') }}</th><th>{{ t('workspace.workflowSpace.timeline_state') }}</th><th>{{ t('workspace.workflowSpace.timeline_elapsed') }}</th><th>{{ t('workspace.workflowSpace.timeline_started') }}</th><th>{{ t('workspace.workflowSpace.timeline_finished') }}</th></tr></thead>
           <tbody><tr v-for="row in rows" :key="row.id">
-            <td><strong>{{ getTimelineNodeLabel(row, t, te) }}</strong><small>{{ row.id }}</small></td>
+            <td><strong>{{ getTimelineNodeLabel(row, t, te) }}</strong><small><a-typography-text type="secondary" :copyable="{ text: row.id }">{{ row.id }}</a-typography-text></small></td>
             <td>{{ t(`workspace.workflowSpace.timeline_${row.status.toLowerCase()}`) }}</td>
             <td>{{ row.elapsed === null ? '—' : `${row.elapsed.toFixed(1)} s` }}</td>
             <td>{{ time(row.startedAt) }}</td><td>{{ time(row.finishedAt) }}</td>

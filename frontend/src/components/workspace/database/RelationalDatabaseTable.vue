@@ -122,9 +122,6 @@ const deleteDatabase = async (rid) => {
             </template>
             {{ t('workspace.dataSpace.create') }}
           </a-button>
-          <a-typography-text type="secondary">
-            {{ userRelationalDatabases.length }}
-          </a-typography-text>
         </a-space>
         <a-modal v-model:open="createNewDatabaseModal.open" :title="t('workspace.dataSpace.create')"
           @ok="createNewDatabaseModal.create" :confirmLoading="createNewDatabaseModal.creating">

@@ -459,7 +459,6 @@ const deleteMessage = () => {
               <template #header>
                 <a-typography-text>
                   {{ t('workspace.chatSpace.reasoning_content') }}
-                  {{ content.reasoning_content.length }}
                 </a-typography-text>
               </template>
               <TextOutput :text="content.reasoning_content" :showCopy="false" />
@@ -524,7 +523,7 @@ const deleteMessage = () => {
                   </a-typography-paragraph>
                 </div>
                 <a-spin v-else-if="['S', 'A', 'R', 'Z', 'F'].includes(status) || showingRecord"
-                  :spinning="loadingWorkflowRecord || runningWorkflow">
+                  :spinning="loadingWorkflowRecord">
                   <a-alert :type="alertType" banner="" show-icon v-if="displayedRecordStatus.length > 0">
 
                     <template #message>

@@ -1,8 +1,8 @@
 <script setup>
-import { ref, reactive, onBeforeMount, h, onMounted, onBeforeUnmount } from "vue"
+import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
-import { message, TypographyTitle, Modal } from 'ant-design-vue'
+import { message, Modal } from 'ant-design-vue'
 import { Plus } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -116,11 +116,11 @@ const createAgentModal = reactive({
 const agentActions = reactive({
   delete: async (agent) => {
     Modal.confirm({
-      title: h(TypographyTitle, { type: 'danger', level: 3, style: { marginBottom: 0 } }, () => t('workspace.agentSpace.delete_agent_confirm_title')),
+      title: t('workspace.agentSpace.delete_agent_confirm_title'),
       content: t('workspace.agentSpace.delete_agent_confirm_content', { 'name': agent.name }),
-      okText: t('common.yes'),
+      okText: t('common.delete'),
       okType: 'danger',
-      cancelText: t('common.no'),
+      cancelText: t('common.cancel'),
       maskClosable: true,
       async onOk() {
         const response = await agentAPI('delete', { aid: agent.aid })
@@ -151,11 +151,7 @@ const agentActions = reactive({
   <div class="main-container">
     <WorkspacePageHero
       :title="t('workspace.agentSpace.my_agents')"
-      :description="t('workspace.agentSpace.hero_description')"
-      :stats="[
-        { label: t('workspace.agentSpace.hero_agent_count'), value: myAgents.length, tip: t('workspace.agentSpace.hero_agent_count_tip') },
-        { label: t('workspace.agentSpace.hero_search_ready'), value: searchText ? 1 : 0, tip: t('workspace.agentSpace.hero_search_ready_tip') },
-      ]">
+      :description="t('workspace.agentSpace.hero_description')">
       <template #actions>
         <InputSearch v-model="searchText" @search="searchAgents" @clear-search="clearSearch" />
         <a-button type="primary" @click="createAgentModal.open = true">

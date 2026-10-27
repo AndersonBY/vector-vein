@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, toRaw, computed } from "vue"
+import { ref, reactive, toRaw, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
 import { Delete } from '@/icons'
@@ -8,6 +8,11 @@ import { settingAPI } from "@/api/user"
 import ModelEndpointTest from '@/components/settings/ModelEndpointTest.vue'
 
 const { t } = useI18n()
+const props = defineProps({
+  saveSettings: { type: Function, required: true },
+  saving: { type: Boolean, default: false },
+})
+const emit = defineEmits(['dirty'])
 
 const endpoints = defineModel('endpoints')
 const localModels = defineModel('localModels')
@@ -37,17 +42,21 @@ const endpointPresets = [
 ]
 
 const endpointFormRemove = (index) => {
+  if (props.saving) return
   endpoints.value.splice(index, 1)
+  if (endpointFormStatus.value === 'edit') {
+    if (endpointEditIndex.value === index) closeEditor()
+    else if (endpointEditIndex.value > index) endpointEditIndex.value--
+  }
 }
 
 const hasUnsavedChanges = () => {
-  // 使用hashObject计算当前表单的哈希值，并与原始哈希值比较
-  const currentHash = hashObject(toRaw(endpointForm), ['credentials'])
-  return currentHash !== originalFormHash.value
+  return !!endpointFormStatus.value && hashObject(endpointForm) !== originalFormHash.value
 }
+watch(hasUnsavedChanges, value => emit('dirty', value), { immediate: true })
 
 const switchEndpoint = (endpoint, index) => {
-  Object.assign(endpointForm, defaultParams)
+  clearForm()
   const copiedEndpoint = deepCopy(toRaw(endpoint))
   copiedEndpoint.credentials = copiedEndpoint.credentials ? JSON.stringify(copiedEndpoint.credentials, null, 2) : ''
   Object.assign(endpointForm, copiedEndpoint)
@@ -55,31 +64,29 @@ const switchEndpoint = (endpoint, index) => {
   endpointEditIndex.value = index
 
   // 保存初始状态的哈希值，用于后续比较
-  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
+  originalFormHash.value = hashObject(toRaw(endpointForm))
 }
 
 const endpointFormEdit = (endpoint, index) => {
+  if (props.saving) return
   // 检查当前表单是否有未保存的更改
   if (endpointFormStatus.value !== '' && hasUnsavedChanges()) {
     Modal.confirm({
       title: t('settings.unsaved_changes'),
       content: t('settings.save_changes_confirm'),
       okText: t('settings.save'),
-      cancelText: t('settings.discard'),
-      onOk: () => {
-        endpointFormSave()
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        if (!await props.saveSettings()) throw new Error('Settings save failed')
         switchEndpoint(endpoint, index)
       },
-      onCancel: () => {
-        switchEndpoint(endpoint, index)
-      }
     })
   } else {
     switchEndpoint(endpoint, index)
   }
 }
 
-const endpointFormSave = () => {
+const readEndpoint = () => {
   const formData = deepCopy(toRaw(endpointForm))
   if (!formData.api_base) {
     message.error(t('settings.api_base_empty'))
@@ -89,40 +96,54 @@ const endpointFormSave = () => {
     message.error(t('settings.endpoint_id_empty'))
     return ''
   }
+  if (endpoints.value.some((endpoint, index) => endpoint.id === formData.id &&
+      (endpointFormStatus.value !== 'edit' || index !== endpointEditIndex.value))) {
+    message.error(t('settings.endpoint_id_duplicate'))
+    return ''
+  }
   try {
     formData.credentials = formData.credentials ? JSON.parse(formData.credentials) : {}
   } catch (error) {
-    console.error('凭证 JSON 解析错误:', error)
     message.error(t('settings.credentials_parse_failed'))
     return ''
   }
 
-  if (endpointFormStatus.value === 'edit') {
-    Object.assign(endpoints.value[endpointEditIndex.value], formData)
-  } else {
-    endpoints.value.push(formData)
-  }
-  Object.keys(endpointForm).forEach(key => endpointForm[key] = '')
-  endpointFormStatus.value = ''
-  originalFormHash.value = 0
-  return formData.id
+  return formData
 }
+const clearForm = () => {
+  Object.keys(endpointForm).forEach(key => delete endpointForm[key])
+  Object.assign(endpointForm, defaultParams)
+}
+const closeEditor = () => {
+  clearForm()
+  endpointFormStatus.value = ''
+  endpointEditIndex.value = undefined
+  originalFormHash.value = 0
+}
+const prepareSave = () => {
+  if (!endpointFormStatus.value) return null
+  const endpoint = readEndpoint()
+  if (!endpoint) return false
+  const submitted = deepCopy(toRaw(endpoints.value))
+  if (endpointFormStatus.value === 'edit') submitted[endpointEditIndex.value] = endpoint
+  else submitted.push(endpoint)
+  return submitted
+}
+defineExpose({ prepareSave, markSaved: closeEditor })
 
 const addNewEndpoint = () => {
+  if (props.saving) return
   // 检查当前表单是否有未保存的更改
   if (endpointFormStatus.value !== '' && hasUnsavedChanges()) {
     Modal.confirm({
       title: t('settings.unsaved_changes'),
       content: t('settings.save_changes_confirm'),
       okText: t('settings.save'),
-      cancelText: t('settings.discard'),
-      onOk: () => {
-        endpointFormSave()
+      cancelText: t('common.cancel'),
+      onOk: async () => {
+        if (!await props.saveSettings()) throw new Error('Settings save failed')
         resetForm()
       },
-      onCancel: () => {
-        resetForm()
-      }
     })
   } else {
     resetForm()
@@ -130,10 +151,10 @@ const addNewEndpoint = () => {
 }
 
 const resetForm = () => {
-  Object.assign(endpointForm, defaultParams)
+  clearForm()
   endpointForm.id = 'new-endpoint'
   endpointFormStatus.value = 'add'
-  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
+  originalFormHash.value = hashObject(toRaw(endpointForm))
 }
 
 const applyPreset = (preset) => {
@@ -145,7 +166,6 @@ const applyPreset = (preset) => {
   if (endpointForm.id === 'new-endpoint') {
     endpointForm.id = preset.key
   }
-  originalFormHash.value = hashObject(toRaw(endpointForm), ['credentials'])
 }
 
 const availableModelsState = reactive({
@@ -201,10 +221,11 @@ const availableModelsState = reactive({
   selectAll: () => {
     availableModelsState.selectedModel = availableModelsState.availableModels.map(item => item.id)
   },
-  addToCustomModels: () => {
-    const endpointId = endpointFormSave()
-    if (endpointId) {
-      availableModelsState.modalOpen = false
+  addToCustomModels: async () => {
+    if (props.saving) return
+    const endpoint = readEndpoint()
+    if (endpoint) {
+      const endpointId = endpoint.id
       availableModelsState.selectedModel.forEach(item => {
         localModels.value.models[item] = {
           "id": item,
@@ -217,6 +238,7 @@ const availableModelsState = reactive({
         }
       })
       modelFamilyMap.value[endpointId] = availableModelsState.selectedModel
+      if (await props.saveSettings()) availableModelsState.modalOpen = false
     }
   },
 })
@@ -227,27 +249,27 @@ const availableModelsState = reactive({
     <a-col :sm="24" :md="8">
       <a-flex vertical gap="small">
         <a-flex v-for="(endpoint, index) in endpoints" :key="endpoint.id" gap="small" align="center">
-          <a-button type="text" block @click="endpointFormEdit(endpoint, index)">
+          <a-button type="text" block :disabled="saving" @click="endpointFormEdit(endpoint, index)">
             <a-typography-text ellipsis :content="endpoint.id" />
           </a-button>
-          <a-button type="text" @click="endpointFormRemove(index)">
+          <a-button type="text" :disabled="saving" :aria-label="t('common.delete')" @click="endpointFormRemove(index)">
             <template #icon>
               <Delete fill="#ff4d4f" />
             </template>
           </a-button>
         </a-flex>
-        <a-button type="dashed" block @click="addNewEndpoint">
+        <a-button type="dashed" block :disabled="saving" @click="addNewEndpoint">
           {{ t('settings.add_endpoint') }}
         </a-button>
       </a-flex>
     </a-col>
     <a-col v-show="['edit', 'add'].includes(endpointFormStatus)" :sm="24" :md="16">
       <a-flex wrap gap="small" style="margin-bottom: 12px;">
-        <a-tag v-for="preset in endpointPresets" :key="preset.key" class="endpoint-preset-tag" @click="applyPreset(preset)">
+        <a-button v-for="preset in endpointPresets" :key="preset.key" size="small" :disabled="saving" @click="applyPreset(preset)">
           {{ preset.label }}
-        </a-tag>
+        </a-button>
       </a-flex>
-      <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
+      <a-form :disabled="saving" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <a-form-item :label="t('settings.endpoint_id')" :required="true">
           <a-input v-model:value="endpointForm.id" />
         </a-form-item>
@@ -287,12 +309,13 @@ const availableModelsState = reactive({
         </a-form-item>
       </a-form>
       <a-flex justify="space-between" gap="small">
-        <a-button block @click="availableModelsState.list" :loading="availableModelsState.listing">
+        <a-button block @click="availableModelsState.list" :disabled="saving" :loading="availableModelsState.listing">
           {{ t('settings.list_models') }}
         </a-button>
-        <a-button type="primary" block @click="endpointFormSave" :disabled="!endpointForm.id">
-          {{ t('settings.save_endpoint') }}
+        <a-button type="primary" block @click="saveSettings()" :loading="saving" :disabled="!endpointForm.id">
+          {{ t('settings.save') }}
         </a-button>
+        <a-button :disabled="saving" @click="closeEditor">{{ t('settings.cancel_endpoint_edit') }}</a-button>
         <a-modal v-model:open="availableModelsState.modalOpen" :title="t('settings.available_models')">
           <a-table :dataSource="availableModelsState.availableModels" :columns="availableModelsState.columns"
             :rowSelection="{ selectedRowKeys: availableModelsState.selectedModel, onChange: availableModelsState.onSelectChange }"
@@ -310,7 +333,7 @@ const availableModelsState = reactive({
                 </a-button>
               </a-space>
               <a-button type="primary" @click="availableModelsState.addToCustomModels"
-                :disabled="!availableModelsState.selectedModel.length">
+                :loading="saving" :disabled="!availableModelsState.selectedModel.length || saving">
                 {{ t('settings.add_to_custom_models') }}
               </a-button>
             </a-flex>
@@ -322,9 +345,3 @@ const availableModelsState = reactive({
     </a-col>
   </a-row>
 </template>
-
-<style scoped>
-.endpoint-preset-tag {
-  cursor: pointer;
-}
-</style>

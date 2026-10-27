@@ -120,11 +120,11 @@ const goBack = () => {
               </template>
               <template #description>
                 <a-typography-paragraph
-                  :ellipsis="{ rows: 4, expandable: true, symbol: t('common.more_settings') }"
+                  :ellipsis="{ rows: 4, expandable: true, symbol: t('common.expand') }"
                   :content="item.text || ''"
                   style="margin-bottom: 4px;" />
                 <a-typography-text v-if="item.object_id" type="secondary" style="font-size: 12px;">
-                  Object: {{ item.object_id }}
+                  {{ t('workspace.databaseDetail.object_id') }}: {{ item.object_id }}
                 </a-typography-text>
               </template>
             </a-list-item-meta>

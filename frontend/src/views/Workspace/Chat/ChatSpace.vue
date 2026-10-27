@@ -1,9 +1,9 @@
 <script setup>
-import { computed, ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, watch, h } from 'vue'
+import { computed, ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import { Edit, More, Delete, ExpandLeft, ExpandRight, Search } from '@/icons'
-import { Modal, message, TypographyTitle } from 'ant-design-vue'
+import { Modal, message } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
 import { useUserAgentsStore } from '@/stores/userAgents'
@@ -165,11 +165,11 @@ watch(searchKeyword, () => {
 
 const deleteChat = (chat) => {
   Modal.confirm({
-    title: h(TypographyTitle, { type: 'danger', level: 3, style: { marginBottom: 0 } }, () => t('workspace.chatSpace.delete_chat_confirm_title')),
+    title: t('workspace.chatSpace.delete_chat_confirm_title'),
     content: t('workspace.chatSpace.delete_chat_confirm_content', { 'title': chat.title }),
-    okText: t('common.yes'),
+    okText: t('common.delete'),
     okType: 'danger',
-    cancelText: t('common.no'),
+    cancelText: t('common.cancel'),
     maskClosable: true,
     async onOk() {
       const res = await conversationAPI('delete', { cid: chat.cid })
@@ -346,7 +346,7 @@ const checkScreenSize = () => {
 
 @media screen and (min-width: 768px) {
   .chat-space-container .conversation-container {
-    border-radius: 20px;
+    border-radius: 12px;
     box-shadow: var(--chat-box-shadow);
     min-width: 600px;
     min-height: 370px;

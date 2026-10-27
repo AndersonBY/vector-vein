@@ -54,6 +54,8 @@ const restoreWorkflow = async (wid) => {
 const purgeWorkflow = (wid) => {
   Modal.confirm({
     title: t('workspace.workflowSpace.purge_confirm'),
+    okText: t('workspace.workflowSpace.delete_permanently'),
+    cancelText: t('common.cancel'),
     okType: 'danger',
     async onOk() {
       const response = await workflowAPI('trash_purge', { wid })
@@ -76,8 +78,7 @@ const onTableChange = async (pagination) => {
   <a-flex vertical gap="large">
     <WorkspacePageHero
       :title="t('workspace.workflowSpace.trash')"
-      :description="t('workspace.workflowSpace.trash_description')"
-      :stats="[{ label: t('workspace.workflowSpace.trash_count'), value: trash.total, tip: t('workspace.workflowSpace.trash_count_tip') }]" />
+      :description="t('workspace.workflowSpace.trash_description')" />
 
     <a-card>
       <WorkspaceEmptyState v-if="!trash.loading && trash.data.length === 0"

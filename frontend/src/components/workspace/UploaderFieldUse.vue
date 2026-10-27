@@ -210,6 +210,7 @@ const selectFile = async (e) => {
     } else {
       _files = selectedFiles
     }
+    if (!_files.length) return
 
     _files.forEach((file, index) => {
       files.value.push(file)
@@ -228,10 +229,11 @@ const selectFile = async (e) => {
     }
 
     emit('update:firstFile', files.value[0])
-    message.success(t('components.workspace.uploaderFieldUse.upload_success'))
+    message.success(t('components.workspace.uploaderFieldUse.upload_success', {
+      file: _files.map(file => file.split(/[\\/]/).pop()).join('、'),
+    }))
   } catch (error) {
-    console.error(error)
-    message.error(t('components.workspace.uploaderFieldUse.upload_failed'))
+    if (!disposed) message.error(t('components.workspace.uploaderFieldUse.select_failed'))
   } finally {
     uploading.value = false
   }

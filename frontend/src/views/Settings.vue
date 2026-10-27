@@ -1,5 +1,6 @@
 <script setup>
-import { ref, reactive, toRaw, onBeforeMount, computed, watch } from "vue"
+import { ref, reactive, toRaw, onBeforeMount, computed } from "vue"
+import { onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import {
@@ -64,6 +65,12 @@ const refreshMics = async () => {
 }
 
 const savedSettingsHash = ref('')
+const savedShortcutsHash = ref('')
+const endpointEditor = ref(null)
+const endpointDraftDirty = ref(false)
+const unsavedChanges = computed(() => !loading.value &&
+  (endpointDraftDirty.value || hashObject(settingForm.data) !== savedSettingsHash.value))
+onBeforeRouteLeave(() => !unsavedChanges.value || window.confirm(t('settings.leave_unsaved_confirm')))
 
 onBeforeMount(async () => {
   const defaultSettingsResp = await settingAPI('get_default_settings')
@@ -97,6 +104,7 @@ onBeforeMount(async () => {
   await refreshMics()
 
   savedSettingsHash.value = hashObject(settingForm.data)
+  savedShortcutsHash.value = hashObject(settingForm.data.shortcuts || {})
 
   loading.value = false
 })
@@ -117,24 +125,38 @@ const selectFolder = async (settingsKey) => {
 
 const saving = ref(false)
 const saveSetting = async (updateShortcuts = false) => {
-  if (saving.value) return
+  if (saving.value) return false
   if (!validPreferences.value) {
     selectedKeys.value = ['model_preferences']
     message.error(t('components.model_picker.invalid_preferences'))
-    return
+    return false
+  }
+  const pendingEndpoints = endpointEditor.value?.prepareSave()
+  if (pendingEndpoints === false) {
+    selectedKeys.value = ['endpoints']
+    return false
   }
   saving.value = true
   try {
-    const response = await settingAPI('update', { ...settingForm, update_shortcuts: updateShortcuts === true })
+    const submitted = deepCopy(toRaw(settingForm))
+    if (pendingEndpoints) submitted.data.llm_settings.endpoints = pendingEndpoints
+    const response = await settingAPI('update', { ...submitted, update_shortcuts: updateShortcuts === true ||
+      hashObject(submitted.data.shortcuts || {}) !== savedShortcutsHash.value })
     if (response.status !== 200) throw new Error('Settings update failed')
-    const saved = response.data || { id: settingForm.id, data: deepCopy(toRaw(settingForm.data)) }
+    const saved = response.data || submitted
     userSettings.setSetting(saved)
     modelCatalogStore.setPayloadFromSettings(saved)
     message.success(t('settings.save_success'))
     chatModelOptions.value = getChatModelOptions()
-    savedSettingsHash.value = hashObject(settingForm.data)
+    savedSettingsHash.value = hashObject(submitted.data)
+    savedShortcutsHash.value = hashObject(submitted.data.shortcuts || {})
+    if (pendingEndpoints) settingForm.data.llm_settings.endpoints = submitted.data.llm_settings.endpoints
+    endpointEditor.value?.markSaved()
+    endpointDraftDirty.value = false
+    return true
   } catch {
     message.error(t('components.model_picker.settings_save_failed'))
+    return false
   } finally {
     saving.value = false
   }
@@ -171,12 +193,6 @@ const websiteDomainOptions = [
   { label: 'vectorvein.com', value: 'vectorvein.com' },
 ]
 
-watch(selectedKeys, () => {
-  const currentHash = hashObject(settingForm.data)
-  if (currentHash != savedSettingsHash.value) {
-    message.warning(t('settings.settings_changed'))
-  }
-})
 </script>
 
 <template>
@@ -274,13 +290,15 @@ watch(selectedKeys, () => {
       </a-layout-sider>
 
       <a-layout-content>
+        <div class="settings-toolbar">
+          <a-typography-text v-if="unsavedChanges" type="secondary" role="status">{{ t('settings.unsaved_notice') }}</a-typography-text>
+          <a-button type="primary" :loading="saving" :disabled="loading || !unsavedChanges" @click="saveSetting()">
+            {{ t('settings.save') }}
+          </a-button>
+        </div>
         <a-card v-show="selectedKeys == 'endpoints'" :title="t('settings.endpoints')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <EndpointSettings
+            ref="endpointEditor" :saving="saving" :save-settings="saveSetting" @dirty="endpointDraftDirty = $event"
             v-if="settingForm.data?.llm_settings?.endpoints && settingForm.data.llm_settings?.backends.local"
             v-model:endpoints="settingForm.data.llm_settings.endpoints"
             v-model:localModels="settingForm.data.llm_settings.backends.local"
@@ -288,26 +306,15 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'llms'" :title="t('settings.llms')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <LLMTabsSettings v-if="settingForm.data.llm_settings?.backends && settingForm.data.llm_settings?.endpoints"
             v-model="settingForm.data.llm_settings.backends" :endpoints="settingForm.data.llm_settings.endpoints" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'model_preferences'" :title="t('components.model_picker.preferences_title')" :loading="loading">
-          <template #extra><a-button type="primary" @click="saveSetting" :loading="saving" :disabled="!validPreferences">{{ t('settings.save') }}</a-button></template>
           <ModelPreferenceSettings v-if="!loading" v-model="settingForm.data.model_preferences" :options="preferenceOptions" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'custom_llms'" :title="t('settings.custom_llms')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-skeleton v-if="loading" active />
           <CustomLLMSettings v-else v-model:localModels="settingForm.data.llm_settings.backends.local"
             v-model:modelFamilyMap="settingForm.data.custom_llms"
@@ -315,11 +322,6 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'embedding_models'" :title="t('settings.embedding_models')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-flex vertical gap="middle">
             <a-alert :message="t('settings.embedding_models')" type="info">
               <template #description>
@@ -339,11 +341,6 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'asr'" :title="t('settings.asr')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
             <a-form-item :label="t('settings.microphone_device')">
               <a-flex gap="small" align="center">
@@ -389,20 +386,10 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'tts'" :title="t('settings.tts')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <TTSSettings v-model="settingForm.data.tts" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'web_search'" :title="t('settings.web_search')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-tabs tab-position="left">
             <a-tab-pane key="jina.ai" tab="jina.ai">
               <a-flex vertical justify="center" gap="middle">
@@ -444,11 +431,6 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'api'" :title="t('settings.api_settings')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting" :loading="saving">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
             <a-form-item :label="t('settings.api_enabled')">
               <a-switch v-model:checked="settingForm.data.api.enabled" />
@@ -474,11 +456,6 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'email'" :title="t('settings.email_settings')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
             <a-form-item :label="t('settings.email_user')">
               <a-input v-model:value="settingForm.data.email.user" />
@@ -503,20 +480,10 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-if="selectedKeys == 'shortcut'" :title="t('settings.shortcut_settings')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting(true)">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <ShortcutSettings v-model="settingForm.data.shortcuts" />
         </a-card>
 
         <a-card v-show="selectedKeys == 'other'" :title="t('settings.other')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
             <a-form-item :label="t('settings.website_domain')">
               <a-select v-model:value="settingForm.data.website_domain" :options="websiteDomainOptions"
@@ -579,11 +546,6 @@ watch(selectedKeys, () => {
         </a-card>
 
         <a-card v-show="selectedKeys == 'agent'" :title="t('settings.agent_settings')" :loading="loading">
-          <template #extra>
-            <a-button type="primary" @click="saveSetting">
-              {{ t('settings.save') }}
-            </a-button>
-          </template>
           <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
             <a-form-item :label="t('settings.agent_auto_title')">
               <a-checkbox v-model:checked="settingForm.data.agent.auto_title" />
@@ -636,5 +598,16 @@ watch(selectedKeys, () => {
 .sider-menu .collapse-button {
   position: absolute;
   bottom: 0;
+}
+.settings-toolbar {
+  position: sticky;
+  top: 64px;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+  padding: 12px 0;
+  background: var(--gray-background);
 }
 </style>

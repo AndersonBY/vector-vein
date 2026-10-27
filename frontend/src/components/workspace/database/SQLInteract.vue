@@ -46,7 +46,7 @@ const runSQL = async () => {
 const FontSizeTheme = EditorView.theme({
   ".cm-content": {
     fontFamily: "Cascadia Code, Consolas, Monaco, Menlo, Ubuntu Mono, Liberation Mono, DejaVu Sans Mono, Courier New, monospace",
-    fontSize: '24px',
+    fontSize: '14px',
   },
 })
 const extensions = [sql(), oneDark, FontSizeTheme]
@@ -69,7 +69,7 @@ const extensions = [sql(), oneDark, FontSizeTheme]
     </a-spin>
     <a-tabs v-model:activeKey="resultTabKey" type="card">
       <a-tab-pane v-for="(result, index) in results" :key="index + 1"
-        :tab="t('workspace.databaseDetail.result_n', { n: index })">
+        :tab="t('workspace.databaseDetail.result_n', { n: index + 1 })">
         <template v-if="result.success">
           <a-table v-if="result.type == 'SELECT'" :columns="result.columns" :data-source="result.records"
             :pagination="{ hideonSinglePage: true }" :scroll="{ x: 970 }">

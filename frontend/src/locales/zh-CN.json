@@ -168,7 +168,8 @@
     "NOTE": "注意",
     "IMPORTANT": "重要",
     "WARNING": "警告",
-    "CAUTION": "小心"
+    "CAUTION": "小心",
+    "expand": "展开"
   },
   "workspace": {
     "canvasPreview": {
@@ -218,7 +219,6 @@
       "chat_connection_closed": "连接已中断，已保留收到的回复。",
       "chat_timeout": "等待回复超时，请重试。",
       "retry_response": "重试",
-
       "fetch_conversations_failed": "获取会话列表失败",
       "fetch_conversation_failed": "获取会话失败",
       "textarea_tip": "Ctrl + Enter 发送",
@@ -247,7 +247,7 @@
       "update_settings_failed": "更新设置失败",
       "agent_settings": "Agent 设置",
       "system_prompt": "系统提示词",
-      "system_prompt_description": "您可以使用系统提示词来描述助手的个性，定义模型应该和不应该回答什么，并定义模型响应的格式。",
+      "system_prompt_description": "设定助手的角色、回复风格与输出格式。",
       "auto_run_workflow": "自动运行工作流",
       "auto_run_workflow_description": "当 AI 判断需要运行工作流来完成任务时，自动运行工作流并返回结果。",
       "use_workflow": "调用工作流",
@@ -306,7 +306,7 @@
       "retry": "重试",
       "my_agents": "我的 AI Agent",
       "public_agents": "公开 AI Agent",
-      "hero_description": "在桌面端统一管理本地 Agent、关联工作流和快捷键触发入口。",
+      "hero_description": "创建、配置 Agent，或开始聊天。",
       "hero_agent_count": "Agent 数量",
       "hero_agent_count_tip": "当前视图中已加载的 Agent 数量。",
       "hero_search_ready": "搜索模式",
@@ -328,10 +328,10 @@
       "duplicate_as_mine": "复制到我的 Agent",
       "duplicate_agent_success": "复制 Agent 成功",
       "add_templates": "同步添加工作流模板",
-      "add_templates_to_your_workflows": "是否同步将该 Agent 中的工作流模板添加为您的个人工作流。添加后可回看工作流运行记录，方便查看。若不添加则该 Agent 不会关联任何工作流，需要您手动处理。",
+      "add_templates_to_your_workflows": "同时将关联模板复制到「我的工作流」，并关联到此 Agent；不勾选则需要之后手动关联。",
       "modify_agent": "修改 Agent",
       "system_prompt": "系统提示词",
-      "system_prompt_tip": "系统提示是用于引导 AI 行为的特殊消息，可以允许开发人员在一定范围内规定人工智能的风格和任务，使其更加可定制和适应各种用例。您可以使用 {'{{'}time{'}}'} 作为时间变量，告知 Agent 当前时间。",
+      "system_prompt_tip": "设定 Agent 的角色、回复风格与输出格式。使用 {'{{'}time{'}}'} 表示当前时间。",
       "opening_dialog": "开场白",
       "opening_question_suggestions": "建议问题",
       "opening_question_suggestions_tip": "给出几个可选的开场问题，让用户可以快速开始对话。",
@@ -348,7 +348,7 @@
       "toggle_agent_is_public_false": "取消公开 Agent",
       "toggle_agent_is_public_false_content": "取消公开后其他用户将无法在社区公开页面发现该 Agent。",
       "workflow_become_template_warning": "您的个人工作流将会自动转换为工作流模板以方便其他用户使用。",
-      "database_access_control_warning": "如果您的 Agent 使用的工作流中涉及到知识库搜索，请注意确认数据库的权限。如果数据库为私有权限，则转换为工作流模板后用户需要自行创建数据库。如果您希望用户直接使用您已创建号的数据库，注意将数据库权限改为公开可读。",
+      "database_access_control_warning": "关联工作流使用私有数据库时，其他用户需要自行创建数据库。若要让他人使用现有数据库，请先确认其中的数据可以公开，再将其设为公开可读。",
       "workflows_converted_to_templates": "工作流已转换为模板",
       "copy_agent_share_link": "复制分享链接",
       "model_select": "AI 模型选择",
@@ -383,7 +383,6 @@
       "timeline_stopped": "已停止",
       "timeline_not_run": "未执行",
       "timeline_unknown": "未知",
-
       "workflow_index": "工作流首页",
       "user_fast_access_workflows": "快速访问工作流",
       "add_new_workflow": "新建工作流",
@@ -407,7 +406,7 @@
       "run": "运行",
       "edit": "编辑",
       "delete": "删除",
-      "delete_confirm": "确认删除该工作流？",
+      "delete_confirm": "将此工作流移入回收站？之后可以恢复。",
       "delete_success": "删除成功",
       "delete_failed": "删除失败",
       "save_success": "保存成功",
@@ -519,7 +518,7 @@
       "schedule_last_run_status": "最近状态",
       "schedule_latest_run": "查看最近运行",
       "trash": "回收站",
-      "trash_description": "这里保留软删除的工作流，便于恢复或彻底清理。",
+      "trash_description": "已删除的工作流可在这里恢复，也可彻底删除。",
       "trash_count": "回收站数量",
       "trash_count_tip": "当前处于软删除状态的工作流数量。",
       "trash_empty": "回收站为空",
@@ -532,7 +531,8 @@
       "purge_confirm": "确认彻底删除该工作流？该操作不可恢复。",
       "purge_success": "彻底删除成功",
       "purge_failed": "彻底删除失败",
-      "deleted_at": "删除时间"
+      "deleted_at": "删除时间",
+      "error_details": "技术详情"
     },
     "workflowEditor": {
       "exit_not_saved_confirm": "工作流尚未保存，确认退出？",
@@ -589,7 +589,7 @@
       "no_workflows_1": "你还没有添加或创建工作流",
       "no_workflows_2": "到这里添加一个工作流看看吧",
       "hero_title": "本地自动化工作台",
-      "hero_description": "围绕工作流创建、运行、调度和恢复构建桌面端的统一控制台。",
+      "hero_description": "创建和运行工作流，管理定时任务与运行记录。",
       "stat_workflows": "工作流总数",
       "stat_workflows_tip": "当前账号下可用的本地工作流。",
       "stat_fast_access": "快速访问",
@@ -648,7 +648,7 @@
       "relational_database": "关系型数据库",
       "relational_database_description": "关系型数据库是一种基于关系模型的数据库，可以用于存储和检索结构化数据。",
       "hero_title": "数据与文件工作台",
-      "hero_description": "把本地数据库、文档调试和文件工作台收敛到同一个桌面入口。",
+      "hero_description": "管理本地数据库，测试向量搜索。",
       "document_query_test": "文档查询测试",
       "document_query_description": "读取本地文档并快速检索片段，用于验证分段和抽取结果。",
       "document_query_matches": "匹配片段",
@@ -690,11 +690,11 @@
       "local_files_preview_placeholder": "选择一个文本类文件后会在这里显示预览内容。",
       "local_files_recent_files": "最近文件",
       "local_files_recent_files_tip": "最近被修改的文件会在这里集中展示，方便回看工作流输出。",
-      "embedding_provider": "嵌入后端",
+      "embedding_provider": "嵌入服务商",
       "embedding_provider_azure_tip": "如果设置中的 OpenAI 类型是 Azure，则以设置中的 Azure Embedding 部署名为准。",
       "embedding_provider_text_embeddings_inference_tip": "text-embeddings-inference 需要自行部署，具体查看",
       "embedding_provider_settings_tip": "这里的可用后端和模型来自 设置 > 嵌入模型。",
-      "embedding_provider_custom_tip": "自定义嵌入服务请在嵌入模型设置里通过 vv-llm 的请求/响应映射来配置。",
+      "embedding_provider_custom_tip": "自定义嵌入接口可在「设置 > 嵌入模型」中配置请求与响应映射。",
       "embedding_models": "嵌入模型",
       "embedding_size": "嵌入维度"
     },
@@ -737,7 +737,8 @@
       "affected_rows": "影响行数 {rows}",
       "max_show_rows": "页面上最多显示 1000 条数据",
       "force_refresh_database": "强制刷新数据库",
-      "result_n": "执行结果 {n}"
+      "result_n": "执行结果 {n}",
+      "object_id": "数据对象 ID"
     },
     "databaseObjectCreate": {
       "add_object": "添加数据",
@@ -834,7 +835,7 @@
       "high_performance": "高性能优先",
       "low_cost": "低成本优先",
       "custom": "自定义",
-      "custom_description": "手动选择模型提供商和模型",
+      "custom_description": "手动选择模型服务商和模型",
       "not_configured": "请先在设置 → 模型预设中配置",
       "reasoning": "推理强度",
       "invalid_preferences": "模型预设包含停用或缺失的模型，请重新选择或清空。",
@@ -849,18 +850,18 @@
       "effort_high": "高",
       "effort_xhigh": "极高",
       "effort_max": "最大"
-},
+    },
     "model_selector": {
       "search": "搜索服务商、模型名称或 ID",
       "select_provider": "请选择服务商",
-      "provider": "提供商",
+      "provider": "服务商",
       "family": "模型系列",
       "select_model": "选择或搜索模型",
       "loading": "正在加载模型…",
       "empty": "当前没有可用模型，请在设置中启用或添加。",
       "no_match": "没有匹配的模型",
       "model_unavailable": "此模型已停用或不在当前配置中，请重新选择。",
-      "provider_unavailable": "此提供商不在当前配置中，请重新选择。",
+      "provider_unavailable": "此服务商不在当前配置中，请重新选择。",
       "family_unavailable": "此模型系列不在当前配置中，请重新选择。",
       "save_failed": "模型选择保存失败，请重试。"
     },
@@ -920,7 +921,8 @@
         "upload_success": "已选择 {file}",
         "upload_failed": "选择 {file} 失败",
         "uploader_text": "点击或拖拽文件到此区域上传",
-        "uploader_hint": "目前支持的文件类型：{fileTypes}"
+        "uploader_hint": "目前支持的文件类型：{fileTypes}",
+        "select_failed": "无法选择文件，请重试。"
       },
       "mindmapRenderer": {
         "download_svg": "下载 SVG 文件",
@@ -1440,8 +1442,8 @@
         },
         "UniversalLlm": {
           "title": "统一 LLM",
-          "description": "基于端点和 provider 配置统一调用远程语言模型。",
-          "model_provider": "模型提供方"
+          "description": "选择服务商和模型，生成文本回复。",
+          "model_provider": "模型服务商"
         },
         "XAi": {
           "title": "xAI",
@@ -1453,7 +1455,7 @@
         "StableDiffusion": {
           "title": "Stable Diffusion",
           "description": "Stable Diffusion 是2022年发布的深度学习文本到图像生成模型。",
-          "provider": "提供方",
+          "provider": "服务商",
           "provider_self-host": "自行部署",
           "provider_stable-diffusion-official": "Stable Diffusion 官方",
           "prompt": "提示词",
@@ -1638,7 +1640,7 @@
           "audio_type_text_to_speech": "文字转语音",
           "audio_type_play_audio": "播放音频",
           "content": "文字内容",
-          "tts_provider": "语音合成提供商",
+          "tts_provider": "语音合成服务商",
           "tts_model": "语音合成模型",
           "tts_voice": "语音合成声音",
           "file_link": "音频文件链接",
@@ -2266,7 +2268,6 @@
     "endpoint_move_up": "在同级中上移",
     "endpoint_move_down": "在同级中下移",
     "model_key_id_required": "请输入模型键名和模型 ID。",
-
     "endpoints": "大语言模型端点",
     "llms": "远程大语言模型",
     "other": "其他",
@@ -2358,12 +2359,12 @@
     "shortcut_not_set": "未设置快捷键",
     "shortcut_conflict": "快捷键冲突，请检查并修改（相同或包含）: {key1} 与 {key2}",
     "embedding_models": "嵌入模型",
-    "embedding_settings_tip": "嵌入后端现在统一使用 vv-llm 的端点绑定和模型映射。请在这里配置 provider 模型，非标准接口则通过 request/response mapping 适配。",
+    "embedding_settings_tip": "配置用于向量搜索的嵌入模型及连接地址。自定义接口可在模型编辑中设置请求与响应映射。",
     "tts": "语音合成",
     "web_search": "网络搜索",
     "stability_key": "Stability Key",
     "asr": "语音识别",
-    "provider_for_asr": "语音识别提供商",
+    "provider_for_asr": "语音识别服务商",
     "asr_openai_setting_same_as_llm": "与大语言模型选项卡中设置相同",
     "voices": "声音",
     "voice_label": "声音标签",
@@ -2385,13 +2386,14 @@
     "embedding_default_endpoint": "默认端点",
     "embedding_default_endpoint_tip": "当模型没有显式绑定端点时，将使用这里的默认端点。",
     "embedding_protocol": "嵌入协议",
-    "embedding_protocol_tip": "选择上游嵌入服务对应的 vv-llm 协议适配器。",
+    "custom_http_protocol": "自定义 HTTP 接口",
+    "embedding_protocol_tip": "选择嵌入服务使用的接口协议。",
     "embedding_dimensions": "默认维度",
     "embedding_dimensions_tip": "可选的模型维度覆盖值，向量库创建弹窗会把它作为默认嵌入维度。",
     "embedding_request_mapping": "请求映射",
-    "embedding_request_mapping_tip": "给 custom_json_http 使用的可选 JSON。留空时使用 vv-llm 默认行为。",
+    "embedding_request_mapping_tip": "仅自定义 HTTP 接口需要配置。留空则使用默认请求格式。",
     "embedding_response_mapping": "响应映射",
-    "embedding_response_mapping_tip": "给 custom_json_http 使用的可选 JSON。当上游响应结构非标准时，请配置 data_path 和 field_map。",
+    "embedding_response_mapping_tip": "返回格式与标准接口不同时，配置 data_path 和 field_map 以读取向量数据。",
     "json_object_optional": "可选 JSON 对象",
     "api_base_empty": "API Base 不能为空",
     "max_output_tokens": "最大输出 Token 数",
@@ -2433,7 +2435,11 @@
     "moonshot": "月之暗面",
     "proxy": "代理",
     "endpoint_type": "端点类型",
-    "endpoint_type_default": "默认"
+    "endpoint_type_default": "默认",
+    "cancel_endpoint_edit": "取消编辑",
+    "endpoint_id_duplicate": "端点名称已存在，请换一个名称。",
+    "unsaved_notice": "有未保存的更改",
+    "leave_unsaved_confirm": "更改尚未保存，确定离开设置？"
   },
   "voiceOptions": {
     "minimax_male-qn-qingse": "青涩青年音色",

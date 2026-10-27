@@ -85,15 +85,7 @@ Spin.setDefaultIndicator({
   --conversation-list-background: #d5eef9;
   --conversation-hover-background-image: linear-gradient(to left, rgb(200 224 234) 60%, rgba(0, 0, 0, 0));
   --chat-button-selected-background-color: rgba(0, 0, 0, 0.06);
-  --chat-box-shadow: 50px 50px 100px 10px rgba(0, 0, 0, .1);
-  --hero-surface-border: rgba(15, 23, 42, 0.08);
-  --hero-surface-glow: rgba(40, 197, 229, 0.14);
-  --hero-surface-background-start: rgba(248, 250, 252, 0.98);
-  --hero-surface-background-end: rgba(255, 255, 255, 0.92);
-  --hero-surface-shadow: 0 18px 36px rgba(15, 23, 42, 0.06);
-  --hero-stat-background: rgba(255, 255, 255, 0.88);
-  --hero-stat-border: rgba(148, 163, 184, 0.18);
-  --hero-stat-value-color: #0f172a;
+  --chat-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 :root .theme-dark {
@@ -112,15 +104,7 @@ Spin.setDefaultIndicator({
   --conversation-list-background: #002130;
   --conversation-hover-background-image: linear-gradient(to left, rgb(0 33 48) 60%, rgba(0, 0, 0, 0));
   --chat-button-selected-background-color: rgba(255, 255, 255, 0.06);
-  --chat-box-shadow: 50px 50px 100px 10px rgba(128, 127, 127, 0.274);
-  --hero-surface-border: rgba(125, 211, 252, 0.16);
-  --hero-surface-glow: rgba(34, 211, 238, 0.18);
-  --hero-surface-background-start: rgba(21, 30, 43, 0.94);
-  --hero-surface-background-end: rgba(17, 24, 39, 0.9);
-  --hero-surface-shadow: 0 18px 40px rgba(0, 0, 0, 0.32);
-  --hero-stat-background: rgba(11, 18, 32, 0.72);
-  --hero-stat-border: rgba(125, 211, 252, 0.12);
-  --hero-stat-value-color: rgba(240, 249, 255, 0.96);
+  --chat-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .theme-dark .ant-menu.ant-menu-dark,

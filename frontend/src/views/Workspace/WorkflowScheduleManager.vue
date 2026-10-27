@@ -36,18 +36,6 @@ const workflowOptions = computed(() => (userWorkflowsStore.userWorkflows || []).
   value: workflow.wid,
 })))
 
-const heroStats = computed(() => ([
-  {
-    label: t('workspace.workflowSpace.schedule_count'),
-    value: schedules.total,
-    tip: t('workspace.workflowSpace.schedule_count_tip'),
-  },
-  {
-    label: t('workspace.workflowSpace.schedule_active_workflows'),
-    value: workflowOptions.value.length,
-    tip: t('workspace.workflowSpace.schedule_active_workflows_tip'),
-  },
-]))
 
 const loadSchedules = async (page = schedules.page, pageSize = schedules.pageSize) => {
   loading.value = true
@@ -124,6 +112,8 @@ const saveSchedule = async () => {
 const removeSchedule = (record) => {
   Modal.confirm({
     title: t('workspace.workflowSpace.schedule_delete_confirm'),
+    okText: t('common.delete'),
+    cancelText: t('common.cancel'),
     okType: 'danger',
     async onOk() {
       const response = await workflowScheduleTriggerAPI('delete', { sid: record.sid })
@@ -165,8 +155,7 @@ const onTableChange = async (pagination) => {
   <a-flex vertical gap="large" class="schedule-manager-page">
     <WorkspacePageHero
       :title="t('workspace.workflowSpace.schedule_manager')"
-      :description="t('workspace.workflowSpace.schedule_manager_description')"
-      :stats="heroStats">
+      :description="t('workspace.workflowSpace.schedule_manager_description')">
       <template #actions>
         <a-button type="primary" @click="openCreateModal">
           {{ t('workspace.workflowSpace.schedule_create') }}

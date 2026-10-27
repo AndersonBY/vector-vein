@@ -20,11 +20,12 @@ const nodeTitle = (failure) => {
   <div class="workflow-failure-details">
     <div v-for="(failure, index) in failures" :key="index" class="workflow-failure">
       <strong>{{ t('workspace.workflowSpace.record_error_task', { task: nodeTitle(failure) }) }}</strong>
-      <span v-if="failure.nodeId"> ({{ failure.nodeId }})</span>
-      <div v-if="failure.code || failure.exceptionType">
-        {{ [failure.code, failure.exceptionType].filter(Boolean).join(' · ') }}
-      </div>
       <div class="workflow-failure-cause">{{ failure.code === 'WORKFLOW_INTERRUPTED' ? t('workspace.workflowSpace.interrupted_message') : failure.message || t('workspace.workflowSpace.failure_no_details') }}</div>
+      <details v-if="failure.nodeId || failure.code || failure.exceptionType" class="failure-diagnostics">
+        <summary>{{ t('workspace.workflowSpace.error_details') }}</summary>
+        <div v-if="failure.nodeId">{{ t('workspace.workflowSpace.timeline_node') }} ID: {{ failure.nodeId }}</div>
+        <div>{{ [failure.code, failure.exceptionType].filter(Boolean).join(' · ') }}</div>
+      </details>
     </div>
     <div v-if="failures.length === 0">{{ t('workspace.workflowSpace.failure_no_details') }}</div>
     <div>{{ t('workspace.workflowSpace.failure_rerun_hint') }}</div>
@@ -41,4 +42,6 @@ const nodeTitle = (failure) => {
 .workflow-failure-cause {
   white-space: pre-wrap;
 }
+.failure-diagnostics { margin-top: 4px; color: var(--site-secondary-text-color); }
+.failure-diagnostics summary { cursor: pointer; }
 </style>

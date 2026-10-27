@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { Search } from '@/icons'
@@ -17,18 +17,6 @@ const tabChange = async (key) => {
   await router.push(getFullUrl(route.path, { tab: key }))
 }
 
-const heroStats = computed(() => ([
-  {
-    label: t('workspace.dataSpace.vector_database'),
-    value: 'Qdrant',
-    tip: t('workspace.dataSpace.vector_database_description'),
-  },
-  {
-    label: t('workspace.dataSpace.relational_database'),
-    value: 'SQLite',
-    tip: t('workspace.dataSpace.relational_database_description'),
-  },
-]))
 </script>
 
 <template>
@@ -38,8 +26,7 @@ const heroStats = computed(() => ([
         <a-flex vertical gap="large">
           <WorkspacePageHero
             :title="t('workspace.dataSpace.hero_title')"
-            :description="t('workspace.dataSpace.hero_description')"
-            :stats="heroStats">
+            :description="t('workspace.dataSpace.hero_description')">
             <template #actions>
               <a-button @click="router.push({ name: 'DocumentQueryTest' })">
                 <Search />

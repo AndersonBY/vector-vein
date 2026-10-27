@@ -1,5 +1,5 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, computed } from "vue"
+import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
 import AgentCard from "@/components/workspace/agent/AgentCard.vue"
@@ -72,26 +72,13 @@ const clearSearch = () => {
   searchAgents()
 }
 
-const heroStats = computed(() => ([
-  {
-    label: t('workspace.agentSpace.hero_agent_count'),
-    value: officialAgents.value.length,
-    tip: t('workspace.agentSpace.hero_agent_count_tip'),
-  },
-  {
-    label: t('workspace.agentSpace.hero_search_ready'),
-    value: searchText.value ? 1 : 0,
-    tip: t('workspace.agentSpace.hero_search_ready_tip'),
-  },
-]))
 </script>
 
 <template>
   <div class="main-container">
     <WorkspacePageHero
       :title="t('workspace.agentSpace.public_agents')"
-      :description="t('workspace.agentSpace.hero_description')"
-      :stats="heroStats">
+      :description="t('workspace.agentSpace.hero_description')">
       <template #actions>
         <InputSearch v-model="searchText" @search="searchAgents" @clear-search="clearSearch" />
       </template>
