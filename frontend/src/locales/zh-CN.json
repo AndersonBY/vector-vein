@@ -171,6 +171,18 @@
     "CAUTION": "小心"
   },
   "workspace": {
+    "canvasPreview": {
+      "open": "预览画布",
+      "title": "画布预览 · {title}",
+      "workflow": "工作流",
+      "empty": "这个工作流还没有节点。",
+      "ignored": "已忽略",
+      "zoom_in": "放大",
+      "zoom_out": "缩小",
+      "fit_view": "适应画布",
+      "load_failed": "无法加载工作流预览。",
+      "retry": "重试"
+    },
     "chatSpace": {
       "chat_response_failed": "回复未能完成，请重试。",
       "chat_connection_failed": "连接失败，请重试。",

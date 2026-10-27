@@ -8,6 +8,7 @@ import { DoubleRight, DoubleLeft } from '@/icons'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
+import WorkflowPreviewModal from '@/components/workspace/WorkflowPreviewModal.vue'
 import RelatedWorkflowsModal from "@/components/workspace/RelatedWorkflowsModal.vue"
 import TextOutput from "@/components/TextOutput.vue"
 import { officialSiteAPI } from '@/api/remote'
@@ -106,6 +107,12 @@ const addTemplateToUserWorkflows = async () => {
               style="margin-bottom: 10px;">
               {{ t('workspace.workflowTemplate.add_to_my_workflows') }}
             </a-button>
+
+            <WorkflowPreviewModal :workflow="templateData">
+              <template #default="{ open }">
+                <a-button block @click="open">{{ t('workspace.canvasPreview.open') }}</a-button>
+              </template>
+            </WorkflowPreviewModal>
 
             <a-button v-if="templateData.is_owner" type="primary" @click="openEditor" block>
               {{ t('workspace.workflowTemplate.edit_template') }}

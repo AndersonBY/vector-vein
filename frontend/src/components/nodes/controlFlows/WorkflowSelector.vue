@@ -4,6 +4,7 @@ import { message } from 'ant-design-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import WorkflowSelect from '@/components/workspace/WorkflowSelect.vue'
+import WorkflowPreviewModal from '@/components/workspace/WorkflowPreviewModal.vue'
 import { createTemplateData } from './WorkflowSelector'
 import { hydrateFlattenedModelField, mergeTemplateIntoFields } from '@/utils/modelCatalog'
 
@@ -80,6 +81,7 @@ const removeWorkflowCandidate = (workflowId) => {
               <a-typography-text ellipsis style="max-width: 180px;">
                 {{ workflow.title }}
               </a-typography-text>
+              <WorkflowPreviewModal :workflow-id="workflow.id" :title="workflow.title" />
               <a-button danger type="text" size="small" @click="removeWorkflowCandidate(workflow.id)">
                 Remove
               </a-button>

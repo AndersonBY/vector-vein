@@ -7,6 +7,7 @@ import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'
 import { workflowAPI, workflowTagAPI } from "@/api/workflow"
+import WorkflowPreviewModal from './WorkflowPreviewModal.vue'
 
 const data = defineModel()
 const emit = defineEmits(['selected'])
@@ -206,6 +207,7 @@ const getWorkflowDetail = async (wid) => {
                 <a-typography-text class="workflow-title">
                   {{ record.title }}
                 </a-typography-text>
+                <WorkflowPreviewModal :workflow-id="record.wid" :title="record.title" />
               </a-space>
             </template>
             <template v-else-if="column.key === 'tags'">
