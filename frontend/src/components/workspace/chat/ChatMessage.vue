@@ -2,7 +2,7 @@
 import { ref, watch, computed, nextTick, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Share, LoadingFour, Redo, Delete, BranchTwo } from '@/icons'
+import { Share, LoadingFour, Redo, Delete, BranchTwo, Edit } from '@/icons'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
@@ -18,6 +18,8 @@ import { messageAPI } from '@/api/chat'
 import { getWorkflowFailures, getWorkflowRunStatus, getWorkflowFailureSnapshot } from '@/utils/workflowFailures'
 
 const props = defineProps({
+  editable: { type: Boolean, default: false },
+  editLoading: { type: Boolean, default: false },
   forkable: { type: Boolean, default: false },
   forkDisabled: { type: Boolean, default: false },
   forkLoading: { type: Boolean, default: false },
@@ -92,7 +94,24 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:status', 'append-answer', 'regenerate', 'delete', 'fork'])
+const emit = defineEmits(['update:status', 'append-answer', 'regenerate', 'delete', 'fork', 'edit'])
+const editing = ref(false)
+const editText = ref('')
+const editInput = ref(null)
+const canEdit = computed(() => props.editable && props.authorType === 'U' && props.contentType === 'TXT' &&
+  props.status === 'S' && typeof props.content.text === 'string' && !props.loading)
+const startEditing = async () => {
+  if (!canEdit.value || props.retryDisabled) return
+  editText.value = props.content.text
+  editing.value = true
+  await nextTick()
+  editInput.value?.focus()
+}
+const cancelEditing = () => { if (!props.editLoading) editing.value = false }
+const submitEdit = () => {
+  if (editing.value && canEdit.value && !props.retryDisabled && !props.editLoading &&
+      editText.value.trim() && editText.value !== props.content.text) emit('edit', editText.value)
+}
 const canForkReply = computed(() => props.forkable && props.authorType === 'A' && !props.forkDisabled &&
   !props.forkLoading && !props.loading && !['P', 'G', 'R'].includes(props.status))
 const forkReply = () => {
@@ -378,12 +397,13 @@ const regenerate = () => {
 }
 
 const deleteMessage = () => {
+  if (props.retryDisabled) return
   emit('delete', props.mid)
 }
 </script>
 
 <template>
-  <div class="chat-message" :class="[authorType == 'U' ? 'chat-message-user' : 'chat-message-assistant']">
+  <div class="chat-message" :class="[authorType == 'U' ? 'chat-message-user' : 'chat-message-assistant', { 'chat-message-editing': editing }]">
     <div class="chat-message-container">
       <div class="chat-message-header">
         <ChatAuthor class="chat-message-author" :author="author" :time="createTime" :key="createTime" />
@@ -404,7 +424,19 @@ const deleteMessage = () => {
             </a-collapse-panel>
           </a-collapse>
 
-          <template v-if="content?.hasOwnProperty('text')">
+          <div v-if="editing" class="chat-message-editor">
+            <a-textarea ref="editInput" v-model:value="editText" :aria-label="t('workspace.chatSpace.edit_message')"
+              :auto-size="{ minRows: 3, maxRows: 12 }" :disabled="editLoading"
+              @keydown.ctrl.enter.prevent="submitEdit" @keydown.esc="cancelEditing" />
+            <a-flex justify="flex-end" gap="small">
+              <a-button :disabled="editLoading" @click="cancelEditing">{{ t('common.cancel') }}</a-button>
+              <a-button type="primary" :loading="editLoading"
+                :disabled="retryDisabled || !editText.trim() || editText === props.content.text" @click="submitEdit">
+                {{ t('workspace.chatSpace.edit_and_regenerate') }}
+              </a-button>
+            </a-flex>
+          </div>
+          <template v-else-if="content?.hasOwnProperty('text')">
             <TextOutput ref="markdownRenderRef" :text="content.text" :showCopy="false" :checkFileCodeBlocks="!failedChat" />
             <span class="typing-dot" v-if="content.text.length == 0 && status == 'G'" />
           </template>
@@ -487,8 +519,14 @@ const deleteMessage = () => {
           </div>
         </template>
         <AttachmentsList :model-value="props.attachments" :removable="false" />
-        <a-flex v-if="!loading && (content?.hasOwnProperty('text') || authorType === 'A')" class="chat-message-footer" gap="small">
+        <a-flex v-if="!editing && !loading && (content?.hasOwnProperty('text') || authorType === 'A')" class="chat-message-footer" gap="small">
           <a-typography-paragraph v-if="content?.hasOwnProperty('text')" :copyable="{ text: content.text }" />
+          <a-tooltip v-if="canEdit" :title="t('workspace.chatSpace.edit_message')">
+            <a-button type="text" size="small" :aria-label="t('workspace.chatSpace.edit_message')"
+              :disabled="retryDisabled" @click="startEditing">
+              <template #icon><Edit /></template>
+            </a-button>
+          </a-tooltip>
           <a-tooltip v-if="authorType === 'A' && !failedChat" :title="t('workspace.chatSpace.regenerate_message')">
             <a-button type="text" size="small" :disabled="retryDisabled" @click="regenerate">
               <template #icon><Redo fill="#28c5e5" /></template>
@@ -502,7 +540,7 @@ const deleteMessage = () => {
           </a-tooltip>
           <a-tooltip :title="t('workspace.chatSpace.delete_message')">
             <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" @confirm="deleteMessage">
-              <a-button type="text" size="small" danger>
+              <a-button type="text" size="small" danger :disabled="retryDisabled">
                 <template #icon><Delete /></template>
               </a-button>
             </a-popconfirm>
@@ -514,6 +552,9 @@ const deleteMessage = () => {
 </template>
 
 <style>
+.chat-message-editing .chat-message-container { width: 640px; }
+.chat-message-editing .chat-message-body { width: 100%; box-sizing: border-box; }
+.chat-message-editor { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
 .chat-response-stopped { margin-top: 8px; font-size: 12px; color: var(--site-light-text-color); }
 .chat-message .chat-message-body .typing-dot {
   display: inline-block;

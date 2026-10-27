@@ -156,6 +156,7 @@ onMounted(() => {
 })
 
 const sending = ref(false)
+const editingMid = ref('')
 const conversation = ref({ settings: { agent_audio_reply: false } })
 const messages = ref([])
 const sendPendingChat = async cid => {
@@ -236,6 +237,7 @@ const cancelAttempt = () => {
   clearTimeout(connectionSetupTimer)
   receiving.value = false
   sending.value = false
+  editingMid.value = ''
   stopping.value = false
   stopCurrentAttempt = null
   if (pending) void messageAPI(stopRequested ? 'stop' : 'fail_notice', pending).catch(() => {})
@@ -441,29 +443,40 @@ const sendMessage = async (content, needTitle = false, submittedFiles = attachme
   }
 }
 
-const requestAssistant = async (action, mid, groupIndex) => {
+const requestAssistant = async (action, mid, groupIndex, editedContent) => {
   if (loading.value || sending.value || receiving.value || forking.value || disposed) return
+  const group = messages.value[groupIndex]
+  const original = group?.[messagePagination.get(groupIndex) ?? (group.length - 1)]
+  if (action === 'edit' && (!editedContent?.trim() || original?.mid !== mid || original.author_type !== 'U' ||
+      original.content_type !== 'TXT' || original.status !== 'S')) return
   sending.value = true
+  if (action === 'edit') editingMid.value = mid
   const epoch = ++attemptEpoch
   const cid = conversationId.value
   try {
-    const res = await messageAPI(action, { cid, mid })
+    const res = await messageAPI(action, { cid, mid, ...(action === 'edit' ? { content: editedContent } : {}) })
     if (!currentAttempt(epoch)) {
       if (res.status === 200) void messageAPI('fail_notice', { cid, mid: res.data.ai_message_mid,
         code: 'CHAT_CONNECTION_CLOSED', content: { text: '', reasoning_content: '' } }).catch(() => {})
       return
     }
-    if (res.status !== 200 || !res.data?.ai_message_mid) throw new Error('request failed')
+    if (res.status !== 200 || !res.data?.ai_message_mid || (action === 'edit' && !res.data.user_message_mid)) throw new Error('request failed')
     if (action === 'append_answer') {
       const parentIndex = messages.value.findIndex(group => group.some(item => item.mid === mid))
       if (parentIndex >= 0) trimHistoryAfter(parentIndex)
     }
-    beginAssistant(res.data, epoch, cid, groupIndex)
+    if (action === 'edit') {
+      trimHistoryAfter(groupIndex)
+      messages.value[groupIndex] = [...group, { ...original, mid: res.data.user_message_mid,
+        content: { text: editedContent }, create_time: Date.now(), metadata: {} }]
+      messagePagination.set(groupIndex, group.length)
+      beginAssistant(res.data, epoch, cid)
+    } else beginAssistant(res.data, epoch, cid, groupIndex)
     void clearSearchTarget().catch(() => {})
   } catch {
-    if (currentAttempt(epoch)) message.error(t('workspace.chatSpace.regenerate_failed'))
+    if (currentAttempt(epoch)) message.error(t(`workspace.chatSpace.${action === 'edit' ? 'edit_message_failed' : 'regenerate_failed'}`))
   } finally {
-    if (currentAttempt(epoch)) sending.value = false
+    if (currentAttempt(epoch)) { sending.value = false; editingMid.value = '' }
   }
 }
 const onAppendAnswer = mid => requestAssistant('append_answer', mid)
@@ -530,6 +543,7 @@ const handleScroll = () => {
 const messagePagination = reactive(new Map())
 
 const regenerate = (mid, groupIndex) => requestAssistant('regenerate', mid, groupIndex)
+const editMessage = (mid, groupIndex, content) => requestAssistant('edit', mid, groupIndex, content)
 
 const switchMessagePage = async (groupIndex, direction) => {
   if (loading.value || sending.value || receiving.value || forking.value || disposed) return
@@ -608,6 +622,7 @@ const deleteMessage = async (mid, groupIndex) => {
               :class="{ 'message-focused': focusedMessageMid === currentMessage.mid }"
               :style="{ '--message-focus-color': token.colorPrimary, '--message-focus-background': token.colorPrimaryBg }">
             <ChatMessage :loading="currentMessage.loading" :cid="conversationId"
+              editable :edit-loading="editingMid === currentMessage.mid"
               forkable :fork-disabled="!canFork" :fork-loading="forking && forkingMid === currentMessage.mid"
               :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving || forking" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
               :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
@@ -616,11 +631,13 @@ const deleteMessage = async (mid, groupIndex) => {
               :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
               @append-answer="onAppendAnswer" @regenerate="regenerate(currentMessage.mid, groupIndex)"
               @fork="forkConversation(currentMessage.mid)"
+              @edit="editMessage(currentMessage.mid, groupIndex, $event)"
               @delete="deleteMessage(currentMessage.mid, groupIndex)" />
             </div>
 
             <!-- 分页控件 -->
-            <div v-if="chatMessageGroup.length > 1" class="message-pagination">
+            <div v-if="chatMessageGroup.length > 1" class="message-pagination"
+              :class="{ 'message-pagination-user': chatMessageGroup[0]?.author_type === 'U' }">
               <a-button type="text" size="small"
                 :disabled="loading || sending || receiving || forking || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
                 @click="switchMessagePage(groupIndex, 'prev')">
@@ -696,6 +713,7 @@ const deleteMessage = async (mid, groupIndex) => {
 </template>
 
 <style scoped>
+.message-pagination-user { display: flex; justify-content: flex-end; align-items: center; padding-right: 32px; }
 .message-focus-target { scroll-margin: 20px; border-radius: 6px; }
 .message-focused { outline: 2px solid var(--message-focus-color); outline-offset: 6px; background: var(--message-focus-background); }
 .main-container {

@@ -77,14 +77,12 @@ def get_history_messages(
     while current_message and current_message.mid not in seen and current_message.conversation_id == start_message.conversation_id:
         seen.add(current_message.mid)
         if all_children:
-            if current_message.parent is not None:
-                siblings = model_serializer(
-                    Message.select().where((Message.parent == current_message.parent) &
-                        (Message.conversation == start_message.conversation_id)).order_by(Message.create_time.asc(), Message.mid.asc()),
-                    many=True,
-                )
-            else:
-                siblings = [model_serializer(current_message)]
+            siblings = model_serializer(
+                Message.select().where((Message.parent == current_message.parent_id) &
+                    (Message.author_type == current_message.author_type) &
+                    (Message.conversation == start_message.conversation_id)).order_by(Message.create_time.asc(), Message.mid.asc()),
+                many=True,
+            )
 
             valid_siblings: SerializedModelList = []
             for sibling in siblings:

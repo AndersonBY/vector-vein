@@ -162,6 +162,75 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       c.conversation.value = { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] }
       c.userChatsStore.addConversation(c.conversation.value)
     }
+    const question = (mid, text = 'original question') => ({ mid, author_type: 'U', status: 'S', content_type: 'TXT',
+      create_time: 1, metadata: {}, content: { text }, attachments: ['question.txt'] })
+    await render(detail, {}, async c => {
+      prepare(c)
+      const original = question('question')
+      c.messages.value = [[original], [assistant('original-answer')], [question('later')], [assistant('later-answer')]]
+      c.messagePagination.set(3, 0)
+      c.userInput.value = 'separate composer draft'
+      c.attachments.value = ['next-file']
+      const pending = deferred()
+      request = async (action, payload) => {
+        if (action === 'message__edit') {
+          assert.deepEqual(payload, { cid: 'cid', mid: 'question', content: 'edited question' })
+          return pending.promise
+        }
+        return { status: 200, data: { port: 9999 } }
+      }
+      const editing = c.editMessage('question', 0, 'edited question')
+      assert.equal(c.editingMid.value, 'question')
+      assert.equal(c.sending.value, true)
+      const count = calls.length
+      await c.editMessage('question', 0, 'duplicate')
+      assert.equal(calls.length, count)
+      pending.resolve({ status: 200, data: { user_message_mid: 'edited-user', ai_message_mid: 'edited-reply' } })
+      await editing
+      assert.equal(c.sending.value, false)
+      assert.equal(c.editingMid.value, '')
+      assert.equal(c.receiving.value, true)
+      assert.equal(c.messages.value.length, 2)
+      assert.equal(c.messages.value[0].length, 2)
+      assert.equal(c.messages.value[0][0].content.text, 'original question')
+      assert.equal(c.messages.value[0][1].content.text, 'edited question')
+      assert.deepEqual(c.messages.value[0][1].attachments, ['question.txt'])
+      assert.equal(c.messagePagination.get(0), 1)
+      assert.equal(c.messagePagination.has(3), false)
+      assert.equal(c.messages.value[1][0].mid, 'edited-reply')
+      assert.equal(c.userInput.value, 'separate composer draft')
+      assert.deepEqual(c.attachments.value, ['next-file'])
+      c.cancelAttempt()
+    })
+    for (const response of [{ status: 500 }, { status: 409 }, { status: 200, data: { ai_message_mid: 'incomplete' } }, new Error('offline')]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = [[question('question')], [assistant('old-answer')]]
+        request = async () => { if (response instanceof Error) throw response; return response }
+        await c.editMessage('question', 0, 'keep edit')
+        assert.equal(c.messages.value.length, 2)
+        assert.equal(c.messages.value[0].length, 1)
+        assert.equal(c.messages.value[1][0].mid, 'old-answer')
+        assert.equal(c.sending.value, false)
+        assert.equal(c.receiving.value, false)
+        assert.equal(c.editingMid.value, '')
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[question('question')]]
+      const pending = deferred()
+      request = action => action === 'message__edit' ? pending.promise : Promise.resolve({ status: 200 })
+      const editing = c.editMessage('question', 0, 'old conversation edit')
+      c.cancelAttempt()
+      c.conversationId.value = 'other-cid'
+      c.messages.value = [[assistant('other-reply')]]
+      pending.resolve({ status: 200, data: { user_message_mid: 'stale-user', ai_message_mid: 'stale-edit' } })
+      await editing
+      assert.equal(c.messages.value[0][0].mid, 'other-reply')
+      assert.equal(c.editingMid.value, '')
+      assert.ok(calls.some(call => call.action === 'message__fail_notice' && call.payload.mid === 'stale-edit' && call.payload.cid === 'cid'))
+    })
     const stoppedSnapshot = (mid = 'attempt', text = '') => ({ ...assistant(mid, 'C'),
       content: { text, reasoning_content: 'saved thought' } })
     const activeRequest = async (action, payload) => action === 'message__send'
@@ -733,6 +802,46 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       globalThis.__chatFailureHarness.route.query = {}
     }
     let retries = 0
+    const edits = []
+    const questionProps = { cid: 'cid', mid: 'user-question', authorType: 'U', contentType: 'TXT', status: 'S',
+      createTime: 1, content: { text: 'old question' }, metadata: {}, editable: true, onEdit: text => edits.push(text) }
+    const editorHtml = await render('/src/components/workspace/chat/ChatMessage.vue', questionProps, async c => {
+      await c.startEditing()
+      assert.equal(c.editText.value, 'old question')
+      c.editText.value = 'new question'
+      c.submitEdit()
+      assert.equal(c.editing.value, true)
+      assert.equal(c.content.value.text, 'old question')
+    })
+    assert.deepEqual(edits, ['new question'])
+    assert.match(editorHtml, /Save and regenerate/)
+    assert.match(editorHtml, /Cancel/)
+    await render('/src/components/workspace/chat/ChatMessage.vue', questionProps, async c => {
+      await c.startEditing()
+      c.submitEdit()
+      c.editText.value = ' \n '
+      c.submitEdit()
+      c.cancelEditing()
+      assert.equal(c.editing.value, false)
+      await c.startEditing()
+      assert.equal(c.editText.value, 'old question')
+    })
+    for (const overrides of [{ editable: false }, { authorType: 'A' }, { status: 'P' }, { contentType: 'IMG' }, { retryDisabled: true }]) {
+      await render('/src/components/workspace/chat/ChatMessage.vue', { ...questionProps, ...overrides }, async c => {
+        await c.startEditing()
+        c.editText.value = 'blocked'
+        c.submitEdit()
+        assert.equal(c.editing.value, false)
+      })
+    }
+    await render('/src/components/workspace/chat/ChatMessage.vue', { ...questionProps, editLoading: true }, async c => {
+      await c.startEditing()
+      c.editText.value = 'busy'
+      c.submitEdit()
+      c.cancelEditing()
+      assert.equal(c.editing.value, true)
+    })
+    assert.deepEqual(edits, ['new question'])
     for (const text of ['', 'partial answer']) {
       const stoppedHtml = await render('/src/components/workspace/chat/ChatMessage.vue', {
         cid: 'cid', mid: 'stopped', authorType: 'A', contentType: 'TXT', status: 'C', createTime: 1,

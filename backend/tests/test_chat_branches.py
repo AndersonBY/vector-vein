@@ -118,4 +118,124 @@ def test_cannot_switch_to_an_unfinished_alternate_tail(branches):
     chat, nodes = branches
     Message.update(status="G").where(Message.mid == nodes["old-answer"].mid).execute()
     assert ConversationAPI().select_branch({"cid": chat.cid.hex, "mid": nodes["old"].mid.hex})["status"] == 409
+
+
+@pytest.mark.parametrize("key,index,context", [("root", 0, []), ("new-question", 2, ["root", "new"])])
+def test_edit_creates_question_version_preserving_original_descendants_and_attachments(branches, key, index, context):
+    chat, nodes = branches
+    original = nodes[key]
+    original.attachments = ["C:/资料/attachment.txt"]
+    original.save()
+    before = {item.mid: item.__data__.copy() for item in Message.select()}
+    response = MessageAPI().edit({"cid": chat.cid.hex, "mid": original.mid.hex, "content": "  revised question  ",
+                                  "attachments": ["must-not-replace-original.txt"]})
+    assert response["status"] == 200
+    data = response["data"]
+    question = Message.get_by_id(data["user_message_mid"])
+    answer = Message.get_by_id(data["ai_message_mid"])
+    assert question.mid != original.mid and question.parent_id == original.parent_id
+    assert question.content == {"text": "  revised question  "}
+    assert question.attachments == original.attachments
+    assert question.status == "S" and question.author_type == "U"
+    assert answer.parent_id == question.mid and answer.status == "P"
+    assert text_path(data["history_messages"]) == context + ["  revised question  "]
+    assert data["need_title"] is False
+    assert Message.select().count() == len(before) + 2
+    assert MessageAPI().edit({"cid": chat.cid.hex, "mid": original.mid.hex, "content": "duplicate"})["status"] == 409
+    assert Message.select().count() == len(before) + 2
+    for mid, saved in before.items():
+        assert Message.get_by_id(mid).__data__ == saved
+    answer.status = "S"
+    answer.content = {"text": "revised reply"}
+    answer.save()
+    new_path = [item["mid"] for item in data["history_messages"]] + [answer.mid.hex]
+    api = ConversationAPI()
+    loaded = api.get({"cid": chat.cid.hex})["data"]
+    assert loaded["selected_message_path"] == new_path
+    assert {item["mid"] for item in loaded["messages"][index]} == {original.mid.hex, question.mid.hex}
+    old = api.select_branch({"cid": chat.cid.hex, "mid": original.mid.hex})["data"]
+    assert old["selected_message_path"] == [nodes[key].mid.hex for key in ("root", "new", "new-question", "new-answer")]
+    assert api.select_branch({"cid": chat.cid.hex, "mid": question.mid.hex})["data"]["selected_message_path"] == new_path
+    assert api.get({"cid": chat.cid.hex})["data"]["selected_message_path"] == new_path
+    # A later reply uses only the edited question and its own answer.
+    sent = MessageAPI().send({"cid": chat.cid.hex, "parent_mid": answer.mid.hex, "content_type": "TXT", "content": "continue"})
+    assert text_path(sent["data"]["history_messages"]) == context + ["  revised question  ", "revised reply", "continue"]
+
+
+@pytest.mark.parametrize("payload", [None, [], {}, {"cid": "bad", "mid": "bad", "content": "x"},
+    {"content": ""}, {"content": " \n "}, {"content": None}, {"content": {}}, {"content": 1}])
+def test_invalid_edits_leave_messages_and_branch_unchanged(branches, payload):
+    chat, nodes = branches
+    if isinstance(payload, dict) and "cid" not in payload and payload:
+        payload = {"cid": chat.cid.hex, "mid": nodes["root"].mid.hex, **payload}
+    assert MessageAPI().edit(payload)["status"] == 400
+    assert Message.select().count() == 7
+    assert Conversation.get_by_id(chat.cid).current_message == nodes["new-answer"].mid
+
+
+@pytest.mark.parametrize("status", ["P", "G", "R"])
+def test_edits_reject_active_generation_and_duplicate_submissions(branches, status):
+    chat, nodes = branches
+    Message.update(status=status).where(Message.mid == chat.current_message).execute()
+    result = MessageAPI().edit({"cid": chat.cid.hex, "mid": nodes["root"].mid.hex, "content": "edited"})
+    assert result["status"] == 409 and result["code"] == "CONVERSATION_BUSY"
+    assert Message.select().count() == 7
+
+
+def test_edits_reject_foreign_missing_or_non_question_messages(branches):
+    chat, nodes = branches
+    api = MessageAPI()
+    other = Conversation.create(title="other", model="m", model_provider="OpenAI")
+    for payload in [{"cid": uuid.uuid4().hex, "mid": nodes["root"].mid.hex},
+                    {"cid": other.cid.hex, "mid": nodes["root"].mid.hex},
+                    {"cid": chat.cid.hex, "mid": uuid.uuid4().hex}]:
+        assert api.edit({**payload, "content": "x"})["status"] == 404
+    assert api.edit({"cid": chat.cid.hex, "mid": nodes["new"].mid.hex, "content": "x"})["status"] == 400
+    original = nodes["root"]
+    for changes in ({"content_type": "IMG"}, {"content_type": "TXT", "status": "F"}):
+        Message.update(**changes).where(Message.mid == original.mid).execute()
+        assert api.edit({"cid": chat.cid.hex, "mid": original.mid.hex, "content": "x"})["status"] == 400
+    assert Message.select().count() == 7
+
+
+def test_edit_cannot_branch_from_an_unfinished_ancestor(branches):
+    chat, nodes = branches
+    Message.update(status="G").where(Message.mid == nodes["old"].mid).execute()
+    result = MessageAPI().edit({"cid": chat.cid.hex, "mid": nodes["old-question"].mid.hex, "content": "revised"})
+    assert result["status"] == 409 and result["code"] == "CONVERSATION_BUSY"
+    assert Message.select().count() == 7
+
+
+@pytest.mark.parametrize("corruption", ["cycle", "foreign", "missing"])
+def test_edit_rejects_invalid_ancestry_without_creating_a_partial_branch(branches, corruption):
+    chat, nodes = branches
+    source = nodes["new-question"]
+    if corruption == "cycle":
+        nodes["new"].parent = source
+        nodes["new"].save()
+    elif corruption == "foreign":
+        other = Conversation.create(title="other", model="m", model_provider="OpenAI")
+        nodes["new"].parent = Message.create(conversation=other, author_type="A", content_type="TXT", status="S")
+        nodes["new"].save()
+    else:
+        nodes["root"].parent_id = uuid.uuid4()
+        nodes["root"].save()
+    count = Message.select().count()
+    assert MessageAPI().edit({"cid": chat.cid.hex, "mid": source.mid.hex, "content": "x"})["status"] == 409
+    assert Message.select().count() == count
+    assert Conversation.get_by_id(chat.cid).current_message == nodes["new-answer"].mid
+
+
+def test_edit_rolls_back_question_and_current_branch_if_reply_creation_fails(branches, monkeypatch):
+    chat, nodes = branches
+    create = Message.create
+    def fail_reply(**kwargs):
+        if kwargs.get("author_type") == "A":
+            raise RuntimeError("storage unavailable")
+        return create(**kwargs)
+    monkeypatch.setattr(Message, "create", fail_reply)
+    with pytest.raises(RuntimeError, match="storage unavailable"):
+        MessageAPI().edit({"cid": chat.cid.hex, "mid": nodes["root"].mid.hex, "content": "x"})
+    assert Message.select().count() == 7
+    assert Conversation.get_by_id(chat.cid).current_message == nodes["new-answer"].mid
     assert Conversation.get_by_id(chat.cid).current_message == nodes["new-answer"].mid

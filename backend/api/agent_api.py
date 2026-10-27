@@ -417,6 +417,43 @@ class ConversationAPI:
 class MessageAPI:
     name = "message"
 
+    def edit(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid message edit")
+        try:
+            cid = uuid.UUID(str(payload.get("cid", "")))
+            mid = uuid.UUID(str(payload.get("mid", "")))
+            content = payload.get("content")
+            if not isinstance(content, str) or not content.strip():
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid message edit")
+        with Conversation._meta.database.atomic():
+            conversation = Conversation.get_or_none(Conversation.cid == cid)
+            original = Message.get_or_none((Message.mid == mid) & (Message.conversation == cid))
+            if conversation is None or original is None:
+                return JResponse(status=404)
+            if (original.author_type != Message.AuthorTypes.USER or original.content_type != Message.ContentTypes.TEXT
+                    or original.status != Message.StatusTypes.SUCCESS):
+                return JResponse(status=400, msg="Only completed text questions can be edited")
+            if Message.select().where((Message.conversation == cid) & (Message.mid == conversation.current_message) &
+                    Message.status.in_((*PENDING, Message.StatusTypes.RUNNING_WORKFLOW))).exists():
+                return JResponse(status=409, code="CONVERSATION_BUSY", msg="Conversation is still running")
+            ancestor = original
+            seen = set()
+            while ancestor is not None:
+                if ancestor.mid in seen or ancestor.conversation_id != cid:
+                    return JResponse(status=409, msg="Invalid conversation message graph")
+                if ancestor.status in (*PENDING, Message.StatusTypes.RUNNING_WORKFLOW):
+                    return JResponse(status=409, code="CONVERSATION_BUSY", msg="Selected context is still running")
+                seen.add(ancestor.mid)
+                parent_mid = ancestor.parent_id
+                ancestor = Message.get_or_none(Message.mid == parent_mid) if parent_mid else None
+                if parent_mid and ancestor is None:
+                    return JResponse(status=409, msg="Invalid conversation message graph")
+            return self.send({"cid": cid.hex, "parent_mid": original.parent_id,
+                              "content": content, "content_type": "TXT", "attachments": original.attachments})
+
     def send(self, payload):
         cid = payload.get("cid")
         content = payload.get("content")
