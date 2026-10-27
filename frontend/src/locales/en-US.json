@@ -184,6 +184,12 @@
       "retry": "Retry"
     },
     "chatSpace": {
+      "search_placeholder": "Search chat history",
+      "search_results": "Search results ({count})",
+      "search_no_results": "No matching chats",
+      "search_failed": "Search failed. Please try again.",
+      "search_more": "Load more results",
+      "retry": "Retry",
       "attachment_unnamed": "Attachment",
       "attachment_preview": "Preview image: {name}",
       "attachment_remove": "Remove attachment: {name}",

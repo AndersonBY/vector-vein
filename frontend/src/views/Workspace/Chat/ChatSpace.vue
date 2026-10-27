@@ -1,20 +1,25 @@
 <script setup>
-import { ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, watch, h } from 'vue'
+import { computed, ref, reactive, onBeforeMount, onMounted, onBeforeUnmount, watch, h } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { Edit, More, Delete, ExpandLeft, ExpandRight } from '@/icons'
+import { Edit, More, Delete, ExpandLeft, ExpandRight, Search } from '@/icons'
 import { Modal, message, TypographyTitle } from 'ant-design-vue'
 import { storeToRefs } from 'pinia'
 import { useUserChatsStore } from '@/stores/userChats'
 import { useUserAgentsStore } from '@/stores/userAgents'
 import { conversationAPI } from '@/api/chat'
+import { useConversationSearch } from '@/utils/useConversationSearch'
 
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const loading = ref(true)
-const agentId = route.params.agentId
+const agentId = computed(() => route.params.agentId)
 const agentData = ref({})
+const { keyword: searchKeyword, results: searchResults, total: searchTotal, searching,
+  failed: searchFailed, active: hasSearchKeyword, hasMore: hasMoreSearch, loadMore: loadMoreSearch } = useConversationSearch(agentId)
+let listVersion = 0
+let disposed = false
 
 const conversationsPagination = reactive({
   total: 0,
@@ -67,21 +72,31 @@ const updateChatSectionsByDate = () => {
     return parseInt(b.update_time) - parseInt(a.update_time)
   })
 }
-onBeforeMount(async () => {
-  const res = await conversationAPI('list', { aid: agentId })
-  if (res.status != 200) {
-    message.error(t('workspace.chatSpace.fetch_conversations_failed'))
-    return
-  }
-  agentData.value = res.data.agent
-  userAgentsStore.addAgent(agentData.value)
-  conversations.value = res.data.conversations
-  conversationsPagination.total = res.data.total
-  conversationsPagination.limit = res.data.limit
-  conversationsPagination.offset = res.data.offset + res.data.limit
+const fetchConversations = async () => {
+  const version = ++listVersion
+  loading.value = true
+  loadingMore.value = false
+  conversations.value = []
   updateChatSectionsByDate()
-  loading.value = false
-})
+  try {
+    const res = await conversationAPI('list', { aid: agentId.value })
+    if (disposed || version !== listVersion) return
+    if (res.status !== 200) throw new Error('Fetch failed')
+    agentData.value = res.data.agent
+    userAgentsStore.addAgent(agentData.value)
+    conversations.value = res.data.conversations
+    conversationsPagination.total = res.data.total
+    conversationsPagination.limit = res.data.limit
+    conversationsPagination.offset = res.data.offset + res.data.limit
+    updateChatSectionsByDate()
+  } catch {
+    if (!disposed && version === listVersion) message.error(t('workspace.chatSpace.fetch_conversations_failed'))
+  } finally {
+    if (!disposed && version === listVersion) loading.value = false
+  }
+}
+onBeforeMount(fetchConversations)
+watch(agentId, () => { searchKeyword.value = ''; void fetchConversations() })
 
 watch(() => conversationsLength.value, () => {
   updateChatSectionsByDate()
@@ -89,51 +104,64 @@ watch(() => conversationsLength.value, () => {
 
 const conversationsListRef = ref()
 const loadingMore = ref(false)
+const handleListScroll = () => {
+  const list = conversationsListRef.value
+  if (!hasSearchKeyword.value && list && list.scrollTop + list.clientHeight >= list.scrollHeight &&
+    !loading.value && !loadingMore.value && conversationsPagination.offset < conversationsPagination.total) void loadMore()
+}
 onMounted(() => {
   checkScreenSize()
   window.addEventListener('resize', checkScreenSize)
-  const list = conversationsListRef.value
-
-  list.addEventListener('scroll', () => {
-    if (list.scrollTop + list.clientHeight >= list.scrollHeight && !loadingMore.value && conversationsPagination.offset < conversationsPagination.total) {
-      loadMore()
-    }
-  })
 })
 onBeforeUnmount(() => {
+  disposed = true
+  listVersion++
   window.removeEventListener('resize', checkScreenSize)
 })
 
 const loadMore = async () => {
   loadingMore.value = true
-
-  const res = await conversationAPI('list', {
-    aid: agentId,
-    limit: conversationsPagination.limit,
-    offset: conversationsPagination.offset
-  })
-  if (res.status != 200) {
-    message.error(t('workspace.chatSpace.fetch_conversations_failed'))
-    return
+  const version = listVersion
+  try {
+    const res = await conversationAPI('list', {
+      aid: agentId.value, limit: conversationsPagination.limit, offset: conversationsPagination.offset
+    })
+    if (disposed || version !== listVersion) return
+    if (res.status !== 200) throw new Error('Fetch failed')
+    conversations.value.push(...res.data.conversations)
+    conversationsLength.value = res.data.total
+    conversationsPagination.total = res.data.total
+    conversationsPagination.limit = res.data.limit
+    conversationsPagination.offset = res.data.offset + res.data.limit
+    updateChatSectionsByDate()
+  } catch {
+    if (!disposed && version === listVersion) message.error(t('workspace.chatSpace.fetch_conversations_failed'))
+  } finally {
+    if (!disposed && version === listVersion) loadingMore.value = false
   }
-  conversations.value.push(...res.data.conversations)
-  conversationsLength.value = res.data.total
-  conversationsPagination.total = res.data.total
-  conversationsPagination.limit = res.data.limit
-  conversationsPagination.offset = res.data.offset + res.data.limit
-  updateChatSectionsByDate()
-  loadingMore.value = false
 }
 
 
 const openChat = (cid) => {
   isConversationsListOpen.value = false
-  router.push({ name: 'conversationDetail', params: { agentId: agentData.aid, conversationId: cid } })
+  router.push({ name: 'conversationDetail', params: { agentId: agentId.value, conversationId: cid } })
 }
 const openNewChat = () => {
   isConversationsListOpen.value = false
-  router.push({ name: 'conversationNew', params: { agentId: agentData.aid } })
+  router.push({ name: 'conversationNew', params: { agentId: agentId.value } })
 }
+const openSearchResult = result => {
+  isConversationsListOpen.value = false
+  router.push({ name: 'conversationDetail', params: { agentId: agentId.value, conversationId: result.cid },
+    query: result.message_mid ? { mid: result.message_mid } : {} })
+}
+watch(searchKeyword, () => {
+  if (route.query.mid) {
+    const query = { ...route.query }
+    delete query.mid
+    router.replace({ query })
+  }
+})
 
 const deleteChat = (chat) => {
   Modal.confirm({
@@ -193,7 +221,7 @@ const checkScreenSize = () => {
     </div>
     <div class="conversation-container">
       <div ref="conversationsListRef" class="conversations-list custom-scrollbar"
-        :class="{ 'open': isConversationsListOpen }">
+        :class="{ 'open': isConversationsListOpen }" @scroll="handleListScroll">
         <div class="new-conversation">
           <a-button type="text" size="large" class="new-conversation-button" @click="openNewChat">
             <a-typography-text style="font-size: 16px; font-weight: 600;">
@@ -201,10 +229,30 @@ const checkScreenSize = () => {
             </a-typography-text>
             <Edit />
           </a-button>
+          <a-input v-model:value="searchKeyword" class="conversation-search" allow-clear
+            :placeholder="t('workspace.chatSpace.search_placeholder')" :aria-label="t('workspace.chatSpace.search_placeholder')">
+            <template #prefix><Search /></template>
+          </a-input>
         </div>
         <div>
           <a-skeleton v-if="loading" active />
-          <template v-for="section in Object.keys(chatSectionsByDate)">
+          <div v-else-if="hasSearchKeyword" class="conversations-section search-results" aria-live="polite">
+            <span class="section-title">{{ t('workspace.chatSpace.search_results', { count: searchTotal }) }}</span>
+            <a-button v-for="result in searchResults" :key="`${result.cid}:${result.message_mid || 'title'}`" type="text"
+              class="search-result" :class="{ 'chat-button-selected': route.params.conversationId === result.cid &&
+                (route.query.mid || null) === result.message_mid }" @click="openSearchResult(result)">
+              <span class="search-result-title" :title="result.conversation_title">{{ result.conversation_title }}</span>
+              <span class="search-result-snippet">{{ result.snippet }}</span>
+            </a-button>
+            <a-flex v-if="searching" justify="center" class="search-feedback"><a-spin size="small" /></a-flex>
+            <div v-else-if="searchFailed" class="search-feedback">
+              <span>{{ t('workspace.chatSpace.search_failed') }}</span>
+              <a-button type="link" size="small" @click="loadMoreSearch">{{ t('workspace.chatSpace.retry') }}</a-button>
+            </div>
+            <span v-else-if="!searchResults.length" class="search-feedback">{{ t('workspace.chatSpace.search_no_results') }}</span>
+            <a-button v-else-if="hasMoreSearch" type="text" @click="loadMoreSearch">{{ t('workspace.chatSpace.search_more') }}</a-button>
+          </div>
+          <template v-else v-for="section in Object.keys(chatSectionsByDate)">
             <div class="conversations-section" v-if="chatSectionsByDate[section].length > 0">
               <a-typography-text class="section-title">
                 {{ t(`workspace.chatSpace.${section}`) }}
@@ -236,7 +284,7 @@ const checkScreenSize = () => {
             </div>
           </template>
           <a-flex justify="center">
-            <a-spin v-if="loadingMore" />
+            <a-spin v-if="!hasSearchKeyword && loadingMore" />
           </a-flex>
         </div>
         <div class="footer-settings">
@@ -248,6 +296,11 @@ const checkScreenSize = () => {
 </template>
 
 <style scoped>
+.conversation-search { margin: 8px 0 12px; }
+.search-result { width: 100%; height: auto; padding: 10px 8px; text-align: left; white-space: normal; display: flex; flex-direction: column; gap: 4px; }
+.search-result-title { width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.search-result-snippet { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 12px; line-height: 1.5; opacity: 0.7; word-break: break-word; }
+.search-feedback { padding: 12px 8px; font-size: 13px; text-align: center; }
 .chat-button-selected {
   background-color: var(--chat-button-selected-background-color);
 }

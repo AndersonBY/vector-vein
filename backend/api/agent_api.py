@@ -1,6 +1,7 @@
 # @Author: Bi Ying
 # @Date:   2024-06-06 11:38:21
 import json
+import uuid
 from datetime import datetime
 from typing import Any
 
@@ -48,6 +49,66 @@ def _serialize_conversation_state(conversation: Conversation) -> dict[str, Any]:
 class ConversationAPI:
     name = "conversation"
 
+    def search(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid search parameters")
+        query = payload.get("query", "")
+        try:
+            aid = uuid.UUID(str(payload.get("aid", ""))).hex
+            limit = payload.get("limit", 25)
+            offset = payload.get("offset", 0)
+            if (not isinstance(query, str) or len(query) > 1000
+                    or isinstance(limit, bool) or isinstance(offset, bool)
+                    or not isinstance(limit, int) or not isinstance(offset, int)
+                    or not 1 <= limit <= 100 or not 0 <= offset <= 2147483647):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid search parameters")
+        status, msg, agent = get_user_object_general(Agent, aid=aid)
+        if status != 200 or not isinstance(agent, Agent):
+            return JResponse(status=status, msg=msg)
+        query = query.strip()
+        data = {"results": [], "total": 0, "limit": limit, "offset": offset}
+        if not query:
+            return JResponse(data=data)
+
+        # Extract only visible text: JSON metadata, reasoning and attachments are not search content.
+        sql = """
+            WITH message_text AS (
+                SELECT m.*, CASE WHEN json_valid(m.content) THEN
+                    CASE WHEN json_type(m.content, '$.text') = 'text'
+                    THEN json_extract(m.content, '$.text') ELSE '' END ELSE '' END AS text
+                FROM message m WHERE m.author_type IN ('U', 'A')
+            ), matches AS (
+                SELECT c.cid, c.title, 'title' AS match_type, NULL AS mid, c.title AS text,
+                    c.update_time AS recent, c.update_time AS message_time
+                FROM conversation c WHERE c.agent_id = ? AND instr(lower(c.title), lower(?)) > 0
+                UNION ALL
+                SELECT c.cid, c.title, 'message', m.mid, m.text, c.update_time, m.create_time
+                FROM conversation c JOIN message_text m ON m.conversation_id = c.cid
+                WHERE c.agent_id = ? AND instr(lower(m.text), lower(?)) > 0
+            )
+        """
+        database = Conversation._meta.database
+        params = (aid, query, aid, query)
+        data["total"] = database.execute_sql(sql + "SELECT COUNT(*) FROM matches", params).fetchone()[0]
+        rows = database.execute_sql(
+            sql + "SELECT cid, title, match_type, mid, text FROM matches "
+            "ORDER BY recent DESC, cid DESC, match_type DESC, message_time DESC, mid DESC LIMIT ? OFFSET ?",
+            (*params, limit, offset),
+        )
+        for cid, title, match_type, mid, text in rows:
+            text = " ".join(text.split())
+            position = text.lower().find(" ".join(query.split()).lower())
+            start = max(0, position - 60)
+            snippet = text[start:start + 220]
+            data["results"].append({
+                "cid": cid, "conversation_title": title, "match_type": match_type,
+                "message_mid": mid,
+                "snippet": ("…" if start else "") + snippet + ("…" if start + 220 < len(text) else ""),
+            })
+        return JResponse(data=data)
+
     def list(self, payload):
         limit = int(payload.get("limit", 25))
         offset = int(payload.get("offset", 0))
@@ -77,6 +138,49 @@ class ConversationAPI:
         if conversation.agent is None:
             return JResponse(status=404, msg="Conversation agent not found")
 
+        focused_message = None
+        selected_path = []
+        start_mid = conversation.current_message
+        if "mid" in payload:
+            try:
+                mid = uuid.UUID(str(payload["mid"]))
+            except (ValueError, TypeError, AttributeError):
+                return JResponse(status=400, msg="Invalid message ID")
+            focused_message = Message.get_or_none((Message.mid == mid) & (Message.conversation == conversation))
+            if focused_message is None:
+                return JResponse(status=404, msg="Message not found in conversation")
+            messages = {item.mid: item for item in Message.select().where(Message.conversation == conversation)}
+
+            def path_to(mid):
+                path = []
+                seen = set()
+                while mid in messages and mid not in seen:
+                    seen.add(mid)
+                    path.append(mid)
+                    mid = messages[mid].parent_id
+                return path[::-1]
+
+            if mid not in path_to(start_mid):
+                # Keep the remainder of an alternate branch visible when focusing an older message.
+                children = {}
+                for item in messages.values():
+                    children.setdefault(item.parent_id, []).append(item)
+                pending = [focused_message]
+                seen = set()
+                leaves = []
+                while pending:
+                    item = pending.pop()
+                    if item.mid in seen:
+                        continue
+                    seen.add(item.mid)
+                    descendants = children.get(item.mid, [])
+                    if descendants:
+                        pending.extend(descendants)
+                    else:
+                        leaves.append(item)
+                start_mid = max(leaves or [focused_message], key=lambda item: (item.create_time, item.mid.hex)).mid
+            selected_path = [item.hex for item in path_to(start_mid)]
+
         if conversation.agent_version != conversation.agent.version:
             conversation.settings = conversation.agent.settings
             conversation.agent_version = conversation.agent.version
@@ -90,12 +194,15 @@ class ConversationAPI:
 
         conversation_serializer = model_serializer(conversation, manytomany=True)
         conversation_serializer["agent"] = model_serializer(conversation.agent)
-        _, _, start_message = get_user_object_general(Message, mid=conversation.current_message)
+        _, _, start_message = get_user_object_general(Message, mid=start_mid)
         history_messages = get_history_messages(start_message, count=None) if start_message is not None else []
+        focus_data = ({"focused_message_mid": focused_message.mid.hex, "selected_message_path": selected_path}
+                      if focused_message is not None else {})
         return JResponse(
             data={
                 "conversation": conversation_serializer,
                 "messages": history_messages,
+                **focus_data,
             }
         )
 

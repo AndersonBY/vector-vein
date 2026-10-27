@@ -184,6 +184,12 @@
       "retry": "重试"
     },
     "chatSpace": {
+      "search_placeholder": "搜索聊天记录",
+      "search_results": "搜索结果（{count}）",
+      "search_no_results": "没有找到相关聊天",
+      "search_failed": "搜索失败，请重试",
+      "search_more": "加载更多结果",
+      "retry": "重试",
       "attachment_unnamed": "附件",
       "attachment_preview": "预览图片：{name}",
       "attachment_remove": "移除附件：{name}",

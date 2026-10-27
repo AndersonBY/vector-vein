@@ -2,7 +2,7 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
-import { createSSRApp, h, nextTick } from 'vue'
+import { createSSRApp, createRenderer, h, nextTick, reactive, ssrContextKey } from 'vue'
 import { createPinia } from 'pinia'
 import { renderToString } from 'vue/server-renderer'
 import { createI18n } from 'vue-i18n'
@@ -29,10 +29,10 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     chunk(data) { this.onmessage?.({ data: JSON.stringify(data) }) }
   }
   globalThis.WebSocket = Socket
-  globalThis.window = { innerWidth: 1000, pywebview: { api: new Proxy({}, {
+  globalThis.window = { innerWidth: 1000, addEventListener() {}, removeEventListener() {}, pywebview: { api: new Proxy({}, {
     get: (_, action) => async payload => { calls.push({ action, payload }); return request(action, payload) },
   }) } }
-  globalThis.__chatFailureHarness = { route: { params: { conversationId: 'cid', agentId: 'agent' }, query: {} },
+  globalThis.__chatFailureHarness = { route: reactive({ params: { conversationId: 'cid', agentId: 'agent' }, query: {} }),
     router: { push: async () => {} }, errors }
   const server = await createServer({
     configFile: false, root: fileURLToPath(new URL('..', import.meta.url)),
@@ -55,7 +55,7 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       if (normalized.endsWith('.vue') && !['ConversationDetail.vue', 'ConversationNew.vue', 'ChatMessage.vue'].some(name => normalized.endsWith(name))) return `\0chat-child:${normalized}`
     }, load(id) {
       if (id === '\0chat-router') return 'export const useRoute = () => globalThis.__chatFailureHarness.route; export const useRouter = () => globalThis.__chatFailureHarness.router'
-      if (id === '\0chat-ant') return 'export const message = { error: value => globalThis.__chatFailureHarness.errors.push(value), success() {} }'
+      if (id === '\0chat-ant') return 'export const message = { error: value => globalThis.__chatFailureHarness.errors.push(value), success() {} }; export const theme = { useToken: () => ({ token: { value: { colorPrimary: "#1677ff", colorPrimaryBg: "#e6f4ff" } } }) }'
       if (id === '\0chat-util') return 'export const navigateToElementBottom = () => {}'
       if (id === '\0chat-common') return 'export const defaultSettings = { en: {}, "en-US": {} }'
       if (id.startsWith('\0chat-child:')) return 'import {h} from "vue"; export default {props:["text"],setup: p => () => h("div",p.text || "")}'
@@ -221,6 +221,80 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(await fetch, false)
       assert.equal(c.messages.value.length, 0)
     })
+    const focusedHistory = await render(detail, {}, async c => {
+      prepare(c)
+      const scrolled = []
+      c.chatBodyElementRef.value = { scrollTop: 100, clientHeight: 600,
+        getBoundingClientRect: () => ({ top: 50 }), scrollTo: options => scrolled.push(options),
+        querySelectorAll: () => [
+          { dataset: { messageMid: 'new-version' }, offsetHeight: 100, getBoundingClientRect: () => ({ top: 900 }) },
+          { dataset: { messageMid: 'old-version' }, offsetHeight: 200, getBoundingClientRect: () => ({ top: 450 }) },
+        ] }
+      request = async (action, payload) => {
+        assert.equal(action, 'conversation__get')
+        assert.equal(payload.mid, 'old-version')
+        return { status: 200, data: {
+          conversation: { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] },
+          messages: [[assistant('ancestor')], [assistant('old-version'), assistant('new-version')]],
+          selected_message_path: ['old-version'], focused_message_mid: 'old-version',
+        } }
+      }
+      assert.equal(await c.fetchConversation('cid', 'old-version'), true)
+      assert.equal(c.messagePagination.get(1), 0)
+      assert.equal(c.focusedMessageMid.value, 'old-version')
+      assert.deepEqual(scrolled, [{ top: 300 }])
+    })
+    assert.match(focusedHistory, /data-message-mid="old-version"/)
+    assert.match(focusedHistory, /message-focused/)
+    assert.doesNotMatch(focusedHistory, /data-message-mid="new-version"/)
+    const detailComponent = (await server.ssrLoadModule(detail)).default
+    const renderer = createRenderer({ createElement: () => ({}), insert() {}, remove() {}, setElementText() {},
+      createText: () => ({}), createComment: () => ({}), setText() {}, setComment() {}, parentNode() {}, nextSibling() {}, patchProp() {} })
+    const historyRequests = []
+    request = (action, payload) => {
+      assert.equal(action, 'conversation__get')
+      const pending = deferred()
+      historyRequests.push({ payload, ...pending })
+      return pending.promise
+    }
+    let mountedDetail
+    const mountedApp = renderer.createApp({ setup(props, context) {
+      mountedDetail = detailComponent.setup(props, context)
+      return () => h('div')
+    } })
+    mountedApp.use(createPinia())
+    mountedApp.provide(ssrContextKey, {})
+    mountedApp.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': locale } }))
+    const historyResponse = (cid, mid) => ({ status: 200, data: {
+      conversation: { cid, agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] },
+      messages: [[assistant(mid)]], selected_message_path: [mid], focused_message_mid: mid,
+    } })
+    try {
+      mountedApp.mount({})
+      const route = globalThis.__chatFailureHarness.route
+      route.params.conversationId = 'next-cid'
+      route.query.mid = 'next-mid'
+      await flush()
+      assert.equal(historyRequests.length, 2)
+      assert.deepEqual(historyRequests[1].payload, { cid: 'next-cid', mid: 'next-mid' })
+      delete route.query.mid
+      await flush()
+      assert.equal(historyRequests.length, 3)
+      assert.deepEqual(historyRequests[2].payload, { cid: 'next-cid' })
+      historyRequests[2].resolve(historyResponse('next-cid', 'current'))
+      await flush()
+      historyRequests[1].resolve(historyResponse('next-cid', 'stale-focus'))
+      historyRequests[0].resolve(historyResponse('cid', 'stale-cid'))
+      await flush()
+      assert.equal(mountedDetail.conversation.value.cid, 'next-cid')
+      assert.equal(mountedDetail.messages.value[0][0].mid, 'current')
+      assert.equal(mountedDetail.focusedMessageMid.value, '')
+      assert.equal(mountedDetail.loading.value, false)
+    } finally {
+      mountedApp.unmount()
+      globalThis.__chatFailureHarness.route.params.conversationId = 'cid'
+      globalThis.__chatFailureHarness.route.query = {}
+    }
     let retries = 0
     const failedProps = { cid: 'cid', mid: 'history', status: 'F', authorType: 'A', contentType: 'WKF', createTime: 1,
       metadata: { selected_workflow: { wid: 'must-not-run' }, error: { message: '<img src=x onerror=alert(1)>' } },

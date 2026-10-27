@@ -1,7 +1,7 @@
 <script setup>
 import { ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
 import { Send, Edit, Link, Plus } from '@/icons'
-import { message } from 'ant-design-vue'
+import { message, theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { storeToRefs } from 'pinia'
@@ -22,6 +22,7 @@ import { settingAPI } from '@/api/user'
 import { conversationAPI, messageAPI } from '@/api/chat'
 
 const { t } = useI18n()
+const { token } = theme.useToken()
 const loading = ref(false)
 const route = useRoute()
 const router = useRouter()
@@ -36,37 +37,73 @@ const userChatsStore = useUserChatsStore()
 const { unsentChats } = storeToRefs(userChatsStore)
 
 const wsPort = ref(null)
+const routeMid = () => typeof route.query.mid === 'string' ? route.query.mid : Array.isArray(route.query.mid) ? route.query.mid[0] || '' : ''
+const focusedMessageMid = ref('')
+let fetchVersion = 0
 
-const fetchConversation = async cid => {
+const fetchConversation = async (cid, mid = routeMid()) => {
+  const version = ++fetchVersion
+  focusedMessageMid.value = ''
   try {
-    const res = await conversationAPI('get', { cid })
-    if (disposed || cid !== conversationId.value) return false
+    const res = await conversationAPI('get', { cid, ...(mid ? { mid } : {}) })
+    if (disposed || version !== fetchVersion || cid !== conversationId.value) return false
     if (res.status !== 200) throw new Error('fetch failed')
     conversation.value = res.data.conversation
     userChatsStore.addConversation(conversation.value)
     messages.value = res.data.messages
+    messagePagination.clear()
+    const selectedPath = new Set(res.data.selected_message_path || [])
+    messages.value.forEach((group, index) => {
+      const selected = group.findIndex(item => selectedPath.has(item.mid))
+      if (selected >= 0) messagePagination.set(index, selected)
+    })
+    focusedMessageMid.value = res.data.focused_message_mid === mid ? mid : ''
     selectedWorkflows.workflows = {}
     selectedWorkflows.templates = {}
     conversation.value.related_workflows.forEach(workflow => { selectedWorkflows.workflows[workflow.wid] = workflow })
     conversation.value.related_templates.forEach(workflow => { selectedWorkflows.templates[workflow.tid] = workflow })
-    nextTick(() => navigateToElementBottom(chatBodyElementRef.value))
+    await nextTick()
+    if (!disposed && version === fetchVersion) scrollToFocus()
     return true
   } catch {
-    if (!disposed && cid === conversationId.value) message.error(t('workspace.chatSpace.fetch_conversation_failed'))
+    if (!disposed && version === fetchVersion && cid === conversationId.value) message.error(t('workspace.chatSpace.fetch_conversation_failed'))
     return false
   } finally {
-    if (!disposed && cid === conversationId.value) loading.value = false
+    if (!disposed && version === fetchVersion && cid === conversationId.value) loading.value = false
   }
 }
 
-watch(() => route.params.conversationId, async (newVal, oldVal) => {
-  cancelAttempt()
-  conversationId.value = newVal
-  if (oldVal == newVal || newVal == undefined) {
+watch([() => route.params.conversationId, () => route.query.mid], async ([cid], [oldCid]) => {
+  if (!cid) return
+  if (cid !== oldCid) {
+    cancelAttempt()
+    conversationId.value = cid
+    loading.value = true
+    messages.value = []
+    focusedMessageMid.value = ''
+    await fetchConversation(cid)
+    return
+  }
+  const mid = routeMid()
+  if (!mid) {
+    focusedMessageMid.value = ''
+    fetchVersion++
+    if (loading.value) await fetchConversation(cid, '')
+    return
+  }
+  // A search within this chat must not cancel an active reply.
+  if (sending.value || receiving.value) {
+    const groupIndex = messages.value.findIndex(group => group.some(item => item.mid === mid))
+    if (groupIndex >= 0) {
+      messagePagination.set(groupIndex, messages.value[groupIndex].findIndex(item => item.mid === mid))
+      focusedMessageMid.value = mid
+      await nextTick()
+      scrollToFocus()
+    }
     return
   }
   loading.value = true
-  await fetchConversation(newVal)
+  await fetchConversation(cid, mid)
 })
 
 const windowWidth = ref(window.innerWidth)
@@ -94,6 +131,7 @@ onBeforeMount(async () => {
 
 onBeforeUnmount(() => {
   disposed = true
+  fetchVersion++
   cancelAttempt()
   if (chatBodyElementRef.value) {
     chatBodyElementRef.value.removeEventListener('scroll', handleScroll)
@@ -120,6 +158,17 @@ const attachments = ref([])
 const userScrolled = ref(false)
 
 const chatBodyElementRef = ref(null)
+const scrollToFocus = () => {
+  const body = chatBodyElementRef.value
+  if (!body) return
+  const target = focusedMessageMid.value && Array.from(body.querySelectorAll('[data-message-mid]'))
+    .find(element => element.dataset.messageMid === focusedMessageMid.value)
+  if (target) {
+    userScrolled.value = true
+    body.scrollTo({ top: body.scrollTop + target.getBoundingClientRect().top - body.getBoundingClientRect().top -
+      (body.clientHeight - target.offsetHeight) / 2 })
+  } else navigateToElementBottom(body)
+}
 
 let chatConnection = null
 let connectionSetupTimer = null
@@ -139,6 +188,13 @@ const cancelAttempt = () => {
   clearAiMessage()
 }
 const receiving = ref(false)
+watch([sending, receiving], async ([isSending, isReceiving]) => {
+  const mid = routeMid()
+  if (!isSending && !isReceiving && !loading.value && mid && focusedMessageMid.value !== mid) {
+    loading.value = true
+    await fetchConversation(conversationId.value, mid)
+  }
+})
 
 const aiMessage = reactive({
   loading: true,
@@ -249,7 +305,7 @@ const beginAssistant = (data, epoch, cid, groupIndex) => {
 }
 
 const sendMessage = async (content, needTitle = false) => {
-  if (!content?.trim() || sending.value || receiving.value || disposed) return false
+  if (!content?.trim() || loading.value || sending.value || receiving.value || disposed) return false
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
@@ -279,7 +335,7 @@ const sendMessage = async (content, needTitle = false) => {
 }
 
 const requestAssistant = async (action, mid, groupIndex) => {
-  if (sending.value || receiving.value || disposed) return
+  if (loading.value || sending.value || receiving.value || disposed) return
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
@@ -413,16 +469,20 @@ const deleteMessage = async (mid, groupIndex) => {
       <a-spin :spinning="loading">
         <template v-for="(chatMessageGroup, groupIndex) in messages" :key="groupIndex">
           <div class="message-group">
-            <ChatMessage
+            <div
               v-for="currentMessage in [chatMessageGroup[messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)]]"
-              :key="currentMessage.mid" :loading="currentMessage.loading" :cid="conversationId"
-              :mid="currentMessage.mid" :retry-disabled="sending || receiving" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
+              :key="currentMessage.mid" :data-message-mid="currentMessage.mid" class="message-focus-target"
+              :class="{ 'message-focused': focusedMessageMid === currentMessage.mid }"
+              :style="{ '--message-focus-color': token.colorPrimary, '--message-focus-background': token.colorPrimaryBg }">
+            <ChatMessage :loading="currentMessage.loading" :cid="conversationId"
+              :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
               :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
               :metadata="currentMessage.metadata" :content="currentMessage.content"
               :workflowInvokeStep="currentMessage.workflow_invoke_step" :attachments="currentMessage?.attachments"
               :agent="{ name: conversation.agent.name, avatar: conversation.agent.avatar }"
               @append-answer="onAppendAnswer" @regenerate="regenerate(currentMessage.mid, groupIndex)"
               @delete="deleteMessage(currentMessage.mid, groupIndex)" />
+            </div>
 
             <!-- 分页控件 -->
             <div v-if="chatMessageGroup.length > 1" class="message-pagination">
@@ -482,7 +542,7 @@ const deleteMessage = async (mid, groupIndex) => {
         </a-tooltip>
         <a-tooltip :title="t('workspace.chatSpace.send_message')">
           <a-button type="primary" class="chat-send-btn" :loading="sending"
-            :disabled="userInput.length == 0 || sending || receiving" @click="sendMessage(userInput)">
+            :disabled="userInput.length == 0 || loading || sending || receiving" @click="sendMessage(userInput)">
             <template #icon>
               <Send />
             </template>
@@ -495,6 +555,8 @@ const deleteMessage = async (mid, groupIndex) => {
 </template>
 
 <style scoped>
+.message-focus-target { scroll-margin: 20px; border-radius: 6px; }
+.message-focused { outline: 2px solid var(--message-focus-color); outline-offset: 6px; background: var(--message-focus-background); }
 .main-container {
   height: 100%;
   width: 100%;
