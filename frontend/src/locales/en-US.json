@@ -184,6 +184,11 @@
       "retry": "Retry"
     },
     "chatSpace": {
+      "attachment_unnamed": "Attachment",
+      "attachment_preview": "Preview image: {name}",
+      "attachment_remove": "Remove attachment: {name}",
+      "attachment_loading": "Loading image",
+      "attachment_unavailable": "Image unavailable",
       "chat_response_failed": "Unable to complete the reply. Please try again.",
       "chat_connection_failed": "Could not connect. Please try again.",
       "chat_connection_closed": "The connection was interrupted. Your partial reply has been kept.",

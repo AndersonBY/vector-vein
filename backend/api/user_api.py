@@ -203,6 +203,13 @@ def register_shortcuts(shortcuts: dict | None = None):
 class SettingAPI:
     name = "setting"
 
+    def attachment_image(self, payload):
+        from utilities.attachment_preview import AttachmentPreviewError, attachment_image_url
+        try:
+            return JResponse(data={"url": attachment_image_url(payload)})
+        except AttachmentPreviewError as error:
+            return JResponse(status=error.status, msg=str(error))
+
     def get_default_settings(self, payload):
         return JResponse(data=deepcopy(DEFAULT_SETTINGS))
 

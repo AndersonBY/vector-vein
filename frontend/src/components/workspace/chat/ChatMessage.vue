@@ -98,7 +98,6 @@ if (props.expandWorkflowRecord) {
   activeKey.value.push(`${props.mid}-workflow`)
 }
 
-const attachments = ref(props.attachments)
 const content = ref(props.content)
 watch(() => props.content, value => { content.value = value })
 const failedChat = computed(() => props.authorType === 'A' && props.status === 'F' &&
@@ -496,7 +495,7 @@ const deleteMessage = () => {
             </a-collapse>
           </div>
         </template>
-        <AttachmentsList v-model="attachments" :removable="false" />
+        <AttachmentsList :model-value="props.attachments" :removable="false" />
       </div>
     </div>
   </div>

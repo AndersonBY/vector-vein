@@ -184,6 +184,11 @@
       "retry": "重试"
     },
     "chatSpace": {
+      "attachment_unnamed": "附件",
+      "attachment_preview": "预览图片：{name}",
+      "attachment_remove": "移除附件：{name}",
+      "attachment_loading": "正在加载图片",
+      "attachment_unavailable": "图片无法预览",
       "chat_response_failed": "回复未能完成，请重试。",
       "chat_connection_failed": "连接失败，请重试。",
       "chat_connection_closed": "连接已中断，已保留收到的回复。",
