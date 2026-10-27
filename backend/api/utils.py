@@ -61,7 +61,7 @@ def get_history_messages(
         count (int | None, optional): 消息数量，如果是 None 则返回全部消息。Defaults to 10.
         all_children (bool, optional): 对于同一个父节点的消息，是否获取全部子节点消息。Defaults to True.
 
-        当不获取全部子节点消息时，将只获取最新的(create_time)子节点消息。
+        当不获取全部子节点消息时，只返回起始消息所在的父链，不替换为其它版本。
         同时返回结果是list[dict]，每个dict是一个消息的信息。
 
         当获取全部子节点消息时，返回结果是list[list[dict]]，每个list[dict]是一个父节点消息的全部子节点消息。
@@ -72,12 +72,15 @@ def get_history_messages(
     history: SerializedModelList | list[SerializedModelList]
     history = []
     current_message: Message | None = start_message
+    seen = set()
 
-    while current_message:
+    while current_message and current_message.mid not in seen and current_message.conversation_id == start_message.conversation_id:
+        seen.add(current_message.mid)
         if all_children:
             if current_message.parent is not None:
                 siblings = model_serializer(
-                    Message.select().where(Message.parent == current_message.parent).order_by(Message.create_time.asc()),
+                    Message.select().where((Message.parent == current_message.parent) &
+                        (Message.conversation == start_message.conversation_id)).order_by(Message.create_time.asc(), Message.mid.asc()),
                     many=True,
                 )
             else:
@@ -100,26 +103,18 @@ def get_history_messages(
                 cast(list[SerializedModelList], history).insert(0, valid_siblings)
             current_message = cast(Message | None, current_message.parent)
         else:
-            if current_message.parent is not None:
-                latest_message = (Message.select()
-                    .where((Message.parent == current_message.parent) &
-                        ((Message.author_type != Message.AuthorTypes.ASSISTANT) | (Message.status != Message.StatusTypes.FAILED)))
-                    .order_by(Message.create_time.desc())
-                    .first())
-                latest_child = model_serializer(latest_message) if latest_message is not None else None
-            else:
-                latest_child = model_serializer(current_message)
-            if latest_child and not (latest_child["author_type"] == Message.AuthorTypes.ASSISTANT and
-                latest_child["status"] == Message.StatusTypes.FAILED) and any(
+            path_message = model_serializer(current_message)
+            if not (path_message["author_type"] == Message.AuthorTypes.ASSISTANT and
+                path_message["status"] == Message.StatusTypes.FAILED) and any(
                 (
-                    latest_child["content_type"] != Message.ContentTypes.TEXT,
-                    "text" not in latest_child["content"],
-                    latest_child["content"].get("text", "").strip(),
+                    path_message["content_type"] != Message.ContentTypes.TEXT,
+                    "text" not in path_message["content"],
+                    path_message["content"].get("text", "").strip(),
                 )
             ):
-                latest_child["create_time"] = int(latest_child["create_time"])
-                latest_child["update_time"] = int(latest_child["update_time"])
-                history.insert(0, latest_child)
+                path_message["create_time"] = int(path_message["create_time"])
+                path_message["update_time"] = int(path_message["update_time"])
+                history.insert(0, path_message)
             current_message = cast(Message | None, current_message.parent)
 
         if count is not None and len(history) >= count:

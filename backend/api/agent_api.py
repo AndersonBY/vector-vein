@@ -199,8 +199,18 @@ class ConversationAPI:
             return JResponse(status=404, msg="Conversation agent not found")
 
         focused_message = None
-        selected_path = []
         start_mid = conversation.current_message
+        messages = {item.mid: item for item in Message.select().where(Message.conversation == conversation)}
+
+        def path_to(mid):
+            path = []
+            seen = set()
+            while mid in messages and mid not in seen:
+                seen.add(mid)
+                path.append(mid)
+                mid = messages[mid].parent_id
+            return path[::-1] if mid is None else []
+
         if "mid" in payload:
             try:
                 mid = uuid.UUID(str(payload["mid"]))
@@ -209,17 +219,6 @@ class ConversationAPI:
             focused_message = Message.get_or_none((Message.mid == mid) & (Message.conversation == conversation))
             if focused_message is None:
                 return JResponse(status=404, msg="Message not found in conversation")
-            messages = {item.mid: item for item in Message.select().where(Message.conversation == conversation)}
-
-            def path_to(mid):
-                path = []
-                seen = set()
-                while mid in messages and mid not in seen:
-                    seen.add(mid)
-                    path.append(mid)
-                    mid = messages[mid].parent_id
-                return path[::-1]
-
             if mid not in path_to(start_mid):
                 # Keep the remainder of an alternate branch visible when focusing an older message.
                 children = {}
@@ -239,7 +238,6 @@ class ConversationAPI:
                     else:
                         leaves.append(item)
                 start_mid = max(leaves or [focused_message], key=lambda item: (item.create_time, item.mid.hex)).mid
-            selected_path = [item.hex for item in path_to(start_mid)]
 
         if conversation.agent_version != conversation.agent.version:
             conversation.settings = conversation.agent.settings
@@ -254,17 +252,48 @@ class ConversationAPI:
 
         conversation_serializer = model_serializer(conversation, manytomany=True)
         conversation_serializer["agent"] = model_serializer(conversation.agent)
-        _, _, start_message = get_user_object_general(Message, mid=start_mid)
+        start_message = messages.get(start_mid)
         history_messages = get_history_messages(start_message, count=None) if start_message is not None else []
-        focus_data = ({"focused_message_mid": focused_message.mid.hex, "selected_message_path": selected_path}
+        focus_data = ({"focused_message_mid": focused_message.mid.hex}
                       if focused_message is not None else {})
         return JResponse(
             data={
                 "conversation": conversation_serializer,
                 "messages": history_messages,
+                "selected_message_path": [item.hex for item in path_to(start_mid)],
                 **focus_data,
             }
         )
+
+    def select_branch(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid branch selection")
+        try:
+            cid = uuid.UUID(str(payload.get("cid", "")))
+            mid = uuid.UUID(str(payload.get("mid", "")))
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid branch selection")
+        with Conversation._meta.database.atomic():
+            conversation = Conversation.get_or_none(Conversation.cid == cid)
+            if conversation is None:
+                return JResponse(status=404)
+            active_statuses = (*PENDING, Message.StatusTypes.RUNNING_WORKFLOW)
+            if Message.select().where((Message.conversation == conversation) &
+                    (Message.mid == conversation.current_message) &
+                    Message.status.in_(active_statuses)).exists():
+                return JResponse(status=409, msg="Conversation is still running")
+            response = self.get({"cid": cid.hex, "mid": mid.hex})
+            if response["status"] != 200:
+                return response
+            path = response["data"]["selected_message_path"]
+            if not path:
+                return JResponse(status=409, msg="Invalid conversation message graph")
+            if Message.get_by_id(path[-1]).status in active_statuses:
+                return JResponse(status=409, msg="Selected branch is still running")
+            Conversation.update(current_message=path[-1]).where(Conversation.cid == cid).execute()
+            response["data"]["conversation"]["current_message"] = path[-1]
+            response["data"].pop("focused_message_mid", None)
+            return response
 
     def create(self, payload):
         conversation_data = payload.get("conversation", {})

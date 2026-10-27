@@ -193,6 +193,7 @@
       "fullscreen_failed": "Unable to expand preview. Please try again."
     },
     "chatSpace": {
+      "branch_switch_failed": "Could not switch reply versions. Please retry.",
       "fork_conversation": "Fork conversation",
       "fork_description": "Branch from this reply",
       "fork_title": "{title} · Fork",

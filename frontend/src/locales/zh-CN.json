@@ -193,6 +193,7 @@
       "fullscreen_failed": "无法放大预览，请重试"
     },
     "chatSpace": {
+      "branch_switch_failed": "切换回复版本失败，请重试",
       "fork_conversation": "创建分支",
       "fork_description": "从此回复创建分支",
       "fork_title": "{title} · 分支",

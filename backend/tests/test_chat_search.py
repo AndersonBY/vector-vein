@@ -116,7 +116,7 @@ def test_get_focus_selects_branch_context_without_changing_current_message(histo
     assert Conversation.get_by_id(chat.cid).current_message == current.mid
     current_focus = api.get({"cid": chat.cid.hex, "mid": root.mid.hex})["data"]
     assert current_focus["selected_message_path"] == [root.mid.hex, current.mid.hex]
-    assert "selected_message_path" not in api.get({"cid": chat.cid.hex})["data"]
+    assert api.get({"cid": chat.cid.hex})["data"]["selected_message_path"] == [root.mid.hex, current.mid.hex]
     foreign = message(conversation(agent), "foreign")
     assert api.get({"cid": chat.cid.hex, "mid": foreign.mid.hex})["status"] == 404
     assert api.get({"cid": chat.cid.hex, "mid": "invalid"})["status"] == 400

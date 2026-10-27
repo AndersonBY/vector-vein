@@ -33,7 +33,7 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     get: (_, action) => async payload => { calls.push({ action, payload }); return request(action, payload) },
   }) } }
   globalThis.__chatFailureHarness = { route: reactive({ params: { conversationId: 'cid', agentId: 'agent' }, query: {} }),
-    router: { push: async () => {} }, errors }
+    router: { push: async () => {}, replace: async () => {} }, errors }
   const server = await createServer({
     configFile: false, root: fileURLToPath(new URL('..', import.meta.url)),
     plugins: [vue(), { name: 'chat-ui-fixtures', enforce: 'pre',
@@ -216,6 +216,7 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     await render(detail, {}, async c => {
       prepare(c)
       c.messages.value = [[assistant('old')], [assistant('last')]]
+      c.messagePagination.set(1, 0)
       request = async action => action === 'message__regenerate'
         ? { status: 200, data: { ai_message_mid: 'regenerated' } }
         : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } }
@@ -228,7 +229,8 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       await flush()
       assert.equal(c.messages.value[0][1].mid, 'regenerated')
       assert.equal(c.messages.value[0][1].status, 'F')
-      assert.equal(c.messages.value[1][0].mid, 'last')
+      assert.equal(c.messages.value.length, 1)
+      assert.equal(c.messagePagination.has(1), false)
       assert.equal(c.messagePagination.get(0), 1)
       assert.equal(c.receiving.value, false)
     })
@@ -305,6 +307,106 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(await fetch, false)
       assert.equal(c.messages.value.length, 0)
     })
+    const branchResponse = (tail = 'old-tail') => ({ status: 200, data: {
+      conversation: { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] },
+      messages: [[assistant('root')], [assistant('old-version'), assistant('new-version')], [assistant(tail)]],
+      selected_message_path: ['root', 'old-version', tail],
+    } })
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = branchResponse('new-tail').data.messages
+      c.messagePagination.set(1, 1)
+      c.userInput.value = 'draft stays'
+      c.attachments.value = ['local-file']
+      const pending = deferred(), replacements = []
+      globalThis.__chatFailureHarness.route.query = { mid: 'search-target', keep: 'yes' }
+      globalThis.__chatFailureHarness.router.replace = async location => { replacements.push(location) }
+      request = (action, payload) => {
+        assert.equal(action, 'conversation__select_branch')
+        assert.deepEqual(payload, { cid: 'cid', mid: 'old-version' })
+        return pending.promise
+      }
+      const selection = c.switchMessagePage(1, 'prev')
+      assert.equal(c.loading.value, true)
+      assert.equal(c.messagePagination.get(1), 1)
+      const count = calls.length
+      await c.switchMessagePage(1, 'prev')
+      assert.equal(calls.length, count)
+      pending.resolve(branchResponse())
+      await selection
+      assert.equal(c.messagePagination.get(1), 0)
+      assert.equal(c.messages.value[2][0].mid, 'old-tail')
+      assert.equal(c.loading.value, false)
+      assert.equal(c.focusedMessageMid.value, '')
+      assert.equal(c.userInput.value, 'draft stays')
+      assert.deepEqual(c.attachments.value, ['local-file'])
+      assert.deepEqual(replacements, [{ query: { keep: 'yes' } }])
+      globalThis.__chatFailureHarness.route.query = {}
+    })
+    for (const failedSelection of [{ status: 500 }, { status: 409 }, new Error('network')]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = branchResponse('new-tail').data.messages
+        c.messagePagination.set(1, 1)
+        const count = errors.length
+        request = async () => { if (failedSelection instanceof Error) throw failedSelection; return failedSelection }
+        await c.switchMessagePage(1, 'prev')
+        assert.equal(c.loading.value, false)
+        assert.equal(c.messagePagination.get(1), 1)
+        assert.equal(c.messages.value[2][0].mid, 'new-tail')
+        assert.equal(errors.length, count + 1)
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = branchResponse('new-tail').data.messages
+      c.messagePagination.set(1, 1)
+      const pending = deferred()
+      request = () => pending.promise
+      const selection = c.switchMessagePage(1, 'prev')
+      c.conversationId.value = 'another-conversation'
+      pending.resolve(branchResponse())
+      await selection
+      assert.equal(c.messages.value[2][0].mid, 'new-tail')
+      assert.equal(c.messagePagination.get(1), 1)
+    })
+    const reopened = await render(detail, {}, async c => {
+      prepare(c)
+      request = async () => branchResponse()
+      assert.equal(await c.fetchConversation('cid', ''), true)
+      assert.equal(c.messagePagination.get(1), 0)
+      assert.equal(c.focusedMessageMid.value, '')
+    })
+    assert.match(reopened, /data-message-mid="old-version"/)
+    assert.doesNotMatch(reopened, /data-message-mid="new-version"/)
+    for (const page of [undefined, 0, 1]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = [[assistant('root')], [assistant('old-version'), assistant('new-version')]]
+        if (page !== undefined) c.messagePagination.set(1, page)
+        request = async (action, payload) => {
+          if (action === 'message__send') {
+            assert.equal(payload.parent_mid, page === 0 ? 'old-version' : 'new-version')
+            return { status: 200, data: { ai_message_mid: 'attempt', user_message_mid: 'question' } }
+          }
+          if (action === 'setting__get_port') return { status: 200, data: { port: 9999 } }
+          return { status: 200 }
+        }
+        await c.sendMessage('continue selected')
+        await flush()
+        c.cancelAttempt()
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[assistant('root')], [assistant('workflow')], [assistant('other-tail')]]
+      request = async action => action === 'message__append_answer' ? { status: 200, data: { ai_message_mid: 'continued' } }
+        : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } } : { status: 200 }
+      await c.onAppendAnswer('workflow')
+      await flush()
+      assert.deepEqual(c.messages.value.map(group => group[0].mid), ['root', 'workflow', 'continued'])
+      c.cancelAttempt()
+    })
     const focusedHistory = await render(detail, {}, async c => {
       prepare(c)
       const scrolled = []
@@ -374,10 +476,26 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(mountedDetail.messages.value[0][0].mid, 'current')
       assert.equal(mountedDetail.focusedMessageMid.value, '')
       assert.equal(mountedDetail.loading.value, false)
+      mountedDetail.messages.value = [[assistant('old-visible'), assistant('new-visible')]]
+      mountedDetail.messagePagination.set(0, 1)
+      mountedDetail.receiving.value = true
+      route.query.mid = 'old-visible'
+      await flush()
+      assert.equal(historyRequests.length, 3)
+      assert.equal(mountedDetail.messagePagination.get(0), 1)
+      mountedDetail.receiving.value = false
+      await flush()
+      assert.equal(historyRequests.length, 4)
+      assert.deepEqual(historyRequests[3].payload, { cid: 'next-cid', mid: 'old-visible' })
+      historyRequests[3].resolve(historyResponse('next-cid', 'old-visible'))
+      await flush()
+      assert.equal(mountedDetail.messages.value[0][0].mid, 'old-visible')
+      delete route.query.mid
+      await flush()
       const lateFork = deferred()
       const count = navigations.length
       request = () => lateFork.promise
-      const pendingFork = mountedDetail.forkConversation('current')
+      const pendingFork = mountedDetail.forkConversation('old-visible')
       assert.equal(mountedDetail.forking.value, true)
       mountedApp.unmount()
       lateFork.resolve({ status: 200, data: { cid: 'after-unmount' } })

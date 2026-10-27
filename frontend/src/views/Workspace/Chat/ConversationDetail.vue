@@ -38,11 +38,34 @@ const { unsentChats } = storeToRefs(userChatsStore)
 
 const wsPort = ref(null)
 const routeMid = () => typeof route.query.mid === 'string' ? route.query.mid : Array.isArray(route.query.mid) ? route.query.mid[0] || '' : ''
+const clearSearchTarget = async () => {
+  if (!routeMid()) return
+  const query = { ...route.query }
+  delete query.mid
+  await router.replace({ query })
+}
 const focusedMessageMid = ref('')
 let fetchVersion = 0
 const forking = ref(false)
 const forkingMid = ref('')
 let forkVersion = 0
+
+const applyConversation = data => {
+  conversation.value = data.conversation
+  userChatsStore.addConversation(conversation.value)
+  messages.value = data.messages
+  messagePagination.clear()
+  const selectedPath = new Set(data.selected_message_path || [])
+  messages.value.forEach((group, index) => {
+    const selected = group.findIndex(item => selectedPath.has(item.mid))
+    if (selected >= 0) messagePagination.set(index, selected)
+  })
+  focusedMessageMid.value = data.focused_message_mid || ''
+  selectedWorkflows.workflows = {}
+  selectedWorkflows.templates = {}
+  conversation.value.related_workflows.forEach(workflow => { selectedWorkflows.workflows[workflow.wid] = workflow })
+  conversation.value.related_templates.forEach(workflow => { selectedWorkflows.templates[workflow.tid] = workflow })
+}
 
 const fetchConversation = async (cid, mid = routeMid()) => {
   const version = ++fetchVersion
@@ -51,20 +74,8 @@ const fetchConversation = async (cid, mid = routeMid()) => {
     const res = await conversationAPI('get', { cid, ...(mid ? { mid } : {}) })
     if (disposed || version !== fetchVersion || cid !== conversationId.value) return false
     if (res.status !== 200) throw new Error('fetch failed')
-    conversation.value = res.data.conversation
-    userChatsStore.addConversation(conversation.value)
-    messages.value = res.data.messages
-    messagePagination.clear()
-    const selectedPath = new Set(res.data.selected_message_path || [])
-    messages.value.forEach((group, index) => {
-      const selected = group.findIndex(item => selectedPath.has(item.mid))
-      if (selected >= 0) messagePagination.set(index, selected)
-    })
+    applyConversation(res.data)
     focusedMessageMid.value = res.data.focused_message_mid === mid ? mid : ''
-    selectedWorkflows.workflows = {}
-    selectedWorkflows.templates = {}
-    conversation.value.related_workflows.forEach(workflow => { selectedWorkflows.workflows[workflow.wid] = workflow })
-    conversation.value.related_templates.forEach(workflow => { selectedWorkflows.templates[workflow.tid] = workflow })
     await nextTick()
     if (!disposed && version === fetchVersion) scrollToFocus()
     return true
@@ -99,8 +110,8 @@ watch([() => route.params.conversationId, () => route.query.mid], async ([cid], 
   // A search within this chat must not cancel an active reply.
   if (sending.value || receiving.value) {
     const groupIndex = messages.value.findIndex(group => group.some(item => item.mid === mid))
-    if (groupIndex >= 0) {
-      messagePagination.set(groupIndex, messages.value[groupIndex].findIndex(item => item.mid === mid))
+    const group = messages.value[groupIndex]
+    if (group?.[messagePagination.get(groupIndex) ?? (group.length - 1)]?.mid === mid) {
       focusedMessageMid.value = mid
       await nextTick()
       scrollToFocus()
@@ -226,7 +237,7 @@ const cancelAttempt = () => {
 const receiving = ref(false)
 watch([sending, receiving], async ([isSending, isReceiving]) => {
   const mid = routeMid()
-  if (!isSending && !isReceiving && !loading.value && mid && focusedMessageMid.value !== mid) {
+  if (!isSending && !isReceiving && !loading.value && mid) {
     loading.value = true
     await fetchConversation(conversationId.value, mid)
   }
@@ -326,12 +337,18 @@ const sendWebsocketMsg = async (msg, epoch, cid) => {
   } catch { await fail('CHAT_CONNECTION_FAILED') }
 }
 
+const trimHistoryAfter = groupIndex => {
+  messages.value.splice(groupIndex + 1)
+  for (const index of messagePagination.keys()) if (index > groupIndex) messagePagination.delete(index)
+}
+
 const beginAssistant = (data, epoch, cid, groupIndex) => {
   clearAiMessage()
   aiMessage.mid = data.ai_message_mid
   receiving.value = true
   if (groupIndex === undefined) messages.value.push([aiMessage])
   else {
+    trimHistoryAfter(groupIndex)
     const parentGroup = messages.value[groupIndex]
     messages.value[groupIndex] = [...parentGroup, aiMessage]
     messagePagination.set(groupIndex, parentGroup.length)
@@ -346,7 +363,8 @@ const sendMessage = async (content, needTitle = false) => {
   const epoch = ++attemptEpoch
   const cid = conversationId.value
   const files = [...attachments.value]
-  const parentMid = messages.value.findLast(group => group[0].mid !== 'tmp')?.[0].mid ?? null
+  const groupIndex = messages.value.findLastIndex(group => group.some(item => item.mid !== 'tmp'))
+  const parentMid = messages.value[groupIndex]?.[messagePagination.get(groupIndex) ?? (messages.value[groupIndex].length - 1)]?.mid ?? null
   try {
     const res = await messageAPI('send', { need_title: needTitle, parent_mid: parentMid,
       cid, content, content_type: 'TXT', attachments: files })
@@ -361,6 +379,7 @@ const sendMessage = async (content, needTitle = false) => {
     if (userInput.value === content) userInput.value = ''
     attachments.value = attachments.value.filter(file => !files.includes(file))
     beginAssistant(res.data, epoch, cid)
+    void clearSearchTarget().catch(() => {})
     return true
   } catch {
     if (currentAttempt(epoch)) message.error(t('workspace.chatSpace.send_message_failed'))
@@ -383,7 +402,12 @@ const requestAssistant = async (action, mid, groupIndex) => {
       return
     }
     if (res.status !== 200 || !res.data?.ai_message_mid) throw new Error('request failed')
+    if (action === 'append_answer') {
+      const parentIndex = messages.value.findIndex(group => group.some(item => item.mid === mid))
+      if (parentIndex >= 0) trimHistoryAfter(parentIndex)
+    }
     beginAssistant(res.data, epoch, cid, groupIndex)
+    void clearSearchTarget().catch(() => {})
   } catch {
     if (currentAttempt(epoch)) message.error(t('workspace.chatSpace.regenerate_failed'))
   } finally {
@@ -452,11 +476,29 @@ const messagePagination = reactive(new Map())
 
 const regenerate = (mid, groupIndex) => requestAssistant('regenerate', mid, groupIndex)
 
-const switchMessagePage = (groupIndex, direction) => {
+const switchMessagePage = async (groupIndex, direction) => {
+  if (loading.value || sending.value || receiving.value || forking.value || disposed) return
   const group = messages.value[groupIndex]
+  if (!group) return
   const currentPage = messagePagination.get(groupIndex) ?? (group.length - 1) // 默认显示最后一项
   const newPage = direction === 'prev' ? currentPage - 1 : currentPage + 1
-  messagePagination.set(groupIndex, newPage)
+  if (newPage < 0 || newPage >= group.length) return
+  const cid = conversationId.value
+  const version = ++fetchVersion
+  const current = () => !disposed && version === fetchVersion && cid === conversationId.value
+  loading.value = true
+  try {
+    const res = await conversationAPI('select_branch', { cid, mid: group[newPage].mid })
+    if (!current()) return
+    if (res.status !== 200) throw new Error('branch selection failed')
+    applyConversation(res.data)
+    loading.value = false
+    await clearSearchTarget()
+  } catch {
+    if (current()) message.error(t('workspace.chatSpace.branch_switch_failed'))
+  } finally {
+    if (current()) loading.value = false
+  }
 }
 
 const deleteMessage = async (mid, groupIndex) => {
@@ -525,7 +567,7 @@ const deleteMessage = async (mid, groupIndex) => {
             <!-- 分页控件 -->
             <div v-if="chatMessageGroup.length > 1" class="message-pagination">
               <a-button type="text" size="small"
-                :disabled="(messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
+                :disabled="loading || sending || receiving || forking || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
                 @click="switchMessagePage(groupIndex, 'prev')">
                 &lt;
               </a-button>
@@ -534,7 +576,7 @@ const deleteMessage = async (mid, groupIndex) => {
                   chatMessageGroup.length }}
               </span>
               <a-button type="text" size="small"
-                :disabled="(messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === chatMessageGroup.length - 1"
+                :disabled="loading || sending || receiving || forking || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === chatMessageGroup.length - 1"
                 @click="switchMessagePage(groupIndex, 'next')">
                 &gt;
               </a-button>
