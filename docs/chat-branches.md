@@ -27,3 +27,24 @@ The edit API validates ownership, message type and completed state, and rejects
 active generations or invalid ancestry. Question creation, reply creation and the
 current branch update share one transaction. A failed edit keeps the inline text
 and displayed history; a stale response cannot replace a different conversation.
+
+## Deleting a branch
+
+The message Delete confirmation covers the selected message and every descendant.
+`message__delete` requires both conversation and message IDs. It deletes descendants
+before their parents in one transaction and never reparents surviving messages.
+Attachment files, workflow run records and the conversation's unsent draft remain.
+
+If the saved current branch survives, it stays selected. Otherwise the API selects
+the newest available sibling of the same author type and its latest completed
+descendant branch. Running sibling contexts are skipped. Without a usable sibling,
+the conversation returns to the deleted message's parent, or becomes empty when the
+only root is removed. A removed share marker is cleared. Deletion rejects running
+current contexts, running target descendants and corrupt graph references.
+
+The API returns the full remaining conversation, history and selected path. Failure
+to produce that response rolls back the deletion. The UI applies this snapshot only
+to the original conversation, clears its search focus, and keeps its composer draft.
+Other history mutations are disabled while deletion is pending. Failed requests keep
+the displayed history and version selections for retry. Coverage is in
+`backend/tests/test_chat_deletion.py` and `frontend/tests/chatFailures.test.js`.

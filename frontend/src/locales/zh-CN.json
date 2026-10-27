@@ -295,7 +295,7 @@
       "edit_and_regenerate": "保存并重新生成",
       "edit_message_failed": "编辑消息失败，已保留修改内容，请重试",
       "delete_message": "删除消息",
-      "delete_message_confirm": "确认删除该消息？",
+      "delete_message_confirm": "删除这条消息及其全部后续内容？其他分支会保留。",
       "delete_message_failed": "删除消息失败",
       "delete_message_success": "删除消息成功"
     },

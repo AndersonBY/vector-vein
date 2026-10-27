@@ -49,6 +49,8 @@ let fetchVersion = 0
 const forking = ref(false)
 const forkingMid = ref('')
 let forkVersion = 0
+const deletingMid = ref('')
+let deleteVersion = 0
 
 const applyConversation = data => {
   conversation.value = data.conversation
@@ -92,6 +94,8 @@ watch([() => route.params.conversationId, () => route.query.mid], async ([cid], 
   if (cid !== oldCid) {
     forkVersion++
     forking.value = false
+    deleteVersion++
+    deletingMid.value = ''
     cancelAttempt()
     conversationId.value = cid
     loading.value = true
@@ -100,6 +104,7 @@ watch([() => route.params.conversationId, () => route.query.mid], async ([cid], 
     if (await fetchConversation(cid)) await sendPendingChat(cid)
     return
   }
+  if (deletingMid.value) return
   const mid = routeMid()
   if (!mid) {
     focusedMessageMid.value = ''
@@ -142,6 +147,7 @@ onBeforeMount(async () => {
 onBeforeUnmount(() => {
   disposed = true
   forkVersion++
+  deleteVersion++
   fetchVersion++
   cancelAttempt()
   if (chatBodyElementRef.value) {
@@ -174,7 +180,7 @@ const sendPendingChat = async cid => {
   await sendMessage(pending.content, true, pending.attachments)
 }
 const canFork = computed(() => !!conversation.value.cid && conversation.value.cid === conversationId.value && !loading.value && !sending.value &&
-  !receiving.value && !forking.value)
+  !receiving.value && !forking.value && !deletingMid.value)
 
 const forkConversation = async mid => {
   if (!canFork.value || disposed) return
@@ -251,9 +257,9 @@ const stopGeneration = () => {
   if (chatConnection) chatConnection.requestStop()
   else void stopCurrentAttempt?.()
 }
-watch([sending, receiving], async ([isSending, isReceiving]) => {
+watch([sending, receiving, deletingMid], async ([isSending, isReceiving, isDeleting]) => {
   const mid = routeMid()
-  if (!isSending && !isReceiving && !loading.value && mid) {
+  if (!isSending && !isReceiving && !isDeleting && !loading.value && mid) {
     loading.value = true
     await fetchConversation(conversationId.value, mid)
   }
@@ -407,7 +413,7 @@ const beginAssistant = (data, epoch, cid, groupIndex) => {
 }
 
 const sendMessage = async (content, needTitle = false, submittedFiles = attachments.value) => {
-  if (!content?.trim() || loading.value || sending.value || receiving.value || forking.value || disposed) return false
+  if (!content?.trim() || loading.value || sending.value || receiving.value || forking.value || deletingMid.value || disposed) return false
   sending.value = true
   const epoch = ++attemptEpoch
   const cid = conversationId.value
@@ -444,7 +450,7 @@ const sendMessage = async (content, needTitle = false, submittedFiles = attachme
 }
 
 const requestAssistant = async (action, mid, groupIndex, editedContent) => {
-  if (loading.value || sending.value || receiving.value || forking.value || disposed) return
+  if (loading.value || sending.value || receiving.value || forking.value || deletingMid.value || disposed) return
   const group = messages.value[groupIndex]
   const original = group?.[messagePagination.get(groupIndex) ?? (group.length - 1)]
   if (action === 'edit' && (!editedContent?.trim() || original?.mid !== mid || original.author_type !== 'U' ||
@@ -546,7 +552,7 @@ const regenerate = (mid, groupIndex) => requestAssistant('regenerate', mid, grou
 const editMessage = (mid, groupIndex, content) => requestAssistant('edit', mid, groupIndex, content)
 
 const switchMessagePage = async (groupIndex, direction) => {
-  if (loading.value || sending.value || receiving.value || forking.value || disposed) return
+  if (loading.value || sending.value || receiving.value || forking.value || deletingMid.value || disposed) return
   const group = messages.value[groupIndex]
   if (!group) return
   const currentPage = messagePagination.get(groupIndex) ?? (group.length - 1) // 默认显示最后一项
@@ -571,28 +577,28 @@ const switchMessagePage = async (groupIndex, direction) => {
 }
 
 const deleteMessage = async (mid, groupIndex) => {
-  const res = await messageAPI('delete', { mid: mid, cid: conversationId.value })
-  if (res.status !== 200) {
-    message.error(t('workspace.chatSpace.delete_message_failed'))
-    return
-  }
-
-  // 获取指定组
+  if (loading.value || sending.value || receiving.value || forking.value || deletingMid.value || disposed) return
   const group = messages.value[groupIndex]
-  // 从组内删除指定消息
-  const messageIndex = group.findIndex(msg => msg.mid === mid)
-  if (messageIndex !== -1) {
-    group.splice(messageIndex, 1)
-    // 如果组变空了，删除整个组
-    if (group.length === 0) {
-      messages.value.splice(groupIndex, 1)
-    }
+  const selected = group?.[messagePagination.get(groupIndex) ?? (group.length - 1)]
+  if (selected?.mid !== mid || ['P', 'G', 'R'].includes(selected.status)) return
+  const cid = conversationId.value
+  const version = ++deleteVersion
+  const current = () => !disposed && version === deleteVersion && cid === conversationId.value
+  fetchVersion++
+  deletingMid.value = mid
+  try {
+    const res = await messageAPI('delete', { mid, cid })
+    if (!current()) return
+    if (res.status !== 200 || res.data?.conversation?.cid !== cid || !Array.isArray(res.data.messages) ||
+        !Array.isArray(res.data.selected_message_path)) throw new Error('delete failed')
+    applyConversation(res.data)
+    await clearSearchTarget()
+    message.success(t('workspace.chatSpace.delete_message_success'))
+  } catch {
+    if (current()) message.error(t('workspace.chatSpace.delete_message_failed'))
+  } finally {
+    if (current()) deletingMid.value = ''
   }
-
-  // 重置相关的分页状态
-  messagePagination.clear()
-
-  message.success(t('workspace.chatSpace.delete_message_success'))
 }
 </script>
 
@@ -623,8 +629,9 @@ const deleteMessage = async (mid, groupIndex) => {
               :style="{ '--message-focus-color': token.colorPrimary, '--message-focus-background': token.colorPrimaryBg }">
             <ChatMessage :loading="currentMessage.loading" :cid="conversationId"
               editable :edit-loading="editingMid === currentMessage.mid"
+              :delete-loading="deletingMid === currentMessage.mid"
               forkable :fork-disabled="!canFork" :fork-loading="forking && forkingMid === currentMessage.mid"
-              :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving || forking" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
+              :mid="currentMessage.mid" :retry-disabled="loading || sending || receiving || forking || !!deletingMid" v-model:status="currentMessage.status" :authorType="currentMessage.author_type"
               :contentType="currentMessage.content_type" :createTime="currentMessage.create_time"
               :metadata="currentMessage.metadata" :content="currentMessage.content"
               :workflowInvokeStep="currentMessage.workflow_invoke_step" :attachments="currentMessage?.attachments"
@@ -639,7 +646,7 @@ const deleteMessage = async (mid, groupIndex) => {
             <div v-if="chatMessageGroup.length > 1" class="message-pagination"
               :class="{ 'message-pagination-user': chatMessageGroup[0]?.author_type === 'U' }">
               <a-button type="text" size="small"
-                :disabled="loading || sending || receiving || forking || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
+                :disabled="loading || sending || receiving || forking || !!deletingMid || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === 0"
                 @click="switchMessagePage(groupIndex, 'prev')">
                 &lt;
               </a-button>
@@ -648,7 +655,7 @@ const deleteMessage = async (mid, groupIndex) => {
                   chatMessageGroup.length }}
               </span>
               <a-button type="text" size="small"
-                :disabled="loading || sending || receiving || forking || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === chatMessageGroup.length - 1"
+                :disabled="loading || sending || receiving || forking || !!deletingMid || (messagePagination.get(groupIndex) ?? (chatMessageGroup.length - 1)) === chatMessageGroup.length - 1"
                 @click="switchMessagePage(groupIndex, 'next')">
                 &gt;
               </a-button>
@@ -700,7 +707,7 @@ const deleteMessage = async (mid, groupIndex) => {
         </a-tooltip>
         <a-tooltip v-else :title="t('workspace.chatSpace.send_message')">
           <a-button type="primary" class="chat-send-btn" :loading="sending"
-            :disabled="userInput.length == 0 || loading || sending || receiving || forking" @click="sendMessage(userInput)">
+            :disabled="userInput.length == 0 || loading || sending || receiving || forking || !!deletingMid" @click="sendMessage(userInput)">
             <template #icon>
               <Send />
             </template>

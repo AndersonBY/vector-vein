@@ -20,6 +20,7 @@ import { getWorkflowFailures, getWorkflowRunStatus, getWorkflowFailureSnapshot }
 const props = defineProps({
   editable: { type: Boolean, default: false },
   editLoading: { type: Boolean, default: false },
+  deleteLoading: { type: Boolean, default: false },
   forkable: { type: Boolean, default: false },
   forkDisabled: { type: Boolean, default: false },
   forkLoading: { type: Boolean, default: false },
@@ -539,9 +540,10 @@ const deleteMessage = () => {
             </a-button>
           </a-tooltip>
           <a-tooltip :title="t('workspace.chatSpace.delete_message')">
-            <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" @confirm="deleteMessage">
-              <a-button type="text" size="small" danger :disabled="retryDisabled">
-                <template #icon><Delete /></template>
+            <a-popconfirm :title="t('workspace.chatSpace.delete_message_confirm')" :disabled="retryDisabled" @confirm="deleteMessage">
+              <a-button type="text" size="small" danger :disabled="retryDisabled" :loading="deleteLoading"
+                :aria-label="t('workspace.chatSpace.delete_message')">
+                <template #icon><Delete v-if="!deleteLoading" /></template>
               </a-button>
             </a-popconfirm>
           </a-tooltip>

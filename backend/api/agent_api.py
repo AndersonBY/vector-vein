@@ -763,52 +763,87 @@ class MessageAPI:
 
     def delete(self, payload):
         """删除消息及其所有子消息"""
-        mid = payload.get("mid")
-        if not mid:
-            return JResponse(status=400, msg="无效的消息ID")
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid message deletion")
+        try:
+            cid = uuid.UUID(str(payload.get("cid", "")))
+            mid = uuid.UUID(str(payload.get("mid", "")))
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid message deletion")
+        with Conversation._meta.database.atomic() as transaction:
+            conversation = Conversation.get_or_none(Conversation.cid == cid)
+            if conversation is None or not Agent.select().where(Agent.aid == conversation.agent_id).exists():
+                return JResponse(status=404)
+            messages = {item.mid: item for item in Message.select().where(Message.conversation == cid)}
+            selected = messages.get(mid)
+            if selected is None:
+                return JResponse(status=404)
 
-        # 获取要删除的消息
-        message = Message.get_or_none(Message.mid == mid)
-        if not message:
-            return JResponse(status=404, msg="消息不存在")
+            def path_to(tip):
+                path = []
+                seen = set()
+                while tip is not None:
+                    if tip not in messages or tip in seen:
+                        return None
+                    seen.add(tip)
+                    path.append(messages[tip])
+                    tip = messages[tip].parent_id
+                return path
 
-        # 获取父消息和子消息
-        parent_message = message.parent
-        children_messages = Message.select().where(Message.parent == message)
+            current_path = path_to(conversation.current_message)
+            if path_to(mid) is None or current_path is None:
+                return JResponse(status=409, msg="Invalid conversation message graph")
+            children = {}
+            for item in messages.values():
+                children.setdefault(item.parent_id, []).append(item)
+            pending = [selected]
+            removed = []
+            removed_ids = set()
+            while pending:
+                item = pending.pop()
+                if item.mid in removed_ids:
+                    return JResponse(status=409, msg="Invalid conversation message graph")
+                removed_ids.add(item.mid)
+                removed.append(item)
+                pending.extend(children.get(item.mid, []))
+            active = (*PENDING, Message.StatusTypes.RUNNING_WORKFLOW)
+            if any(item.status in active for item in [*current_path, *removed]):
+                return JResponse(status=409, code="CONVERSATION_BUSY", msg="Conversation is still running")
+            # Refuse corrupt references instead of leaving another conversation dangling.
+            foreign_parents = Message.select(Message.parent).where((Message.conversation != cid) &
+                Message.parent.in_(Message.select(Message.mid).where(Message.conversation == cid)))
+            if any(item.parent_id in removed_ids for item in foreign_parents):
+                return JResponse(status=409, msg="Invalid conversation message graph")
 
-        # 如果有父消息，获取兄弟消息
-        sibling = None
-        if parent_message:
-            siblings = (
-                Message.select()
-                .where((Message.parent == parent_message) & (Message.mid != message.mid))
-                .order_by(Message.create_time.desc())
-            )
-            if siblings.count() > 0:
-                sibling = siblings[0]
-
-        # 处理子消息的关系
-        for child in children_messages:
-            if sibling:
-                child.parent = sibling
-            elif parent_message:
-                child.parent = parent_message
-            child.save()
-
-        # 更新conversation的current_message
-        if message.conversation.current_message == message.mid:
-            if sibling:
-                message.conversation.current_message = sibling.mid
-            elif parent_message:
-                message.conversation.current_message = parent_message.mid
-            else:
-                message.conversation.current_message = None
-            message.conversation.save()
-
-        # 删除消息
-        message.delete_instance()
-
-        return JResponse(msg="删除成功")
+            if conversation.current_message in removed_ids:
+                conversation.current_message = selected.parent_id
+                siblings = [item for item in children.get(selected.parent_id, [])
+                            if item.mid not in removed_ids and item.author_type == selected.author_type]
+                for sibling in sorted(siblings, key=lambda item: (item.create_time, item.mid.hex), reverse=True):
+                    pending = [sibling]
+                    leaves = []
+                    while pending:
+                        item = pending.pop()
+                        descendants = children.get(item.mid, [])
+                        if descendants:
+                            pending.extend(descendants)
+                        else:
+                            path = path_to(item.mid)
+                            if path is not None and not any(node.status in active for node in path):
+                                leaves.append(item)
+                    if leaves:
+                        conversation.current_message = max(leaves, key=lambda item: (item.create_time, item.mid.hex)).mid
+                        break
+            if conversation.shared_at_message in removed_ids:
+                conversation.shared_at_message = None
+            # Children first also works with SQLite foreign-key enforcement enabled.
+            for item in reversed(removed):
+                Message.delete().where((Message.mid == item.mid) & (Message.conversation == cid)).execute()
+            conversation.save(only=[Conversation.current_message, Conversation.shared_at_message])
+            response = ConversationAPI().get({"cid": cid.hex})
+            if response["status"] != 200:
+                transaction.rollback()
+            return response
 
 
 class AgentAPI:

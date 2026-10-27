@@ -164,6 +164,81 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     }
     const question = (mid, text = 'original question') => ({ mid, author_type: 'U', status: 'S', content_type: 'TXT',
       create_time: 1, metadata: {}, content: { text }, attachments: ['question.txt'] })
+    const deletionResponse = (cid = 'cid', empty = false) => ({ status: 200, data: {
+      conversation: { cid, agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] },
+      messages: empty ? [] : [[question('root')], [assistant('older'), assistant('surviving')], [question('surviving-question')]],
+      selected_message_path: empty ? [] : ['root', 'surviving', 'surviving-question'],
+    } })
+    for (const empty of [false, true]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = [[question('root')], [assistant('older'), assistant('deleted')], [question('later')], [assistant('later-answer')]]
+        c.messagePagination.set(1, 1)
+        c.messagePagination.set(3, 0)
+        c.userInput.value = 'keep composer draft'
+        c.attachments.value = ['keep-file']
+        const pending = deferred()
+        request = async (action, payload) => {
+          assert.equal(action, 'message__delete')
+          assert.deepEqual(payload, { cid: 'cid', mid: 'deleted' })
+          return pending.promise
+        }
+        const deleting = c.deleteMessage('deleted', 1)
+        assert.equal(c.deletingMid.value, 'deleted')
+        assert.equal(c.canFork.value, false)
+        const count = calls.length
+        await c.deleteMessage('deleted', 1)
+        await c.regenerate('deleted', 1)
+        await c.editMessage('root', 0, 'blocked')
+        await c.switchMessagePage(1, 'prev')
+        assert.equal(await c.sendMessage('blocked'), false)
+        assert.equal(calls.length, count)
+        assert.equal(c.messages.value.length, 4)
+        pending.resolve(deletionResponse('cid', empty))
+        await deleting
+        assert.equal(c.deletingMid.value, '')
+        assert.equal(c.userInput.value, 'keep composer draft')
+        assert.deepEqual(c.attachments.value, ['keep-file'])
+        assert.equal(c.messages.value.length, empty ? 0 : 3)
+        if (!empty) {
+          assert.equal(c.messages.value[2][0].mid, 'surviving-question')
+          assert.equal(c.messagePagination.get(1), 1)
+          assert.equal(c.messagePagination.has(3), false)
+        }
+      })
+    }
+    for (const response of [{ status: 500 }, { status: 409 }, { status: 200, data: {} },
+      deletionResponse('wrong-cid'), new Error('offline')]) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        c.messages.value = [[question('root')], [assistant('older'), assistant('selected')], [assistant('tail')]]
+        c.messagePagination.set(1, 1)
+        c.userInput.value = 'unchanged draft'
+        request = async () => { if (response instanceof Error) throw response; return response }
+        const errorCount = errors.length
+        await c.deleteMessage('selected', 1)
+        assert.equal(errors.length, errorCount + 1)
+        assert.equal(c.deletingMid.value, '')
+        assert.equal(c.messages.value.length, 3)
+        assert.equal(c.messages.value[1][1].mid, 'selected')
+        assert.equal(c.messages.value[2][0].mid, 'tail')
+        assert.equal(c.messagePagination.get(1), 1)
+        assert.equal(c.userInput.value, 'unchanged draft')
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      c.messages.value = [[assistant('older'), assistant('selected')]]
+      c.messagePagination.set(0, 1)
+      const count = calls.length
+      await c.deleteMessage('older', 0)
+      for (const state of ['loading', 'sending', 'receiving', 'forking']) {
+        c[state].value = true
+        await c.deleteMessage('selected', 0)
+        c[state].value = false
+      }
+      assert.equal(calls.length, count)
+    })
     await render(detail, {}, async c => {
       prepare(c)
       const original = question('question')
@@ -711,6 +786,38 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
     const detailComponent = (await server.ssrLoadModule(detail)).default
     const renderer = createRenderer({ createElement: () => ({}), insert() {}, remove() {}, setElementText() {},
       createText: () => ({}), createComment: () => ({}), setText() {}, setComment() {}, parentNode() {}, nextSibling() {}, patchProp() {} })
+    for (const end of ['route-change', 'unmount']) {
+      let deletingDetail
+      const deleteApp = renderer.createApp({ setup(props, context) {
+        deletingDetail = detailComponent.setup(props, context)
+        return () => h('div')
+      } })
+      deleteApp.use(createPinia())
+      deleteApp.provide(ssrContextKey, {})
+      deleteApp.use(createI18n({ legacy: false, locale: 'en-US', messages: { 'en-US': locale } }))
+      const pending = deferred()
+      request = async (action, payload) => action === 'message__delete' ? pending.promise : deletionResponse(payload.cid)
+      try {
+        deleteApp.mount({})
+        await flush()
+        const deleting = deletingDetail.deleteMessage('surviving', 1)
+        assert.equal(deletingDetail.deletingMid.value, 'surviving')
+        if (end === 'route-change') {
+          globalThis.__chatFailureHarness.route.params.conversationId = 'other-cid'
+          await flush()
+          assert.equal(deletingDetail.conversation.value.cid, 'other-cid')
+          assert.equal(deletingDetail.deletingMid.value, '')
+        } else deleteApp.unmount()
+        const errorCount = errors.length
+        pending.resolve(deletionResponse('cid', true))
+        await deleting
+        assert.equal(deletingDetail.messages.value.length, 3)
+        assert.equal(errors.length, errorCount)
+      } finally {
+        deleteApp.unmount()
+        globalThis.__chatFailureHarness.route.params.conversationId = 'cid'
+      }
+    }
     const historyRequests = []
     request = (action, payload) => {
       assert.equal(action, 'conversation__get')
@@ -814,6 +921,12 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       assert.equal(c.content.value.text, 'old question')
     })
     assert.deepEqual(edits, ['new question'])
+    let deletedMessages = 0
+    await render('/src/components/workspace/chat/ChatMessage.vue', { ...questionProps, onDelete: () => deletedMessages++ },
+      async c => { c.deleteMessage() })
+    await render('/src/components/workspace/chat/ChatMessage.vue', { ...questionProps, retryDisabled: true, onDelete: () => deletedMessages++ },
+      async c => { c.deleteMessage() })
+    assert.equal(deletedMessages, 1)
     assert.match(editorHtml, /Save and regenerate/)
     assert.match(editorHtml, /Cancel/)
     await render('/src/components/workspace/chat/ChatMessage.vue', questionProps, async c => {

@@ -295,7 +295,7 @@
       "edit_and_regenerate": "Save and regenerate",
       "edit_message_failed": "Could not edit the message. Your changes are preserved; please retry.",
       "delete_message": "Delete message",
-      "delete_message_confirm": "Confirm delete message?",
+      "delete_message_confirm": "Delete this message and everything that follows it? Other branches will be kept.",
       "delete_message_failed": "Delete message failed",
       "delete_message_success": "Delete message success"
     },
