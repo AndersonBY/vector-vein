@@ -1,5 +1,7 @@
 <script setup>
-import { onBeforeMount, reactive, ref } from 'vue'
+import { computed, onBeforeMount, reactive, ref } from 'vue'
+import ModelSelector from '@/components/ModelSelector.vue'
+import { useModelCatalogStore } from '@/stores/modelCatalog'
 import { message } from 'ant-design-vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
@@ -20,6 +22,8 @@ const props = defineProps({
 })
 
 const fieldsData = ref(props.data.template)
+const modelCatalogStore = useModelCatalogStore()
+const catalogReady = computed(() => modelCatalogStore.loaded && !modelCatalogStore.loading && !modelCatalogStore.loadError)
 const templateData = createTemplateData()
 
 onBeforeMount(async () => {
@@ -71,7 +75,8 @@ const removeWorkflowCandidate = (workflowId) => {
         </BaseField>
 
         <BaseField name="Selection Model" type="target" v-model:data="fieldsData.llm_model">
-          <a-select v-model:value="fieldsData.llm_model.value" :options="fieldsData.llm_model.options" />
+          <ModelSelector v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
+            :loading="modelCatalogStore.loading" :ready="catalogReady" />
         </BaseField>
 
         <a-card size="small" title="Workflow Candidates">

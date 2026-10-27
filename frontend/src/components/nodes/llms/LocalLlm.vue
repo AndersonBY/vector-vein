@@ -1,7 +1,9 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { storeToRefs } from 'pinia'
-import { useUserSettingsStore } from '@/stores/userSettings'
+import { ref, computed, onBeforeMount } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { useModelCatalogStore } from '@/stores/modelCatalog'
+import ModelSelector from '@/components/ModelSelector.vue'
+import BaseField from '@/components/nodes/BaseField.vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import { createTemplateData } from './LocalLlm'
@@ -26,27 +28,43 @@ Object.entries(templateData.template).forEach(([key, value]) => {
   }
 })
 
-const userSettings = useUserSettingsStore()
-const { setting } = storeToRefs(userSettings)
-
-fieldsData.value.model_family.options = Object.keys(setting.value.data?.custom_llms)?.map((llm) => ({
-  value: llm,
-  text: llm,
-}))
-
-fieldsData.value.llm_model.options = computed(() => {
+const { t } = useI18n()
+const modelCatalogStore = useModelCatalogStore()
+onBeforeMount(() => modelCatalogStore.ensureLoaded())
+const catalogReady = computed(() => modelCatalogStore.loaded && !modelCatalogStore.loading && !modelCatalogStore.loadError)
+const familyOptions = computed(() => (modelCatalogStore.modelFamilies || [])
+  .filter((family) => family.isCustom)
+  .map((family) => ({ value: family.key, label: family.label })))
+const modelOptions = computed(() => {
   const modelFamily = fieldsData.value.model_family.value
-  const models = setting.value.data?.custom_llms[modelFamily]
+  const models = modelCatalogStore.familyMap[modelFamily]
   return models ? models.map((model) => ({
-    value: model,
-    text: model,
+    value: model.key,
+    label: model.id || model.key,
   })) : []
 })
+fieldsData.value.model_family.options = familyOptions
+fieldsData.value.llm_model.options = modelOptions
+const familyUnavailable = computed(() => catalogReady.value && fieldsData.value.model_family.value &&
+  !familyOptions.value.some((item) => item.value === fieldsData.value.model_family.value))
 </script>
 
 <template>
   <BaseNode :nodeId="id" :debug="props.data.debug" :fieldsData="fieldsData"
     translatePrefix="components.nodes.llms.LocalLlm">
+    <template #field-model_family>
+      <BaseField :name="t('components.model_selector.family')" type="target" v-model:data="fieldsData.model_family">
+        <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData.model_family.value" :options="familyOptions"
+          show-search option-filter-prop="label" @change="fieldsData.llm_model.value = ''" />
+        <small v-if="familyUnavailable" role="status">{{ t('components.model_selector.family_unavailable') }}</small>
+      </BaseField>
+    </template>
+    <template #field-llm_model>
+      <BaseField :name="t('components.nodes.llms.common.llm_model')" type="target" v-model:data="fieldsData.llm_model">
+        <ModelSelector v-model="fieldsData.llm_model.value" :options="modelOptions"
+          :loading="modelCatalogStore.loading" :ready="catalogReady" />
+      </BaseField>
+    </template>
     <template #afterInputs>
       <ModelCapabilities provider="local" :model="fieldsData.llm_model?.value" />
     </template>

@@ -1,4 +1,5 @@
 import { useModelCatalogStore } from "@/stores/modelCatalog"
+import { computed } from 'vue'
 
 export const LLM_NODE_PROVIDER_MAP = {
   OpenAI: "OpenAI",
@@ -52,18 +53,12 @@ export async function hydrateTemplateModelField(fieldsData, provider, fieldName 
     return
   }
 
-  const providerOptions = findProviderChildren(vision ? store.visionModelOptions : store.generalModelOptions, provider)
-
-  fieldsData.value[fieldName].options = providerOptions.map((item) => ({
+  fieldsData.value[fieldName].options = computed(() => findProviderChildren(
+    vision ? store.visionModelOptions : store.generalModelOptions, provider
+  ).map((item) => ({
     value: item.value,
     label: item.label,
-  }))
-
-  const currentValue = fieldsData.value[fieldName].value
-  const currentValid = providerOptions.some((item) => item.value === currentValue)
-  if (!currentValid) {
-    fieldsData.value[fieldName].value = providerOptions[0]?.value || ''
-  }
+  })))
 }
 
 export async function hydrateFlattenedModelField(fieldsData, fieldName = "llm_model") {
@@ -74,15 +69,5 @@ export async function hydrateFlattenedModelField(fieldsData, fieldName = "llm_mo
     return
   }
 
-  const flattened = flattenProviderModelOptions(store.generalModelOptions)
-  if (flattened.length === 0) {
-    return
-  }
-
-  fieldsData.value[fieldName].options = flattened
-  const currentValue = fieldsData.value[fieldName].value
-  const currentValid = flattened.some((item) => item.value === currentValue)
-  if (!currentValid) {
-    fieldsData.value[fieldName].value = flattened[0].value
-  }
+  fieldsData.value[fieldName].options = computed(() => flattenProviderModelOptions(store.generalModelOptions))
 }

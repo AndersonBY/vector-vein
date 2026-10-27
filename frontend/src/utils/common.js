@@ -78,7 +78,7 @@ export const getChatModelOptions = (flat = false) => {
   const { setting } = storeToRefs(userSettings)
   const nonLocalModels = getDynamicChatModelOptions(setting.value.data)
   const customModels = Object.entries(setting.value.data?.custom_llms || {}).map(([family, models]) => {
-    const children = models.map((model) => ({
+    const children = models.filter(model => setting.value.data?.llm_settings?.backends?.local?.models?.[model]?.enabled !== false).map((model) => ({
       value: model,
       label: model,
     }))
@@ -93,7 +93,7 @@ export const getChatModelOptions = (flat = false) => {
       labelText: family,
       children: children,
     }
-  })
+  }).filter(provider => provider.children.length > 0)
   const chatModels = nonLocalModels.concat(customModels)
   if (flat) {
     return flattenModelOptions(chatModels, true)

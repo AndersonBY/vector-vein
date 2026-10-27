@@ -143,7 +143,7 @@ const buildCatalogPayload = (settingPayload) => {
   const localFamilyKey = 'custom_llms'
   const customFamilyModels = []
   Object.entries(customFamilies).forEach(([familyName, familyModels]) => {
-    const normalizedModels = (familyModels || []).map((modelName) => ({
+    const normalizedModels = (familyModels || []).filter(modelName => backends.local?.models?.[modelName]?.enabled !== false).map((modelName) => ({
       provider: localFamilyKey,
       family: familyName,
       key: modelName,

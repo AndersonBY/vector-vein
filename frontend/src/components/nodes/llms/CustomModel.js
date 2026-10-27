@@ -17,5 +17,6 @@ export function createTemplateData() {
     field_type: 'select',
   }
   template.template.llm_model.options = []
+  template.template.llm_model.value = ''
   return template
 }

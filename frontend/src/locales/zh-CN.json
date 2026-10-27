@@ -809,6 +809,18 @@
     }
   },
   "components": {
+    "model_selector": {
+      "provider": "提供商",
+      "family": "模型系列",
+      "select_model": "选择或搜索模型",
+      "loading": "正在加载模型…",
+      "empty": "当前没有可用模型，请在设置中启用或添加。",
+      "no_match": "没有匹配的模型",
+      "model_unavailable": "此模型已停用或不在当前配置中，请重新选择。",
+      "provider_unavailable": "此提供商不在当前配置中，请重新选择。",
+      "family_unavailable": "此模型系列不在当前配置中，请重新选择。",
+      "save_failed": "模型选择保存失败，请重试。"
+    },
     "layout": {
       "basicHeader": {
         "agent": "Agent",

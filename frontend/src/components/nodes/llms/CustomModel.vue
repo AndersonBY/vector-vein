@@ -1,5 +1,7 @@
 <script setup>
-import { onBeforeMount, ref, watch } from 'vue'
+import { computed, onBeforeMount, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import ModelSelector from '@/components/ModelSelector.vue'
 import BaseLLMComponent from './_BaseLLM.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import { createTemplateData } from './CustomModel.js'
@@ -19,43 +21,32 @@ const props = defineProps({
 
 const fieldsData = ref(props.data.template)
 const modelCatalogStore = useModelCatalogStore()
+const { t } = useI18n()
+const catalogReady = computed(() => modelCatalogStore.loaded && !modelCatalogStore.loading && !modelCatalogStore.loadError)
 
-const refreshFamilyOptions = () => {
-  fieldsData.value.model_family.options = (modelCatalogStore.modelFamilies || [])
+const familyOptions = computed(() => (modelCatalogStore.modelFamilies || [])
     .filter((item) => item.isCustom)
     .map((item) => ({
       value: item.key,
       label: item.label,
-    }))
-  if (!fieldsData.value.model_family.value && fieldsData.value.model_family.options.length > 0) {
-    fieldsData.value.model_family.value = fieldsData.value.model_family.options[0].value
-  }
-}
+    })))
 
-const refreshModelOptions = (family) => {
-  const models = modelCatalogStore.familyMap?.[family] || []
-  fieldsData.value.llm_model.options = models.map((item) => ({
+const modelOptions = computed(() => {
+  const models = modelCatalogStore.familyMap?.[fieldsData.value.model_family?.value] || []
+  return models.map((item) => ({
     value: item.value || item.key || item.id,
     label: item.label || item.id || item.key,
   }))
-  if (!fieldsData.value.llm_model.options.some((item) => item.value === fieldsData.value.llm_model.value)) {
-    fieldsData.value.llm_model.value = fieldsData.value.llm_model.options[0]?.value || ''
-  }
-}
+})
+const familyUnavailable = computed(() => catalogReady.value && fieldsData.value.model_family?.value &&
+  !familyOptions.value.some((item) => item.value === fieldsData.value.model_family.value))
 
 onBeforeMount(async () => {
   mergeTemplateIntoFields(fieldsData, createTemplateData())
   await modelCatalogStore.ensureLoaded()
-  refreshFamilyOptions()
-  refreshModelOptions(fieldsData.value.model_family.value)
+  fieldsData.value.model_family.options = familyOptions
+  fieldsData.value.llm_model.options = modelOptions
 })
-
-watch(
-  () => fieldsData.value?.model_family?.value,
-  (family) => {
-    refreshModelOptions(family)
-  }
-)
 </script>
 
 <template>
@@ -64,11 +55,14 @@ watch(
     :functionCallAvailable="true">
     <template #modelSelection>
       <a-flex vertical gap="small">
-        <BaseField name="Model Family" type="target" v-model:data="fieldsData.model_family">
-          <a-select v-model:value="fieldsData.model_family.value" :options="fieldsData.model_family.options" />
+        <BaseField :name="t('components.model_selector.family')" type="target" v-model:data="fieldsData.model_family">
+          <a-select class="nodrag" style="width: 100%;" v-model:value="fieldsData.model_family.value" :options="familyOptions"
+            show-search option-filter-prop="label" @change="fieldsData.llm_model.value = ''" />
+          <small v-if="familyUnavailable" role="status">{{ t('components.model_selector.family_unavailable') }}</small>
         </BaseField>
-        <BaseField name="Model" required type="target" v-model:data="fieldsData.llm_model">
-          <a-select v-model:value="fieldsData.llm_model.value" :options="fieldsData.llm_model.options" />
+        <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target" v-model:data="fieldsData.llm_model">
+          <ModelSelector v-model="fieldsData.llm_model.value" :options="modelOptions"
+            :loading="modelCatalogStore.loading" :ready="catalogReady" />
         </BaseField>
       </a-flex>
     </template>

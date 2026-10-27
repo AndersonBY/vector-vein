@@ -809,6 +809,18 @@
     }
   },
   "components": {
+    "model_selector": {
+      "provider": "Provider",
+      "family": "Model family",
+      "select_model": "Select or search models",
+      "loading": "Loading models…",
+      "empty": "No models available. Enable or add models in Settings.",
+      "no_match": "No matching models",
+      "model_unavailable": "This model is disabled or no longer configured. Select another model.",
+      "provider_unavailable": "This provider is no longer configured. Select another provider.",
+      "family_unavailable": "This model family is no longer configured. Select another family.",
+      "save_failed": "Could not save the model selection. Please retry."
+    },
     "layout": {
       "basicHeader": {
         "agent": "Agent",

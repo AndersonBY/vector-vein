@@ -1,134 +1,98 @@
 <script setup>
-import { ref, computed, watch } from "vue"
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { RobotOne } from '@/icons'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
+import ModelSelector from '@/components/ModelSelector.vue'
 import IconButton from '@/components/IconButton.vue'
 import { getChatModelOptions } from '@/utils/common'
+import { hasModelOption, filterModelOption } from '@/utils/modelSelection'
 import { conversationAPI } from '@/api/chat'
 
 const props = defineProps({
-  cid: {
-    type: String,
-    default: ''
-  },
-  model: {
-    type: String,
-    default: ''
-  },
-  modelProvider: {
-    type: String,
-    default: ''
-  },
+  cid: { type: String, default: '' },
+  model: { type: String, default: '' },
+  modelProvider: { type: String, default: '' },
 })
 const emit = defineEmits(['update:model', 'update:modelProvider'])
-
 const { t } = useI18n()
 const open = ref(false)
+const saving = ref(false)
+const saveError = ref(false)
+const draftProvider = ref(props.modelProvider)
+const draftModel = ref(props.model)
 const chatModelOptions = computed(() => getChatModelOptions())
+const providerOptions = computed(() => chatModelOptions.value.map(item => ({ value: item.value, label: item.labelText || (typeof item.label === 'string' ? item.label : item.value) })))
+const modelOptions = computed(() => chatModelOptions.value.find(item => item.value === draftProvider.value)?.children || [])
+const providerUnavailable = computed(() => Boolean(draftProvider.value) && !hasModelOption(providerOptions.value, draftProvider.value))
+const validSelection = computed(() => hasModelOption(providerOptions.value, draftProvider.value) && hasModelOption(modelOptions.value, draftModel.value))
+let generation = 0
 
-const model = ref(props.model)
-const modelProvider = ref([props.modelProvider])
-const modelProviders = computed(() => (chatModelOptions.value.map((item) => {
-  return {
-    key: item.value,
-    label: item.label,
-    _children: item.children,
-  }
-})))
-const modelSelection = ref([props.model])
-const modelSelections = computed(() => {
-  const models = chatModelOptions.value.filter((item) => item.value === modelProvider.value[0])
-  if (models.length === 0) return []
-  return models[0].children.map((item) => {
-    return {
-      key: item.value,
-      label: item.label,
-    }
-  })
-})
-
-watch(() => props.model, (value) => {
-  model.value = value
-  modelSelection.value = [model.value]
-})
-watch(() => props.modelProvider, (value) => {
-  modelProvider.value = [value]
-  modelSelection.value = [model.value]
-})
-
-const originalModelProvider = ref([])
-const originalModelSelection = ref([])
-const openModal = () => {
-  originalModelProvider.value = modelProvider.value
-  originalModelSelection.value = modelSelection.value
-  open.value = true
+const resetDraft = () => {
+  draftProvider.value = props.modelProvider
+  draftModel.value = props.model
+  saveError.value = false
 }
-const cancel = () => {
-  open.value = false
-  modelProvider.value = originalModelProvider.value
-  modelSelection.value = originalModelSelection.value
+const openModal = () => { resetDraft(); open.value = true }
+const cancel = () => { if (!saving.value) { open.value = false; resetDraft() } }
+const providerChanged = value => {
+  if (value === draftProvider.value) return
+  draftProvider.value = value ?? ''
+  draftModel.value = ''
+  saveError.value = false
 }
+watch(() => [props.modelProvider, props.model], () => { if (!saving.value) resetDraft() })
+watch(() => props.cid, () => { generation++; saving.value = false; open.value = false; resetDraft() })
+onBeforeUnmount(() => { generation++ })
 
 const modelChanged = async () => {
-  model.value = modelSelection.value[0]
-  emit('update:model', model.value)
-  emit('update:modelProvider', modelProvider.value[0])
-  if (props.cid === 'tmp') {
+  if (saving.value || !validSelection.value) return
+  const version = ++generation
+  const selection = { cid: props.cid, model: draftModel.value, model_provider: draftProvider.value }
+  saving.value = true
+  saveError.value = false
+  try {
+    if (selection.cid !== 'tmp') {
+      const response = await conversationAPI('update', selection)
+      if (version !== generation) return
+      if (response.status !== 200) throw new Error('Model update failed')
+    }
+    if (version !== generation) return
+    emit('update:modelProvider', selection.model_provider)
+    emit('update:model', selection.model)
     open.value = false
-    return
+    if (selection.cid !== 'tmp') message.success(t('workspace.chatSpace.model_select_success'))
+  } catch {
+    if (version === generation) saveError.value = true
+  } finally {
+    if (version === generation) saving.value = false
   }
-  const response = await conversationAPI('update', {
-    cid: props.cid,
-    model: model.value,
-    model_provider: modelProvider.value[0]
-  })
-  if (response.status == 200) {
-    message.success(t('workspace.chatSpace.model_select_success'))
-  }
-  open.value = false
 }
 </script>
 
 <template>
   <div>
     <a-popover :title="t('workspace.chatSpace.model_select')" placement="topLeft">
-      <IconButton :text="model" size="small" type="text" shape="round" @click="openModal">
-        <template #icon>
-          <RobotOne :fill="'#389e0d'" />
-        </template>
+      <IconButton :text="model || t('components.model_selector.select_model')" size="small" type="text" shape="round" @click="openModal">
+        <template #icon><RobotOne :fill="'#389e0d'" /></template>
       </IconButton>
     </a-popover>
-    <a-modal :open="open" :title="t('workspace.chatSpace.model_select')" :width="850" @cancel="cancel"
-      @ok="modelChanged" class="model-selection-modal">
-      <a-row>
-        <a-col :span="12">
-          <a-menu v-model:selectedKeys="modelProvider" theme="light" mode="inline" :items="modelProviders"
-            class="model-selection-menu">
-          </a-menu>
-        </a-col>
-        <a-col :span="12">
-          <a-menu v-model:selectedKeys="modelSelection" theme="light" mode="inline" :items="modelSelections"
-            class="model-selection-menu">
-          </a-menu>
-        </a-col>
-      </a-row>
-      <ModelCapabilities :provider="modelProvider[0]" :model="modelSelection[0]" />
+    <a-modal :open="open" :title="t('workspace.chatSpace.model_select')" :width="600" @cancel="cancel" @ok="modelChanged"
+      :confirm-loading="saving" :ok-button-props="{ disabled: !validSelection }" :cancel-button-props="{ disabled: saving }"
+      :closable="!saving" :mask-closable="!saving" :keyboard="!saving">
+      <a-form layout="vertical">
+        <a-form-item :label="t('components.model_selector.provider')">
+          <a-select :value="draftProvider || undefined" :options="providerOptions" show-search :filter-option="filterModelOption"
+            :disabled="saving" :status="providerUnavailable ? 'error' : undefined" @change="providerChanged" />
+          <a-typography-text v-if="providerUnavailable" type="danger" role="status">{{ t('components.model_selector.provider_unavailable') }}</a-typography-text>
+        </a-form-item>
+        <a-form-item :label="t('components.nodes.llms.common.llm_model')">
+          <ModelSelector v-model="draftModel" :options="modelOptions" :disabled="saving" />
+        </a-form-item>
+      </a-form>
+      <ModelCapabilities v-if="validSelection" :provider="draftProvider" :model="draftModel" />
+      <a-typography-text v-if="saveError" type="danger" role="alert">{{ t('components.model_selector.save_failed') }}</a-typography-text>
     </a-modal>
   </div>
 </template>
-
-<style scoped>
-.markdown-body {
-  padding: 8px;
-  background-color: #f0f0f0;
-  border-radius: 10px;
-}
-
-.model-selection-modal .model-selection-menu {
-  border-inline-end: none;
-  max-height: min(50vh, 420px);
-  overflow-y: auto;
-}
-</style>

@@ -4,6 +4,8 @@ import { useI18n } from 'vue-i18n'
 import { AddOne, ReduceOne, Edit } from '@/icons'
 import { message } from 'ant-design-vue'
 import ModelCapabilities from '@/components/ModelCapabilities.vue'
+import ModelSelector from '@/components/ModelSelector.vue'
+import { useModelCatalogStore } from '@/stores/modelCatalog'
 import BaseNode from '@/components/nodes/BaseNode.vue'
 import BaseField from '@/components/nodes/BaseField.vue'
 import BaseFieldsCollapse from '@/components/nodes/BaseFieldsCollapse.vue'
@@ -113,6 +115,8 @@ const reliabilityTemplate = { template: {
   }
 } }
 const loading = ref(true)
+const modelCatalogStore = useModelCatalogStore()
+const catalogReady = computed(() => modelCatalogStore.loaded && !modelCatalogStore.loading && !modelCatalogStore.loadError)
 const fieldsData = defineModel('templateData')
 onBeforeMount(async () => {
   const templateData = await props.createTemplateData()
@@ -355,8 +359,8 @@ const nodeDescription = computed(() => {
         <slot name="modelSelection">
           <BaseField :name="t('components.nodes.llms.common.llm_model')" required type="target"
             v-model:data="fieldsData.llm_model">
-            <a-select style="width: 100%;" v-model:value="fieldsData.llm_model.value"
-              :options="fieldsData.llm_model.options" />
+            <ModelSelector v-model="fieldsData.llm_model.value" :options="fieldsData.llm_model.options"
+              :loading="modelCatalogStore.loading" :ready="catalogReady" />
           </BaseField>
         </slot>
         <ModelCapabilities :provider="fieldsData.model_provider?.value || (props.llmName === 'CustomModel' ? 'local' : LLM_NODE_PROVIDER_MAP[props.llmName])"
