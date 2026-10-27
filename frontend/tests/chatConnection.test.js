@@ -70,6 +70,39 @@ test('route cancellation closes connection and timers without reporting a second
   assert.deepEqual(f.failures, [])
 })
 
+test('stop sends once with a bounded deadline, while unopened connections stop immediately', () => {
+  {
+    const f = fixture()
+    f.socket.onopen()
+    f.connection.requestStop()
+    f.connection.requestStop()
+    assert.equal(f.socket.sent.length, 2)
+    assert.deepEqual(JSON.parse(f.socket.sent[1]), { action: 'stop', mid: 'attempt' })
+    assert.equal([...f.timers.values()][0].ms, 10000)
+    const deadline = [...f.timers.keys()][0]
+    f.socket.onmessage({ data: '{"content":"last partial"}' })
+    assert.equal([...f.timers.keys()][0], deadline)
+    f.socket.onmessage({ data: '{"end":true,"mid":"attempt","status":"C","content":"last partial"}' })
+    assert.equal(f.timers.size, 0)
+    assert.deepEqual(f.failures, [])
+    f.connection.requestStop()
+    assert.equal(f.socket.sent.length, 2)
+  }
+  const unopened = fixture()
+  const staleOpen = unopened.socket.onopen
+  unopened.connection.requestStop()
+  unopened.connection.requestStop()
+  staleOpen()
+  assert.equal(unopened.socket.sent.length, 0)
+  assert.equal(unopened.socket.closed, true)
+  assert.deepEqual(unopened.failures, ['CHAT_CONNECTION_CLOSED'])
+  const missingAck = fixture()
+  missingAck.socket.onopen()
+  missingAck.connection.requestStop()
+  missingAck.timeout()
+  assert.deepEqual(missingAck.failures, ['CHAT_TIMEOUT'])
+})
+
 test('foreign terminal frames are ignored before closing and invalid JSON values finalize safely', () => {
   const f = fixture()
   f.socket.onopen()
@@ -104,4 +137,11 @@ test('terminal snapshots preserve partials, suppress failed workflow actions, an
   assert.equal(waiting.workflow_invoke_step, 'wait_for_invoke')
   assert.equal(waiting.metadata.selected_workflow.wid, 'valid')
   assert.equal(replaceChatMessage(groups, 'absent', waiting), false)
+  const stopped = terminalChatMessage({ ...pending, metadata: { error: { message: 'old' }, selected_workflow: { wid: 'unsafe' } } }, { status: 'C' })
+  assert.equal(stopped.status, 'C')
+  assert.equal(stopped.content_type, 'TXT')
+  assert.equal(stopped.content.text, 'partial')
+  assert.equal(stopped.workflow_invoke_step, '')
+  assert.equal(stopped.metadata.error, undefined)
+  assert.deepEqual(stopped.metadata.selected_workflow, {})
 })

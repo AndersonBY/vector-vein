@@ -11,7 +11,7 @@ from models import Agent, Conversation, Message, User
 from api.agent_api import MessageAPI
 from api.utils import get_history_messages
 from chat_server import server as chat
-from utilities.chat_responses import failure_response, persist_response
+from utilities.chat_responses import failure_response, persist_response, stopped_response
 
 
 @pytest.fixture
@@ -46,6 +46,9 @@ class Socket:
 
     async def wait_closed(self):
         await self.closed.wait()
+
+    async def recv(self):
+        await asyncio.Future()
 
     async def close(self, *args):
         self.closed.set()
@@ -120,6 +123,111 @@ def test_history_keeps_empty_failed_assistants_and_omits_provider_partial(pendin
     saved.save()
     history = get_history_messages(saved, count=None, all_children=False)
     assert [message["author_type"] for message in history] == ["U"]
+
+
+def test_stop_before_connection_preserves_partial_reasoning_and_cannot_be_overwritten(pending):
+    api = MessageAPI()
+    payload = {"cid": pending.conversation.cid.hex, "mid": pending.mid.hex,
+               "content": {"text": "partial", "reasoning_content": "thought"}}
+    pending.metadata = {"selected_workflow": {"wid": "must-not-run"}, "tool_calls": ["unfinished"]}
+    pending.save()
+    stopped = api.stop(payload)
+    assert stopped["status"] == 200
+    assert stopped["data"]["status"] == "C"
+    assert stopped["data"]["content"] == payload["content"]
+    assert stopped["data"]["content_type"] == "TXT"
+    assert "selected_workflow" not in stopped["data"]["metadata"]
+    assert "tool_calls" not in stopped["data"]["metadata"]
+    assert "error" not in stopped["data"]["metadata"]
+    assert api.stop({**payload, "content": {"text": ""}}) == stopped
+    assert api.fail_notice({**payload, "code": "CHAT_CONNECTION_CLOSED"})["data"] == stopped["data"]
+    assert api.done_notice({"mid": pending.mid.hex})["data"] == stopped["data"]
+    assert persist_response(pending, {"content_type": "TXT", "content": {"text": "late completion"}}).status == "C"
+    assert get_history_messages(Message.get_by_id(pending.mid), count=None)[-1][0]["status"] == "C"
+    assert get_history_messages(Message.get_by_id(pending.mid), count=None, all_children=False)[-1]["content"]["text"] == "partial"
+
+
+@pytest.mark.parametrize("status", ["S", "W", "F"])
+def test_late_stop_does_not_replace_completed_reply_tool_handoff_or_provider_failure(pending, status):
+    response = failure_response("CHAT_REQUEST_FAILED", {"text": "failure"}) if status == "F" else {
+        "status": status, "content_type": "WKF" if status == "W" else "TXT", "content": {"text": "complete"}}
+    saved = persist_response(pending, response)
+    stopped = MessageAPI().stop({"cid": pending.conversation.cid.hex, "mid": pending.mid.hex,
+                                 "content": {"text": "stale"}})
+    assert stopped["data"]["status"] == status
+    assert stopped["data"]["content"] == saved.content
+
+
+def test_deliberate_stop_supersedes_only_its_disconnect_notice_and_keeps_longest_partial(pending):
+    saved = persist_response(pending, failure_response("CHAT_CONNECTION_CLOSED", {"text": "long server partial"}))
+    saved = persist_response(saved, stopped_response({"text": "short"}))
+    assert saved.status == "C"
+    assert saved.content["text"] == "long server partial"
+    assert "error" not in saved.metadata
+
+
+def test_stop_validation_and_message_scope(pending):
+    api = MessageAPI()
+    valid = {"cid": pending.conversation.cid.hex, "mid": pending.mid.hex}
+    for payload in (None, [], {}, {**valid, "mid": "invalid"}, {**valid, "content": []},
+                    {**valid, "content": {"text": 1}}, {**valid, "content": {"reasoning_content": None}}):
+        assert api.stop(payload)["status"] == 400
+    other = Conversation.create(title="other", model_provider="openai", model="custom")
+    assert api.stop({**valid, "cid": other.cid.hex})["status"] == 404
+    assert api.stop({**valid, "mid": pending.parent.mid.hex})["status"] == 404
+    assert Message.get_by_id(pending.mid).status == "P"
+    assert api.stop(valid)["data"]["status"] == "C"
+    assert get_history_messages(Message.get_by_id(pending.mid), count=None)[-1][0]["status"] == "C"
+
+
+@pytest.mark.parametrize("partial", [False, True])
+def test_real_websocket_stop_cancels_generation_and_replays_saved_state_without_new_call(pending, monkeypatch, partial):
+    async def scenario():
+        server = chat.WebSocketServer()
+        started, cancelled = asyncio.Event(), asyncio.Event()
+        calls, closed = [], []
+
+        class Client:
+            async def close(self):
+                closed.append("client")
+
+        async def generate(socket, data, state):
+            calls.append("generate")
+            state["client"] = SimpleNamespace(raw_client=Client())
+            if partial:
+                state.update(text="partial answer", reasoning_content="partial reasoning")
+                await socket.send(json.dumps({"content": "partial answer", "reasoning_content": "partial reasoning"}))
+            started.set()
+            try:
+                await asyncio.Future()
+            finally:
+                cancelled.set()
+
+        monkeypatch.setattr(server, "_generate_response", generate)
+        async def handler(socket):
+            await server.handle_chat(socket, pending.conversation.cid.hex)
+        async with serve(handler, "127.0.0.1", 0) as listener:
+            url = f"ws://127.0.0.1:{listener.sockets[0].getsockname()[1]}"
+            async with connect(url) as websocket:
+                await websocket.send(json.dumps(request(pending)))
+                await asyncio.wait_for(started.wait(), 1)
+                if partial:
+                    assert json.loads(await websocket.recv())["content"] == "partial answer"
+                await websocket.send(json.dumps({"action": "stop", "mid": pending.mid.hex}))
+                frame = json.loads(await websocket.recv())
+                assert frame["status"] == "C" and frame["end"] is True
+                assert frame["content"] == ("partial answer" if partial else "")
+                assert frame["selected_workflow"] == {} and "error" not in frame
+                await asyncio.wait_for(cancelled.wait(), 1)
+            async with connect(url) as websocket:
+                await websocket.send(json.dumps(request(pending)))
+                assert json.loads(await websocket.recv())["status"] == "C"
+        assert calls == ["generate"]
+        assert closed == ["client"]
+        saved = Message.get_by_id(pending.mid)
+        assert saved.status == "C"
+        assert saved.content["reasoning_content"] == ("partial reasoning" if partial else "")
+    asyncio.run(scenario())
 
 
 def test_server_failure_redacts_and_persists_partial_before_terminal(pending, monkeypatch):

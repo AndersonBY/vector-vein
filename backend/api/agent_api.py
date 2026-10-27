@@ -20,7 +20,7 @@ from api.utils import (
     get_user_object_general,
 )
 from utilities.config import cache
-from utilities.chat_responses import CLIENT_FAILURES, PENDING, failure_response, persist_response
+from utilities.chat_responses import CLIENT_FAILURES, PENDING, failure_response, persist_response, stopped_response
 from utilities.file_processing import static_file_server
 from utilities.media_processing import SpeechRecognitionClient
 
@@ -515,6 +515,25 @@ class MessageAPI:
                     message = persist_response(message, response)
             except (TypeError, ValueError, KeyError):
                 pass
+        return JResponse(data=model_serializer(message))
+
+    def stop(self, payload):
+        if not isinstance(payload, dict):
+            return JResponse(status=400, msg="Invalid stop parameters")
+        try:
+            cid = uuid.UUID(str(payload.get("cid", "")))
+            mid = uuid.UUID(str(payload.get("mid", "")))
+            content = payload.get("content", {})
+            if not isinstance(content, dict) or any(not isinstance(content.get(name, ""), str)
+                                                   for name in ("text", "reasoning_content")):
+                raise ValueError
+        except (ValueError, TypeError, AttributeError):
+            return JResponse(status=400, msg="Invalid stop parameters")
+        message = Message.get_or_none((Message.mid == mid) & (Message.conversation == cid) &
+                                      (Message.author_type == Message.AuthorTypes.ASSISTANT))
+        if message is None:
+            return JResponse(status=404)
+        message = persist_response(message, stopped_response(content))
         return JResponse(data=model_serializer(message))
 
     def fail_notice(self, payload):

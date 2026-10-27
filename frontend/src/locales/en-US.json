@@ -193,6 +193,9 @@
       "fullscreen_failed": "Unable to expand preview. Please try again."
     },
     "chatSpace": {
+      "stop_generation": "Stop generating",
+      "stopped": "Stopped",
+      "stop_save_failed": "Could not save the stopped state. Click Stop again to retry.",
       "branch_switch_failed": "Could not switch reply versions. Please retry.",
       "fork_conversation": "Fork conversation",
       "fork_description": "Branch from this reply",

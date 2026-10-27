@@ -93,6 +93,7 @@ class Message(BaseModel):
         GENERATING = "G"
         SUCCESS = "S"
         FAILED = "F"
+        STOPPED = "C"
         OVERTIME = "O"
         WAITING_FOR_WORKFLOW = "W"
         RUNNING_WORKFLOW = "R"

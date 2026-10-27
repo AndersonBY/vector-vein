@@ -8,7 +8,7 @@ from contextlib import suppress
 from uuid import UUID
 
 from models import Message
-from utilities.chat_responses import PENDING, failure_response, persist_response, terminal_frame
+from utilities.chat_responses import PENDING, failure_response, persist_response, terminal_frame, stopped_response
 from threading import Thread
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -16,7 +16,6 @@ from zoneinfo import ZoneInfo
 from websockets.asyncio.server import serve, ServerConnection
 from websockets.exceptions import ConnectionClosed
 from vv_llm.types import (
-    NotGiven,
     NOT_GIVEN,
     BackendType,
 )
@@ -138,7 +137,7 @@ class WebSocketServer:
             await websocket.close(1008, "Invalid chat message")
             return
         if assistant.status not in PENDING:
-            if assistant.status in ("S", "W", "F"):
+            if assistant.status in ("S", "W", "F", "C"):
                 await websocket.send(json.dumps(terminal_frame(assistant), ensure_ascii=False))
             else:
                 await websocket.close(1008, "Chat message already processed")
@@ -150,16 +149,20 @@ class WebSocketServer:
         state = {"text": "", "reasoning_content": ""}
         generation = asyncio.create_task(self._generate_response(websocket, request, state))
         disconnected = asyncio.create_task(websocket.wait_closed())
+        stop_requested = asyncio.create_task(self._wait_for_stop(websocket, mid))
         try:
-            done, _ = await asyncio.wait((generation, disconnected), return_when=asyncio.FIRST_COMPLETED)
+            done, _ = await asyncio.wait((generation, disconnected, stop_requested), return_when=asyncio.FIRST_COMPLETED)
             if generation in done:
                 response = await generation
             else:
                 generation.cancel()
                 with suppress(asyncio.CancelledError, Exception):
                     await generation
-                response = failure_response("CHAT_CONNECTION_CLOSED", state,
-                    model=request.get("conversation", {}).get("model"))
+                if stop_requested in done and stop_requested.result():
+                    response = stopped_response(state, model=request.get("conversation", {}).get("model"))
+                else:
+                    response = failure_response("CHAT_CONNECTION_CLOSED", state,
+                        model=request.get("conversation", {}).get("model"))
             assistant = persist_response(assistant, response)
             with suppress(Exception):
                 await websocket.send(json.dumps(terminal_frame(assistant), ensure_ascii=False))
@@ -177,7 +180,8 @@ class WebSocketServer:
         finally:
             generation.cancel()
             disconnected.cancel()
-            await asyncio.gather(generation, disconnected, return_exceptions=True)
+            stop_requested.cancel()
+            await asyncio.gather(generation, disconnected, stop_requested, return_exceptions=True)
             provider = getattr(state.get("client"), "__dict__", {}).get("raw_client")
             if provider is not None and hasattr(provider, "close"):
                 with suppress(Exception):
@@ -186,6 +190,18 @@ class WebSocketServer:
                 if resource is not None and hasattr(resource, "aclose"):
                     with suppress(Exception):
                         await resource.aclose()
+
+    async def _wait_for_stop(self, websocket, mid):
+        try:
+            control = json.loads(await websocket.recv())
+            if control.get("action") == "stop" and UUID(str(control.get("mid"))) == mid:
+                return True
+            await websocket.close(1008, "Invalid stop request")
+        except ConnectionClosed:
+            pass
+        except (ValueError, TypeError, AttributeError):
+            await websocket.close(1008, "Invalid stop request")
+        return False
 
     async def _initial_response(self, awaitable):
         return await asyncio.wait_for(awaitable, timeout=self.CHAT_IDLE_TIMEOUT)

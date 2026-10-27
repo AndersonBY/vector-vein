@@ -412,6 +412,9 @@ const deleteMessage = () => {
             <p role="alert">{{ chatError }}</p>
             <a-button size="small" :disabled="retryDisabled" @click="regenerate">{{ t('workspace.chatSpace.retry_response') }}</a-button>
           </div>
+          <div v-if="authorType === 'A' && status === 'C'" class="chat-response-stopped">
+            {{ t('workspace.chatSpace.stopped') }}
+          </div>
           <div class="workflow-container" v-if="contentType == 'WKF' && !failedChat">
             <a-collapse v-model:activeKey="activeKey" :bordered="false" @change="workflowPanelChange">
               <a-collapse-panel :key="`${props.mid}-workflow`">
@@ -511,6 +514,7 @@ const deleteMessage = () => {
 </template>
 
 <style>
+.chat-response-stopped { margin-top: 8px; font-size: 12px; color: var(--site-light-text-color); }
 .chat-message .chat-message-body .typing-dot {
   display: inline-block;
   width: 8px;

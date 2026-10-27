@@ -85,6 +85,132 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       c.conversation.value = { cid: 'cid', agent: { name: 'AI' }, settings: {}, related_workflows: [], related_templates: [] }
       c.userChatsStore.addConversation(c.conversation.value)
     }
+    const stoppedSnapshot = (mid = 'attempt', text = '') => ({ ...assistant(mid, 'C'),
+      content: { text, reasoning_content: 'saved thought' } })
+    const activeRequest = async (action, payload) => action === 'message__send'
+      ? { status: 200, data: { user_message_mid: 'question', ai_message_mid: 'attempt' } }
+      : action === 'setting__get_port' ? { status: 200, data: { port: 9999 } }
+      : { status: 200, data: stoppedSnapshot(payload.mid, 'saved partial') }
+    await render(detail, {}, async c => {
+      prepare(c)
+      request = activeRequest
+      await c.sendMessage('hello')
+      await flush()
+      const socket = sockets.at(-1)
+      socket.onopen()
+      socket.chunk({ content: 'partial', reasoning_content: 'thought' })
+      const staleChunk = socket.onmessage
+      c.userInput.value = 'next draft'
+      c.attachments.value = ['next-file']
+      c.stopGeneration()
+      c.stopGeneration()
+      assert.equal(c.stopping.value, true)
+      assert.equal(socket.sent.length, 2)
+      assert.deepEqual(JSON.parse(socket.sent[1]), { action: 'stop', mid: 'attempt' })
+      socket.chunk({ end: true, mid: 'attempt', status: 'C', content: 'saved partial', reasoning_content: 'saved thought' })
+      await flush()
+      assert.equal(c.messages.value[1][0].status, 'C')
+      assert.equal(c.messages.value[1][0].content.text, 'saved partial')
+      assert.equal(c.messages.value[1][0].content.reasoning_content, 'saved thought')
+      assert.equal(c.messages.value[1][0].metadata.error, undefined)
+      assert.equal(c.receiving.value, false)
+      assert.equal(c.stopping.value, false)
+      assert.equal(c.userInput.value, 'next draft')
+      assert.deepEqual(c.attachments.value, ['next-file'])
+      staleChunk({ data: '{"content":"late data"}' })
+      assert.equal(c.messages.value[1][0].content.text, 'saved partial')
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      const port = deferred(), save = deferred()
+      const socketCount = sockets.length
+      request = (action, payload) => action === 'message__send' ? activeRequest(action, payload)
+        : action === 'setting__get_port' ? port.promise : save.promise
+      await c.sendMessage('stop before connecting')
+      c.stopGeneration()
+      assert.equal(c.stopping.value, true)
+      assert.equal(c.messages.value[1][0].status, 'C')
+      port.resolve({ status: 200, data: { port: 9999 } })
+      await flush()
+      assert.equal(sockets.length, socketCount)
+      save.resolve({ status: 200, data: stoppedSnapshot() })
+      await flush()
+      assert.equal(c.receiving.value, false)
+      assert.equal(c.stopping.value, false)
+      assert.equal(c.messages.value[1][0].status, 'C')
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      const port = deferred()
+      let stops = 0
+      const count = errors.length
+      request = (action, payload) => action === 'message__send' ? activeRequest(action, payload)
+        : action === 'setting__get_port' ? port.promise
+        : Promise.resolve(++stops === 1 ? { status: 503 } : { status: 200, data: stoppedSnapshot() })
+      await c.sendMessage('save retry')
+      c.stopGeneration()
+      await flush()
+      assert.equal(c.stopping.value, false)
+      assert.equal(c.receiving.value, true)
+      assert.equal(errors.length, count + 1)
+      c.stopGeneration()
+      await flush()
+      assert.equal(stops, 2)
+      assert.equal(c.receiving.value, false)
+      assert.equal(c.messages.value[1][0].status, 'C')
+      port.resolve({ status: 200, data: { port: 9999 } })
+      await flush()
+    })
+    for (const status of ['S', 'W']) {
+      await render(detail, {}, async c => {
+        prepare(c)
+        request = (action, payload) => action === 'message__done_notice'
+          ? Promise.resolve({ status: 200, data: { ...assistant(payload.mid, status),
+            content_type: status === 'W' ? 'WKF' : 'TXT', metadata: { selected_workflow: { wid: 'completed' } } } })
+          : activeRequest(action, payload)
+        await c.sendMessage('completion race')
+        await flush()
+        const socket = sockets.at(-1)
+        socket.onopen()
+        c.stopGeneration()
+        socket.chunk({ end: true, mid: 'attempt', status, content: 'completed', selected_workflow: { wid: 'completed' } })
+        await flush()
+        assert.equal(c.messages.value[1][0].status, status)
+        assert.equal(c.messages.value[1][0].workflow_invoke_step, '')
+        assert.equal(c.receiving.value, false)
+      })
+    }
+    await render(detail, {}, async c => {
+      prepare(c)
+      request = activeRequest
+      await c.sendMessage('stop with lost acknowledgement')
+      await flush()
+      const socket = sockets.at(-1)
+      socket.onopen()
+      socket.chunk({ content: 'partial' })
+      c.stopGeneration()
+      socket.onerror()
+      await flush()
+      assert.equal(c.messages.value[1][0].status, 'C')
+      assert.equal(c.receiving.value, false)
+      assert.ok(calls.some(call => call.action === 'message__stop' && call.payload.mid === 'attempt'))
+    })
+    await render(detail, {}, async c => {
+      prepare(c)
+      const port = deferred(), save = deferred()
+      request = (action, payload) => action === 'message__send' ? activeRequest(action, payload)
+        : action === 'setting__get_port' ? port.promise : save.promise
+      await c.sendMessage('stale stop')
+      c.stopGeneration()
+      c.cancelAttempt()
+      c.conversationId.value = 'next-conversation'
+      c.messages.value = [[assistant('next-message')]]
+      save.resolve({ status: 200, data: stoppedSnapshot() })
+      port.resolve({ status: 200, data: { port: 9999 } })
+      await flush()
+      assert.equal(c.messages.value[0][0].mid, 'next-message')
+      assert.equal(c.stopping.value, false)
+    })
     const navigations = []
     globalThis.__chatFailureHarness.router.push = async location => { navigations.push(location) }
     await render(detail, {}, async c => {
@@ -507,6 +633,15 @@ test('actual chat components preserve drafts, finalize failed attempts, target r
       globalThis.__chatFailureHarness.route.query = {}
     }
     let retries = 0
+    for (const text of ['', 'partial answer']) {
+      const stoppedHtml = await render('/src/components/workspace/chat/ChatMessage.vue', {
+        cid: 'cid', mid: 'stopped', authorType: 'A', contentType: 'TXT', status: 'C', createTime: 1,
+        content: { text }, metadata: {}, onRegenerate: () => retries++,
+      }, async c => { c.regenerate() })
+      assert.match(stoppedHtml, /chat-response-stopped[^>]*>Stopped/)
+      assert.doesNotMatch(stoppedHtml, /typing-dot|chat-response-error/)
+    }
+    retries = 0
     const forkedMessages = []
     const replyProps = { cid: 'cid', mid: 'old-version', authorType: 'A', contentType: 'TXT', status: 'S',
       createTime: 1, content: { text: 'earlier answer' }, metadata: {}, forkable: true, onFork: mid => forkedMessages.push(mid) }

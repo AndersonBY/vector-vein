@@ -93,7 +93,8 @@ def get_history_messages(
                         sibling["content_type"] != Message.ContentTypes.TEXT,
                         "text" not in sibling["content"],
                         sibling["content"].get("text", "").strip(),
-                        sibling["author_type"] == Message.AuthorTypes.ASSISTANT and sibling["status"] == Message.StatusTypes.FAILED,
+                        sibling["author_type"] == Message.AuthorTypes.ASSISTANT and
+                        sibling["status"] in (Message.StatusTypes.FAILED, Message.StatusTypes.STOPPED),
                     )
                 ):
                     sibling["create_time"] = int(sibling["create_time"])

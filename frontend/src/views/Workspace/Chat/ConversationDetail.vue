@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref, reactive, onBeforeMount, onBeforeUnmount, onMounted, nextTick, watch } from 'vue'
-import { Send, Edit, Link, Plus } from '@/icons'
+import { Send, Edit, Link, Plus, HandleSquare } from '@/icons'
 import { message, theme } from 'ant-design-vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
@@ -221,20 +221,31 @@ let chatConnection = null
 let connectionSetupTimer = null
 let attemptEpoch = 0
 let disposed = false
+let stopCurrentAttempt = null
 const cancelAttempt = () => {
   const pending = aiMessage.mid !== 'tmp' && receiving.value
     ? { mid: aiMessage.mid, cid: conversationId.value, code: 'CHAT_CONNECTION_CLOSED',
         content: { text: aiMessage.content.text, reasoning_content: aiMessage.content.reasoning_content } } : null
+  const stopRequested = stopping.value || aiMessage.status === 'C'
   attemptEpoch += 1
   chatConnection?.cancel()
   chatConnection = null
   clearTimeout(connectionSetupTimer)
   receiving.value = false
   sending.value = false
-  if (pending) void messageAPI('fail_notice', pending).catch(() => {})
+  stopping.value = false
+  stopCurrentAttempt = null
+  if (pending) void messageAPI(stopRequested ? 'stop' : 'fail_notice', pending).catch(() => {})
   clearAiMessage()
 }
 const receiving = ref(false)
+const stopping = ref(false)
+const stopGeneration = () => {
+  if (!receiving.value || stopping.value || disposed) return
+  stopping.value = true
+  if (chatConnection) chatConnection.requestStop()
+  else void stopCurrentAttempt?.()
+}
 watch([sending, receiving], async ([isSending, isReceiving]) => {
   const mid = routeMid()
   if (!isSending && !isReceiving && !loading.value && mid) {
@@ -266,16 +277,41 @@ const clearAiMessage = () => {
 }
 
 const currentAttempt = epoch => !disposed && epoch === attemptEpoch
-const applySnapshot = (epoch, mid, snapshot) => {
+const applySnapshot = (epoch, mid, snapshot, allowAutoRun = true) => {
   if (!currentAttempt(epoch) || snapshot?.mid !== mid) return
   const current = messages.value.flat().find(message => message.mid === mid)
-  if (!current || !['S', 'W', 'F'].includes(current.status)) return
+  if (!current || !['S', 'W', 'F', 'C'].includes(current.status)) return
   replaceChatMessage(messages.value, mid, { ...snapshot, loading: false,
-    workflow_invoke_step: snapshot.status === 'W' ? 'wait_for_invoke' : '' })
+    workflow_invoke_step: snapshot.status === 'W' && allowAutoRun ? 'wait_for_invoke' : '' })
 }
 const sendWebsocketMsg = async (msg, epoch, cid) => {
   const mid = msg.ai_message_mid
   let ended = false
+  stopCurrentAttempt = async () => {
+    if (!currentAttempt(epoch) || !receiving.value) return
+    ended = true
+    clearTimeout(connectionSetupTimer)
+    chatConnection?.cancel()
+    chatConnection = null
+    Object.assign(aiMessage, terminalChatMessage(aiMessage, { status: 'C' }))
+    try {
+      const response = await messageAPI('stop', { mid, cid,
+        content: { text: aiMessage.content.text, reasoning_content: aiMessage.content.reasoning_content } })
+      if (!currentAttempt(epoch)) return
+      if (response.status !== 200) throw new Error('stop save failed')
+      applySnapshot(epoch, mid, response.data, false)
+      receiving.value = false
+      sending.value = false
+      stopping.value = false
+      stopCurrentAttempt = null
+      clearAiMessage()
+    } catch {
+      if (currentAttempt(epoch)) {
+        stopping.value = false
+        message.error(t('workspace.chatSpace.stop_save_failed'))
+      }
+    }
+  }
   const finish = async (data, failureCode) => {
     if (!currentAttempt(epoch) || ended) return
     ended = true
@@ -283,10 +319,14 @@ const sendWebsocketMsg = async (msg, epoch, cid) => {
     chatConnection?.cancel()
     chatConnection = null
     const partial = { text: aiMessage.content.text, reasoning_content: aiMessage.content.reasoning_content }
+    const allowAutoRun = !stopping.value
     const snapshot = terminalChatMessage(aiMessage, data)
+    if (!allowAutoRun) snapshot.workflow_invoke_step = ''
     replaceChatMessage(messages.value, mid, snapshot)
     receiving.value = false
     sending.value = false
+    stopping.value = false
+    stopCurrentAttempt = null
     clearAiMessage()
     if (typeof data.title === 'string' && data.title) {
       conversation.value.title = data.title
@@ -295,11 +335,15 @@ const sendWebsocketMsg = async (msg, epoch, cid) => {
     try {
       const response = await messageAPI(failureCode ? 'fail_notice' : 'done_notice', failureCode
         ? { mid, cid, code: failureCode, content: partial } : { mid })
-      if (response.status === 200) applySnapshot(epoch, mid, response.data)
+      if (response.status === 200) applySnapshot(epoch, mid, response.data, allowAutoRun)
     } catch { /* Keep the terminal local result when persistence is unavailable. */ }
   }
-  const fail = code => finish({ status: 'F', error: { code,
-    message: t(`workspace.chatSpace.${code.toLowerCase()}`) } }, code)
+  const fail = code => {
+    if (!currentAttempt(epoch)) return
+    if (stopping.value) return stopCurrentAttempt?.()
+    return finish({ status: 'F', error: { code,
+      message: t(`workspace.chatSpace.${code.toLowerCase()}`) } }, code)
+  }
   try {
     if (wsPort.value === null) {
       connectionSetupTimer = setTimeout(() => { void fail('CHAT_TIMEOUT') }, 15000)
@@ -430,6 +474,7 @@ const editable = reactive({
     }
   },
 })
+    if (stopping.value) chatConnection.requestStop()
 
 const isDragging = ref(false)
 const handleDragEnter = (event) => {
@@ -620,7 +665,13 @@ const deleteMessage = async (mid, groupIndex) => {
             </template>
           </UploaderFieldUse>
         </a-tooltip>
-        <a-tooltip :title="t('workspace.chatSpace.send_message')">
+        <a-tooltip v-if="receiving" :title="t('workspace.chatSpace.stop_generation')">
+          <a-button type="primary" class="chat-send-btn" :aria-label="t('workspace.chatSpace.stop_generation')"
+            :loading="stopping" :disabled="stopping" @click="stopGeneration">
+            <template #icon><HandleSquare v-if="!stopping" theme="filled" /></template>
+          </a-button>
+        </a-tooltip>
+        <a-tooltip v-else :title="t('workspace.chatSpace.send_message')">
           <a-button type="primary" class="chat-send-btn" :loading="sending"
             :disabled="userInput.length == 0 || loading || sending || receiving || forking" @click="sendMessage(userInput)">
             <template #icon>
