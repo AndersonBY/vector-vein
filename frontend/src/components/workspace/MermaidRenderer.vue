@@ -21,7 +21,7 @@ const props = defineProps({
   }
 })
 
-mermaid.initialize({ startOnLoad: false, securityLevel: "loose" })
+mermaid.initialize({ startOnLoad: false, securityLevel: "loose", layout: 'dagre', theme: 'default', look: 'classic' })
 const emit = defineEmits(['rendered'])
 let epoch = 0
 let copyTimer
