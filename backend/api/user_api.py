@@ -17,7 +17,6 @@ from models import Setting, Conversation, Agent, model_serializer
 from utilities.general import LogServer
 from tts_server.server import tts_server
 from utilities.media_processing import Microphone
-from utilities.shortcuts import shortcuts_listener
 from utilities.media_processing import get_screenshot
 from utilities.file_processing.files import read_file_content
 from utilities.config import config, Settings, cache, DEFAULT_SETTINGS
@@ -158,6 +157,9 @@ def register_shortcuts(shortcuts: dict | None = None):
         }
         ```
     """
+    # Import desktop input hooks only when registering or recording shortcuts.
+    from utilities.shortcuts import shortcuts_listener
+
     if shortcuts is None:
         settings = Settings()
         _shortcuts: dict = settings.get("shortcuts", {})
@@ -390,6 +392,8 @@ class ShortcutAPI:
         return JResponse(data=shortcuts)
 
     def set_setting_mode(self, payload):
+        from utilities.shortcuts import shortcuts_listener
+
         def finish_setting_mode(payload):
             key_combination = []
             for key in payload:
