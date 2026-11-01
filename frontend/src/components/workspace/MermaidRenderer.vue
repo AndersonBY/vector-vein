@@ -3,7 +3,7 @@ import { ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import { Download, Copy, Check } from '@/icons'
 import { Flex, Tooltip, Button } from 'ant-design-vue'
 import { saveAs } from 'file-saver'
-import mermaid from "mermaid"
+import { renderAsync } from 'pele/lazy'
 
 const props = defineProps({
   content: {
@@ -21,7 +21,6 @@ const props = defineProps({
   }
 })
 
-mermaid.initialize({ startOnLoad: false, securityLevel: "loose", layout: 'dagre', theme: 'default', look: 'classic' })
 const emit = defineEmits(['rendered'])
 let epoch = 0
 let copyTimer
@@ -37,7 +36,7 @@ const update = async () => {
   const mermaidCode = content.value.match(/```mermaid((.|\n)*?)```/)?.[1] || content.value
   // 渲染Mermaid
   try {
-    const { svg } = await mermaid.render(props.id, mermaidCode)
+    const { svg } = await renderAsync(mermaidCode, { idPrefix: props.id })
     if (current !== epoch || !mermaidRef.value) return
     mermaidRef.value.innerHTML = svg
     emit('rendered')
