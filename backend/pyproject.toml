@@ -51,7 +51,7 @@ dependencies = [
 description = ""
 license = {text = "CC BY-NC-SA"}
 name = "vector-vein"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.12,<3.13"
 version = "0.5.4"
 
 [project.optional-dependencies]
@@ -89,4 +89,4 @@ fullstack-dev.cmd = "python run_fullstack_dev.py"
 fullstack-dev.env_file = ".env"
 test = "pytest tests"
 lint = "ruff check ."
-typecheck = "ty check --python-version 3.10 ."
+typecheck = "ty check --python-version 3.12 ."
