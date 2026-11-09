@@ -1,1 +1,7 @@
 .vscode/
+.cache/
+
+# Runtime files created when launching from the repository root.
+/config.json
+/data/
+/log/
