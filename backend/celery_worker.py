@@ -31,7 +31,6 @@ app = Celery(
     backend=result_backend, 
     include=[
         "background_task.general_tasks", 
-        "background_task.qdrant_tasks",
         "background_task.workflow_tasks",
         # Include all worker task modules to register them
         "worker.tasks",
@@ -69,7 +68,6 @@ app.conf.update(
     task_default_queue='celery',
     task_routes={
         'background_task.general_tasks.*': {'queue': 'celery'},
-        'background_task.qdrant_tasks.*': {'queue': 'celery'},
         'background_task.workflow_tasks.*': {'queue': 'celery'},
         'workflow.*': {'queue': 'celery'},
     }

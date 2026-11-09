@@ -159,5 +159,5 @@ def test_native_anthropic_real_request_uses_draft_key_and_correct_path(endpoint_
     assert request["path"] == "/v1/messages"
     assert request["body"]["model"] == "native-draft-model"
     assert request["body"]["messages"] == [{"role": "user", "content": "native custom message"}]
-    assert request["headers"]["x-api-key"] == "native-draft-key"
+    assert request["headers"]["authorization"] == "Bearer native-draft-key"
     assert "must-not-be-used" not in json.dumps(server.received)

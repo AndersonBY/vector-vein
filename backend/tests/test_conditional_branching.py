@@ -210,7 +210,7 @@ def test_report_workflow_status_updates_cached_record_status(monkeypatch) -> Non
     class _FakeWorkflowRunRecordModel:
         rid = object()
         status = "RUNNING"
-        RunFromTypes = SimpleNamespace(CHAT="CHAT")
+        RunFromTypes = SimpleNamespace(WEB="WEB")
 
         @staticmethod
         def update(**kwargs):
@@ -222,7 +222,6 @@ def test_report_workflow_status_updates_cached_record_status(monkeypatch) -> Non
                 status="RUNNING",
                 data={"nodes": []},
                 run_from="WEB",
-                source_message=None,
                 end_time=None,
                 save=lambda: 1,
             )

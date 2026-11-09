@@ -74,7 +74,6 @@ def recover_interrupted_runs():
     from utilities.workflow_stopping import _key
     from utilities.workflow_timeline import merge_timeline, initialize_timeline, update_timeline
     from utilities.workflow_errors import add_failure
-    from utilities.workflow_messages import project_workflow_message
 
     recovered = []
     with cache.transact():
@@ -105,11 +104,6 @@ def recover_interrupted_runs():
                 if not changed:
                     continue
                 record.status, record.data = "FAILED", data
-            try:
-                project_workflow_message(record)
-            except Exception as exc:
-                from utilities.general import mprint
-                mprint.error(f"Interrupted workflow message update failed: {type(exc).__name__}")
             cache.set(_key(rid, "active"), 0)
             cache.set(f"workflow:record:{rid}", 500, 60 * 60)
             recovered.append(rid)

@@ -25,7 +25,6 @@ from .workflow_models import (
     WorkflowRunRecord,
     WorkflowRunSchedule,
 )
-from .agent_models import Conversation, Message, Agent, ChatDraft
 
 
 def create_tables():
@@ -44,30 +43,18 @@ def create_tables():
             UserVectorDatabase,
             UserRelationalDatabase,
             UserRelationalTable,
-            Conversation,
-            Conversation.related_workflows.get_through_model(),
-            Conversation.related_templates.get_through_model(),
-            Message,
-            ChatDraft,
-            Agent,
-            Agent.related_workflows.get_through_model(),
-            Agent.related_templates.get_through_model(),
         ]
     )
 
 
 __all__ = [
     "User",
-    "Agent",
     "Status",
     "Setting",
-    "Message",
-    "ChatDraft",
     "database",
     "Workflow",
     "UserObject",
     "WorkflowTag",
-    "Conversation",
     "create_tables",
     "DatabaseStatus",
     "run_migrations",

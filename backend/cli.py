@@ -35,6 +35,8 @@ def parser():
     result.add_argument("--result-file", type=Path, help="Also save the command JSON result")
     groups = result.add_subparsers(dest="group", required=True)
     groups.add_parser("init", help="Initialize the workspace without opening a GUI")
+    task_agent = groups.add_parser("task-agent").add_subparsers(dest="command", required=True)
+    task_agent.add_parser("serve", help="Run the desktop Task Agent App Server over stdio")
     commands = groups.add_parser("workflow").add_subparsers(dest="command", required=True)
     listing = commands.add_parser("list")
     listing.add_argument("--search", default="")
@@ -227,6 +229,8 @@ def main(argv=None):
     for stream in (sys.stdout, sys.stderr):
         if isinstance(stream, io.TextIOWrapper):
             stream.reconfigure(encoding="utf-8")
+    if isinstance(sys.stdin, io.TextIOWrapper):
+        sys.stdin.reconfigure(encoding="utf-8")
     args = parser().parse_args(argv)
     for name in ("workspace", "settings", "output_dir", "result_file", "file", "inputs"):
         value = getattr(args, name, None)
@@ -238,6 +242,9 @@ def main(argv=None):
     if args.output_dir:
         os.environ["VECTORVEIN_OUTPUT_DIR"] = str(args.output_dir)
     os.chdir(args.workspace)
+    if args.group == "task-agent":
+        from task_agent.server import serve
+        return serve()
     code = 2
     try:
         with contextlib.redirect_stdout(sys.stderr):

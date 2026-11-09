@@ -37,11 +37,11 @@ DEFAULT_EMBEDDING_BACKENDS = {
             },
         },
     },
-    "cohere": {"models": {}},
-    "jina": {"models": {}},
-    "voyage": {"models": {}},
-    "siliconflow": {"models": {}},
-    "local": {"models": {}},
+    "cohere": {"models": {}, "default_endpoint": None},
+    "jina": {"models": {}, "default_endpoint": None},
+    "voyage": {"models": {}, "default_endpoint": None},
+    "siliconflow": {"models": {}, "default_endpoint": None},
+    "local": {"models": {}, "default_endpoint": None},
     "custom": {
         "default_endpoint": "tei-default",
         "models": {
@@ -64,6 +64,11 @@ DEFAULT_EMBEDDING_BACKENDS = {
     },
 }
 
+DEFAULT_RERANK_BACKENDS = {
+    provider: {"models": {}, "default_endpoint": None}
+    for provider in ("cohere", "jina", "voyage", "siliconflow", "local", "custom", "openai")
+}
+
 
 DEFAULT_SETTINGS = {
     "initial_setup": False,
@@ -84,15 +89,12 @@ DEFAULT_SETTINGS = {
     "use_system_proxy": True,
     "skip_ssl_verification": False,
     "website_domain": "vectorvein.ai",
-    "agent": {
-        "auto_title": True,
-        "auto_title_model": ["OpenAI", "gpt-5-nano"],
-        "screenshot_monitor_device": 0,
-        "tool_call_data_generate_model": ["OpenAI", "gpt-5-nano"],
-    },
-    "microphone_device": 0,
+    "workflow": {"tool_call_data_generate_model": ["OpenAI", "gpt-5-nano"]},
     "shortcuts": {},
     "model_preferences": {},
+    "task_agent_approval": {"model_provider": "", "model": ""},
+    "knowledge_retrieval": {"rerank": {"provider": "", "model": ""}},
+    "notifications": {"enabled": False, "language": "zh-CN"},
     "tts": {
         "piper": {"api_base": "http://localhost:5000"},
         "reecho": {"api_key": "", "voices": []},
@@ -109,10 +111,7 @@ DEFAULT_SETTINGS = {
     },
     "web_search": {
         "jinaai": {"api_key": ""},
-        "bing": {
-            "ocp_apim_subscription_key": "",
-            "endpoint": "https://api.bing.microsoft.com/v7.0/search",
-        },
+        "deepseek": {"api_key": "", "endpoint": "https://api.deepseek.com/v1/tools/search"},
     },
     "llm_settings": {
         "endpoints": [
@@ -228,6 +227,7 @@ DEFAULT_SETTINGS = {
         ],
         "backends": deepcopy(DEFAULT_CHAT_BACKENDS),
         "embedding_backends": deepcopy(DEFAULT_EMBEDDING_BACKENDS),
+        "rerank_backends": deepcopy(DEFAULT_RERANK_BACKENDS),
     },
     "custom_llms": {},
 }
@@ -248,6 +248,7 @@ def deep_merge(default, custom):
 
 def normalize_chat_backends(data: dict[str, Any]) -> None:
     normalize_embedding_backends(data)
+    normalize_rerank_backends(data)
     raw = deepcopy(data.get("llm_settings", {}))
     backends = raw.setdefault("backends", {})
     for provider in DEFAULT_CHAT_BACKENDS:
@@ -291,10 +292,12 @@ def normalize_chat_backends(data: dict[str, Any]) -> None:
             default_model = next(iter(backend["models"]), "")
         backend["default_model"] = default_model
     data["llm_settings"] = normalized
-    for field in ("auto_title_model", "tool_call_data_generate_model"):
-        selection = data.get("agent", {}).get(field)
-        if selection and len(selection) == 2 and is_retired_model(str(selection[0]).lower(), selection[1]):
-            data["agent"][field] = deepcopy(DEFAULT_SETTINGS["agent"][field])
+    workflow = data.setdefault("workflow", {})
+    field = "tool_call_data_generate_model"
+    workflow.setdefault(field, deepcopy(DEFAULT_SETTINGS["workflow"][field]))
+    selection = workflow[field]
+    if selection and len(selection) == 2 and is_retired_model(str(selection[0]).lower(), selection[1]):
+        workflow[field] = deepcopy(DEFAULT_SETTINGS["workflow"][field])
 
 
 def _split_endpoint_base_and_path(api_base: str, default_path: str = "/embed") -> tuple[str, str]:
@@ -363,7 +366,69 @@ def normalize_embedding_backends(data: dict[str, Any]) -> bool:
     return changed
 
 
+def normalize_web_search(data: dict):
+    search = data.get("web_search")
+    if not isinstance(search, dict):
+        search = {}
+    search.pop("bing", None)
+    data["web_search"] = deep_merge(deepcopy(DEFAULT_SETTINGS["web_search"]), search)
+
+
+def normalize_rerank_backends(data: dict[str, Any]) -> None:
+    raw = data.get("llm_settings")
+    if isinstance(raw, dict):
+        backends = raw.get("rerank_backends")
+        raw["rerank_backends"] = deep_merge(
+            deepcopy(DEFAULT_RERANK_BACKENDS), backends if isinstance(backends, Mapping) else {})
+    retrieval = data.setdefault("knowledge_retrieval", {})
+    if isinstance(retrieval, dict):
+        retrieval.setdefault("rerank", {"provider": "", "model": ""})
+
+
+def validate_rerank_settings(data: dict[str, Any]) -> tuple[str, str]:
+    """Validate selection against native vv-llm model keys and endpoint bindings."""
+    retrieval = data.get("knowledge_retrieval", {})
+    selection = retrieval.get("rerank", {}) if isinstance(retrieval, dict) else None
+    if not isinstance(selection, dict):
+        raise ValueError("Invalid knowledge retrieval rerank settings.")
+    provider, model = selection.get("provider", ""), selection.get("model", "")
+    if not isinstance(provider, str) or not isinstance(model, str):
+        raise ValueError("Rerank provider and model must be strings.")
+    if not provider and not model:
+        return "", ""
+    if provider not in DEFAULT_RERANK_BACKENDS or not model:
+        raise ValueError("Choose a rerank provider and configured model, or clear both to disable reranking.")
+    settings = VvLlmSettings.model_validate(data.get("llm_settings", {}))
+    backend = settings.get_rerank_backend(provider)
+    if model not in backend.models or not backend.models[model].enabled:
+        raise ValueError("The selected rerank model is missing or disabled.")
+    selected = backend.get_model_setting(model)
+    enabled = 0
+    for binding in selected.endpoints:
+        if isinstance(binding, dict) and binding.get("enabled") is False:
+            continue
+        endpoint_id = binding if isinstance(binding, str) else binding.get("endpoint_id")
+        endpoint = next((item for item in settings.endpoints if item.id == endpoint_id), None)
+        if endpoint is None:
+            raise ValueError("The selected rerank model references a missing endpoint.")
+        if not endpoint.enabled:
+            continue
+        try:
+            parsed = urlsplit(endpoint.api_base)
+            valid = parsed.scheme in {"http", "https"} and bool(parsed.hostname) and parsed.port != 0
+            valid = valid and not (parsed.username or parsed.password or parsed.query or parsed.fragment)
+        except ValueError:
+            valid = False
+        if not valid:
+            raise ValueError("The selected rerank endpoint needs a valid HTTP(S) base URL.")
+        enabled += 1
+    if not enabled:
+        raise ValueError("The selected rerank model has no enabled endpoint.")
+    return provider, model
+
+
 def update_llm_settings_to_v2(data: dict):
+    normalize_web_search(data)
     if data.get("settings_version", 1) == 2:
         normalize_chat_backends(data)
         return data
@@ -520,6 +585,8 @@ class Settings:
             raw = json.loads(Path(external).read_text(encoding="utf-8-sig"))
             VvLlmSettings.model_validate(raw)
             self.data["llm_settings"] = raw
+            normalize_embedding_backends(self.data)
+            normalize_rerank_backends(self.data)
         output_dir = os.environ.get("VECTORVEIN_OUTPUT_DIR")
         if output_dir:
             self.data["output_folder"] = str(Path(output_dir).resolve())

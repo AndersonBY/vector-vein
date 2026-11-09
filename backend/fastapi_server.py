@@ -24,7 +24,6 @@ from api.workflow_api import (
     WorkflowRunRecordAPI,
     WorkflowRunScheduleAPI,
 )
-from api.vector_database_api import DatabaseAPI, DatabaseObjectAPI
 
 mprint = mprint_with_name(name="FastAPI Server")
 
@@ -60,8 +59,8 @@ class FastAPIServer:
         async def api_info():
             return {
                 "server_type": "local_desktop",
-                "endpoints": {"workflow": "/api/workflow/*", "database": "/api/database/*", "health": "/health", "static": "/static/*", "assets": "/assets/*"},
-                "task_queues": ["default", "qdrant"],
+                "endpoints": {"workflow": "/api/workflow/*", "health": "/health", "static": "/static/*", "assets": "/assets/*"},
+                "task_queues": ["celery"],
                 "documentation": "/docs",
             }
 
@@ -71,12 +70,12 @@ class FastAPIServer:
         self.workflow_template_api = WorkflowTemplateAPI()
         self.workflow_run_record_api = WorkflowRunRecordAPI()
         self.workflow_run_schedule_api = WorkflowRunScheduleAPI()
-        self.database_api = DatabaseAPI()
-        self.database_object_api = DatabaseObjectAPI()
+        from task_agent.knowledge import install_knowledge_routes
+        install_knowledge_routes(self.fastapi_app)
 
         # Add Workflow API endpoints
         self.setup_workflow_endpoints()
-        self.setup_database_endpoints()
+        self.setup_database_retirement()
 
         # Static files for user data
         data_static_path = Path(config.data_path) / "static"
@@ -331,58 +330,28 @@ class FastAPIServer:
             # Fallback to empty list if formatting fails
             return []
 
-    def setup_database_endpoints(self):
-        """Setup vector database API endpoints"""
-
-        @self.fastapi_app.get("/api/database/list")
-        async def list_databases(page: int = 1, page_size: int = 20):
-            """List all vector databases"""
-            try:
-                result = self.database_api.list({"page": page, "page_size": page_size})
-                return result
-            except Exception as e:
-                mprint(f"Error listing databases: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
-
-        @self.fastapi_app.get("/api/database/{database_id}")
-        async def get_database(database_id: str):
-            """Get a specific database by ID"""
-            try:
-                result = self.database_api.get({"vid": database_id})
-                if result.get("status") != 200:
-                    raise HTTPException(status_code=404, detail="Database not found")
-                return result["data"]
-            except HTTPException:
-                raise
-            except Exception as e:
-                mprint(f"Error getting database {database_id}: {e}")
-                raise HTTPException(status_code=500, detail=str(e))
-
-    def find_free_port(self):
-        """Find a free port for the server"""
-        import socket
-
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(("", 0))
-            s.listen(1)
-            port = s.getsockname()[1]
-        return port
+    def setup_database_retirement(self):
+        @self.fastapi_app.api_route("/api/database/{legacy_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"])
+        def retired_vector_database(legacy_path: str):
+            raise HTTPException(status_code=410, detail="Vector databases have moved to the desktop Knowledge bases screen. Manage and search your documents there; existing source data is preserved.")
 
     def run_fastapi_server(self):
         """Run FastAPI server"""
+        sockets = []
         try:
-            # Auto-assign port if requested
-            if self.port == 0:
-                self.actual_port = self.find_free_port()
-            else:
-                self.actual_port = self.port
-
             config = uvicorn.Config(
                 self.fastapi_app,
                 host=self.host,
-                port=self.actual_port,
+                port=self.port,
                 log_level="warning",  # Reduce log noise for desktop app
             )
+            # Prebind once so port=0 has no free-port race and LAN binds retain a
+            # separate numeric loopback listener for private Agent retrieval.
+            primary = config.bind_socket()
+            sockets.append(primary)
+            self.actual_port = primary.getsockname()[1]
+            from task_agent.knowledge import knowledge_loopback_listener
+            self._knowledge_bridge_url = knowledge_loopback_listener(primary, sockets)
             self.server = uvicorn.Server(config)
 
             # Set up startup callback
@@ -393,11 +362,13 @@ class FastAPIServer:
                 self.server_started_event.set()  # Signal that server has started
 
             setattr(self.server, "startup", new_startup)
-            self.server.run()
-        except Exception as e:
+            self.server.run(sockets=sockets)
+        except (Exception, SystemExit) as e:
             mprint.error(f"FastAPI server failed to start: {e}")
             self.server_started_event.set()  # Set event to prevent infinite waiting
         finally:
+            for listener in sockets:
+                listener.close()
             self.server = None
 
     def start(self):
@@ -410,10 +381,15 @@ class FastAPIServer:
         self.server_started_event.wait(timeout=10)
 
         if self.server_started_event.is_set():
+            if self.server is None or not self.server.started:
+                raise RuntimeError("Desktop API server failed to start")
+            from task_agent.knowledge import start_knowledge_bridge
+            start_knowledge_bridge(self._knowledge_bridge_url)
             mprint(f"FastAPI server started at http://{self.host}:{self.actual_port}")
             mprint(f"API Documentation: http://{self.host}:{self.actual_port}/docs")
         else:
-            mprint.error("FastAPI server failed to start within timeout")
+            self.stop()
+            raise RuntimeError("Desktop API server failed to start within timeout")
 
     def _run_server(self):
         """Internal method to run the server"""
@@ -421,6 +397,8 @@ class FastAPIServer:
 
     def stop(self):
         """Stop FastAPI server"""
+        from task_agent.knowledge import stop_knowledge_bridge
+        stop_knowledge_bridge()
         if self.server is not None:
             self.server.should_exit = True
         if self.thread:

@@ -6,7 +6,7 @@ from uuid import UUID
 
 from celery import current_task
 
-from models import WorkflowRunRecord, Message
+from models import WorkflowRunRecord
 from utilities.config import cache
 from utilities.workflow_timeline import merge_timeline, update_timeline
 
@@ -30,15 +30,6 @@ def _record(rid):
     except (ValueError, TypeError, AttributeError):
         return None
     return WorkflowRunRecord.get_or_none(WorkflowRunRecord.rid == normalized)
-
-
-def _project_stopped(record):
-    if record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
-        message = Message.get_or_none(Message.mid == record.source_message)
-        if message and message.status == Message.StatusTypes.RUNNING_WORKFLOW:
-            message.metadata = {**message.metadata, "recordStatus": "STOPPED", "workflow_result": "Workflow stopped. Completed outputs are retained."}
-            message.status = Message.StatusTypes.WORKFLOW_FAILED
-            message.save()
 
 
 def _finish_stopping(rid):
@@ -71,11 +62,6 @@ def _finish_stopping(rid):
     if changed:
         cache.set(f"workflow:record:{rid}", 200, 60 * 60)
         record.status, record.data = "STOPPED", data
-        try:
-            _project_stopped(record)
-        except Exception:
-            # The run's durable terminal state must survive chat projection failure.
-            pass
         from utilities.workflow_feedback import wake_parent
         wake_parent(rid)
         parent = cache.get(_key(rid, "parent"))

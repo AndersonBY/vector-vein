@@ -127,3 +127,19 @@ def test_embedding_client_maps_legacy_provider_to_vv_llm_custom_backend(monkeypa
     assert recorded["embed"] == {"text": "hello", "dimensions": 768}
     assert client.get(["a", "b"]) == [[1.0], [2.0]]
     assert recorded["embed_batch"] == {"texts": ["a", "b"], "dimensions": 768}
+
+
+def test_external_settings_fill_missing_embedding_backends_without_changing_the_file(tmp_path, monkeypatch):
+    import json
+    from utilities.config.settings import Settings, DEFAULT_EMBEDDING_BACKENDS
+    raw = _base_llm_settings()
+    raw['embedding_backends'] = {'cohere': {'models': {'chosen': {'id': 'chosen', 'enabled': False, 'dimensions': 512}}}}
+    path = tmp_path / 'external.json'
+    original = json.dumps(raw)
+    path.write_text(original, encoding='utf-8')
+    monkeypatch.setenv('VECTORVEIN_LLM_SETTINGS_FILE', str(path))
+    monkeypatch.setattr(Settings, 'load_setting', lambda self: setattr(self, 'data', {}))
+    result = Settings().get('llm_settings')['embedding_backends']
+    assert set(DEFAULT_EMBEDDING_BACKENDS) <= set(result)
+    assert result['cohere']['models']['chosen'] == {'id': 'chosen', 'enabled': False, 'dimensions': 512}
+    assert path.read_text(encoding='utf-8') == original

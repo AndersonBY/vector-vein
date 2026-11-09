@@ -253,14 +253,6 @@ try:
     assert saved(deep_parent).status==saved(grandparent).status=='FAILED'
     assert saved(grandparent).data['failures'][0]['message']=='real sibling failure'
 
-    chat,chat_data=create([node('chat-feedback',True)],[])
-    WorkflowRunRecord.update(run_from='CHAT').where(WorkflowRunRecord.rid==chat.rid).execute()
-    message=SimpleNamespace(status='R',metadata={},save=lambda:None)
-    with patch('utilities.workflow_feedback.Message',SimpleNamespace(mid='mid',get_or_none=lambda *args:message,
-            StatusTypes=SimpleNamespace(RUNNING_WORKFLOW='R'))):
-        runner.run_workflow.run(chat_data)
-    assert saved(chat).status=='PAUSED' and message.status=='R'
-    assert message.metadata['recordStatus']=='PAUSED' and 'workflow_result' not in message.metadata
     print('feedback runner passed')
 finally:
     release.set(); cache.close(); database.close(); config.close()

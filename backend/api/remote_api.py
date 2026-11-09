@@ -3,6 +3,7 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-06-25 15:22:18
 import os
+import re
 from pathlib import Path
 
 from utilities.general import mprint_with_name
@@ -45,31 +46,27 @@ class OfficialSiteAPI:
             self.version = version_file.read_text().strip()
 
     def get_update_info(self, payload):
-        if cache.get("update_info"):
-            return JResponse(data=cache.get("update_info"))
-        else:
-            path = "/api/v1/client-software/update-info"
-            response_data = request("GET", path, payload)["data"]
-            official_version = response_data["version"]
-            # compare official_version with self.version
-            # Version format: major.minor.patch
-            official_version = tuple(map(int, official_version.split(".")))
-            current_version = tuple(map(int, self.version.split(".")))
-            response_data["updatable"] = official_version > current_version
-            cache.set("update_info", response_data, expire=600)
-            return JResponse(data=response_data)
-
-    def list_agents(self, payload):
-        path = "/api/v1/client-software/agent/list"
-        return request("GET", path, payload)
-
-    def get_agent(self, payload):
-        path = "/api/v1/client-software/agent/get"
-        return request("GET", path, payload)
-
-    def duplicate_agent(self, payload):
-        path = "/api/v1/client-software/agent/duplicate"
-        return request("GET", path, payload)
+        cached = cache.get("update_info")
+        if cached:
+            return JResponse(data=cached)
+        response = request("GET", "/api/v1/client-software/update-info", payload)
+        if not isinstance(response, dict) or response.get("status") != 200:
+            return JResponse(status=502, msg="Update information unavailable")
+        response_data = response.get("data")
+        if not isinstance(response_data, dict):
+            return JResponse(status=502, msg="Invalid update information")
+        official_version = response_data.get("version")
+        versions = (official_version, self.version)
+        if any(not isinstance(version, str) or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", version)
+               for version in versions):
+            return JResponse(status=502, msg="Invalid update version")
+        try:
+            official, current = (tuple(map(int, version.split("."))) for version in versions)
+        except ValueError:
+            return JResponse(status=502, msg="Invalid update version")
+        response_data = {**response_data, "updatable": official > current}
+        cache.set("update_info", response_data, expire=600)
+        return JResponse(data=response_data)
 
     def list_templates(self, payload):
         path = "/api/v1/client-software/template/list"

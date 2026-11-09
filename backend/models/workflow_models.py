@@ -86,7 +86,6 @@ class WorkflowRunRecord(BaseModel):
         SCHEDULE = "SCHEDULE"
         API = "API"
         WORKFLOW = "WORKFLOW"
-        CHAT = "CHAT"
 
     rid = cast(ModelField[uuid.UUID], UUIDField(primary_key=True, default=uuid.uuid4))
     user = cast(ModelField[User | None], ForeignKeyField(User, null=True, backref="workflow_run_records"))
@@ -113,7 +112,6 @@ class WorkflowRunRecord(BaseModel):
         ModelField[str],
         CharField(max_length=16, choices=RunFromTypes.__dict__.items(), default=RunFromTypes.WEB),
     )
-    source_message = cast(ModelField[uuid.UUID | None], UUIDField(null=True))
 
     def __str__(self):
         return self.rid.hex

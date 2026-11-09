@@ -543,11 +543,6 @@ class Workflow:
             mprint.error(f"report_workflow_status failed: {type(e).__name__}")
             return False
 
-        try:
-            from utilities.workflow_messages import project_workflow_message
-            project_workflow_message(workflow_record)
-        except Exception as e:
-            mprint.error(f"Workflow message update failed: {type(e).__name__}")
         return True
 
     def set_node_status(

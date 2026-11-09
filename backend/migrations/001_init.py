@@ -47,70 +47,11 @@ def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
             table_name = "user"
 
     @migrator.create_model
-    class Agent(pw.Model):
-        aid = pw.UUIDField(primary_key=True)
-        name = pw.CharField(max_length=512)
-        description = pw.TextField(default='')
-        avatar = pw.CharField(default='', max_length=512)
-        has_published = pw.BooleanField(default=False)
-        shared = pw.BooleanField(default=False)
-        is_public = pw.BooleanField(default=False)
-        version = pw.IntegerField(default=1)
-        user = pw.ForeignKeyField(column_name='user_id', field='uid', model=migrator.orm['user'], null=True)
-        settings = pw.TextField()
-        model_provider = pw.CharField(max_length=12)
-        model = pw.CharField(max_length=30)
-        create_time = pw.DateTimeField()
-        update_time = pw.DateTimeField()
-
-        class Meta:
-            table_name = "agent"
-
-    @migrator.create_model
     class BaseModel(pw.Model):
         id = pw.AutoField()
 
         class Meta:
             table_name = "basemodel"
-
-    @migrator.create_model
-    class Conversation(pw.Model):
-        cid = pw.UUIDField(primary_key=True)
-        user = pw.ForeignKeyField(column_name='user_id', field='uid', model=migrator.orm['user'], null=True)
-        title = pw.CharField(max_length=512)
-        settings = pw.TextField()
-        brief = pw.TextField(default='')
-        shared = pw.BooleanField(default=False)
-        shared_meta = pw.TextField()
-        is_public = pw.BooleanField(default=False)
-        shared_at_message = pw.UUIDField(null=True)
-        model_provider = pw.CharField(max_length=12)
-        model = pw.CharField(max_length=30)
-        agent = pw.ForeignKeyField(column_name='agent_id', field='aid', model=migrator.orm['agent'], null=True)
-        agent_version = pw.IntegerField(default=1)
-        create_time = pw.DateTimeField()
-        update_time = pw.DateTimeField()
-        current_message = pw.UUIDField(null=True)
-
-        class Meta:
-            table_name = "conversation"
-
-    @migrator.create_model
-    class Message(pw.Model):
-        mid = pw.UUIDField(primary_key=True)
-        parent = pw.ForeignKeyField(column_name='parent_id', field='mid', model='self', null=True)
-        conversation = pw.ForeignKeyField(column_name='conversation_id', field='cid', model=migrator.orm['conversation'])
-        author_type = pw.CharField(max_length=1)
-        content_type = pw.CharField(max_length=3)
-        status = pw.CharField(default='P', max_length=1)
-        create_time = pw.DateTimeField()
-        update_time = pw.DateTimeField()
-        metadata = pw.TextField()
-        content = pw.TextField()
-        attachments = pw.TextField()
-
-        class Meta:
-            table_name = "message"
 
     @migrator.create_model
     class Setting(pw.Model):
@@ -307,10 +248,6 @@ def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
 
     migrator.remove_model('user')
 
-    migrator.remove_model('message')
 
-    migrator.remove_model('conversation')
 
     migrator.remove_model('basemodel')
-
-    migrator.remove_model('agent')

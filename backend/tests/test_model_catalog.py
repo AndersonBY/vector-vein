@@ -41,7 +41,6 @@ def test_default_catalog_covers_current_providers_and_binds_every_model() -> Non
 def test_upgrade_retires_builtins_preserves_custom_routing_and_refreshes_capabilities() -> None:
     data = {
         "settings_version": 2,
-        "agent": {"auto_title_model": ["OpenAI", "gpt-4o-mini"]},
         "llm_settings": {
             "VERSION": "2",
             "endpoints": [
@@ -95,7 +94,8 @@ def test_upgrade_retires_builtins_preserves_custom_routing_and_refreshes_capabil
     assert models["gpt-6.1-sol"]["endpoints"] == ["private"]
     assert llm["backends"]["xiaomi"]["models"]["mimo-v2-pro"]["endpoints"] == ["xiaomi-default"]
     assert llm["endpoints"][0]["api_key"] == "test-key"
-    assert data["agent"]["auto_title_model"] == ["OpenAI", "gpt-5-nano"]
+    assert "agent" not in data
+    assert data["workflow"]["tool_call_data_generate_model"] == ["OpenAI", "gpt-5-nano"]
     previous = deepcopy(data)
     update_llm_settings_to_v2(data)
     assert data == previous

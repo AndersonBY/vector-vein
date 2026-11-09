@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import threading
 from copy import deepcopy
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Iterable, TypedDict
 from zoneinfo import ZoneInfo
 
@@ -149,7 +149,10 @@ def parse_cron_expression(cron_expression: str) -> ParsedCronExpression:
 
 
 def cron_matches_datetime(cron_expression: str, current_time: datetime) -> bool:
-    parsed = parse_cron_expression(cron_expression)
+    return _cron_matches_datetime(parse_cron_expression(cron_expression), current_time)
+
+
+def _cron_matches_datetime(parsed: ParsedCronExpression, current_time: datetime) -> bool:
 
     minute_match = current_time.minute in parsed["minute"]
     hour_match = current_time.hour in parsed["hour"]
@@ -172,19 +175,54 @@ def cron_matches_datetime(cron_expression: str, current_time: datetime) -> bool:
     return minute_match and hour_match and month_match and day_match
 
 
+def normalize_recurrence(value: object) -> dict | None:
+    if value is None:
+        return None
+    if not isinstance(value, dict) or set(value) != {"unit", "interval", "anchor_date"}:
+        raise ValueError("Invalid schedule recurrence")
+    unit, interval, anchor = value["unit"], value["interval"], value["anchor_date"]
+    limits = {"day": 365, "week": 52, "month": 12}
+    if not isinstance(unit, str) or unit not in limits or type(interval) is not int or not 1 <= interval <= limits[unit]:
+        raise ValueError("Invalid schedule recurrence interval")
+    if not isinstance(anchor, str) or date.fromisoformat(anchor).isoformat() != anchor:
+        raise ValueError("Invalid schedule start date")
+    return {"unit": unit, "interval": interval, "anchor_date": anchor}
+
+
+def recurrence_matches_datetime(recurrence: dict | None, current_time: datetime) -> bool:
+    if recurrence is None:
+        return True
+    anchor = date.fromisoformat(recurrence["anchor_date"])
+    current = current_time.date()
+    if current < anchor:
+        return False
+    if recurrence["unit"] == "day":
+        distance = (current - anchor).days
+    elif recurrence["unit"] == "week":
+        distance = ((current - timedelta(days=current.weekday())) - (anchor - timedelta(days=anchor.weekday()))).days // 7
+    else:
+        distance = (current.year - anchor.year) * 12 + current.month - anchor.month
+    return distance % recurrence["interval"] == 0
+
+
 def get_next_run_time(
     cron_expression: str,
     timezone_name: str | None,
     from_time: datetime | None = None,
     max_minutes: int = 60 * 24 * 365,
+    *,
+    recurrence: dict | None = None,
 ) -> datetime | None:
     timezone_info = _safe_timezone(timezone_name)
-    cursor = (from_time or datetime.now(timezone.utc)).astimezone(timezone_info)
+    rule = normalize_recurrence(recurrence)
+    parsed = parse_cron_expression(cron_expression)
+    cursor = (from_time or datetime.now(timezone.utc)).astimezone(timezone.utc)
     cursor = cursor.replace(second=0, microsecond=0) + timedelta(minutes=1)
 
     for _ in range(max_minutes):
-        if cron_matches_datetime(cron_expression, cursor):
-            return cursor
+        local_time = cursor.astimezone(timezone_info)
+        if _cron_matches_datetime(parsed, local_time) and recurrence_matches_datetime(rule, local_time):
+            return local_time
         cursor += timedelta(minutes=1)
     return None
 
@@ -241,6 +279,10 @@ class WorkflowScheduler:
             return
 
         schedule_data = schedule.data if isinstance(schedule.data, dict) else {}
+        try:
+            recurrence = normalize_recurrence(schedule_data.get("recurrence"))
+        except (ValueError, TypeError):
+            return
         timezone_name = str(schedule_data.get("timezone") or "Asia/Shanghai")
         timezone_info = _safe_timezone(timezone_name)
         local_time = current_utc.astimezone(timezone_info).replace(second=0, microsecond=0)
@@ -254,7 +296,7 @@ class WorkflowScheduler:
             if self._last_triggered.get(schedule_key) == minute_key:
                 return
 
-        if not cron_matches_datetime(cron_expression, local_time):
+        if not cron_matches_datetime(cron_expression, local_time) or not recurrence_matches_datetime(recurrence, local_time):
             return
 
         latest_record = (

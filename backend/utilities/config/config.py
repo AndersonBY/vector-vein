@@ -12,7 +12,7 @@ from collections.abc import Mapping
 DEFAULT_CONFIG = {
     "language": "en-US",
     "data_path": "./data",
-    "window": {"width": 1600, "height": 1000, "x": 0, "y": 0, "fullscreen": False, "on_top": False},
+    "window": {"width": 1600, "height": 1000, "x": 0, "y": 0, "fullscreen": False, "on_top": False, "close_action": "ask"},
     "theme": "default",
 }
 

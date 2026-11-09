@@ -6,6 +6,7 @@
 from copy import deepcopy
 from datetime import datetime
 from uuid import UUID
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from peewee import fn
 
@@ -26,6 +27,7 @@ from utilities.config import cache
 from utilities.workflow_timeline import read_timeline
 from utilities.workflow_artifacts import get_run_artifacts, open_run_artifact
 from utilities.workflow import WorkflowData, validate_cron_expression, get_next_run_time
+from utilities.workflow.scheduler import normalize_recurrence
 from utilities.file_processing import static_file_server
 from celery_tasks import update_workflow_tool_call_data
 
@@ -656,6 +658,7 @@ class WorkflowRunScheduleAPI:
             next_run_at = get_next_run_time(
                 run_schedule.cron_expression,
                 run_schedule.data.get("timezone", "Asia/Shanghai") if isinstance(run_schedule.data, dict) else "Asia/Shanghai",
+                recurrence=run_schedule.data.get("recurrence") if isinstance(run_schedule.data, dict) else None,
             )
             if next_run_at is not None:
                 data["next_run_at"] = int(next_run_at.timestamp() * 1000)
@@ -692,6 +695,7 @@ class WorkflowRunScheduleAPI:
                 next_run_at = get_next_run_time(
                     schedule.cron_expression,
                     schedule.data.get("timezone", "Asia/Shanghai") if isinstance(schedule.data, dict) else "Asia/Shanghai",
+                    recurrence=schedule.data.get("recurrence") if isinstance(schedule.data, dict) else None,
                 )
                 if next_run_at is not None:
                     item["next_run_at"] = int(next_run_at.timestamp() * 1000)
@@ -709,7 +713,10 @@ class WorkflowRunScheduleAPI:
     def update(self, payload):
         sid = payload.get("sid")
         wid = payload.get("wid")
-        cron_expression = (payload.get("cron_expression") or payload.get("schedule") or "").strip()
+        cron_expression = payload.get("cron_expression") or payload.get("schedule") or ""
+        if not isinstance(cron_expression, str):
+            return JResponse(status=400, msg="invalid cron expression")
+        cron_expression = cron_expression.strip()
         if not validate_cron_expression(cron_expression):
             return JResponse(status=400, msg="invalid cron expression")
 
@@ -730,13 +737,23 @@ class WorkflowRunScheduleAPI:
                 .order_by(WorkflowRunSchedule.create_time.desc())
                 .first()
             )
-            if run_schedule is None:
-                run_schedule = WorkflowRunSchedule.create(workflow=workflow)
-
-        schedule_data = run_schedule.data if isinstance(run_schedule.data, dict) else {}
+        schedule_data = deepcopy(run_schedule.data) if run_schedule and isinstance(run_schedule.data, dict) else {}
+        timezone_name = payload.get("timezone", schedule_data.get("timezone", "Asia/Shanghai"))
+        try:
+            if not isinstance(timezone_name, str) or not timezone_name:
+                raise ValueError("Invalid timezone")
+            ZoneInfo(timezone_name)
+            # Old clients changing the expression must not retain an unrelated calendar interval.
+            previous_rule = schedule_data.get("recurrence") if run_schedule and run_schedule.cron_expression == cron_expression else None
+            recurrence = normalize_recurrence(payload.get("recurrence", previous_rule))
+        except (ValueError, TypeError, ZoneInfoNotFoundError):
+            return JResponse(status=400, msg="invalid schedule recurrence or timezone")
+        if run_schedule is None:
+            run_schedule = WorkflowRunSchedule.create(workflow=workflow)
         schedule_data.update(
             {
-                "timezone": payload.get("timezone", schedule_data.get("timezone", "Asia/Shanghai")),
+                "timezone": timezone_name,
+                "recurrence": recurrence,
                 "source": "desktop",
             }
         )
@@ -756,6 +773,8 @@ class WorkflowRunScheduleAPI:
                 "sid": run_schedule.sid.hex,
                 "workflow": _serialize_workflow_summary(workflow),
                 "cron_expression": cron_expression,
+                "timezone": timezone_name,
+                "recurrence": recurrence,
             }
         )
 

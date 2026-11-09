@@ -43,58 +43,6 @@ def test_nested_configuration_and_secret_objects_are_redacted(monkeypatch):
     assert workflow_error_payload({"rid": "run", "status": "FAILED", "data": data})["failures"] == [failure]
 
 
-def test_failed_chat_projection_cannot_rollback_sqlite_run_records(tmp_path):
-    script = r'''
-import json
-import sys
-from copy import deepcopy
-from types import SimpleNamespace
-from unittest.mock import patch
-
-sys.path.insert(0, sys.argv[1])
-from models import Workflow as WorkflowModel, WorkflowRunRecord, create_tables, database
-from utilities.config import cache, config
-from utilities.workflow import Workflow
-from utilities.workflow_errors import add_failure, node_failure
-
-create_tables()
-workflow = WorkflowModel.create(title="chat projection persistence", data={"nodes": [], "edges": []})
-results = []
-try:
-    for operation in ("lookup", "save"):
-        data = {"nodes": [], "edges": []}
-        record = WorkflowRunRecord.create(workflow=workflow, data=data, status="RUNNING", run_from="CHAT")
-        data["rid"] = record.rid.hex
-        add_failure(data, node_failure(ValueError("original failure"), data, "failed-node", "tools.example"))
-
-        def broken(*args, **kwargs):
-            raise RuntimeError("chat projection unavailable")
-
-        message = SimpleNamespace(mid=record.rid, status="R", metadata={"record_id": record.rid.hex})
-        with patch("utilities.workflow_messages.Message.get_or_none",
-                   side_effect=broken if operation == "lookup" else lambda *args: message), \
-             patch("utilities.workflow_messages.Message.update", side_effect=broken):
-            assert Workflow(deepcopy(data)).report_workflow_status(500, "tools.example")
-        database.close()
-        saved = WorkflowRunRecord.get_by_id(record.rid)
-        assert saved.status == "FAILED"
-        assert saved.data["failures"][0]["message"] == "original failure"
-        results.append(operation)
-    print(json.dumps(results))
-finally:
-    cache.close()
-    database.close()
-    config.close()
-'''
-    environment = {key: value for key, value in os.environ.items()
-                   if key not in ("VECTORVEIN_LLM_SETTINGS_FILE", "VECTORVEIN_OUTPUT_DIR")}
-    process = subprocess.run([sys.executable, "-X", "utf8", "-c", script, str(CLI.parent)],
-                             cwd=tmp_path, env=environment, capture_output=True, text=True,
-                             encoding="utf-8", timeout=120)
-    assert process.returncode == 0, process.stderr + process.stdout
-    assert '["lookup", "save"]' in process.stdout
-
-
 def programming_node(identity, code, **inputs):
     fields = {name: {"value": value, "type": "str"} for name, value in inputs.items()}
     fields.update(language={"value": "python"}, code={"value": code})

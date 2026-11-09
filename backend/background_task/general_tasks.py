@@ -4,15 +4,11 @@
 # General Celery tasks (non-Qdrant tasks)
 
 from celery_worker import app, timer
-from vv_llm.types import BackendType
-from vv_llm.chat_clients.utils import format_messages
 
 from models import Workflow, WorkflowTemplate
 from utilities.general import mprint_with_name
-from utilities.config import cache
 from utilities.ai_utils import (
     ToolCallData,
-    conversation_title_generator,
 )
 
 mprint = mprint_with_name(name="General Tasks")
@@ -47,28 +43,3 @@ def update_workflow_tool_call_data(
         mprint.error(f"Failed to update tool call data: {e}")
         self.retry(countdown=60, max_retries=3)
         return False
-
-
-@app.task(bind=True)
-@timer
-def summarize_conversation_title(
-    self,
-    message_id: str,
-    messages: list,
-    backend: BackendType = BackendType.OpenAI,
-    model: str = "gpt-5-nano",
-):
-    """Summarize conversation title"""
-    try:
-        formatted_messages = format_messages(messages=messages, backend=backend)
-        conversation_title = conversation_title_generator(formatted_messages, backend=backend, model=model)
-        if conversation_title:
-            conversation_title = conversation_title[:40]
-        cache.set(f"conversation-title:{message_id}", conversation_title, expire=60 * 60)
-
-        mprint(f"Generated conversation title for message: {message_id}")
-        return conversation_title
-    except Exception as e:
-        mprint.error(f"Failed to generate conversation title: {e}")
-        self.retry(countdown=60, max_retries=3)
-        return None

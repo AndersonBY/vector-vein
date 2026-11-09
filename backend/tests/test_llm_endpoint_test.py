@@ -170,7 +170,7 @@ def test_native_anthropic_uses_explicit_key_and_extracts_only_text(monkeypatch):
     payload["endpoint"].update(api_key="draft-key", endpoint_type="anthropic")
     assert probe.run_model_endpoint_test(payload) == {"content": "worked", "reasoning_content": "thought"}
     request = captured[0][1]
-    assert request.headers["x-api-key"] == "draft-key"
+    assert request.headers["authorization"] == "Bearer draft-key"
     assert "ambient" not in str(request.headers)
     assert str(request.url) == "https://draft.invalid/v1/messages"
 

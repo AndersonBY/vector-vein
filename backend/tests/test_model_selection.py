@@ -50,9 +50,32 @@ def test_settings_api_keeps_saved_presets_when_new_selection_is_invalid(monkeypa
         database.create_tables([Setting])
         setting = Setting.create(data={"model_preferences": {}})
         payload = {"id": setting.id, "data": {"llm_settings": {"backends": {"openai": {"models": {"good": {}}}}},
-            "model_preferences": {"default": {"model_provider": "OpenAI", "model": "good"}}}}
+            "model_preferences": {"default": {"model_provider": "OpenAI", "model": "good", "reasoning_effort": "high"}}, "task_agent_approval": {"model_provider": "OpenAI", "model": "good"}}}
         assert user_api.SettingAPI().update(payload)["status"] == 200
+        assert Setting.get_by_id(setting.id).data["model_preferences"]["default"]["reasoning_effort"] == "high"
+        payload["data"]["model_preferences"]["default"]["reasoning_effort"] = "unknown"
+        assert user_api.SettingAPI().update(payload)["status"] == 400
+        assert Setting.get_by_id(setting.id).data["model_preferences"]["default"]["reasoning_effort"] == "high"
+        payload["data"]["model_preferences"]["default"]["reasoning_effort"] = "high"
+        assert Setting.get_by_id(setting.id).data["task_agent_approval"]["model"] == "good"
+        payload["data"]["task_agent_approval"]["model"] = "missing"
+        assert user_api.SettingAPI().update(payload)["status"] == 400
+        assert Setting.get_by_id(setting.id).data["task_agent_approval"]["model"] == "good"
+        payload["data"]["task_agent_approval"]["model"] = "good"
         payload["data"]["model_preferences"]["default"]["model"] = "missing"
         assert user_api.SettingAPI().update(payload)["status"] == 400
         assert Setting.get_by_id(setting.id).data["model_preferences"]["default"]["model"] == "good"
     database.close()
+
+
+def test_approval_reviewer_is_separate_and_validated():
+    data = {"llm_settings": {"backends": {"local": {"models": {"reviewer": {"enabled": True}}}}},
+            "task_agent_approval": {"model_provider": "local", "model": "reviewer"}}
+    validate_model_preferences(data)
+    assert "model_preferences" not in data
+    for selection in ({"model_provider": "local", "model": "missing"}, {"model_provider": "local"}, {"model": 123}, {"model_provider": "local", "model": "reviewer", "api_key": "unexpected"}, []):
+        data["task_agent_approval"] = selection
+        with pytest.raises(ValueError):
+            validate_model_preferences(data)
+    data["task_agent_approval"] = {"model_provider": "", "model": ""}
+    validate_model_preferences(data)

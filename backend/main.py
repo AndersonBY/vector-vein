@@ -15,9 +15,8 @@ from bootstrap import APP_ROOT
 from utilities.config import config, cache
 from models import create_tables, run_migrations
 from celery_worker import CeleryWorkerManager
-from chat_server.server import WebSocketServer
+from workflow_stream.server import WebSocketServer
 from fastapi_server import FastAPIServer
-from background_task.qdrant_tasks import close_qdrant_client
 from tts_server.server import tts_server
 from utilities.file_processing import static_file_server
 from utilities.general import LogServer, mprint
@@ -108,25 +107,19 @@ class MainServer:
             WorkflowRunRecordAPI,
             WorkflowRunScheduleAPI,
         )
-        from api.vector_database_api import DatabaseAPI, DatabaseObjectAPI
+        from api.knowledge_base_api import KnowledgeBaseAPI
         from api.relational_database_api import (
             RelationalDatabaseAPI,
             RelationalDatabaseTableAPI,
             RelationalDatabaseTableRecordAPI,
         )
-        from api.agent_api import (
-            AudioAPI,
-            AgentAPI,
-            MessageAPI,
-            ConversationAPI,
-        )
         from api.user_api import (
             LogAPI,
             SettingAPI,
-            HardwareAPI,
             ShortcutAPI,
         )
         from api.remote_api import OfficialSiteAPI
+        from api.task_agent_api import TaskAgentAPI
 
         api_class_list = [
             WorkflowAPI,
@@ -134,20 +127,15 @@ class MainServer:
             WorkflowTemplateAPI,
             WorkflowRunRecordAPI,
             WorkflowRunScheduleAPI,
-            DatabaseAPI,
-            DatabaseObjectAPI,
+            KnowledgeBaseAPI,
             RelationalDatabaseAPI,
             RelationalDatabaseTableAPI,
             RelationalDatabaseTableRecordAPI,
             SettingAPI,
             OfficialSiteAPI,
-            AudioAPI,
-            AgentAPI,
-            MessageAPI,
-            ConversationAPI,
-            HardwareAPI,
             ShortcutAPI,
             LogAPI,
+            TaskAgentAPI,
         ]
 
         mprint("Registering API classes...")
@@ -227,6 +215,13 @@ class MainServer:
         cache.set("api_server_host", self.api_server.host)
         cache.set("api_server_port", self.api_server.actual_port)
         cache.set("api_server_url", f"http://{self.api_server.host}:{self.api_server.actual_port}")
+        from knowledge_base import knowledge_service
+        try:
+            knowledge_service().start()
+        except Exception:
+            mprint.warning("Knowledge bases are unavailable (knowledge_unavailable). Retry from Knowledge bases.")
+        from task_agent.service import task_agent_service
+        task_agent_service().scheduler.start()
 
         # Configure WebView URL - use FastAPI server to serve frontend
         if self.DEBUG:
@@ -267,8 +262,13 @@ class MainServer:
             x=config.get("window.x", 0),
             y=config.get("window.y", 0),
             on_top=config.get("window.on_top", False),
-            confirm_close=True,
+            confirm_close=False,
         )
+        from utilities.desktop_window import DesktopWindowController
+        self.desktop_window = DesktopWindowController(self.window)
+        self.window.events.before_show += self.desktop_window.start
+        self.window.events.closing += self.desktop_window.on_closing
+        self.window.events.closed += self.terminate
 
     def terminate(self):
         """Terminate all services"""
@@ -278,8 +278,14 @@ class MainServer:
         self._terminating = True
         mprint("Terminating...")
         try:
-            # Stop FastAPI server
+            if hasattr(self, "desktop_window"):
+                self.desktop_window.stop()
+            from task_agent.service import stop_task_agent_service
+            stop_task_agent_service()
+            # Revoke retrieval and drain requests before closing their index owner.
             self.api_server.stop()
+            from knowledge_base import stop_knowledge_service
+            stop_knowledge_service()
 
             # Stop Celery worker manager
             if hasattr(self, "celery_worker_manager"):
@@ -295,7 +301,6 @@ class MainServer:
             self.ws_server.stop()
             self.log_server.stop()
             self.tts_server.terminate()
-            close_qdrant_client()
             self.window = None
 
             mprint("Terminated.")
@@ -330,7 +335,6 @@ class MainServer:
         """Bind event handlers to window"""
         drop_event = getattr(window.dom.document.events, "drop")
         drop_event += DOMEventHandler(MainServer.on_drop)
-        window.events.closed += self.terminate
         window.events.resized += MainServer.on_resized
         window.events.moved += MainServer.on_moved
 

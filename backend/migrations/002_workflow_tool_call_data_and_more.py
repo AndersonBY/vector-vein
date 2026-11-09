@@ -39,30 +39,17 @@ with suppress(ImportError):
 def migrate(migrator: Migrator, database: pw.Database, *, fake=False):
     """Write your migrations here."""
 
-    migrator.add_index("agent", "aid", unique=True)
-
-    migrator.add_index("conversation", "cid", unique=True)
-
-    migrator.add_index("message", "mid", unique=True)
-
     migrator.add_fields("workflow", tool_call_data=pw.TextField(default="{}"))
 
     migrator.add_fields(
         "workflowrunrecord",
         run_from=pw.CharField(default="WEB", max_length=16),
-        source_message=pw.UUIDField(null=True),
     )
 
 
 def rollback(migrator: Migrator, database: pw.Database, *, fake=False):
     """Write your rollback migrations here."""
 
-    migrator.remove_fields("workflowrunrecord", "run_from", "source_message")
+    migrator.remove_fields("workflowrunrecord", "run_from")
 
     migrator.remove_fields("workflow", "tool_call_data")
-
-    migrator.drop_index("message", "mid")
-
-    migrator.drop_index("conversation", "cid")
-
-    migrator.drop_index("agent", "aid")

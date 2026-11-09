@@ -1,196 +1,150 @@
 # @Author: Bi Ying
 # @Date:   2023-04-13 15:45:13
+"""Saved vector workflow nodes backed by managed knowledge bases."""
 import time
+from uuid import uuid4
 
 from worker.tasks import task, timer
 from utilities.workflow import Workflow
-from utilities.general import mprint_with_name
-from utilities.ai_utils import EmbeddingClient
-from utilities.text_processing import split_text, remove_markdown_image
-
-# Import directly from the task modules to avoid circular import
-from background_task.qdrant_tasks import (
-    embedding_and_upload,
-    q_delete_point as delete_point,
-    search_points_sync,
-)
-from models import UserObject, UserVectorDatabase
+from utilities.text_processing import remove_markdown_image
 
 
-mprint = mprint_with_name(name="Vector Database Tasks")
+PROCESSING_TIMEOUT = 300
+PROCESSING_POLL_INTERVAL = 1
+
+
+def knowledge_service():
+    from knowledge_base import knowledge_service as get_service
+
+    return get_service()
+
+
+def _strings(value, field):
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list) and all(isinstance(item, str) for item in value):
+        return value
+    raise ValueError(f"{field} must be a string or a list of strings")
+
+
+def _item(service, kb_id, document_id):
+    item = service.dispatch("get_item", {"kb_id": kb_id, "id": document_id})
+    if item["kb_id"] != kb_id or item["id"] != document_id or item["kind"] != "file":
+        raise ValueError("The document does not belong to the selected knowledge base")
+    return item
+
+
+def _wait_for_processing(service, kb_id, document_ids):
+    deadline = time.monotonic() + PROCESSING_TIMEOUT
+    pending = set(document_ids)
+    while pending:
+        for document_id in tuple(pending):
+            item = _item(service, kb_id, document_id)
+            status = item["status"]
+            if status == "ready":
+                pending.remove(document_id)
+            elif status in ("failed", "unindexed"):
+                raise RuntimeError(
+                    f"Knowledge document {document_id} is {status}. "
+                    "Check its indexing status in Knowledge bases and explicitly reindex it before retrying."
+                )
+            elif status not in ("queued", "indexing"):
+                raise RuntimeError(f"Knowledge document {document_id} has an unsupported indexing status")
+        if not pending:
+            return
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError(
+                "Knowledge base indexing timed out. Check document status in Knowledge bases; "
+                "retry failed documents with Reindex before running dependent search nodes."
+            )
+        time.sleep(min(PROCESSING_POLL_INTERVAL, remaining))
 
 
 @task
 @timer
-def add_data(
-    workflow_data: dict,
-    node_id: str,
-):
+def add_data(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
     raw_text = workflow.get_node_field_value(node_id, "text")
-    raw_content_title = workflow.get_node_field_value(node_id, "content_title")
-    raw_source_url = workflow.get_node_field_value(node_id, "source_url")
-
-    split_method = workflow.get_node_field_value(node_id, "split_method")
-    chunk_length = workflow.get_node_field_value(node_id, "chunk_length")
-    chunk_overlap = workflow.get_node_field_value(node_id, "chunk_overlap", 30)
-    delimiter = workflow.get_node_field_value(node_id, "delimiter", "\\n")
-    remove_url_and_email = workflow.get_node_field_value(node_id, "remove_url_and_email", True)
-    process_rules = {
-        "split_method": split_method,
-        "chunk_length": chunk_length,
-        "chunk_overlap": chunk_overlap,
-        "delimiter": delimiter,
-        "remove_url_and_email": remove_url_and_email,
-    }
-
-    data_type = workflow.get_node_field_value(node_id, "data_type")
-    wait_for_processing = workflow.get_node_field_value(node_id, "wait_for_processing", False)
-
-    if isinstance(raw_text, str):
-        texts = [raw_text]
-    else:
-        texts = raw_text
-    if isinstance(raw_content_title, str):
-        content_titles = [raw_content_title]
-    else:
-        content_titles = raw_content_title
-    if isinstance(raw_source_url, str):
-        source_urls = [raw_source_url]
-    else:
-        source_urls = raw_source_url
-
-    if not (len(texts) == len(content_titles) == len(source_urls)):
-        max_length = max(len(texts), len(content_titles), len(source_urls))
-        if len(texts) == 1:
-            texts = texts * max_length
-        if len(content_titles) == 1:
-            content_titles = content_titles * max_length
-        if len(source_urls) == 1:
-            source_urls = source_urls * max_length
-        if not (len(texts) == len(content_titles) == len(source_urls)):
-            raise ValueError(
-                "Batch text, content_title, and source_url values must have equal lengths after single-value expansion"
-            )
-
-    database_vid = workflow.get_node_field_value(node_id, "database")
-    vector_database = UserVectorDatabase.get(vid=database_vid)
-
-    data_count = len(texts)
-    object_ids = []
-    content_length = 0
-    for index, (text, content_title, source_url) in enumerate(zip(texts, content_titles, source_urls)):
-        mprint(f"Adding data {index + 1}/{data_count} to database {database_vid}")
-        text = remove_markdown_image(text)
-        content_length += len(text)
-
-        user_object = UserObject.create(
-            title=content_title,
-            info=dict(),
-            data_type=data_type.upper(),
-            vector_database=vector_database,
-            source_url=source_url,
-            raw_data={
-                "text": text,
-                "title": content_title,
-                "source_url": source_url,
-            },
-            embeddings=list(),
+    raw_title = workflow.get_node_field_value(node_id, "content_title")
+    raw_source = workflow.get_node_field_value(node_id, "source_url", "")
+    values = [_strings(raw_text, "text"), _strings(raw_title, "content_title"),
+              _strings(raw_source, "source_url")]
+    length = max(map(len, values))
+    texts, titles, sources = [value * length if len(value) == 1 else value for value in values]
+    if not len(texts) == len(titles) == len(sources):
+        raise ValueError(
+            "Batch text, content_title, and source_url values must have equal lengths after single-value expansion"
         )
-        object_id = user_object.oid.hex
-        object_ids.append(object_id)
-
-        paragraphs = split_text(text=text, rules=process_rules, flat=False)
-        embedding_and_upload.delay(
-            vid=vector_database.vid.hex,
-            object_id=user_object.oid.hex,
-            input=[paragraph["text"] for paragraph in paragraphs],
-            embedding_provider=vector_database.embedding_provider,
-            embedding_model=vector_database.embedding_model,
-            embedding_dimensions=vector_database.embedding_size,
-            embedding_type=user_object.data_type.lower(),
-        )
-
-        user_object.info["word_counts"] = sum([paragraph["word_counts"] for paragraph in paragraphs])
-        user_object.info["paragraph_counts"] = len(paragraphs)
-        user_object.info["process_rules"] = process_rules
-        user_object.raw_data["segments"] = paragraphs
-        user_object.save()
-
-    all_objects_processed = False
-    sleep_interval = content_length // 10000 + 1
-    while not all_objects_processed and wait_for_processing:
-        time.sleep(sleep_interval)
-        user_objects = UserObject.select().where(UserObject.oid.in_(object_ids))
-        all_objects_processed = all(user_object.status != "PR" for user_object in user_objects)
-        mprint.debug(f"Waiting for all objects to be processed: {object_ids}")
-        mprint.debug(f"Next check in {sleep_interval} seconds")
-
-    if all(
-        (
-            isinstance(raw_text, str),
-            isinstance(raw_content_title, str),
-            isinstance(raw_source_url, str),
-        )
-    ):
-        workflow.update_node_field_value(node_id, "object_id", object_ids[0])
-    else:
-        workflow.update_node_field_value(node_id, "object_id", object_ids)
-
+    kb_id = workflow.get_node_field_value(node_id, "database")
+    service = knowledge_service()
+    document_ids = []
+    for text, title, source in zip(texts, titles, sources):
+        payload = {
+            "kb_id": kb_id, "name": title, "text": remove_markdown_image(text), "source_url": source,
+        }
+        try:
+            item = service.dispatch("add_text", payload)
+        except ValueError as exc:
+            if getattr(exc, "code", None) != "name_conflict":
+                raise
+            # Saved workflows may reuse a title; KB sibling names must be unique.
+            payload["name"] = f"{title[:205]} ({uuid4().hex})"
+            item = service.dispatch("add_text", payload)
+        document_ids.append(item["id"])
+    if workflow.get_node_field_value(node_id, "wait_for_processing", False):
+        _wait_for_processing(service, kb_id, document_ids)
+    scalar = all(isinstance(value, str) for value in (raw_text, raw_title, raw_source))
+    workflow.update_node_field_value(node_id, "object_id", document_ids[0] if scalar else document_ids)
     return workflow.data
 
 
 @task
 @timer
-def delete_data(
-    workflow_data: dict,
-    node_id: str,
-):
+def delete_data(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
-    object_id = workflow.get_node_field_value(node_id, "object_id")
-    database_vid = workflow.get_node_field_value(node_id, "database")
-    user_object = UserObject.get(oid=object_id)
-    delete_point.delay(vid=database_vid, object_id=object_id)
-    user_object.delete_instance(recursive=True)
+    document_ids = _strings(workflow.get_node_field_value(node_id, "object_id"), "object_id")
+    kb_id = workflow.get_node_field_value(node_id, "database")
+    service = knowledge_service()
+    # Validate the whole batch before deleting any document.
+    items = [_item(service, kb_id, document_id) for document_id in dict.fromkeys(document_ids)]
+    for item in items:
+        service.dispatch("delete_item", {
+            "kb_id": kb_id, "id": item["id"], "expected_updated_at": item["updated_at"],
+        })
     workflow.update_node_field_value(node_id, "delete_success", True)
     return workflow.data
 
 
 @task
 @timer
-def search_data(
-    workflow_data: dict,
-    node_id: str,
-):
+def search_data(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
-    search_text = workflow.get_node_field_value(node_id, "search_text")
+    raw_query = workflow.get_node_field_value(node_id, "search_text")
+    queries = _strings(raw_query, "search_text")
     output_type = workflow.get_node_field_value(node_id, "output_type")
-    database_vid = workflow.get_node_field_value(node_id, "database")
-    vector_database: UserVectorDatabase = UserVectorDatabase.get(vid=database_vid)
+    if output_type not in ("text", "list"):
+        raise ValueError("output_type must be text or list")
+    kb_id = workflow.get_node_field_value(node_id, "database")
     count = workflow.get_node_field_value(node_id, "count")
-
-    if isinstance(search_text, str):
-        search_texts = [search_text]
-    elif isinstance(search_text, list):
-        search_texts = search_text
-    else:
-        raise ValueError(f"Unsupported search_text type: {type(search_text)}")
-
-    embedding_client = EmbeddingClient(provider=vector_database.embedding_provider, model_id=vector_database.embedding_model)
-
-    results = []
-    for text in search_texts:
-        text_embedding = embedding_client.get(text)
-        search_results = search_points_sync(
-            vid=database_vid,
-            text_embedding=text_embedding,
-            limit=count,
-        )
-
-        if output_type == "text":
-            results.append("\n".join([result["text"] for result in search_results]))
-        elif output_type == "list":
-            results.append([result["text"] for result in search_results])
-
-    workflow.update_node_field_value(node_id, "output", results if isinstance(search_text, list) else results[0])
+    service = knowledge_service()
+    outputs = []
+    for query in queries:
+        response = service.dispatch("search", {
+            "kb_ids": [kb_id], "query": query, "mode": "hybrid", "limit": count,
+        })
+        if any(result["kb_id"] != kb_id for result in response["results"]):
+            raise RuntimeError("Knowledge search returned a document outside the selected knowledge base")
+        if not response["results"] and any(
+            warning.get("error_code") in ("semantic_unavailable", "index_incomplete", "unindexed")
+            for warning in response.get("warnings", [])
+        ):
+            raise RuntimeError(
+                "Knowledge search is unavailable or document indexing is incomplete. "
+                "Check the embedding model settings and document status in Knowledge bases; "
+                "wait for processing or use Reindex, then retry."
+            )
+        texts = [result["text"] for result in response["results"]]
+        outputs.append("\n".join(texts) if output_type == "text" else texts)
+    workflow.update_node_field_value(node_id, "output", outputs if isinstance(raw_query, list) else outputs[0])
     return workflow.data

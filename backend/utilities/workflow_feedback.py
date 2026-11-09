@@ -1,12 +1,14 @@
 """Durable HumanFeedback checkpoints for the local workflow runner."""
 from copy import deepcopy
+import hashlib
+import json
 
-from models import WorkflowRunRecord, Message
+from models import WorkflowRunRecord
 from utilities.config import cache
 from utilities.workflow_timeline import merge_timeline
 
 
-CHECKPOINT_FIELDS = ("pending_feedback_nodes", "pending_feedback_runs", "feedback_answers", "feedback_generation", "_feedback_waiting", "feedback_resume_ready")
+CHECKPOINT_FIELDS = ("pending_feedback_nodes", "pending_feedback_runs", "feedback_answers", "feedback_generation", "_feedback_waiting", "feedback_resume_ready", "feedback_submissions")
 
 
 class WorkflowPaused(Exception):
@@ -37,14 +39,6 @@ def request_pause(data, node_id=None, child_rid=None):
                 data[key] = deepcopy(saved[key])
 
 
-def _project_pause(record):
-    if record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
-        message = Message.get_or_none(Message.mid == record.source_message)
-        if message and message.status == Message.StatusTypes.RUNNING_WORKFLOW:
-            message.metadata = {**message.metadata, "recordStatus": "PAUSED"}
-            message.save()
-
-
 def finish_pausing(rid):
     """Called under the admission transaction, after checkpoint snapshots are saved."""
     from utilities.workflow_stopping import _record, _key
@@ -60,21 +54,20 @@ def finish_pausing(rid):
     if changed:
         cache.set(f"workflow:record:{rid}", 102, 60 * 60)
         record.status, record.data = "PAUSED", data
-        try:
-            _project_pause(record)
-        except Exception:
-            pass
         parent = cache.get(_key(rid, "parent"))
         if parent:
             request_pause({"rid": parent}, child_rid=rid)
             finish_pausing(parent)
 
 
-def _activate(record, answers):
+def _activate(record, answers, submission=None):
     data = deepcopy(record.data)
     from utilities.workflow_recovery import claim_execution
     claim_execution(data)
     data.setdefault("feedback_answers", {}).update(answers)
+    if submission is not None:
+        key, receipt = submission
+        data.setdefault("feedback_submissions", {})[key] = receipt
     for node in data.get("nodes", []):
         if node["id"] in answers:
             node["data"]["template"].setdefault("human_input", {})["value"] = answers[node["id"]]
@@ -83,14 +76,6 @@ def _activate(record, answers):
     WorkflowRunRecord.update(status="RUNNING", data=data, end_time=None).where(
         WorkflowRunRecord.rid == record.rid, WorkflowRunRecord.status == "PAUSED").execute()
     cache.set(f"workflow:record:{record.rid.hex}", 202, 60 * 60)
-    if record.run_from == WorkflowRunRecord.RunFromTypes.CHAT:
-        try:
-            message = Message.get_or_none(Message.mid == record.source_message)
-            if message and message.status == Message.StatusTypes.RUNNING_WORKFLOW:
-                message.metadata = {**message.metadata, "recordStatus": "RUNNING"}
-                message.save()
-        except Exception:
-            pass
     return data
 
 
@@ -110,19 +95,25 @@ def _dispatch(data):
                     WorkflowRunRecord.rid == record.rid, WorkflowRunRecord.status == "RUNNING").execute()
                 cache.set(f"workflow:record:{data['rid']}", 102, 60 * 60)
                 record.status, record.data = "PAUSED", restored
-                try:
-                    _project_pause(record)
-                except Exception:
-                    pass
         raise
 
 
-def resume_run(rid, submissions):
+def resume_run(rid, submissions, *, expected_generation=None, submission_id=None):
     from utilities.workflow_stopping import _record, _key
     with cache.transact():
         record = _record(rid)
         if record is None:
             return 404, "record not found", None
+        receipt = None
+        if submission_id is not None:
+            if not isinstance(submission_id, str) or not 1 <= len(submission_id) <= 128 or type(expected_generation) is not int:
+                return 400, "invalid feedback identity", record
+            receipt = {"generation": expected_generation, "digest": hashlib.sha256(json.dumps(submissions, sort_keys=True, ensure_ascii=False).encode()).hexdigest()}
+            previous = record.data.get("feedback_submissions", {}).get(submission_id)
+            if previous is not None:
+                return (200, record.status, record) if previous == receipt else (409, "feedback identity conflict", record)
+        if expected_generation is not None and record.data.get("feedback_generation", 0) != expected_generation:
+            return 409, "workflow checkpoint changed", record
         if record.status != "PAUSED" or cache.get(_key(rid, "active"), 0):
             return 409, "only a drained paused run can be resumed", record
         pending = record.data.get("pending_feedback_nodes", [])
@@ -145,7 +136,7 @@ def resume_run(rid, submissions):
             answers[node_id] = content
         if set(answers) != set(pending):
             return 400, "feedback is required for every pending node", record
-        data = _activate(record, answers)
+        data = _activate(record, answers, (submission_id, receipt) if receipt is not None else None)
     try:
         _dispatch(data)
     except Exception:

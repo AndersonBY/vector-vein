@@ -16,9 +16,13 @@ def validate_model_preferences(data):
     if not isinstance(preferences, dict) or set(preferences) - {"default", "high_performance", "low_cost"}:
         raise ValueError("Invalid model presets")
     backends = data.get("llm_settings", {}).get("backends", {})
-    for preset in preferences.values():
+    reviewer = data.get("task_agent_approval", {})
+    if not isinstance(reviewer, dict) or set(reviewer) - {"model_provider", "model"}:
+        raise ValueError("Invalid Task Agent approval model")
+    for preset in [*preferences.values(), reviewer]:
         if not isinstance(preset, dict):
             raise ValueError("Each model preset must be an object")
+        parse_reasoning_effort(preset.get("reasoning_effort"))
         provider, model = preset.get("model_provider", ""), preset.get("model", "")
         if not isinstance(provider, str) or not isinstance(model, str):
             raise ValueError("Model presets require string provider and model values")

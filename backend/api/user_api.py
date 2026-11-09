@@ -4,7 +4,9 @@
 # @Last Modified by:   Bi Ying
 # @Last Modified time: 2024-07-13 12:05:07
 import json
+import os
 import time
+import tempfile
 from copy import deepcopy
 from pathlib import Path
 from typing import Any
@@ -13,63 +15,14 @@ import webview
 from vv_llm.types import EndpointSetting
 
 from .utils import JResponse
-from models import Setting, Conversation, Agent, model_serializer
+from models import Setting, model_serializer
 from utilities.general import LogServer
-from tts_server.server import tts_server
-from utilities.media_processing import Microphone
-from utilities.media_processing import get_screenshot
 from utilities.file_processing.files import read_file_content
 from utilities.config import config, Settings, cache, DEFAULT_SETTINGS
-from utilities.config.settings import normalize_embedding_backends, update_llm_settings_to_v2
+from utilities.config.settings import normalize_embedding_backends, update_llm_settings_to_v2, validate_rerank_settings
 from utilities.llm_endpoint_test import run_model_endpoint_test
+from utilities.retrieval_model_test import RetrievalTestError, run_retrieval_model_test
 from utilities.workflow_errors import redact_message
-
-
-def start_chat(agent_id: str, continue_chat: bool = False, with_screenshot: bool = False):
-    if continue_chat:
-        agent = Agent.select().where(Agent.aid == agent_id).first()
-        conversation = (
-            Conversation.select().where(Conversation.agent == agent).order_by(Conversation.update_time.desc()).first()
-        )
-        conversation_id = conversation.cid.hex
-        if not conversation_id:
-            router_push_params = json.dumps({"name": "conversationNew", "params": {"agentId": agent_id}})
-        else:
-            router_push_params = json.dumps(
-                {"name": "conversationDetail", "params": {"agentId": agent_id, "conversationId": conversation_id}}
-            )
-    else:
-        router_push_params = json.dumps({"name": "conversationNew", "params": {"agentId": agent_id}})
-
-    has_start_recording = cache.get("has_start_recording")
-    if not has_start_recording and with_screenshot:
-        settings = Settings()
-        monitor_number = int(settings.get("agent.screenshot_monitor_device", 0))
-        screen_shot_path = [get_screenshot(output_type="file_path", monitor_number=monitor_number)]
-        cache.set(f"screen_shot_path_{agent_id}", screen_shot_path, expire=600)
-    else:
-        screen_shot_path = cache.get(f"screen_shot_path_{agent_id}", []) if with_screenshot else []
-
-    function_name = "start_recording" if not has_start_recording else "stop_recording"
-    window = webview.windows[0]
-    window.evaluate_js(f"window.router.push({router_push_params})")
-    window.evaluate_js(
-        f"""
-        const mainFunction = async () => {{
-            while (!window.{function_name} || !window.setAttachments) {{
-                await new Promise((resolve) => setTimeout(resolve, 100))
-            }}
-            window.setAttachments({json.dumps(screen_shot_path)})
-            {function_name}({{auto_stop: true}})
-        }}
-        mainFunction()
-        """
-    )
-    if has_start_recording:
-        cache.delete("has_start_recording")
-        cache.delete(f"screen_shot_path_{agent_id}")
-    else:
-        cache.set("has_start_recording", True, expire=600)
 
 
 def push_route(route_name: str, params: dict | None = None, query: dict | None = None):
@@ -142,21 +95,7 @@ def _scan_recent_files(roots: list[Path], limit: int = 24):
 
 
 def register_shortcuts(shortcuts: dict | None = None):
-    """Register shortcuts and restart shortcuts_listener.
-
-    Args:
-        shortcuts (dict | None, optional): Should be a dict like:
-        ```python
-        {
-            "agent1_id": {
-                "new_chat_with_agent": "<shortcuts combo>",
-                "new_chat_with_agent_with_screenshot": "<shortcuts combo>",
-                "continue_chat_with_agent": "<shortcuts combo>",
-                "continue_chat_with_agent_with_screenshot": "<shortcuts combo>"
-            }
-        }
-        ```
-    """
+    """Register global workspace shortcuts."""
     # Import desktop input hooks only when registering or recording shortcuts.
     from utilities.shortcuts import shortcuts_listener
 
@@ -167,43 +106,85 @@ def register_shortcuts(shortcuts: dict | None = None):
         _shortcuts = shortcuts
     shortcuts_listener.clear_hotkeys()
     global_shortcut_actions = {
+        "open_task_agent": lambda: push_route("taskAgentWorkbench"),
         "open_workflow_space": lambda: push_route("WorkflowSpaceMain"),
         "open_schedule_manager": lambda: push_route("WorkflowScheduleManager"),
         "open_data_space": lambda: push_route("DataSpaceMain"),
     }
-    for agent_id, shortcut in _shortcuts.items():
-        if agent_id == "__global__":
-            for action_name, callback in global_shortcut_actions.items():
-                combo = shortcut.get(action_name)
-                if combo:
-                    shortcuts_listener.register_hotkeys(combo, callback)
-            continue
-
-        if shortcut.get("new_chat_with_agent"):
-            shortcuts_listener.register_hotkeys(
-                shortcut["new_chat_with_agent"],
-                lambda current_agent_id=agent_id: start_chat(current_agent_id),
-            )
-        if shortcut.get("new_chat_with_agent_with_screenshot"):
-            shortcuts_listener.register_hotkeys(
-                shortcut["new_chat_with_agent_with_screenshot"],
-                lambda current_agent_id=agent_id: start_chat(current_agent_id, with_screenshot=True),
-            )
-        if shortcut.get("continue_chat_with_agent"):
-            shortcuts_listener.register_hotkeys(
-                shortcut["continue_chat_with_agent"],
-                lambda current_agent_id=agent_id: start_chat(current_agent_id, continue_chat=True),
-            )
-        if shortcut.get("continue_chat_with_agent_with_screenshot"):
-            shortcuts_listener.register_hotkeys(
-                shortcut["continue_chat_with_agent_with_screenshot"],
-                lambda current_agent_id=agent_id: start_chat(current_agent_id, continue_chat=True, with_screenshot=True),
-            )
+    for action_name, callback in global_shortcut_actions.items():
+        combo = _shortcuts.get("__global__", {}).get(action_name)
+        if combo:
+            shortcuts_listener.register_hotkeys(combo, callback)
     shortcuts_listener.restart()
+
+
+_ENDPOINT_SECRET_FIELDS = ("api_key", "credentials", "access_token", "headers", "proxy")
+
+
+def settings_for_ui(data):
+    result = deepcopy(data)
+    if os.environ.get("VECTORVEIN_LLM_SETTINGS_FILE"):
+        # External credentials are runtime-only, including when the UI caches or saves settings.
+        for endpoint in result.get("llm_settings", {}).get("endpoints", []):
+            hidden = [key for key in _ENDPOINT_SECRET_FIELDS if endpoint.get(key)]
+            endpoint["_saved_endpoint_id"] = endpoint["id"]
+            endpoint["_saved_secret_fields"] = hidden
+            for key in hidden:
+                endpoint[key] = {} if key in {"credentials", "headers"} else ""
+    return result
+
+
+def resolve_endpoint_draft(draft, saved_endpoints=None):
+    endpoint = deepcopy(draft)
+    reference = endpoint.pop("_saved_endpoint_id", None)
+    fields = endpoint.pop("_saved_secret_fields", [])
+    if not fields:
+        return endpoint
+    if not isinstance(fields, list) or any(key not in _ENDPOINT_SECRET_FIELDS for key in fields):
+        raise ValueError("Invalid saved endpoint credential reference.")
+    if saved_endpoints is None:
+        try:
+            saved_endpoints = Settings().get("llm_settings", {}).get("endpoints", [])
+        except Exception:
+            raise ValueError("Unable to load saved endpoint configuration. Check the model settings file.") from None
+    saved = next((item for item in saved_endpoints if item.get("id") == reference), None)
+    if saved is None:
+        raise ValueError("Saved endpoint no longer exists. Reopen settings and enter its credentials.")
+    # Do not send stored credentials to a different destination from an edited draft.
+    for key, default in (("api_base", ""), ("endpoint_type", "default"), ("proxy", ""), ("headers", {})):
+        if not (key in fields and not endpoint.get(key)) and (endpoint.get(key) or default) != (saved.get(key) or default):
+            raise ValueError("Endpoint address, adapter, proxy or headers changed. Re-enter credentials before testing or saving.")
+    for key in fields:
+        if not endpoint.get(key):
+            endpoint[key] = deepcopy(saved.get(key))
+    return endpoint
+
+
+def save_external_llm_settings(llm_settings):
+    path = Path(os.environ["VECTORVEIN_LLM_SETTINGS_FILE"])
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent, delete=False) as stream:
+            temporary = Path(stream.name)
+            json.dump(llm_settings, stream, ensure_ascii=False, indent=2)
+            stream.write("\n")
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 class SettingAPI:
     name = "setting"
+
+    def test_notification(self, payload):
+        from utilities.desktop_notifications import send_notification
+        language = payload.get("language", "zh-CN")
+        if language not in {"zh-CN", "en-US"}:
+            return JResponse(status=400, msg="Invalid notification language")
+        body = "这是一条 VectorVein 测试通知。" if language == "zh-CN" else "This is a VectorVein test notification."
+        sent = send_notification("VectorVein", body)
+        return JResponse(status=200 if sent else 503, data={"submitted": sent}, msg="" if sent else "Desktop notifications unavailable")
 
     def attachment_image(self, payload):
         from utilities.attachment_preview import AttachmentPreviewError, attachment_image_url
@@ -222,7 +203,7 @@ class SettingAPI:
         else:
             setting = Setting.select().order_by(Setting.create_time.desc()).first()
         setting_payload = model_serializer(setting)
-        setting_payload["data"] = normalized_settings.data
+        setting_payload["data"] = settings_for_ui(normalized_settings.data)
         
         # Add API configuration to the response
         api_config = {
@@ -239,16 +220,52 @@ class SettingAPI:
     def update(self, payload):
         setting_id = payload.get("id")
         setting = Setting.get_by_id(setting_id)
-        setting_data = payload.get("data", {})
+        setting_data = deepcopy(payload.get("data", {}))
         if not isinstance(setting_data, dict):
             setting_data = {}
-        setting_data = update_llm_settings_to_v2(setting_data)
-        normalize_embedding_backends(setting_data)
+        if "notifications" in setting_data:
+            from utilities.desktop_notifications import validate_notification_settings
+            try:
+                setting_data["notifications"] = validate_notification_settings(setting_data["notifications"])
+            except ValueError:
+                return JResponse(status=400, msg="Invalid notification settings")
+        external = os.environ.get("VECTORVEIN_LLM_SETTINGS_FILE")
+        if external:
+            try:
+                current_llm = Settings().get("llm_settings", {})
+            except Exception:
+                return JResponse(status=500, msg="Unable to load saved endpoint configuration. Check the model settings file.")
+            try:
+                llm_settings = setting_data.get("llm_settings", {})
+                # Resolve references before vv-llm normalization drops UI-only fields.
+                llm_settings["endpoints"] = [resolve_endpoint_draft(item, current_llm.get("endpoints", []))
+                                             for item in llm_settings.get("endpoints", [])]
+            except ValueError as error:
+                return JResponse(status=400, msg=redact_message(error, {"credentials": setting_data}, include_settings=False))
+        try:
+            setting_data = update_llm_settings_to_v2(setting_data)
+            normalize_embedding_backends(setting_data)
+            validate_rerank_settings(setting_data)
+        except ValueError as error:
+            return JResponse(status=400, msg=redact_message(error, {"credentials": setting_data}, include_settings=False))
         from utilities.model_selection import validate_model_preferences
         try:
             validate_model_preferences(setting_data)
         except ValueError as error:
             return JResponse(status=400, msg=str(error))
+        if external:
+            try:
+                llm_settings = setting_data.get("llm_settings", {})
+                from vv_llm.settings import Settings as LlmSettings
+                LlmSettings.model_validate(llm_settings)
+                current = update_llm_settings_to_v2({"settings_version": 2, "llm_settings": deepcopy(current_llm)})
+                normalize_embedding_backends(current)
+                if llm_settings != current["llm_settings"]:
+                    save_external_llm_settings(llm_settings)
+            except Exception as error:
+                return JResponse(status=400 if isinstance(error, ValueError) else 500,
+                                 msg=redact_message(error, {"credentials": [setting_data, llm_settings]}, include_settings=False))
+            setting_data["llm_settings"] = deepcopy(setting.data.get("llm_settings", {}))
         setting.data = setting_data
         setting.save()
         config.save("data_path", setting.data.get("data_path", "./data"))
@@ -262,14 +279,39 @@ class SettingAPI:
         
         if payload.get("update_shortcuts"):
             register_shortcuts(setting.data.get("shortcuts", {}))
-        return JResponse(data=model_serializer(setting))
+        response = model_serializer(setting)
+        if os.environ.get("VECTORVEIN_LLM_SETTINGS_FILE"):
+            response["data"] = settings_for_ui(Settings().data)
+        return JResponse(data=response)
 
     def list(self, payload):
         settings = Setting.select().order_by(Setting.create_time.desc())
         settings_list = model_serializer(settings, many=True)
         return JResponse(data=settings_list)
 
+    def get_window_setting(self, payload):
+        from utilities.desktop_window import window_settings
+        return JResponse(data=window_settings())
+
+    def minimize_to_tray(self, payload):
+        from utilities.desktop_window import get_controller
+        controller = get_controller()
+        if controller is None:
+            return JResponse(status=503, msg="System tray unavailable")
+        try:
+            controller.minimize_to_tray()
+        except Exception:
+            return JResponse(status=503, msg="System tray unavailable")
+        return JResponse()
+
     def update_window_setting(self, payload):
+        if "close_action" in payload:
+            from utilities.desktop_window import save_close_action, window_settings
+            try:
+                save_close_action(payload["close_action"])
+            except ValueError:
+                return JResponse(status=400, msg="Invalid window close action")
+            return JResponse(data=window_settings())
         window = webview.windows[0]
         time.sleep(0.1)  # If we don't sleep, the window will get frozen. Have no idea.
         pin_window = payload.get("pin_window")
@@ -290,27 +332,40 @@ class SettingAPI:
         return JResponse(data={"port": port})
 
     def list_models(self, payload):
+        resolved = payload
         try:
-            base_url = payload.get("base_url")
-            api_key = payload.get("api_key")
-            endpoint = EndpointSetting(
-                id="test-endpoint",
-                api_base=base_url if isinstance(base_url, str) else None,
-                api_key=api_key if isinstance(api_key, str) else None,
-            )
+            resolved = resolve_endpoint_draft(payload["endpoint"]) if "endpoint" in payload else {
+                "id": "test-endpoint", "api_base": payload.get("base_url"), "api_key": payload.get("api_key"),
+            }
+            endpoint = EndpointSetting.model_validate(resolved)
             models = endpoint.model_list()
             return JResponse(data={"models": models})
         except Exception as error:
-            return JResponse(status=500, msg=redact_message(error, {"credentials": payload}, include_settings=False))
+            return JResponse(status=400 if isinstance(error, ValueError) else 500,
+                             msg=redact_message(error, {"credentials": [payload, resolved]}, include_settings=False))
 
     def test_model_endpoint(self, payload):
+        resolved = payload
         try:
-            return JResponse(data=run_model_endpoint_test(payload))
+            if isinstance(payload, dict) and isinstance(payload.get("endpoint"), dict):
+                resolved = {**payload, "endpoint": resolve_endpoint_draft(payload["endpoint"])}
+            return JResponse(data=run_model_endpoint_test(resolved))
         except Exception as error:
             return JResponse(
                 status=400 if isinstance(error, ValueError) else 502,
-                msg=redact_message(error, {"credentials": payload}, include_settings=False),
+                msg=redact_message(error, {"credentials": [payload, resolved]}, include_settings=False),
             )
+
+    def test_retrieval_model(self, payload):
+        try:
+            if isinstance(payload, dict) and isinstance(payload.get("endpoint"), dict):
+                payload = {**payload, "endpoint": resolve_endpoint_draft(payload["endpoint"])}
+            return JResponse(data=run_retrieval_model_test(payload))
+        except RetrievalTestError as error:
+            return JResponse(status=error.status, data={"error_code": error.code}, msg=str(error))
+        except Exception:
+            error = RetrievalTestError("invalid_config")
+            return JResponse(status=error.status, data={"error_code": error.code}, msg=str(error))
 
     def read_local_document(self, payload):
         file_path = payload.get("file", "")
@@ -349,39 +404,6 @@ class SettingAPI:
                 "recent_files": _scan_recent_files(roots or [current_path]),
             }
         )
-
-
-class HardwareAPI:
-    name = "hardware"
-
-    def list_microphones(self, payload):
-        mic = Microphone()
-        microphones = mic.list_devices()
-        mic.close()
-        return JResponse(data=microphones)
-
-    def check_microphone(self, payload):
-        if not self.mic.is_recording:
-            cache.delete("has_start_recording")
-        return JResponse(data={"is_recording": self.mic.is_recording, "audio_path": self.mic.latest_saved_file})
-
-    def start_microphone(self, payload):
-        tts_server.stop()
-        settings = Settings()
-        self.mic = Microphone(device_index=settings.get("microphone_device", 0))
-        try:
-            self.mic.start(auto_stop=payload.get("auto_stop", False))
-            return JResponse()
-        except Exception as e:
-            return JResponse(msg=str(e))
-
-    def stop_microphone(self, payload):
-        try:
-            cache.delete("has_start_recording")
-            audio_path = self.mic.stop()
-            return JResponse(data={"audio_path": audio_path})
-        except Exception as e:
-            return JResponse(status=500, msg=str(e))
 
 
 class ShortcutAPI:

@@ -202,15 +202,6 @@ try:
     assert saved(failing).data['failures'][0]['message'] == 'real in-flight failure'
     assert request_stop(failing.rid.hex).status == 'FAILED'
 
-    chat, chat_data = create()
-    WorkflowRunRecord.update(run_from='CHAT').where(WorkflowRunRecord.rid == chat.rid).execute()
-    message = SimpleNamespace(status='R', metadata={}, save=lambda: None)
-    with patch('utilities.workflow_stopping.Message', SimpleNamespace(
-            get_or_none=lambda *args: message, mid='mid',
-            StatusTypes=SimpleNamespace(RUNNING_WORKFLOW='R', WORKFLOW_FAILED='Z'))):
-        assert request_stop(chat.rid.hex).status == 'STOPPED'
-    assert message.status == 'Z' and message.metadata['recordStatus'] == 'STOPPED'
-
     # Simultaneous last-node finish and stop choose a single immutable terminal state.
     for _ in range(8):
         raced, raced_data = create()

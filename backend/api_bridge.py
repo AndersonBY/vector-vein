@@ -23,25 +23,19 @@ from api.workflow_api import (
     WorkflowRunRecordAPI,
     WorkflowRunScheduleAPI,
 )
-from api.vector_database_api import DatabaseAPI, DatabaseObjectAPI
+from api.knowledge_base_api import KnowledgeBaseAPI
 from api.relational_database_api import (
     RelationalDatabaseAPI,
     RelationalDatabaseTableAPI,
     RelationalDatabaseTableRecordAPI,
 )
-from api.agent_api import (
-    AudioAPI,
-    AgentAPI,
-    MessageAPI,
-    ConversationAPI,
-)
 from api.user_api import (
     LogAPI,
     SettingAPI,
-    HardwareAPI,
     ShortcutAPI,
 )
 from api.remote_api import OfficialSiteAPI
+from api.task_agent_api import TaskAgentAPI
 
 mprint = mprint_with_name(name="API Compatibility")
 
@@ -64,20 +58,15 @@ class APIBridge:
             WorkflowTemplateAPI,
             WorkflowRunRecordAPI,
             WorkflowRunScheduleAPI,
-            DatabaseAPI,
-            DatabaseObjectAPI,
+            KnowledgeBaseAPI,
             RelationalDatabaseAPI,
             RelationalDatabaseTableAPI,
             RelationalDatabaseTableRecordAPI,
             SettingAPI,
             OfficialSiteAPI,
-            AudioAPI,
-            AgentAPI,
-            MessageAPI,
-            ConversationAPI,
-            HardwareAPI,
             ShortcutAPI,
             LogAPI,
+            TaskAgentAPI,
         ]
 
         for api_class in api_class_list:
@@ -254,7 +243,7 @@ class API:
     @staticmethod
     def debug_api_call(method_name, *args, **kwargs):
         """Debug wrapper for API calls"""
-        mprint(f"🔍 API Call: {method_name} with args={args}, kwargs={kwargs}")
+        mprint(f"🔍 API Call: {method_name}")
         try:
             if hasattr(API, method_name):
                 method = getattr(API, method_name)
@@ -265,7 +254,7 @@ class API:
                 mprint(f"❌ API Method Not Found: {method_name}")
                 raise AttributeError(f"API has no attribute '{method_name}'")
         except Exception as e:
-            mprint(f"💥 API Call Failed: {method_name} -> {type(e).__name__}: {e}")
+            mprint(f"💥 API Call Failed: {method_name} -> {type(e).__name__}")
             raise
 
     @staticmethod

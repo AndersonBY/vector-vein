@@ -153,6 +153,30 @@ def test_get_next_run_time_falls_back_to_default_timezone_for_invalid_zone() -> 
     )
 
 
+@pytest.mark.parametrize(("cron", "rule", "after", "expected"), [
+    ("0 9 * * *", {"unit": "day", "interval": 2, "anchor_date": "2026-01-30"}, "2026-01-30T10:00:00+08:00", "2026-02-01T09:00:00+08:00"),
+    ("0 9 * * 1", {"unit": "week", "interval": 2, "anchor_date": "2026-12-30"}, "2026-12-30T10:00:00+08:00", "2027-01-11T09:00:00+08:00"),
+    ("0 9 * * 1,5", {"unit": "week", "interval": 2, "anchor_date": "2026-12-30"}, "2026-12-29T08:00:00+08:00", "2027-01-01T09:00:00+08:00"),
+    ("0 9 31 * *", {"unit": "month", "interval": 2, "anchor_date": "2026-11-01"}, "2026-11-01T10:00:00+08:00", "2027-01-31T09:00:00+08:00"),
+])
+def test_calendar_intervals_keep_the_anchor_across_month_and_year_boundaries(cron, rule, after, expected):
+    assert scheduler_module.get_next_run_time(cron, "Asia/Shanghai", datetime.fromisoformat(after), recurrence=rule) == datetime.fromisoformat(expected)
+
+
+def test_calendar_interval_skips_nonexistent_local_time_at_dst_transition():
+    rule = {"unit": "day", "interval": 2, "anchor_date": "2026-03-06"}
+    result = scheduler_module.get_next_run_time("30 2 * * *", "America/New_York", datetime.fromisoformat("2026-03-06T03:00:00-05:00"), recurrence=rule)
+    assert result == datetime.fromisoformat("2026-03-10T02:30:00-04:00")
+
+
+@pytest.mark.parametrize("rule", [{}, {"unit": "week", "interval": True, "anchor_date": "2026-11-06"},
+    {"unit": "week", "interval": 0, "anchor_date": "2026-11-06"}, {"unit": "month", "interval": 13, "anchor_date": "2026-11-06"},
+    {"unit": "week", "interval": 2, "anchor_date": "2026-02-30"}, {"unit": "week", "interval": 2, "anchor_date": "2026-11-06", "extra": True}])
+def test_invalid_recurrence_is_rejected(rule):
+    with pytest.raises(ValueError):
+        scheduler_module.normalize_recurrence(rule)
+
+
 def test_try_run_schedule_triggers_workflow_and_updates_state(monkeypatch: pytest.MonkeyPatch) -> None:
     scheduler = scheduler_module.WorkflowScheduler()
     schedule = _FakeSchedule()
@@ -241,6 +265,7 @@ def test_try_run_schedule_skips_when_record_already_exists_for_same_minute(
 
     assert run_calls == []
     assert schedule.save_calls == 0
+    assert schedule.save_calls == 0
     assert scheduler._last_triggered[schedule.sid.hex] == local_time.strftime("%Y-%m-%dT%H:%M%z")
 
 
@@ -259,4 +284,18 @@ def test_try_run_schedule_ignores_invalid_expression(monkeypatch: pytest.MonkeyP
     scheduler._try_run_schedule(schedule, datetime(2026, 3, 30, 6, 45, tzinfo=timezone.utc))
 
     assert run_calls == []
-    assert schedule.save_calls == 0
+
+
+def test_scheduler_runs_calendar_interval_only_on_eligible_weeks(monkeypatch):
+    scheduler = scheduler_module.WorkflowScheduler()
+    schedule = _FakeSchedule(cron_expression="0 9 * * 1")
+    schedule.data["recurrence"] = {"unit": "week", "interval": 2, "anchor_date": "2026-12-30"}
+    run_calls = []
+    monkeypatch.setattr(scheduler_module, "WorkflowRunRecord", _FakeWorkflowRunRecordModel)
+    monkeypatch.setattr(scheduler_module, "run_workflow_common", lambda **kwargs: run_calls.append(kwargs))
+    _FakeWorkflowRunRecordModel.record = None
+    scheduler._try_run_schedule(schedule, datetime.fromisoformat("2027-01-04T01:00:00+00:00"))
+    assert run_calls == []
+    scheduler._try_run_schedule(schedule, datetime.fromisoformat("2027-01-11T01:00:00+00:00"))
+    assert len(run_calls) == 1
+    assert schedule.save_calls == 1

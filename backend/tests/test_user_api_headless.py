@@ -36,20 +36,18 @@ try:
     shortcuts = ModuleType("utilities.shortcuts")
     listener = shortcuts.shortcuts_listener = Mock()
     with patch.dict(sys.modules, {"utilities.shortcuts": shortcuts}), \
-         patch.object(user_api, "push_route") as push_route, \
-         patch.object(user_api, "start_chat") as start_chat:
+         patch.object(user_api, "push_route") as push_route:
         user_api.register_shortcuts({
-            "__global__": {"open_workflow_space": "<ctrl>+1"},
+            "__global__": {"open_task_agent": "<ctrl>+1", "open_workflow_space": "<ctrl>+3"},
             "agent": {"new_chat_with_agent": "<ctrl>+2"},
         })
         listener.clear_hotkeys.assert_called_once_with()
         listener.restart.assert_called_once_with()
         calls = listener.register_hotkeys.call_args_list
-        assert [call.args[0] for call in calls] == ["<ctrl>+1", "<ctrl>+2"]
+        assert [call.args[0] for call in calls] == ["<ctrl>+1", "<ctrl>+3"]
         calls[0].args[1]()
         calls[1].args[1]()
-        push_route.assert_called_once_with("WorkflowSpaceMain")
-        start_chat.assert_called_once_with("agent")
+        assert [call.args[0] for call in push_route.call_args_list] == ["taskAgentWorkbench", "WorkflowSpaceMain"]
 
         shortcut_api = user_api.ShortcutAPI()
         assert shortcut_api.set_setting_mode({})["status"] == 200

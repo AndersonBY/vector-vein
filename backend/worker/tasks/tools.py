@@ -7,27 +7,24 @@ import re
 import io
 import builtins
 import uuid
-import json
 import shutil
 import traceback
 from pathlib import Path
-from urllib.parse import quote
 from typing import Any, Callable, Dict, List, cast
 from threading import RLock
-
-from bs4 import BeautifulSoup
 
 from api.utils import run_workflow_common
 from models.workflow_models import WorkflowRunRecord, Workflow as WorkflowModel
 from utilities.config import Settings
 from utilities.workflow import Workflow
 from utilities.workflow_artifacts import register_artifact
-from utilities.workflow_errors import WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
+from utilities.workflow_errors import WorkflowInputError, WorkflowExecutionError, add_failure, node_failure, redact_message, workflow_error_payload
 from utilities.workflow_stopping import WorkflowStopped
 from utilities.workflow_feedback import WorkflowPaused
-from utilities.general import Retry, mprint_with_name
+from utilities.general import mprint_with_name
 from utilities.media_processing import get_screenshot
-from utilities.network import headers, new_httpx_client
+from utilities.network import new_httpx_client
+from utilities.web_search import search_pages
 from utilities.http_request import perform_http_request
 from worker.tasks import task, timer
 
@@ -156,91 +153,39 @@ def programming_function(workflow_data: dict, node_id: str):
 
 @task
 @timer
-def image_search(
-    workflow_data: dict,
-    node_id: str,
-):
+def image_search(workflow_data: dict, node_id: str):
     workflow = Workflow(workflow_data)
     search_text = workflow.get_node_field_value(node_id, "search_text")
     search_engine = workflow.get_node_field_value(node_id, "search_engine")
     count = workflow.get_node_field_value(node_id, "count")
     output_type = workflow.get_node_field_value(node_id, "output_type")
-
-    http_client = new_httpx_client(is_async=False)
-
+    if search_engine != "pexels":
+        raise WorkflowInputError("该图片搜索引擎已不受支持，请在节点中重新选择 Pexels。")
+    if isinstance(count, str) and count.strip().isdigit():
+        count = int(count)
+    if type(count) is not int or not 1 <= count <= 80 or output_type not in {"text", "markdown"}:
+        raise WorkflowInputError("图片搜索数量必须是 1 到 80 的整数，输出格式请选择文本或 Markdown。")
+    key = Settings().get("pexels_api_key", "")
+    if not key:
+        raise WorkflowInputError("请先在设置中配置 Pexels API Key。")
+    search_texts = [search_text] if isinstance(search_text, str) else search_text
+    if not isinstance(search_texts, list) or any(not isinstance(text, str) or not text.strip() for text in search_texts):
+        raise WorkflowInputError("图片搜索词必须是非空文本或文本列表。")
     results = []
-    if search_engine == "bing":
-        if isinstance(search_text, list):
-            search_texts = search_text
-        else:
-            search_texts = [search_text]
-
+    with new_httpx_client(is_async=False) as client:
         for text in search_texts:
-            params = {
-                "q": text,
-                "first": "-",
-                "count": 30,
-                "cw": 1920,
-                "ch": 929,
-                "relp": 59,
-                "tsc": "ImageHoverTitle",
-                "datsrc": "I",
-                "layout": "RowBased_Landscape",
-                "mmasync": 1,
-            }
+            response = client.get("https://api.pexels.com/v1/search", params={"query": text, "per_page": count},
+                                  headers={"Authorization": key}, timeout=30)
+            response.raise_for_status()
             images = []
-            response = http_client.get(
-                "https://cn.bing.com/images/async",
-                params=params,
-                headers=headers,
-            )
-            soup = BeautifulSoup(response.text, "lxml")
-            images_elements = soup.select(".imgpt>a")
-            for image_element in images_elements[:count]:
-                m = image_element["m"]
-                if isinstance(m, list):
-                    m = m[0]
-                image_data = json.loads(m)
-                title = image_data["t"]
-                url = image_data["murl"]
+            for image in response.json()["photos"][:count]:
+                url, photographer, photo_url = image["src"]["original"], image["photographer"], image["url"]
                 if output_type == "text":
-                    images.append(url)
-                elif output_type == "markdown":
-                    images.append(f"![{title}]({url})")
+                    images.append(f"{url}\nPexels {photographer}: {photo_url}")
+                else:
+                    images.append(f"![{photographer}]({url})\nPexels {photographer}: [{photo_url}]({photo_url})")
             results.append(images)
-    elif search_engine == "pexels":
-        pexels_api_key = Settings().pexels_api_key
-        if isinstance(search_text, list):
-            search_texts = search_text
-        else:
-            search_texts = [search_text]
-        for text in search_texts:
-            params = {
-                "query": text,
-                "per_page": 30,
-            }
-            images = []
-            response = http_client.get(
-                "https://api.pexels.com/v1/search",
-                params=params,
-                headers={"Authorization": pexels_api_key},
-            )
-            data = response.json()
-            for image_data in data["photos"][:count]:
-                title = image_data["photographer"]
-                url = image_data["src"]["original"]
-                photographer = image_data["photographer"]
-                pexels_photo_url = image_data["url"]
-                if output_type == "text":
-                    images.append(f"{url}\nPexels {photographer}: {pexels_photo_url}")
-                elif output_type == "markdown":
-                    images.append(
-                        f"![{title}]({url})\nPexels {photographer}: [{pexels_photo_url}]({pexels_photo_url})"
-                    )
-            results.append(images)
-
-    output = results if isinstance(search_text, list) else results[0]
-    workflow.update_node_field_value(node_id, "output", output)
+    workflow.update_node_field_value(node_id, "output", results if isinstance(search_text, list) else results[0])
     return workflow.data
 
 
@@ -263,152 +208,43 @@ def screenshot(
 
 @task
 @timer
-def text_search(
-    workflow_data: dict,
-    node_id: str,
-):
-    http_client = new_httpx_client(is_async=False)
-
-    def format_output(text: str, text_type: str, output_type: str):
-        if output_type == "text":
-            return text
-        if text_type == "name" or text_type == "title":
-            return f"### {text}"
-        elif text_type == "url":
-            return f"[{text}]({text})"
-        elif text_type == "snippet" or text_type == "content":
-            return text
-
-    def search_with_jinaai(query: str, max_results: int = 5, try_times: int = 0) -> list:
-        if try_times > 5:
-            return []
-
-        headers = {"Accept": "application/json"}
-        if try_times > 2:
-            headers["Authorization"] = f"Bearer {settings.get('web_search.jinaai.api_key')}"
-
-        try:
-            response = http_client.get(
-                f"https://s.jina.ai/{quote(query)}",
-                headers=headers,
-                timeout=30,
-            )
-            result = response.json()
-
-            if result["code"] == 200:
-                return result["data"]
-            else:
-                return search_with_jinaai(query, max_results, try_times + 1)
-        except Exception as e:
-            mprint.error(e)
-            return search_with_jinaai(query, max_results, try_times + 1)
-
-    def format_text_search_results(
-        results: list, combine_result_in_text: bool, output_type: str, max_snippet_length: int
-    ):
-        split_str = "\n\n" if output_type == "markdown" else "\n"
-        output_title, output_url, output_snippet = [], [], []
-
-        for result in results:
-            title = format_output(result["title"], "title", output_type)
-            url = format_output(result["url"], "url", output_type)
-            snippet = format_output(
-                result.get("content", result.get("description", ""))[:max_snippet_length], "content", output_type
-            )
-
-            output_title.append(title)
-            output_url.append(url)
-            output_snippet.append(snippet)
-
-        if combine_result_in_text:
-            return {
-                "title": split_str.join(output_title),
-                "url": split_str.join(output_url),
-                "snippet": split_str.join(output_snippet),
-            }
-        return {
-            "title": output_title,
-            "url": output_url,
-            "snippet": output_snippet,
-        }
-
+def text_search(workflow_data: dict, node_id: str):
     settings = Settings()
     workflow = Workflow(workflow_data)
     search_text = workflow.get_node_field_value(node_id, "search_text")
-    search_engine = workflow.get_node_field_value(node_id, "search_engine")
-    count = workflow.get_node_field_value(node_id, "count")
-    combine_result_in_text = workflow.get_node_field_value(node_id, "combine_result_in_text")
-    max_snippet_length = workflow.get_node_field_value(node_id, "max_snippet_length", 300)
-    output_type = workflow.get_node_field_value(node_id, "output_type")
-
-    search_texts = [search_text] if isinstance(search_text, str) else search_text
-
-    results = {
-        "output_page_title": [],
-        "output_page_url": [],
-        "output_page_snippet": [],
-    }
-
-    def handle_bing_results(search_results):
-        split_str = "\n\n" if output_type == "markdown" else "\n"
-        titles, urls, snippets = [], [], []
-
-        for web_page in search_results["webPages"]["value"]:
-            titles.append(format_output(web_page["name"], "name", output_type))
-            urls.append(format_output(web_page["url"], "url", output_type))
-            snippets.append(format_output(web_page["snippet"][:max_snippet_length], "snippet", output_type))
-
-        if combine_result_in_text:
-            results["output_page_title"].append(split_str.join(titles))
-            results["output_page_url"].append(split_str.join(urls))
-            results["output_page_snippet"].append(split_str.join(snippets))
-        else:
-            results["output_page_title"].append(titles)
-            results["output_page_url"].append(urls)
-            results["output_page_snippet"].append(snippets)
-
-    if search_engine == "bing":
-        search_url = settings.get("web_search.bing.endpoint")
-        headers = {"Ocp-Apim-Subscription-Key": settings.get("web_search.bing.ocp_apim_subscription_key")}
-        for text in search_texts:
-            params = {"q": text, "count": count}
-            request_success, response = (
-                Retry(http_client.get)
-                .args(
-                    url=search_url,
-                    headers=headers,
-                    params=params,
-                    timeout=20,
-                )
-                .retry_times(3)
-                .sleep_time(10)
-                .run()
-            )
-            if not request_success or response is None:
-                continue
-
-            search_results = response.json()
-            handle_bing_results(search_results)
-
-    elif search_engine == "jina.ai":
-        for text in search_texts:
-            search_results = search_with_jinaai(text, max_results=count)
-            output = format_text_search_results(
-                search_results, combine_result_in_text, output_type, max_snippet_length
-            )
-            results["output_page_title"].append(output["title"])
-            results["output_page_url"].append(output["url"])
-            results["output_page_snippet"].append(output["snippet"])
-
-    if isinstance(search_text, list):
-        workflow.update_node_field_value(node_id, "output_page_title", results["output_page_title"])
-        workflow.update_node_field_value(node_id, "output_page_url", results["output_page_url"])
-        workflow.update_node_field_value(node_id, "output_page_snippet", results["output_page_snippet"])
-    else:
-        workflow.update_node_field_value(node_id, "output_page_title", results["output_page_title"][0])
-        workflow.update_node_field_value(node_id, "output_page_url", results["output_page_url"][0])
-        workflow.update_node_field_value(node_id, "output_page_snippet", results["output_page_snippet"][0])
-
+    engine = workflow.get_node_field_value(node_id, "search_engine")
+    count = workflow.get_node_field_value(node_id, "count", 10)
+    combined = workflow.get_node_field_value(node_id, "combine_result_in_text", True)
+    snippet_length = workflow.get_node_field_value(node_id, "max_snippet_length", 300)
+    output_type = workflow.get_node_field_value(node_id, "output_type", "markdown")
+    queries = [search_text] if isinstance(search_text, str) else search_text
+    if engine not in {"deepseek", "jina.ai"}:
+        raise WorkflowInputError("该搜索引擎已不受支持，请在文本搜索节点中重新选择 DeepSeek 或 Jina。")
+    if not isinstance(queries, list) or any(not isinstance(query, str) or not query.strip() for query in queries):
+        raise WorkflowInputError("搜索词必须是非空文本或文本列表。")
+    if engine == "deepseek" and any(len(query) > 128 for query in queries):
+        raise WorkflowInputError("DeepSeek 搜索词不能超过 128 个字符。")
+    if isinstance(count, str) and count.strip().isdigit():
+        count = int(count)
+    if type(count) is not int or not 1 <= count <= 50:
+        raise WorkflowInputError("搜索结果数量必须是 1 到 50 的整数。")
+    if type(snippet_length) is not int or snippet_length < 0 or output_type not in {"text", "markdown"}:
+        raise WorkflowInputError("请检查搜索节点的摘要长度与输出格式。")
+    outputs = {"output_page_title": [], "output_page_url": [], "output_page_snippet": []}
+    separator = "\n\n" if output_type == "markdown" else "\n"
+    with new_httpx_client(is_async=False) as client:
+        for query in queries:
+            results = search_pages(client, settings, engine, query, count)
+            titles, urls, snippets = [], [], []
+            for result in results:
+                title, url = result["title"], result["url"]
+                titles.append(f"### {title}" if output_type == "markdown" else title)
+                urls.append(f"[{url}]({url})" if output_type == "markdown" else url)
+                snippets.append((result.get("content") or result.get("description") or "")[:snippet_length])
+            for field, values in zip(outputs, (titles, urls, snippets)):
+                outputs[field].append(separator.join(values) if combined else values)
+    for field, values in outputs.items():
+        workflow.update_node_field_value(node_id, field, values if isinstance(search_text, list) else values[0])
     return workflow.data
 
 
