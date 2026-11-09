@@ -174,45 +174,79 @@ def test_window_settings_api_saves_without_loading_models_or_requiring_a_visible
 
 
 @pytest.mark.skipif(sys.platform != "win32", reason="Windows native controls")
-def test_windows_close_dialog_controls_construct_without_displaying_ui(tmp_path):
+@pytest.mark.parametrize("bundled_icon", [True, False], ids=["bundled-icon", "native-icon-fallback"])
+def test_windows_close_dialog_controls_construct_without_displaying_ui(tmp_path, bundled_icon):
     script = r'''
+import shutil
 import sys
+from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 import clr
 clr.AddReference("System.Windows.Forms")
 clr.AddReference("System.Drawing")
-from System.Windows.Forms import Button, DialogResult, NotifyIcon
+from System import Object
+from System.Drawing import SystemIcons
+from System.Windows.Forms import Button, DialogResult, Form, NotifyIcon
+import bootstrap
+bootstrap.APP_ROOT = Path.cwd() / "isolated-app"
+image_path = bootstrap.APP_ROOT / "web" / "favicon.ico"
+bundled_icon = sys.argv[2] == "True"
+if bundled_icon:
+    source_icon = Path(sys.argv[1]).parent / "frontend" / "public" / "favicon.ico"
+    assert source_icon.is_file(), f"Tracked icon fixture is missing: {source_icon}"
+    image_path.parent.mkdir(parents=True)
+    shutil.copyfile(source_icon, image_path)
+assert image_path.is_file() == bundled_icon, f"Incorrect isolated icon fixture: {image_path}"
 from utilities.desktop_window import build_close_dialog, WindowsTray
 from types import SimpleNamespace
 for available in (True, False):
     dialog, remember = build_close_dialog(available)
     try:
-        assert not dialog.Visible and not dialog.ShowInTaskbar
-        assert not remember.Checked
+        assert not dialog.Visible and not dialog.ShowInTaskbar, "Close dialog must remain hidden"
+        assert not remember.Checked, "Remember choice must default to unchecked"
         buttons = [control for control in dialog.Controls if isinstance(control, Button)]
-        assert len(buttons) == 3
-        assert dialog.CancelButton.DialogResult == DialogResult.Cancel
+        assert len(buttons) == 3, f"Expected three close buttons, got {len(buttons)}"
+        assert dialog.CancelButton.DialogResult == DialogResult.Cancel, "Cancel button result is incorrect"
         tray = next(button for button in buttons if button.DialogResult == DialogResult.No)
-        assert tray.Enabled == available
-        assert dialog.AcceptButton.DialogResult == (DialogResult.No if available else DialogResult.Yes)
+        assert tray.Enabled == available, f"Tray button enabled state differs from availability={available}"
+        assert dialog.AcceptButton.DialogResult == (DialogResult.No if available else DialogResult.Yes), \
+            f"Incorrect default button for tray availability={available}"
     finally:
         dialog.Dispose()
 icon = NotifyIcon()
-assert not icon.Visible
+assert not icon.Visible, "New notification icon must remain hidden"
 icon.Dispose()
-tray = WindowsTray(SimpleNamespace(native=SimpleNamespace(Icon=None)), lambda: None, lambda: None)
-tray._create_icon()
-assert not tray.icon.Visible and tray.icon.Icon is not None
-assert tray.icon.Text == "VectorVein"
-assert tray.icon.ContextMenuStrip.Items.Count == 2
-tray.stop()
-assert tray.icon is None and not tray.available
+native = Form()
+native_icon = SystemIcons.Application.Clone()
+native.Icon = native_icon
+tray = WindowsTray(SimpleNamespace(native=native), lambda: None, lambda: None)
+try:
+    tray._create_icon()
+    assert not native.Visible and not tray.icon.Visible, "Native form and tray icon must remain hidden"
+    assert tray.icon.Icon is not None, f"Tray icon is missing (bundled_icon={bundled_icon})"
+    if bundled_icon:
+        assert tray.image is not None, f"Bundled icon was not loaded from {image_path}"
+        assert Object.ReferenceEquals(tray.icon.Icon, tray.image), "Tray must use the loaded bundled icon"
+        assert not Object.ReferenceEquals(tray.icon.Icon, native.Icon), "Bundled icon must take priority over native icon"
+    else:
+        assert tray.image is None, "Missing bundled icon must not create a loaded image"
+        assert Object.ReferenceEquals(tray.icon.Icon, native.Icon), "Tray must fall back to the real native icon"
+    assert tray.icon.Text == "VectorVein", f"Unexpected tray tooltip: {tray.icon.Text!r}"
+    assert tray.icon.ContextMenuStrip.Items.Count == 2, "Tray menu must contain restore and exit actions"
+finally:
+    tray.stop()
+    native.Dispose()
+    native_icon.Dispose()
+assert tray.icon is None and not tray.available, "Tray cleanup must clear the icon and availability"
 from utilities.config import config, cache
 config.close()
 cache.close()
 '''
     env = {key: value for key, value in os.environ.items()
            if key not in {"VECTORVEIN_LLM_SETTINGS_FILE", "VECTORVEIN_OUTPUT_DIR"}}
-    result = subprocess.run([sys.executable, "-X", "utf8", "-c", script, str(Path(__file__).resolve().parents[1])],
+    result = subprocess.run([sys.executable, "-X", "utf8", "-c", script, str(Path(__file__).resolve().parents[1]), str(bundled_icon)],
                             cwd=tmp_path, env=env, capture_output=True, text=True, encoding="utf-8", timeout=60)
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 0, (
+        f"Headless Windows controls check failed (bundled_icon={bundled_icon}, exit={result.returncode})\n"
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )

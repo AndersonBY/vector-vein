@@ -69,6 +69,7 @@ def test_profile_validates_tool_settings(tmp_path, values):
 
 def test_background_command_ownership_and_stop(tmp_path):
     import json
+    import time
     from dataclasses import replace
     from vv_agent.tools.base import ToolContext
     from task_agent.host import desktop_tool_registry
@@ -82,17 +83,22 @@ def test_background_command_ownership_and_stop(tmp_path):
     command = "sleep 15" if shell["kind"] == "bash" else "Start-Sleep -Seconds 15"
     context = ToolContext(workspace=tmp_path, workspace_backend=LocalWorkspaceBackend(tmp_path), shared_state={}, cycle_index=1,
                           task_id="owner", tool_call_id="command", task_metadata={"bash_shell": shell["executable"]})
-    result = json.loads(run_bash_command(context, {"command": command, "yield_time_ms": 0, "timeout_seconds": 3}).content)
+    result = json.loads(run_bash_command(context, {"command": command, "yield_time_ms": 0, "timeout_seconds": 30}).content)
     handle = {"session_id": result["session_id"]}
     try:
         wrong_owner = check_background_command(replace(context, task_id="other"), handle)
         assert wrong_owner.error_code
         assert check_background_command(context, handle).error_code is None
-        stopped = json.loads(stop_background_command(context, handle).content)
-        import os
-        if os.name == "nt":
-            assert stopped["status"] == "stopped", stopped
-        else:
-            assert stopped["status"] in {"stopped", "stopping", "unknown", "timeout"}, stopped
+        assert stop_background_command(replace(context, task_id="other"), handle).error_code
+        stopped = stop_background_command(context, handle)
+        # POSIX terminal receipts contain plain output; structured state lives in metadata.
+        deadline = time.monotonic() + 5
+        while stopped.metadata["status"] in {"stopping", "unknown"} and time.monotonic() < deadline:
+            time.sleep(0.05)
+            stopped = check_background_command(context, handle)
+        assert stopped.metadata["status"] == "stopped", stopped
+        assert stopped.metadata["session_id"] == handle["session_id"]
+        assert stopped.metadata["exit_code"] is not None
+        assert check_background_command(context, handle).metadata["status"] == "stopped"
     finally:
         stop_background_command(context, handle)

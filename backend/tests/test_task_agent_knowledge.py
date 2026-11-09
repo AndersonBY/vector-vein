@@ -1,5 +1,6 @@
 """Task authority and real FunctionTool execution against the private bridge."""
 from copy import deepcopy
+import errno
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import os
@@ -534,6 +535,14 @@ def test_backend_limits_are_enforced_before_dispatch(owner, operation, arguments
 def test_desktop_server_hosts_keep_bridge_numeric_loopback_and_no_public_kb(owner, host):
     from fastapi_server import FastAPIServer
     from threading import Event
+    if host == "127.0.0.2":
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as probe:
+            try:
+                probe.bind((host, 0))
+            except OSError as exc:
+                if exc.errno == errno.EADDRNOTAVAIL:
+                    pytest.skip("The host has no 127.0.0.2 loopback alias configured")
+                raise
     if host == "lan-interface":
         host = socket.gethostbyname(socket.gethostname())
         if knowledge.ipaddress.ip_address(host).is_loopback:
@@ -559,6 +568,17 @@ def test_desktop_server_hosts_keep_bridge_numeric_loopback_and_no_public_kb(owne
     finally:
         server.stop()
     assert knowledge._endpoint is None
+
+
+@pytest.mark.parametrize("host,expected", [
+    ("127.0.0.1", "127.0.0.1"), ("127.0.0.2", "127.0.0.2"),
+    ("0.0.0.0", "127.0.0.1"), ("::", "[::1]"), ("::1", "[::1]"),
+])
+def test_loopback_listener_reuses_primary_address_without_extra_socket(host, expected):
+    sockets = []
+    primary = SimpleNamespace(getsockname=lambda: (host, 8787))
+    assert knowledge.knowledge_loopback_listener(primary, sockets) == f"http://{expected}:8787"
+    assert sockets == []
 
 
 def test_specific_lan_bind_gets_separate_owned_loopback_listener(owner):

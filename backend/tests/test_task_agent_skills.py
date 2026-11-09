@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sqlite3
 import subprocess
 import zipfile
@@ -527,17 +528,23 @@ def test_missing_import_source_reports_file_not_found_and_reparse_points_rejecte
     skill_with_junction.mkdir()
     (skill_with_junction / "SKILL.md").write_text(valid_skill_md(name="junction-skill"), encoding="utf-8")
     junction_path = skill_with_junction / "linked"
-    subprocess.run(["cmd", "/c", "mklink", "/J", str(junction_path), str(target_dir)], check=True, capture_output=True)
+    if os.name == "nt":
+        subprocess.run(["cmd", "/c", "mklink", "/J", str(junction_path), str(target_dir)], check=True, capture_output=True)
+    else:
+        junction_path.symlink_to(target_dir, target_is_directory=True)
     try:
         with pytest.raises(SkillLibraryError) as exc:
             lib.import_path({"skill_id": "junc", "path": str(skill_with_junction)})
         assert exc.value.code == "symlink_rejected"
-        # Also reject importing directly through a junction ancestor path
+        # Also reject importing directly through a junction or symlink ancestor path.
         with pytest.raises(SkillLibraryError) as exc_anc:
             lib.import_path({"skill_id": "junc_anc", "path": str(junction_path / "SKILL.md")})
         assert exc_anc.value.code == "symlink_rejected"
     finally:
-        subprocess.run(["cmd", "/c", "rmdir", str(junction_path)], check=False, capture_output=True)
+        if os.name == "nt":
+            subprocess.run(["cmd", "/c", "rmdir", str(junction_path)], check=False, capture_output=True)
+        else:
+            junction_path.unlink()
 
     lib.save({"skill_id": "safe", "content": valid_skill_md()})
     for bad_path in ("../SKILL.md", "/SKILL.md", "SKILL.md:stream", "references\\guide.md", ".vv-agent/secret", "SKILL.md.", "CON.txt"):
