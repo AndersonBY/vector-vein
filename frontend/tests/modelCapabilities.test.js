@@ -63,6 +63,6 @@ test('shared summary labels capability states and separates token limits', async
     assert.match(html, /Native tools：Unsupported/)
     assert.match(html, /JSON mode：Unknown/)
     assert.match(html, /32,000/)
-    assert.match(html, /Chat can try calling tools through prompts; workflow nodes require native tool support/)
+    assert.match(html, /Task Agent and workflow tools require native tool support/)
   } finally { await server.close() }
 })

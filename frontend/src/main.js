@@ -16,6 +16,7 @@ import { getPageTitle } from '@/utils/title'
 
 import 'ant-design-vue/dist/reset.css'
 import '@/icons/icons.css'
+import '@/assets/css/scrollbar.css'
 
 const app = createApp(App)
 

@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, reactive, onBeforeMount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from "vue-router"
@@ -116,14 +117,11 @@ const deleteDatabase = async (rid) => {
     <template #title>
       <a-flex justify="space-between">
         <a-space>
-          <a-button type="primary" @click="createNewDatabaseModal.open = true">
-            <template #icon>
-              <Add />
-            </template>
-            {{ t('workspace.dataSpace.create') }}
-          </a-button>
+          <IconButton :text="t('workspace.dataSpace.create')" type="text" @click="createNewDatabaseModal.open = true">
+            <template #icon><Add /></template>
+          </IconButton>
         </a-space>
-        <a-modal v-model:open="createNewDatabaseModal.open" :title="t('workspace.dataSpace.create')"
+        <a-modal ok-type="default" v-model:open="createNewDatabaseModal.open" :title="t('workspace.dataSpace.create')"
           @ok="createNewDatabaseModal.create" :confirmLoading="createNewDatabaseModal.creating">
           <a-form :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
             <a-form-item :label="t('workspace.dataSpace.database_name')">
@@ -154,12 +152,10 @@ const deleteDatabase = async (rid) => {
         </span>
       </template>
       <template v-else-if="column.key === 'action'">
-        <a-popconfirm :title="t('workspace.dataSpace.delete_confirm')" @confirm="deleteDatabase(record.rid)">
-          <a-button danger type="text">
-            <template #icon>
-              <Delete />
-            </template>
-          </a-button>
+        <a-popconfirm ok-type="default" :title="t('workspace.dataSpace.delete_confirm')" @confirm="deleteDatabase(record.rid)">
+          <IconButton :text="t('common.delete')" danger type="text">
+            <template #icon><Delete /></template>
+          </IconButton>
         </a-popconfirm>
       </template>
     </template>

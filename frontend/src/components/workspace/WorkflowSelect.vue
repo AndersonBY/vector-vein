@@ -1,8 +1,10 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+
 import { onBeforeMount, ref, reactive, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { WholeSiteAccelerator, TagOne, Time } from '@/icons'
+import { WholeSiteAccelerator, TagOne, Time, Undo } from '@/icons'
 import { storeToRefs } from 'pinia'
 import { useUserDatabasesStore } from "@/stores/userDatabase"
 import { getUIDesignFromWorkflow } from '@/utils/workflow'
@@ -140,11 +142,9 @@ const getWorkflowDetail = async (wid) => {
   selectedWorkflow.value = res.data
   selectedWorkflow.value.data.nodes.forEach((node) => {
     if (node.category == "vectorDb") {
-      node.data.template.database.options = userDatabases.value.filter((database) => {
-        return database.status == 'VALID'
-      }).map((item) => {
+      node.data.template.database.options = userDatabases.value.map((item) => {
         return {
-          value: item.vid,
+          value: item.id,
           label: item.name,
         }
       })
@@ -174,9 +174,9 @@ const getWorkflowDetail = async (wid) => {
                 :placeholder="t('workspace.workflowSpaceMain.input_search_text')" enter-button
                 @search="workflowRecords.searchWorkflows" class="search-input">
               </a-input-search>
-              <a-button @click="workflowRecords.clearSearch">
-                {{ t('workspace.workflowSpaceMain.reset_search') }}
-              </a-button>
+              <IconButton :text="t('workspace.workflowSpaceMain.reset_search')" @click="workflowRecords.clearSearch">
+                <template #icon><Undo /></template>
+              </IconButton>
             </a-space>
           </a-col>
         </a-row>

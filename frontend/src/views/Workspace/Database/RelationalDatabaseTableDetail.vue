@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from "vue-router"
@@ -245,7 +246,7 @@ const addRecordModal = reactive({
         <a-tab-pane key="sheet" :tab="t('workspace.databaseTableRecord.sheet')">
           <div>
             <div class="table-mask" v-if="!tableLoaded">
-              <a-button type="primary" :loading="tableRecords.loading" @click="tableRecords.load">
+              <a-button type="default" :loading="tableRecords.loading" @click="tableRecords.load">
                 {{ t('workspace.databaseTableRecord.load_data') }}
               </a-button>
             </div>
@@ -255,22 +256,17 @@ const addRecordModal = reactive({
               <template #title>
                 <a-flex gap="small" justify="space-between">
                   <div v-show="tableRecords.editable">
-                    <a-popconfirm :disabled="tableRecords.selectedRecords.length == 0"
+                    <a-popconfirm ok-type="default" :disabled="tableRecords.selectedRecords.length == 0"
                       :title="t('workspace.databaseTableRecord.delete_records_confirm')"
                       @confirm="tableRecords.deleteRecords">
-                      <a-button type="text" danger :disabled="tableRecords.selectedRecords.length == 0">
-                        <template #icon>
-                          <Delete />
-                        </template>
-                      </a-button>
+                      <IconButton :text="t('common.delete')" type="text" danger :disabled="tableRecords.selectedRecords.length == 0">
+                        <template #icon><Delete /></template>
+                      </IconButton>
                     </a-popconfirm>
-                    <a-tooltip :title="t('workspace.databaseTableRecord.add_record')">
-                      <a-button type="text" @click="addRecordModal.open">
-                        <template #icon>
-                          <AddItem />
-                        </template>
-                      </a-button>
-                      <a-modal v-model:open="addRecordModal.visible" :confirm-loading="addRecordModal.loading"
+                    <IconButton :text="t('workspace.databaseTableRecord.add_record')" type="text" @click="addRecordModal.open">
+                      <template #icon><AddItem /></template>
+                    </IconButton>
+                      <a-modal ok-type="default" v-model:open="addRecordModal.visible" :confirm-loading="addRecordModal.loading"
                         :title="t('workspace.databaseTableRecord.add_record')" @ok="addRecordModal.handleOk"
                         @cancel="addRecordModal.handleCancel">
                         <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
@@ -294,30 +290,23 @@ const addRecordModal = reactive({
                         <UploaderFieldUse v-else-if="addRecordModal.addMethod == 'file'" v-model="addRecordModal.files"
                           :multiple="false" support-file-types=".xlsx, .xls, .csv" />
                       </a-modal>
-                    </a-tooltip>
                   </div>
                   <a-space>
-                    <a-tooltip :title="t('common.edit')">
-                      <a-button v-show="!tableRecords.editable" type="text" @click="tableRecords.startEdit">
-                        <template #icon>
-                          <Edit />
-                        </template>
-                      </a-button>
-                    </a-tooltip>
-                    <a-tooltip :title="t('common.cancel')">
-                      <a-button v-show="tableRecords.editable" type="text" @click="tableRecords.cancelEdit">
-                        <template #icon>
-                          <Close />
-                        </template>
-                      </a-button>
-                    </a-tooltip>
-                    <a-tooltip :title="t('common.save')">
-                      <a-button v-show="tableRecords.editable" type="text" @click="tableRecords.save">
-                        <template #icon>
-                          <Save fill="#28c5e5" />
-                        </template>
-                      </a-button>
-                    </a-tooltip>
+                    <span v-show="!tableRecords.editable">
+                      <IconButton :text="t('common.edit')" type="text" @click="tableRecords.startEdit">
+                        <template #icon><Edit /></template>
+                      </IconButton>
+                    </span>
+                    <span v-show="tableRecords.editable">
+                      <IconButton :text="t('common.cancel')" type="text" @click="tableRecords.cancelEdit">
+                        <template #icon><Close /></template>
+                      </IconButton>
+                    </span>
+                    <span v-show="tableRecords.editable">
+                      <IconButton :text="t('common.save')" type="text" @click="tableRecords.save">
+                        <template #icon><Save fill="#28c5e5" /></template>
+                      </IconButton>
+                    </span>
                   </a-space>
                 </a-flex>
               </template>

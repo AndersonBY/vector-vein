@@ -25,12 +25,8 @@ export function createTemplateData() {
         "required": true,
         "placeholder": "",
         "show": false,
-        "value": "bing",
+        "value": "pexels",
         "options": [
-          {
-            "value": "bing",
-            "label": "bing"
-          },
           {
             "value": "pexels",
             "label": "pexels"
@@ -47,6 +43,8 @@ export function createTemplateData() {
         "placeholder": "",
         "show": false,
         "value": 5,
+        "min": 1,
+        "max": 80,
         "name": "count",
         "display_name": "count",
         "type": "str",

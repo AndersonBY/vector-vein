@@ -4,6 +4,8 @@ export function createTemplateData() {
     task_name: "triggers.schedule_trigger",
     has_inputs: false,
     template: {
+      recurrence: { name: 'recurrence', value: null, type: 'dict', show: false, required: false, field_type: 'json' },
+      timezone: { name: 'timezone', value: Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai', type: 'str', show: false, required: false, field_type: 'str' },
       schedule: {
         required: true,
         placeholder: "",

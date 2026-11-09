@@ -1,6 +1,6 @@
 import { defineComponent, h } from 'vue'
 import {
-  PhArrowCounterClockwise, PhActivity, PhAlarm, PhArrowClockwise, PhArrowLineDown, PhArrowLineUp, PhArrowsClockwise, PhArrowsOut, PhBellSlash, PhBookOpen, PhBookmark, PhBracketsCurly, PhBug, PhCaretDoubleLeft, PhCaretDoubleRight, PhCaretDown, PhCaretLeft, PhCaretUp, PhChartLine, PhChartPolar, PhChats, PhCheck, PhCheckCircle, PhCircle, PhClock, PhCode, PhCopy, PhCornersIn, PhCornersOut, PhCube, PhCursorClick, PhDatabase, PhDot, PhDotsThree, PhDownload, PhEnvelope, PhEye, PhEyeClosed, PhFile, PhFileAudio, PhFileCode, PhFileDoc, PhFilePdf, PhFileText, PhFileTxt, PhFileXls, PhFileZip, PhFiles, PhFloppyDisk, PhGear, PhGitBranch, PhGithubLogo, PhGraph, PhHourglassHigh, PhHouse, PhImage, PhImages, PhInfo, PhKeyboard, PhLayout, PhLightning, PhLink, PhLinkBreak, PhList, PhListNumbers, PhMagnifyingGlass, PhMicrophone, PhMinus, PhMoon, PhPaperPlaneTilt, PhPause, PhPencil, PhPlay, PhPlugsConnected, PhPlus, PhPrinter, PhQuestion, PhRobot, PhSelectionAll, PhShare, PhShareNetwork, PhSidebar, PhSignIn, PhSliders, PhSparkle, PhSpinner, PhSquaresFour, PhStar, PhStop, PhTag, PhTranslate, PhTrash, PhTrayArrowDown, PhTreeStructure, PhUpload, PhUser, PhWarning, PhWaveform, PhWrench, PhX, PhXCircle
+  PhArrowCounterClockwise, PhActivity, PhAlarm, PhArrowClockwise, PhArrowLineDown, PhArrowLineUp, PhArrowSquareOut, PhArrowsClockwise, PhArrowsOut, PhBell, PhCalendar, PhBellSlash, PhBookOpen, PhBookmark, PhBracketsCurly, PhBug, PhCaretDoubleLeft, PhCaretDoubleRight, PhCaretDown, PhCaretLeft, PhCaretRight, PhCaretUp, PhChartLine, PhChartPolar, PhChats, PhCheck, PhCheckCircle, PhCircle, PhClock, PhCode, PhCopy, PhCornersIn, PhCornersOut, PhCube, PhCursorClick, PhDatabase, PhDot, PhDotsThree, PhDownload, PhEnvelope, PhEye, PhEyeClosed, PhFile, PhFileAudio, PhFileCode, PhFileDoc, PhFilePdf, PhFileText, PhFileTxt, PhFileXls, PhFileZip, PhFiles, PhFolderOpen, PhFloppyDisk, PhGear, PhGitBranch, PhGithubLogo, PhGraph, PhHourglassHigh, PhHouse, PhImage, PhImages, PhInfo, PhKeyboard, PhLayout, PhLightning, PhLink, PhLinkBreak, PhList, PhListNumbers, PhMagnifyingGlass, PhMicrophone, PhMinus, PhMoon, PhPaperPlaneTilt, PhPause, PhPencil, PhPlay, PhPlugsConnected, PhPlus, PhPrinter, PhQuestion, PhRobot, PhSelectionAll, PhShare, PhShareNetwork, PhSidebar, PhSignIn, PhSliders, PhSparkle, PhSpinner, PhSquaresFour, PhStar, PhStop, PhTag, PhTranslate, PhTrash, PhTrayArrowDown, PhTreeStructure, PhUpload, PhUser, PhWarning, PhWaveform, PhWrench, PhX, PhXCircle
 } from '@phosphor-icons/vue'
 
 // Keep presentation props and names already used by desktop components.
@@ -43,6 +43,8 @@ export const CircleFourLine = /* @__PURE__ */ createIcon('CircleFourLine', PhCir
 export const ClickTap = /* @__PURE__ */ createIcon('ClickTap', PhCursorClick)
 export const Close = /* @__PURE__ */ createIcon('Close', PhX)
 export const CloseOne = /* @__PURE__ */ createIcon('CloseOne', PhX)
+export const Calendar = /* @__PURE__ */ createIcon('Calendar', PhCalendar)
+export const Remind = /* @__PURE__ */ createIcon('Remind', PhBell)
 export const CloseRemind = /* @__PURE__ */ createIcon('CloseRemind', PhBellSlash)
 export const CloseSmall = /* @__PURE__ */ createIcon('CloseSmall', PhX)
 export const Code = /* @__PURE__ */ createIcon('Code', PhCode)
@@ -64,6 +66,7 @@ export const DocDetail = /* @__PURE__ */ createIcon('DocDetail', PhFileText)
 export const Dot = /* @__PURE__ */ createIcon('Dot', PhDot)
 export const DoubleLeft = /* @__PURE__ */ createIcon('DoubleLeft', PhCaretDoubleLeft)
 export const DoubleRight = /* @__PURE__ */ createIcon('DoubleRight', PhCaretDoubleRight)
+export const Right = /* @__PURE__ */ createIcon('Right', PhCaretRight)
 export const Down = /* @__PURE__ */ createIcon('Down', PhCaretDown)
 export const DownPicture = /* @__PURE__ */ createIcon('DownPicture', PhImage)
 export const Download = /* @__PURE__ */ createIcon('Download', PhDownload)
@@ -75,6 +78,7 @@ export const Effects = /* @__PURE__ */ createIcon('Effects', PhSparkle)
 export const Error = /* @__PURE__ */ createIcon('Error', PhXCircle)
 export const ExpandLeft = /* @__PURE__ */ createIcon('ExpandLeft', PhCaretDoubleLeft)
 export const ExpandRight = /* @__PURE__ */ createIcon('ExpandRight', PhCaretDoubleRight)
+export const FolderOpen = /* @__PURE__ */ createIcon('FolderOpen', PhFolderOpen)
 export const FileCabinet = /* @__PURE__ */ createIcon('FileCabinet', PhFiles)
 export const FileCode = /* @__PURE__ */ createIcon('FileCode', PhFileCode)
 export const FileExcel = /* @__PURE__ */ createIcon('FileExcel', PhFileXls)
@@ -99,6 +103,7 @@ export const KeyboardOne = /* @__PURE__ */ createIcon('KeyboardOne', PhKeyboard)
 export const LayoutFive = /* @__PURE__ */ createIcon('LayoutFive', PhLayout)
 export const Left = /* @__PURE__ */ createIcon('Left', PhCaretLeft)
 export const Lightning = /* @__PURE__ */ createIcon('Lightning', PhLightning)
+export const OpenExternal = /* @__PURE__ */ createIcon('OpenExternal', PhArrowSquareOut)
 export const Link = /* @__PURE__ */ createIcon('Link', PhLink)
 export const LinkFour = /* @__PURE__ */ createIcon('LinkFour', PhLink)
 export const LinkInterrupt = /* @__PURE__ */ createIcon('LinkInterrupt', PhLinkBreak)

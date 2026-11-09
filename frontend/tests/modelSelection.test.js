@@ -31,10 +31,12 @@ async function componentSource(path, id) {
 async function setupModules(extra = {}) {
   const modules = {
     '@/components/ModelPicker.vue': await componentSource('../src/components/ModelPicker.vue', 'model-picker-test'),
+    '/model-preferences-test.js': await componentSource('../src/components/settings/ModelPreferenceSettings.vue', 'model-preferences-test'),
     '@/components/ModelSelector.vue': await componentSource('../src/components/ModelSelector.vue', 'model-selector'),
     '@/utils/modelPreferences': (await readFile(new URL('../src/utils/modelPreferences.js', import.meta.url), 'utf8')).replace("'./modelSelection'", "'@/utils/modelSelection'"),
     '@/stores/userSettings': 'export const useUserSettingsStore = () => globalThis.__pickerSettings || {setting:{data:{}}}',
-    '@/icons': 'export const CheckOne={render:()=>null},Down=CheckOne;',
+    '@/components/IconButton.vue': await componentSource('../src/components/IconButton.vue', 'icon-button-test'),
+    '@/icons': 'export const CheckOne={render:()=>null},Down=CheckOne,Undo=CheckOne;',
     '/model-selector-test.js': await componentSource('../src/components/ModelSelect.vue', 'model-select-test'),
     '/grouped-model-selector-test.js': await componentSource('../src/components/ModelSelector.vue', 'grouped-model-selector-test'),
     '@/components/ModelSelect.vue': await componentSource('../src/components/ModelSelect.vue', 'flat-model-select'),
@@ -50,7 +52,7 @@ async function setupModules(extra = {}) {
 async function mount(component, props) {
   const app = renderer().createApp({ render: () => h(component, props) })
   app.use(createI18n({ legacy: false, locale: 'en', messages: { en: JSON.parse(await readFile(new URL('../src/locales/en-US.json', import.meta.url), 'utf8')) } }))
-  for (const name of ['ADropdown', 'AMenuItem', 'AMenuDivider', 'ASlider', 'ACascader', 'AMenu', 'ASelect', 'AAlert', 'APopover', 'AModal', 'ARow', 'ACol', 'AForm', 'AFormItem', 'ATypographyText', 'AFlex', 'ATextarea', 'ACheckbox', 'AInputNumber', 'AInput', 'AButton', 'ADrawer', 'ACheckboxGroup', 'ASelectOption']) {
+  for (const name of ['ATooltip', 'ADropdown', 'AMenuItem', 'AMenuDivider', 'ASlider', 'ACascader', 'AMenu', 'ASelect', 'AAlert', 'APopover', 'AModal', 'ARow', 'ACol', 'AForm', 'AFormItem', 'ATypographyText', 'AFlex', 'ATextarea', 'ACheckbox', 'AInputNumber', 'AInput', 'AButton', 'ADrawer', 'ACheckboxGroup', 'ASelectOption']) {
     app.component(name, { inheritAttrs: false, props: ['showSearch', 'filterOption', 'okButtonProps', 'confirmLoading', 'selectedKeys'], setup: (props, { attrs, slots }) => () => h(name, { ...attrs, ...props }, [slots.default?.(), slots.overlay?.()]) })
   }
   const root = { children: [] }
@@ -123,6 +125,42 @@ test('grouped cascader preserves saved pairs, searches labels and IDs, and rejec
   } finally { mounted?.app.unmount(); await server.close() }
 })
 
+test('preset settings use the compact picker, edit draft model and reasoning atomically, and keep other presets intact', async () => {
+  const server = await setupModules()
+  let mounted
+  try {
+    const original = { default: { model_provider: 'OpenAI', model: 'retired' }, high_performance: { model_provider: 'OpenAI', model: 'fast', reasoning_effort: 'low' } }
+    const props = reactive({ modelValue: structuredClone(original),
+      options: [{ value: 'OpenAI', children: [{ value: 'fast', label: 'Fast Model' }, { value: 'draft-only', label: 'Draft Model' }] }],
+      backends: { openai: { models: { fast: { capabilities: { reasoning_efforts: ['low', 'high'] } }, 'draft-only': {} } } },
+      'onUpdate:modelValue': value => { props.modelValue = value },
+    })
+    mounted = await mount((await server.ssrLoadModule('/model-preferences-test.js')).default, props)
+    const menus = () => findAll(mounted.root, 'AMenu').filter(node => node.props.class === 'model-preference-menu')
+    assert.equal(menus().length, 3)
+    assert.equal(findAll(mounted.root, 'ACascader').length, 0, 'preset rows use the screenshot picker')
+    assert.deepEqual(props.modelValue, original, 'mount preserves unavailable and absent presets')
+    menus()[2].props.onClick({key:'high_performance'}); await flush()
+    assert.deepEqual(props.modelValue.low_cost, {model_provider:'OpenAI',model:'fast',reasoning_effort:'low'})
+    const sliders = () => findAll(mounted.root, 'ASlider')
+    assert.equal(sliders()[2].props.max, 2, 'uses unsaved backend capabilities')
+    sliders()[2].props.onAfterChange(2); await flush()
+    assert.equal(props.modelValue.low_cost.reasoning_effort, 'high')
+    assert.deepEqual(props.modelValue.high_performance, original.high_performance)
+    menus()[0].props.onClick({key:'custom'}); await flush()
+    const modals = () => findAll(mounted.root, 'AModal')
+    modals()[0].props.onCancel(); await flush()
+    assert.deepEqual(props.modelValue.default, original.default, 'cancel keeps the saved unavailable model')
+    menus()[0].props.onClick({key:'custom'}); await flush()
+    findAll(mounted.root, 'AMenu').filter(node => node.props.items)[1].props.onClick({key:'draft-only'}); await flush()
+    await modals()[0].props.onOk(); await flush()
+    assert.deepEqual(props.modelValue.default, {model_provider:'OpenAI',model:'draft-only',reasoning_effort:'default'})
+    findAll(findAll(mounted.root, 'AFormItem')[1], 'AButton')[0].props.onClick(); await flush()
+    assert.deepEqual(props.modelValue.high_performance, {model_provider:'',model:'',reasoning_effort:'default'})
+    assert.equal(props.modelValue.low_cost.reasoning_effort, 'high')
+  } finally { mounted?.app.unmount(); await server.close() }
+})
+
 test('expanded selector shares pair state, clears only on a different provider, searches, and respects readonly menus', async () => {
   const server = await setupModules()
   let mounted
@@ -190,6 +228,10 @@ test('compact picker applies configured presets and supported reasoning, while c
     assert.equal(slider().props.max, 2, 'slider only exposes default and model-supported levels')
     slider().props.onAfterChange(2); await flush()
     assert.equal(props.reasoningEffort, 'high')
+    settings.setting.data.model_preferences.high_performance.reasoning_effort = 'low'
+    menu().props.onClick({key:'high_performance'}); await flush()
+    assert.equal(props.reasoningEffort, 'low', 'using a configured preset applies its saved reasoning strength')
+    slider().props.onAfterChange(2); await flush()
     const count = changes.length
     settings.setting.data.model_preferences.high_performance.model = 'removed'
     await flush()
@@ -279,75 +321,6 @@ for (const name of ['UniversalLlm', 'CustomModel', 'LocalLlm']) {
   })
 }
 
-test('mounted chat selector commits only successful saves and ignores stale conversation saves', async () => {
-  const previous = globalThis.__chatSelection
-  const state = { options: reactive([{ value: 'OpenAI', label: 'OpenAI', children: [{ value: 'old', label: 'Old' }] },
-    { value: 'Other', label: 'Other', children: [{ value: 'new', label: 'New' }] }]), requests: [], successes: [] }
-  globalThis.__chatSelection = state
-  const server = await setupModules({
-    '/chat-selector-test.js': (await componentSource('../src/components/workspace/chat/ModelSelectButton.vue', 'chat-selector-test')).replace("'ant-design-vue'", "'virtual:selection-message'"),
-    '@/components/ModelSelector.vue': await componentSource('../src/components/ModelSelector.vue', 'chat-model-selector'),
-    '@/components/ModelCapabilities.vue': 'export default {render:()=>null}',
-    '@/components/IconButton.vue': 'import {h} from "vue"; export default {inheritAttrs:false, setup:(_, {attrs})=>()=>h("open-model",attrs)}',
-    '@/icons': 'export const RobotOne = {render:()=>null}, CheckOne=RobotOne, Down=RobotOne',
-    '@/utils/common': 'export const getChatModelOptions = () => globalThis.__chatSelection.options',
-    '@/api/chat': 'export const conversationAPI = (...args) => globalThis.__chatSelection.request(...args)',
-    'virtual:selection-message': 'export const message = {success: value => globalThis.__chatSelection.successes.push(value)}',
-  })
-  let mounted
-  try {
-    state.request = (...args) => { const request = { ...deferred(), args }; state.requests.push(request); return request.promise }
-    const updates = []
-    const props = reactive({ cid: 'first', model: 'old', modelProvider: 'OpenAI',
-      'onUpdate:model': value => updates.push(['model', value]), 'onUpdate:modelProvider': value => updates.push(['provider', value]) })
-    mounted = await mount((await server.ssrLoadModule('/chat-selector-test.js')).default, props)
-    const modal = () => findAll(mounted.root, 'AModal')[0]
-    const menus = () => findAll(mounted.root, 'AMenu').filter(node => node.props.items)
-    const open = async () => { findAll(mounted.root, 'AMenu')[0].props.onClick({key:'custom'}); await flush() }
-    const choose = async () => { menus()[0].props.onClick({ key: 'Other' }); await flush(); assert.deepEqual(menus()[1].props.selectedKeys, []); menus()[1].props.onClick({ key: 'new' }); await flush() }
-    await open()
-    state.options[0].children = []; await flush()
-    assert.equal(modal().props.okButtonProps.disabled, true)
-    await modal().props.onOk()
-    assert.equal(state.requests.length, 0, 'invalid provider/model pairs cannot be submitted')
-    modal().props.onCancel(); state.options[0].children = [{ value: 'old', label: 'Old' }]; await flush()
-    await open(); await choose()
-    assert.equal(modal().props.okButtonProps.disabled, false)
-    modal().props.onCancel(); await flush()
-    assert.deepEqual(updates, [])
-    await open()
-    assert.deepEqual(menus()[0].props.selectedKeys, ['OpenAI'])
-    assert.deepEqual(menus()[1].props.selectedKeys, ['old'])
-    await choose()
-    const failed = modal().props.onOk(); await flush()
-    assert.deepEqual(state.requests[0].args, ['update', { cid: 'first', model: 'new', model_provider: 'Other', settings: {model_preference:'custom',reasoning_effort:'default'} }])
-    assert.deepEqual(updates, [], 'pending save must not update the conversation')
-    state.requests[0].reject(new Error('offline')); await failed; await flush()
-    assert.equal(modal().props.open, true)
-    assert.deepEqual(menus()[1].props.selectedKeys, ['new'])
-    assert.equal(findAll(mounted.root, 'ATypographyText').some(node => node.props.role === 'alert'), true)
-    assert.deepEqual(updates, [])
-    const saved = modal().props.onOk(); state.requests[1].resolve({ status: 200 }); await saved; await flush()
-    assert.deepEqual(updates, [['provider', 'Other'], ['model', 'new']])
-    assert.equal(modal().props.open, false)
-    updates.length = 0
-    await open(); await choose()
-    const stale = modal().props.onOk(); props.cid = 'second'; props.model = 'old'; props.modelProvider = 'OpenAI'; await flush()
-    state.requests[2].resolve({ status: 200 }); await stale; await flush()
-    assert.deepEqual(updates, [])
-    assert.equal(modal().props.open, false)
-    assert.equal(state.successes.length, 1)
-    props.cid = 'tmp'; await flush(); await open(); await choose(); await modal().props.onOk(); await flush()
-    assert.equal(state.requests.length, 3)
-    assert.deepEqual(updates, [['provider', 'Other'], ['model', 'new']])
-    updates.length = 0
-    props.cid = 'last'; await flush(); await open(); await choose()
-    const unmounted = modal().props.onOk(); mounted.app.unmount(); mounted = null
-    state.requests[3].resolve({ status: 200 }); await unmounted; await flush()
-    assert.deepEqual(updates, [])
-    assert.equal(state.successes.length, 1)
-  } finally { mounted?.app.unmount(); globalThis.__chatSelection = previous; await server.close() }
-})
 
 test('model catalog hydration preserves saved models and reacts to catalog refreshes', async () => {
   const modules = {

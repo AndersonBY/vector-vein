@@ -1,4 +1,7 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
 import { ref, watch } from 'vue'
 import { PlayOne, Pause, Download } from '@/icons'
 import VueAudioPlayer from '@liripeng/vue-audio-player'
@@ -128,19 +131,19 @@ const audioPlayerRef = ref()
     <VueAudioPlayer v-if="!isMidi" ref="audioPlayerRef" :audio-list="innerAudios" theme-color="#28c5e5"
       :isLoop="false" />
     <div v-else>
-      <a-button v-if="playing" type="primary" shape="round" size="large" @click="stop">
-        <pause theme="filled" />
-      </a-button>
-      <a-button v-else type="primary" shape="round" size="large" @click="play">
+      <IconButton v-if="playing" :text="t('common.pause')" type="primary" shape="round" size="large" @click="stop">
+        <template #icon><Pause theme="filled" /></template>
+      </IconButton>
+      <IconButton v-else :text="t('common.play')" type="primary" shape="round" size="large" @click="play">
         <template #icon>
           <play-one theme="filled" />
         </template>
-      </a-button>
+      </IconButton>
     </div>
-    <a-button type="text" @click="downloadAudio">
+    <IconButton :text="t('common.download')" @click="downloadAudio">
       <template #icon>
         <Download />
       </template>
-    </a-button>
+    </IconButton>
   </a-flex>
 </template>

@@ -22,6 +22,8 @@ Object.entries(templateData.template).forEach(([key, value]) => {
     fieldsData.value[key].is_output = true
   }
 })
+fieldsData.value.search_engine.options = templateData.template.search_engine.options
+if (!fieldsData.value.search_engine.options.some(option => option.value === fieldsData.value.search_engine.value)) fieldsData.value.search_engine.value = ''
 </script>
 
 <template>

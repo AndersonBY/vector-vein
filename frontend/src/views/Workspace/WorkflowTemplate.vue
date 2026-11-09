@@ -1,10 +1,12 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+
 import { onBeforeMount, ref } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
 import { useUserWorkflowsStore } from "@/stores/userWorkflows"
 import { message } from 'ant-design-vue'
-import { DoubleRight, DoubleLeft } from '@/icons'
+import { DoubleRight, DoubleLeft, Edit, PreviewOpen } from '@/icons'
 import AuthorComponent from "@/components/AuthorComponent.vue"
 import ImageCarousel from "@/components/ImageCarousel.vue"
 import WorkflowUse from "@/components/workspace/WorkflowUse.vue"
@@ -108,15 +110,18 @@ const addTemplateToUserWorkflows = async () => {
               {{ t('workspace.workflowTemplate.add_to_my_workflows') }}
             </a-button>
 
+            <a-flex gap="small">
             <WorkflowPreviewModal :workflow="templateData">
               <template #default="{ open }">
-                <a-button block @click="open">{{ t('workspace.canvasPreview.open') }}</a-button>
+                <IconButton :text="t('workspace.canvasPreview.open')" @click="open"><template #icon><PreviewOpen /></template></IconButton>
               </template>
             </WorkflowPreviewModal>
 
-            <a-button v-if="templateData.is_owner" type="primary" @click="openEditor" block>
-              {{ t('workspace.workflowTemplate.edit_template') }}
-            </a-button>
+            <IconButton v-if="templateData.is_owner" :text="t('workspace.workflowTemplate.edit_template')" @click="openEditor">
+              <template #icon><Edit /></template>
+            </IconButton>
+
+            </a-flex>
 
             <ImageCarousel v-if="templateData.images?.length > 0" :images="templateData.images" />
 

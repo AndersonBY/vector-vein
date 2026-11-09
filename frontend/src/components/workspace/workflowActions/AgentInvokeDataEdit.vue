@@ -1,4 +1,7 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+import { Save } from '@/icons'
+
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -103,9 +106,7 @@ const saveSettings = async () => {
     </a-button>
     <a-drawer :title="t('components.workspace.agentInvokeDataEdit.agent_invoke')" :open="open" @close="open = false">
       <template #extra>
-        <a-button type="primary" @click="saveSettings">
-          {{ t('common.save') }}
-        </a-button>
+        <IconButton :text="t('common.save')" @click="saveSettings"><template #icon><Save /></template></IconButton>
       </template>
       <a-spin :spinning="loading">
         <a-form ref="modifyFormRef" :model="toolCallData" layout="vertical">

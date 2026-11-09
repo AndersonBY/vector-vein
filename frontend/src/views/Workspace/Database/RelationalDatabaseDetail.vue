@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, reactive, onBeforeMount, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
@@ -185,14 +186,10 @@ const infoEditorModal = reactive({
           </template>
           <template #extra>
             <a-flex gap="middle">
-              <a-tooltip :title="t('workspace.databaseDetail.modify_database_info')">
-                <a-button type="text" size="large" @click="infoEditorModal.show">
-                  <template #icon>
-                    <Edit />
-                  </template>
-                </a-button>
-              </a-tooltip>
-              <a-modal :title="t('workspace.databaseDetail.modify_database_info')" @ok="infoEditorModal.ok"
+              <IconButton :text="t('workspace.databaseDetail.modify_database_info')" type="text" size="large" @click="infoEditorModal.show">
+                <template #icon><Edit /></template>
+              </IconButton>
+              <a-modal ok-type="default" :title="t('workspace.databaseDetail.modify_database_info')" @ok="infoEditorModal.ok"
                 :confirm-loading="infoEditorModal.createLoading" v-model:open="infoEditorModal.open">
                 <a-form :model="databaseInfo" layout="vertical">
                   <a-form-item :label="t('workspace.dataSpace.database_name')" name="name"
@@ -201,14 +198,10 @@ const infoEditorModal = reactive({
                   </a-form-item>
                 </a-form>
               </a-modal>
-              <a-tooltip :title="t('workspace.databaseDetail.add_object')">
-                <a-button type="text" size="large"
+              <IconButton :text="t('workspace.databaseDetail.add_object')" type="text" size="large"
                   @click="router.push({ name: 'RelationalDatabaseTableCreate', params: { databaseId } })">
-                  <template #icon>
-                    <Upload />
-                  </template>
-                </a-button>
-              </a-tooltip>
+                <template #icon><Upload /></template>
+              </IconButton>
             </a-flex>
           </template>
           <a-tabs v-model:activeKey="activeKey" tab-position="left">
@@ -238,13 +231,11 @@ const infoEditorModal = reactive({
                   </template>
                   <template v-else-if="column.key === 'action'">
                     <template v-if="record.status != 'PR'">
-                      <a-popconfirm placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
+                      <a-popconfirm ok-type="default" placement="leftTop" :title="t('workspace.databaseDetail.delete_confirm')"
                         @confirm="deleteTable(record.tid)">
-                        <a-button type="text" danger>
-                          <template #icon>
-                            <Delete />
-                          </template>
-                        </a-button>
+                        <IconButton :text="t('common.delete')" type="text" danger>
+                          <template #icon><Delete /></template>
+                        </IconButton>
                       </a-popconfirm>
                     </template>
                   </template>

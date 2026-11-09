@@ -27,11 +27,9 @@ Object.entries(templateData.template).forEach(([key, value]) => {
     fieldsData.value[key].is_output = true
   }
 })
-fieldsData.value.database.options = userDatabases.value.filter((database) => {
-  return database.status == 'VALID'
-}).map((item) => {
+fieldsData.value.database.options = userDatabases.value.map((item) => {
   return {
-    value: item.vid,
+    value: item.id,
     label: item.name,
   }
 })

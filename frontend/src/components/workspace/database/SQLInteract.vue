@@ -55,7 +55,7 @@ const extensions = [sql(), oneDark, FontSizeTheme]
 <template>
   <a-flex gap="middle" vertical>
     <a-flex gap="middle" justify="flex-end">
-      <a-button type="primary" @click="runSQL" :loading="runningSQL" :disabled="sqlStatement.length == 0">
+      <a-button type="default" @click="runSQL" :loading="runningSQL" :disabled="sqlStatement.length == 0">
         {{ t('workspace.databaseDetail.run_sql') }}
       </a-button>
     </a-flex>
@@ -84,19 +84,3 @@ const extensions = [sql(), oneDark, FontSizeTheme]
     </a-tabs>
   </a-flex>
 </template>
-
-<style>
-.code-editor .cm-scroller::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.code-editor .cm-scroller::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.code-editor .cm-scroller::-webkit-scrollbar-track {
-  background: transparent;
-}
-</style>

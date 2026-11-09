@@ -101,19 +101,3 @@ const handleReady = (payload) => {
       @ready="handleReady" @change="updateCode($event)" />
   </a-modal>
 </template>
-
-<style>
-.code-editor .cm-scroller::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.code-editor .cm-scroller::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.code-editor .cm-scroller::-webkit-scrollbar-track {
-  background: transparent;
-}
-</style>

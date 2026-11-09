@@ -1,4 +1,8 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+
 import { watch, ref, computed } from 'vue'
 import { Download } from '@/icons'
 import xlsx from "json-as-xlsx"
@@ -70,11 +74,11 @@ const exportTable = () => {
     <div class="table-container custom-scrollbar">
       <a-table :dataSource="parsedData" :columns="columns" :bordered="bordered" />
     </div>
-    <a-button type="text" @click="exportTable">
+    <IconButton :text="t('common.export_table')" @click="exportTable">
       <template #icon>
         <Download />
       </template>
-    </a-button>
+    </IconButton>
   </a-flex>
 </template>
 

@@ -1,4 +1,6 @@
 <script setup>
+import { Add, Edit, Time, Delete } from '@/icons'
+import IconButton from '@/components/IconButton.vue'
 import { computed, onBeforeMount, reactive, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -6,7 +8,8 @@ import { message, Modal } from 'ant-design-vue'
 import { useUserWorkflowsStore } from '@/stores/userWorkflows'
 import { workflowScheduleTriggerAPI } from '@/api/workflow'
 import { formatTime } from '@/utils/util'
-import CronInput from '@/components/nodes/CronInput.vue'
+import ScheduleEditor from '@/components/scheduling/ScheduleEditor.vue'
+import { formatSchedule } from '@/utils/schedule'
 import WorkspacePageHero from '@/components/workspace/WorkspacePageHero.vue'
 import WorkspaceEmptyState from '@/components/workspace/WorkspaceEmptyState.vue'
 
@@ -16,6 +19,8 @@ const router = useRouter()
 const userWorkflowsStore = useUserWorkflowsStore()
 const loading = ref(false)
 const saving = ref(false)
+const scheduleValid = ref(true)
+const localTimezone = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Asia/Shanghai'
 
 const schedules = reactive({
   data: [],
@@ -29,6 +34,8 @@ const scheduleModal = reactive({
   sid: '',
   wid: '',
   cron_expression: '0 9 * * *',
+  timezone: localTimezone(),
+  recurrence: null,
 })
 
 const workflowOptions = computed(() => (userWorkflowsStore.userWorkflows || []).map((workflow) => ({
@@ -78,6 +85,8 @@ const openCreateModal = () => {
   scheduleModal.sid = ''
   scheduleModal.wid = route.query.wid || ''
   scheduleModal.cron_expression = '0 9 * * *'
+  scheduleModal.timezone = localTimezone()
+  scheduleModal.recurrence = null
 }
 
 const openEditModal = (record) => {
@@ -85,28 +94,37 @@ const openEditModal = (record) => {
   scheduleModal.sid = record.sid
   scheduleModal.wid = record.workflow?.wid || ''
   scheduleModal.cron_expression = record.cron_expression || '0 9 * * *'
+  scheduleModal.timezone = record.data?.timezone || 'Asia/Shanghai'
+  scheduleModal.recurrence = record.data?.recurrence ? { ...record.data.recurrence } : null
 }
 
 const saveSchedule = async () => {
+  if (saving.value || !scheduleValid.value) return
   if (!scheduleModal.wid && !scheduleModal.sid) {
     message.warning(t('workspace.workflowSpace.schedule_workflow_required'))
     return
   }
   saving.value = true
-  const response = await workflowScheduleTriggerAPI('update', {
-    sid: scheduleModal.sid || undefined,
-    wid: scheduleModal.wid || undefined,
-    cron_expression: scheduleModal.cron_expression,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-  })
-  if (response.status === 200) {
-    message.success(t('workspace.workflowSpace.schedule_update_success'))
-    scheduleModal.open = false
-    await loadSchedules()
-  } else {
-    message.error(response.msg || t('workspace.workflowSpace.schedule_update_failed'))
+  try {
+    const response = await workflowScheduleTriggerAPI('update', {
+      sid: scheduleModal.sid || undefined,
+      wid: scheduleModal.wid || undefined,
+      cron_expression: scheduleModal.cron_expression,
+      timezone: scheduleModal.timezone,
+      recurrence: scheduleModal.recurrence,
+    })
+    if (response.status === 200) {
+      message.success(t('workspace.workflowSpace.schedule_update_success'))
+      scheduleModal.open = false
+      await loadSchedules()
+    } else {
+      message.error(response.msg || t('workspace.workflowSpace.schedule_update_failed'))
+    }
+  } catch {
+    message.error(t('workspace.workflowSpace.schedule_update_failed'))
+  } finally {
+    saving.value = false
   }
-  saving.value = false
 }
 
 const removeSchedule = (record) => {
@@ -157,9 +175,9 @@ const onTableChange = async (pagination) => {
       :title="t('workspace.workflowSpace.schedule_manager')"
       :description="t('workspace.workflowSpace.schedule_manager_description')">
       <template #actions>
-        <a-button type="primary" @click="openCreateModal">
-          {{ t('workspace.workflowSpace.schedule_create') }}
-        </a-button>
+        <IconButton :text="t('workspace.workflowSpace.schedule_create')" type="primary" @click="openCreateModal">
+          <template #icon><Add /></template>
+        </IconButton>
       </template>
     </WorkspacePageHero>
 
@@ -182,31 +200,45 @@ const onTableChange = async (pagination) => {
             </a-button>
           </template>
         </a-table-column>
-        <a-table-column key="cron_expression" :title="t('workspace.workflowSpace.schedule_expression')" data-index="cron_expression" />
+        <a-table-column key="cron_expression" :title="t('workspace.workflowSpace.schedule_pattern')">
+          <template #default="{ record }">
+            <span>{{ formatSchedule(record.cron_expression, record.data?.recurrence, t) }}</span>
+            <div class="schedule-timezone">{{ record.data?.timezone || 'Asia/Shanghai' }}</div>
+          </template>
+        </a-table-column>
         <a-table-column key="next_run_display" :title="t('workspace.workflowSpace.schedule_next_run')" data-index="next_run_display" />
         <a-table-column key="last_run_display" :title="t('workspace.workflowSpace.schedule_last_run')" data-index="last_run_display" />
         <a-table-column key="last_run_status" :title="t('workspace.workflowSpace.schedule_last_run_status')" data-index="last_run_status" />
         <a-table-column key="update_time_display" :title="t('common.update_time')" data-index="update_time_display" />
-        <a-table-column key="action" :title="t('common.action')" width="240">
+        <a-table-column key="action" :title="t('common.action')" width="132">
           <template #default="{ record }">
             <a-space>
-              <a-button size="small" @click="openEditModal(record)">{{ t('common.edit') }}</a-button>
-              <a-button size="small" @click="openLatestRecord(record)">{{ t('workspace.workflowSpace.schedule_latest_run') }}</a-button>
-              <a-button size="small" danger @click="removeSchedule(record)">{{ t('common.delete') }}</a-button>
+              <IconButton :text="t('common.edit')" size="small" @click="openEditModal(record)">
+                <template #icon><Edit /></template>
+              </IconButton>
+              <IconButton :text="t('workspace.workflowSpace.schedule_latest_run')" size="small" @click="openLatestRecord(record)">
+                <template #icon><Time /></template>
+              </IconButton>
+              <IconButton :text="t('common.delete')" size="small" danger @click="removeSchedule(record)">
+                <template #icon><Delete /></template>
+              </IconButton>
             </a-space>
           </template>
         </a-table-column>
       </a-table>
     </a-card>
 
-    <a-modal v-model:open="scheduleModal.open" :title="t('workspace.workflowSpace.schedule_edit')"
-      :confirm-loading="saving" @ok="saveSchedule">
+    <a-modal v-model:open="scheduleModal.open" :title="t(scheduleModal.sid ? 'workspace.workflowSpace.schedule_edit' : 'workspace.workflowSpace.schedule_create')"
+      :ok-text="t('common.save')" :cancel-text="t('common.cancel')"
+      :confirm-loading="saving" :ok-button-props="{ disabled: !scheduleValid || saving }" :cancel-button-props="{ disabled: saving }"
+      :closable="!saving" :mask-closable="!saving" :keyboard="!saving" @ok="saveSchedule">
       <a-form layout="vertical">
         <a-form-item :label="t('common.workflow')" required>
-          <a-select v-model:value="scheduleModal.wid" :options="workflowOptions" :disabled="!!scheduleModal.sid" />
+          <a-select v-model:value="scheduleModal.wid" :options="workflowOptions" :disabled="saving || !!scheduleModal.sid" />
         </a-form-item>
-        <a-form-item :label="t('workspace.workflowSpace.schedule_expression')" required>
-          <CronInput v-model="scheduleModal.cron_expression" />
+        <a-form-item :label="t('workspace.workflowSpace.schedule_pattern')" required>
+          <ScheduleEditor v-if="scheduleModal.open" v-model="scheduleModal.cron_expression" v-model:timezone="scheduleModal.timezone"
+            v-model:recurrence="scheduleModal.recurrence" :disabled="saving" @validity-change="scheduleValid = $event" />
         </a-form-item>
       </a-form>
     </a-modal>
@@ -219,4 +251,5 @@ const onTableChange = async (pagination) => {
   flex-direction: column;
   gap: 16px;
 }
+.schedule-timezone { margin-top: 4px; color: var(--site-secondary-text-color); font-size: 12px; }
 </style>

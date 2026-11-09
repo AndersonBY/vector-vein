@@ -1,8 +1,9 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { Edit } from '@/icons'
+import { Edit, Delete } from '@/icons'
 import LLMStandardSettings from "@/components/settings/LLMStandardSettings.vue"
 
 const props = defineProps({
@@ -57,9 +58,7 @@ function addModel(model) {
       </a-button>
       <a-popconfirm :title="t('settings.delete_model_family_confirm', { modelFamily: modelFamilyName })"
         @confirm="deleteModelFamily">
-        <a-button danger>
-          {{ t('settings.delete_model_family') }}
-        </a-button>
+        <IconButton danger :text="t('settings.delete_model_family')"><template #icon><Delete /></template></IconButton>
       </a-popconfirm>
     </a-flex>
     <a-tabs tab-position="left" v-model:activeKey="selectedModelFamily" @change="handleTabChange">
@@ -73,11 +72,11 @@ function addModel(model) {
             </template>
             <a-flex align="center" gap="small">
               <a-typography-text :content="modelFamilyName" />
-              <a-button type="text" @click="editModelFamilyNameModalOpen = true">
+              <IconButton :text="t('common.edit')" @click="editModelFamilyNameModalOpen = true">
                 <template #icon>
                   <Edit />
                 </template>
-              </a-button>
+              </IconButton>
               <a-modal v-model:open="editModelFamilyNameModalOpen" :title="t('settings.edit_model_family_name')"
                 @ok="familyNameChange">
                 <a-input v-model:value="modelFamilyName" />

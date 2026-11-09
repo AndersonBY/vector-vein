@@ -28,8 +28,8 @@ export function createTemplateData() {
         "value": "jina.ai",
         "options": [
           {
-            "value": "bing",
-            "label": "bing"
+            "value": "deepseek",
+            "label": "DeepSeek"
           },
           {
             "value": "jina.ai",
@@ -47,6 +47,8 @@ export function createTemplateData() {
         "placeholder": "",
         "show": false,
         "value": 10,
+        "min": 1,
+        "max": 50,
         "name": "count",
         "display_name": "count",
         "type": "str",

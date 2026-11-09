@@ -23,14 +23,14 @@ test('workflow stop guards duplicate and stale requests, retries failures, and p
       if (!['WorkflowUse.vue', 'WorkflowRunRecordsDrawer.vue'].some(name => id.endsWith(name))) return
       return source.replace(/from (['"])(@[^'"]+|vue-router|ant-design-vue)\1/g, (all, quote, name) => {
         if (!name.startsWith('@/') && !['vue-router', 'ant-design-vue'].includes(name)) return all
-        if (['@/utils/workflowFailures', '@/icons', '@/components/nodes/tools/_httpRequestShared.js'].includes(name)) return all
+        if (['@/utils/workflowFailures', '@/utils/schedule', '@/icons', '@/components/nodes/tools/_httpRequestShared.js'].includes(name)) return all
         return `from "virtual:stop:${name}"`
       })
     }, resolveId(id) { if (id.startsWith('virtual:stop:')) return '\0' + id }, load(id) {
       if (!id.startsWith('\0virtual:stop:')) return
       const name = id.slice('\0virtual:stop:'.length)
       if (name.endsWith('.vue')) return 'export default {}'
-      if (name.startsWith('@/api/')) return 'export const workflowAPI = (...args) => globalThis.__stopHarness.request(...args); export const workflowRunRecordAPI = workflowAPI; export const workflowScheduleTriggerAPI = workflowAPI; export const databaseAPI = workflowAPI; export const relationalDatabaseAPI = workflowAPI; export const settingAPI = workflowAPI'
+      if (name.startsWith('@/api/')) return 'export const workflowAPI = (...args) => globalThis.__stopHarness.request(...args); export const workflowRunRecordAPI = workflowAPI; export const workflowScheduleTriggerAPI = workflowAPI; export const databaseAPI = workflowAPI; export const knowledgeBaseAPI = workflowAPI; export const relationalDatabaseAPI = workflowAPI; export const settingAPI = workflowAPI'
       if (name === 'vue-router') return 'export const useRouter = () => ({push(){}})'
       if (name === 'ant-design-vue') return 'export const message = {success: value => globalThis.__stopHarness.notices.push(["success",value]),error: value => globalThis.__stopHarness.notices.push(["error",value])}'
       if (name === '@/utils/util') return 'export const deepCopy = value => JSON.parse(JSON.stringify(value)); export const formatTime = value => value'

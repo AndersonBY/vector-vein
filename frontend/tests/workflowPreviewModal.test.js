@@ -6,6 +6,7 @@ import { createRenderer, h, nextTick, reactive } from 'vue'
 import { createI18n } from 'vue-i18n'
 import { parse, compileScript, compileTemplate } from 'vue/compiler-sfc'
 import { createServer } from 'vite'
+import { iconButtonFixture } from './taskAgentButtonFixture.js'
 
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r }); return { promise, resolve } }
 const flush = async () => { await nextTick(); await nextTick() }
@@ -25,14 +26,16 @@ test('preview opens without selecting, handles failures, and rejects stale loads
   const script = compiled.content.replace('export default', 'const component =')
     .replace("'@/api/workflow'", "'virtual:preview-api'")
     .replace("'./CanvasPreview.vue'", "'virtual:preview-canvas'")
+    .replace("'@/components/IconButton.vue'", "'virtual:preview-icon-button'")
   const template = compileTemplate({ source: descriptor.template.content, filename, id: 'preview-modal-test',
     compilerOptions: { bindingMetadata: compiled.bindings } }).code.replace('export function render', 'function render')
   const moduleId = '/preview-modal-mounted.js'
   const server = await createServer({
     configFile: false, root: fileURLToPath(new URL('..', import.meta.url)),
-    plugins: [{ name: 'preview-modal-test', resolveId: id => [moduleId, 'virtual:preview-api', 'virtual:preview-canvas'].includes(id) ? id : undefined,
+    plugins: [{ name: 'preview-modal-test', resolveId: id => [moduleId, 'virtual:preview-api', 'virtual:preview-canvas', 'virtual:preview-icon-button'].includes(id) ? id : undefined,
       load: id => id === moduleId ? `${script}\n${template}\ncomponent.render = render; export default component`
         : id === 'virtual:preview-api' ? 'export const workflowAPI = (...args) => globalThis.__previewRequest(...args)'
+          : id === 'virtual:preview-icon-button' ? iconButtonFixture
           : id === 'virtual:preview-canvas' ? 'export default { render: () => null }' : undefined }],
     resolve: { alias: { '@': fileURLToPath(new URL('../src', import.meta.url)) } },
     server: { middlewareMode: true, hmr: false }, optimizeDeps: { noDiscovery: true }, appType: 'custom',

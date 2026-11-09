@@ -3,10 +3,14 @@ import { computed, reactive, ref, toRaw, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
 import { Edit, Delete } from '@/icons'
+import IconButton from '@/components/IconButton.vue'
+import RetrievalModelTest from './RetrievalModelTest.vue'
 import QuestionPopover from "@/components/QuestionPopover.vue"
 import { deepCopy } from '@/utils/util'
 
 const props = defineProps({
+  kind: { type: String, default: 'embedding' },
+  backend: { type: String, default: 'local' },
   endpoints: {
     type: Array,
     default: () => []
@@ -16,17 +20,24 @@ const props = defineProps({
 const { t } = useI18n()
 const backendSettings = defineModel()
 
-const protocolOptions = [
+const protocolOptions = computed(() => props.kind === 'rerank' ? [
+  { label: 'Cohere Rerank v2', value: 'cohere_rerank_v2' },
+  { label: 'Jina Rerank v1', value: 'jina_rerank_v1' },
+  { label: 'Voyage Rerank v1', value: 'voyage_rerank_v1' },
+  { label: 'SiliconFlow', value: 'siliconflow' },
+  { label: t('settings.custom_http_protocol'), value: 'custom_json_http' },
+] : [
   { label: 'OpenAI Embeddings', value: 'openai_embeddings' },
   { label: 'Cohere Embed v2', value: 'cohere_embed_v2' },
   { label: 'Voyage Embeddings v1', value: 'voyage_embeddings_v1' },
   { label: 'SiliconFlow', value: 'siliconflow' },
   { label: t('settings.custom_http_protocol'), value: 'custom_json_http' },
-]
+])
 
 const ensureBackendSettings = () => {
   if (!backendSettings.value || typeof backendSettings.value !== 'object' || Array.isArray(backendSettings.value)) {
-    backendSettings.value = {}
+    backendSettings.value = { models: {}, default_endpoint: null }
+    return
   }
   if (!backendSettings.value.models || typeof backendSettings.value.models !== 'object' || Array.isArray(backendSettings.value.models)) {
     backendSettings.value.models = {}
@@ -57,6 +68,7 @@ const modelFormModalOpen = ref(false)
 const modelFormStatus = ref('')
 const modelEditKey = ref('')
 const endpointModelModalOpen = ref(false)
+const endpointEditIndex = ref(null)
 
 const modelForm = reactive({
   id: '',
@@ -81,6 +93,8 @@ const formatOptionalJson = (value) => {
 }
 
 const resetModelForm = () => {
+  endpointModelModalOpen.value = false
+  endpointEditIndex.value = null
   Object.assign(modelForm, {
     id: '',
     endpoints: [],
@@ -150,13 +164,18 @@ const saveModel = () => {
     message.error(t('settings.model_key_empty'))
     return
   }
+  if (modelFormStatus.value === 'add' && Object.hasOwn(backendSettings.value.models, nextKey)) {
+    message.error(t('settings.embedding_model_duplicate'))
+    return
+  }
 
   backendSettings.value.models[nextKey] = {
+    ...(backendSettings.value.models[nextKey] || {}),
     id: modelForm.id || nextKey,
     endpoints: deepCopy(toRaw(modelForm.endpoints)),
     enabled: modelForm.enabled,
     protocol: modelForm.protocol || null,
-    dimensions: modelForm.dimensions || null,
+    ...(props.kind === 'embedding' ? { dimensions: modelForm.dimensions || null } : {}),
     request_mapping: requestMapping,
     response_mapping: responseMapping,
   }
@@ -164,12 +183,27 @@ const saveModel = () => {
   resetModelForm()
 }
 
+const draftForTest = computed(() => {
+  try {
+    const { request_mapping_json, response_mapping_json, ...config } = modelForm
+    return {
+      ...config,
+      id: modelForm.id || modelEditKey.value.trim(),
+      protocol: modelForm.protocol || null,
+      dimensions: props.kind === 'embedding' ? (modelForm.dimensions || null) : undefined,
+      request_mapping: request_mapping_json.trim() ? JSON.parse(request_mapping_json) : null,
+      response_mapping: response_mapping_json.trim() ? JSON.parse(response_mapping_json) : null,
+    }
+  } catch { return null }
+})
+
 const cancelModel = () => {
   modelFormModalOpen.value = false
   resetModelForm()
 }
 
 const addEndpoint = () => {
+  endpointEditIndex.value = null
   endpointModelForm.endpoint_id = ''
   endpointModelForm.model_id = ''
   endpointModelModalOpen.value = true
@@ -179,18 +213,17 @@ const saveEndpoint = () => {
   if (!endpointModelForm.endpoint_id) {
     return
   }
-  if (endpointModelForm.model_id) {
-    modelForm.endpoints.push({
+  const endpoint = endpointModelForm.model_id ? {
       endpoint_id: endpointModelForm.endpoint_id,
       model_id: endpointModelForm.model_id,
-    })
-  } else {
-    modelForm.endpoints.push(endpointModelForm.endpoint_id)
-  }
+    } : endpointModelForm.endpoint_id
+  if (endpointEditIndex.value === null) modelForm.endpoints.push(endpoint)
+  else modelForm.endpoints.splice(endpointEditIndex.value, 1, endpoint)
   endpointModelModalOpen.value = false
 }
 
 const editEndpoint = (index) => {
+  endpointEditIndex.value = index
   const endpoint = modelForm.endpoints[index]
   if (typeof endpoint === 'string') {
     endpointModelForm.endpoint_id = endpoint
@@ -208,7 +241,7 @@ const removeEndpoint = (index) => {
 </script>
 
 <template>
-  <a-flex vertical gap="small">
+  <a-flex v-if="backendSettings" vertical gap="small">
     <a-form :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
       <a-form-item>
         <template #label>
@@ -221,16 +254,21 @@ const removeEndpoint = (index) => {
 
     <template v-for="(model, modelKey) in backendSettings.models" :key="modelKey">
       <a-flex gap="small" align="center">
-        <a-button type="text" block @click="editModel(model, modelKey)">
-          {{ modelKey }}: {{ model.id }}
-        </a-button>
-        <a-button type="text" danger @click="removeModel(modelKey)">
+        <span style="flex: 1; overflow-wrap: anywhere">{{ modelKey }}: {{ model.id }}</span>
+        <RetrievalModelTest :kind="kind" :backend="backend" :model-key="modelKey" :model-config="model"
+          :endpoints="endpoints" :default-endpoint="backendSettings.default_endpoint" />
+        <IconButton :text="t('common.edit')" @click="editModel(model, modelKey)"><template #icon><Edit /></template></IconButton>
+        <IconButton :text="t('common.delete')" danger @click="removeModel(modelKey)">
           <template #icon>
             <Delete />
           </template>
-        </a-button>
+        </IconButton>
       </a-flex>
     </template>
+
+    <a-typography-paragraph v-if="!Object.keys(backendSettings.models).length" type="secondary">
+      {{ t(kind === 'rerank' ? 'settings.rerank_empty_hint' : 'settings.embedding_empty_hint') }}
+    </a-typography-paragraph>
 
     <a-button type="dashed" block @click="addNewModel">
       {{ t('settings.add_model') }}
@@ -269,16 +307,16 @@ const removeEndpoint = (index) => {
                     {{ typeof endpoint === 'string' ? endpoint : `${endpoint.endpoint_id} (${endpoint.model_id})` }}
                   </span>
                   <a-flex gap="small">
-                    <a-button type="text" size="small" @click="editEndpoint(index)">
+                    <IconButton :text="t('common.edit')" @click="editEndpoint(index)">
                       <template #icon>
                         <Edit />
                       </template>
-                    </a-button>
-                    <a-button type="text" size="small" danger @click="removeEndpoint(index)">
+                    </IconButton>
+                    <IconButton :text="t('common.delete')" danger @click="removeEndpoint(index)">
                       <template #icon>
                         <Delete />
                       </template>
-                    </a-button>
+                    </IconButton>
                   </a-flex>
                 </a-flex>
               </a-list-item>
@@ -295,13 +333,13 @@ const removeEndpoint = (index) => {
 
         <a-form-item>
           <template #label>
-            {{ t('settings.embedding_protocol') }}
-            <QuestionPopover :contents="[t('settings.embedding_protocol_tip')]" />
+            {{ t(kind === 'rerank' ? 'settings.rerank_protocol' : 'settings.embedding_protocol') }}
+            <QuestionPopover :contents="[t(kind === 'rerank' ? 'settings.rerank_protocol_tip' : 'settings.embedding_protocol_tip')]" />
           </template>
           <a-select v-model:value="modelForm.protocol" :options="protocolOptions" allow-clear />
         </a-form-item>
 
-        <a-form-item>
+        <a-form-item v-if="kind === 'embedding'">
           <template #label>
             {{ t('settings.embedding_dimensions') }}
             <QuestionPopover :contents="[t('settings.embedding_dimensions_tip')]" />
@@ -321,12 +359,14 @@ const removeEndpoint = (index) => {
         <a-form-item>
           <template #label>
             {{ t('settings.embedding_response_mapping') }}
-            <QuestionPopover :contents="[t('settings.embedding_response_mapping_tip')]" />
+            <QuestionPopover :contents="[t(kind === 'rerank' ? 'settings.rerank_response_mapping_tip' : 'settings.embedding_response_mapping_tip')]" />
           </template>
           <a-textarea v-model:value="modelForm.response_mapping_json" :rows="6"
             :placeholder="t('settings.json_object_optional')" />
         </a-form-item>
       </a-form>
+      <RetrievalModelTest v-if="modelFormModalOpen" :kind="kind" :backend="backend" :model-key="modelEditKey"
+        :model-config="draftForTest" :endpoints="endpoints" :default-endpoint="backendSettings.default_endpoint" />
     </a-modal>
 
     <a-modal v-model:open="endpointModelModalOpen" :title="t('settings.endpoint_config')" @ok="saveEndpoint">

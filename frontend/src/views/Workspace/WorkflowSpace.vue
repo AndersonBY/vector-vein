@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, nextTick, watch, onBeforeMount, computed } from "vue"
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
@@ -89,12 +90,9 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
         breakpoint="lg" collapsed-width="0" :zeroWidthTriggerStyle="{ background: 'unset', top: 0 }"
         :theme="componentTheme">
         <template #trigger>
-          <a-button type="text" @click="collapsed = !collapsed">
-            <template #icon>
-              <ExpandLeft v-if="collapsed" />
-              <ExpandRight v-else />
-            </template>
-          </a-button>
+          <IconButton :text="t(collapsed ? 'workspace.taskAgentSpace.expand_sidebar' : 'workspace.taskAgentSpace.collapse_sidebar')" type="text" @click="collapsed = !collapsed">
+            <template #icon><ExpandRight v-if="collapsed" /><ExpandLeft v-else /></template>
+          </IconButton>
         </template>
         <a-skeleton v-if="loading" active />
         <a-menu v-else v-model:selectedKeys="selectedKeys" v-model:openKeys="openKeys" mode="inline"
@@ -134,9 +132,9 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
                 </a-tooltip>
                 <a-dropdown>
                   <div class="starred-workflow-item-more-container">
-                    <div class="single-chat-button-more">
-                      <More />
-                    </div>
+                    <IconButton :text="t('common.action')" class="single-chat-button-more" size="small">
+                      <template #icon><More /></template>
+                    </IconButton>
                   </div>
                   <template #overlay>
                     <a-menu>
@@ -197,7 +195,8 @@ const componentTheme = computed(() => theme.value == 'default' ? 'light' : 'dark
   justify-content: flex-end;
 }
 
-.space-container .starred-workflow-item:hover .starred-workflow-item-more-container {
+.space-container .starred-workflow-item:hover .starred-workflow-item-more-container,
+.space-container .starred-workflow-item:focus-within .starred-workflow-item-more-container {
   opacity: 1;
   visibility: visible;
 }

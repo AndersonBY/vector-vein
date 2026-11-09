@@ -114,17 +114,4 @@ const onTourClose = () => {
   right: 0;
 }
 
-html::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-html::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-html::-webkit-scrollbar-track {
-  background: transparent;
-}
 </style>

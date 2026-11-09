@@ -15,36 +15,10 @@ export const dataSpaceRoute = {
       component: () => import('@/views/Workspace/Database/DataSpace.vue'),
     },
     {
-      path: 'document-query-test',
-      name: 'DocumentQueryTest',
-      meta: {
-        title: 'router.workspace.children.document_query_test',
-      },
-      component: () => import('@/views/Workspace/Database/DocumentQueryTest.vue'),
-    },
-    {
-      path: 'vector-db/:databaseId',
-      name: 'VectorDatabaseDetail',
-      meta: {
-        title: 'router.workspace.children.database_detail',
-      },
-      component: () => import('@/views/Workspace/Database/VectorDatabaseDetail.vue'),
-    },
-    {
-      path: 'vector-db/:databaseId/create',
-      name: 'VectorDatabaseObjectCreate',
-      meta: {
-        title: 'router.workspace.children.database_object_create',
-      },
-      component: () => import('@/views/Workspace/Database/VectorDatabaseObjectCreate.vue'),
-    },
-    {
-      path: 'vector-db/:databaseId/object/:objectId',
-      name: 'VectorDatabaseObjectDetail',
-      meta: {
-        title: 'router.workspace.children.database_object_detail',
-      },
-      component: () => import('@/views/Workspace/Database/VectorDatabaseObjectDetail.vue'),
+      path: 'knowledge-base/:kbId',
+      name: 'KnowledgeBaseDetail',
+      meta: { title: 'knowledgeBase.title' },
+      component: () => import('@/views/Workspace/Database/KnowledgeBaseDetail.vue'),
     },
     {
       path: 'relational-db/:databaseId',

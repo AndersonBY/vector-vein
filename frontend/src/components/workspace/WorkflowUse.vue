@@ -1,9 +1,11 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+import { knowledgeBaseAPI } from '@/api/knowledgeBase'
 import { onBeforeMount, onBeforeUnmount, ref, reactive, computed } from "vue"
 import { useRouter } from "vue-router"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
-import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg } from '@/icons'
+import { FullScreenOne, OffScreenOne, Edit, Lightning, Dot, PlayOne, Eeg, AlarmClock, Bug } from '@/icons'
 import ReconnectingWebSocket from 'reconnecting-websocket'
 import { storeToRefs } from 'pinia'
 import { useUserSettingsStore } from '@/stores/userSettings'
@@ -22,6 +24,7 @@ import WorkflowRunTimeline from "@/components/workspace/WorkflowRunTimeline.vue"
 import WorkflowRunArtifacts from "@/components/workspace/WorkflowRunArtifacts.vue"
 import WorkflowRecordStatusAlert from "@/components/workspace/WorkflowRecordStatusAlert.vue"
 import TextOutput from "@/components/TextOutput.vue"
+import { formatSchedule } from '@/utils/schedule'
 import HtmlPreview from "@/components/HtmlPreview.vue"
 import {
   hasShowFields,
@@ -33,7 +36,7 @@ import {
 import { deepCopy, formatTime } from '@/utils/util'
 import { settingAPI } from '@/api/user'
 import { workflowAPI, workflowRunRecordAPI, workflowScheduleTriggerAPI } from '@/api/workflow'
-import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
+import { relationalDatabaseAPI } from "@/api/database"
 import { getWorkflowRunStatus } from '@/utils/workflowFailures'
 import { findHttpRequestError } from '@/components/nodes/tools/_httpRequestShared.js'
 
@@ -76,9 +79,8 @@ function setCurrentWorkflow(workflow) {
   currentWorkflow.value.data.nodes.forEach(node => {
     if (node.category === 'vectorDb') {
       node.data.template.database.options = userDatabases.value
-        .filter(database => database.status === 'VALID')
         .map(item => ({
-          value: item.vid,
+          value: item.id,
           label: item.name,
         }));
     } else if (node.category === 'relationalDb') {
@@ -150,7 +152,7 @@ onBeforeMount(async () => {
   const requests = [];
 
   if (hasVectorDbNode) {
-    requests.push(databaseAPI('list', {}));
+    requests.push(knowledgeBaseAPI('list', {}));
   }
 
   if (hasRelationalDbNode) {
@@ -164,7 +166,7 @@ onBeforeMount(async () => {
   if (hasVectorDbNode) {
     listVectorDBResponse = responses.shift();
     if (listVectorDBResponse.status === 200) {
-      userDatabasesStore.setUserDatabases(listVectorDBResponse.data);
+      userDatabasesStore.setUserDatabases(listVectorDBResponse.data.bases);
     }
   }
 
@@ -483,7 +485,8 @@ const scheduleSummary = computed(() => {
     return t('workspace.workflowSpace.schedule_not_configured')
   }
   const items = [
-    `${t('workspace.workflowSpace.schedule_expression')}: ${scheduleInfo.value.cron_expression || '-'}`,
+    formatSchedule(scheduleInfo.value.cron_expression, scheduleInfo.value.data?.recurrence, t),
+    scheduleInfo.value.data?.timezone || 'Asia/Shanghai',
   ]
   if (scheduleInfo.value.next_run_display) {
     items.push(`${t('workspace.workflowSpace.schedule_next_run')}: ${scheduleInfo.value.next_run_display}`)
@@ -742,9 +745,9 @@ function clearWorkflow() {
                   {{ scheduleSummary }}
                 </a-typography-paragraph>
               </div>
-              <a-button size="small" @click="openScheduleManager">
-                {{ t('workspace.workflowSpace.manage_schedule') }}
-              </a-button>
+              <IconButton :text="t('workspace.workflowSpace.manage_schedule')" size="small" @click="openScheduleManager">
+                <template #icon><AlarmClock /></template>
+              </IconButton>
             </a-flex>
           </a-card>
 
@@ -797,29 +800,23 @@ function clearWorkflow() {
           {{ t('workspace.workflowSpace.outputs') }}
         </span>
         <a-space>
-          <a-button v-if="running || showingRecord" type="text" size="small" :aria-pressed="showTimeline"
+          <IconButton :text="t(showTimeline ? 'workspace.workflowSpace.hide_debug_details' : 'workspace.workflowSpace.show_debug_details')" v-if="running || showingRecord" type="text" size="small" :aria-pressed="showTimeline"
             @click="showTimeline = !showTimeline">
-            {{ t(showTimeline ? 'workspace.workflowSpace.hide_debug_details' : 'workspace.workflowSpace.show_debug_details') }}
-          </a-button>
-          <a-button v-if="showingRecord && !isTemplate" type="text" size="small" @click="diagnosisRecord">
-            <template #icon>
-              <Eeg />
-            </template>
-          </a-button>
-          <a-tooltip placement="topLeft" :title="t('workspace.workflowSpace.maximize_output')">
-            <a-button type="text" size="small" @click="outputMaximized = !outputMaximized" v-show="!outputMaximized">
-              <template #icon>
-                <FullScreenOne />
-              </template>
-            </a-button>
-          </a-tooltip>
-          <a-tooltip placement="topLeft" :title="t('workspace.workflowSpace.normalize_output')">
-            <a-button type="text" size="small" @click="outputMaximized = !outputMaximized" v-show="outputMaximized">
-              <template #icon>
-                <OffScreenOne />
-              </template>
-            </a-button>
-          </a-tooltip>
+            <template #icon><Bug /></template>
+          </IconButton>
+          <IconButton :text="t('workspace.workflowSpace.diagnosis_workflow_record')" v-if="showingRecord && !isTemplate" type="text" size="small" @click="diagnosisRecord">
+            <template #icon><Eeg /></template>
+          </IconButton>
+          <span v-show="!outputMaximized">
+            <IconButton :text="t('workspace.workflowSpace.maximize_output')" type="text" size="small" @click="outputMaximized = !outputMaximized">
+              <template #icon><FullScreenOne /></template>
+            </IconButton>
+          </span>
+          <span v-show="outputMaximized">
+            <IconButton :text="t('workspace.workflowSpace.normalize_output')" type="text" size="small" @click="outputMaximized = !outputMaximized">
+              <template #icon><OffScreenOne /></template>
+            </IconButton>
+          </span>
         </a-space>
       </a-typography-title>
       <WorkflowRunTimeline v-if="showTimeline && (running || showingRecord)" :snapshot="timelineSnapshot" :active="running" :status="recordStatus" :fresh="timelineFresh" />

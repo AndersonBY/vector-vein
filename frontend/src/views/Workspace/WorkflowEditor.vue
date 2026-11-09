@@ -1,4 +1,6 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+import { knowledgeBaseAPI } from '@/api/knowledgeBase'
 import { ref, reactive, markRaw, onMounted, onUnmounted, watch, computed, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { v4 as uuidv4 } from 'uuid'
@@ -32,7 +34,7 @@ import { getUIDesignFromWorkflow, nonFormItemsTypes, checkWorkflowDAG } from '@/
 import { useLayout } from '@/utils/useLayout'
 import { createWorkflowHistory, workflowSnapshot, isHistoryTextTarget } from '@/utils/workflowHistory'
 import { workflowAPI, workflowTemplateAPI, workflowRunRecordAPI } from "@/api/workflow"
-import { databaseAPI, relationalDatabaseAPI } from "@/api/database"
+import { relationalDatabaseAPI } from "@/api/database"
 import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import '@vue-flow/minimap/dist/style.css'
@@ -160,7 +162,7 @@ onMounted(async () => {
     queryParam = { tid: workflowId.value }
   }
   const getWorkflowRequest = workflowOrTemplateAPI('get', queryParam)
-  const listVectorDbRequest = databaseAPI('list')
+  const listVectorDbRequest = knowledgeBaseAPI('list')
   const listRelationalDbRequest = relationalDatabaseAPI('list')
   const workflowResponse = await getWorkflowRequest
   const listVectorDbResponse = await listVectorDbRequest
@@ -168,7 +170,7 @@ onMounted(async () => {
   if (historyDisposed) return
 
   if (listVectorDbResponse.status == 200) {
-    userDatabasesStore.setUserDatabases(listVectorDbResponse.data)
+    userDatabasesStore.setUserDatabases(listVectorDbResponse.data.bases)
   }
   if (listRelationalDbResponse.status == 200) {
     userRelationalDatabasesStore.setUserRelationalDatabases(listRelationalDbResponse.data)
@@ -195,11 +197,9 @@ onMounted(async () => {
       }
     }
     if (node.category == "vectorDb") {
-      node.data.template.database.options = userDatabases.value.filter((database) => {
-        return database.status == 'VALID'
-      }).map((item) => {
+      node.data.template.database.options = userDatabases.value.map((item) => {
         return {
-          value: item.vid,
+          value: item.id,
           label: item.name,
         }
       })
@@ -928,11 +928,9 @@ const codeEditorModal = reactive({
         if (template?.[key]?.condition) field.condition = template[key].condition
       }
       if (node.category == "vectorDb") {
-        node.data.template.database.options = userDatabases.value.filter((database) => {
-          return database.status == 'VALID'
-        }).map((item) => {
+        node.data.template.database.options = userDatabases.value.map((item) => {
           return {
-            value: item.vid,
+            value: item.id,
             label: item.name,
           }
         })
@@ -1013,36 +1011,15 @@ const llmNodesCount = computed(() => {
 
         <a-col :span="8" style="display: flex; justify-content: end;">
           <a-space>
-            <a-tooltip :title="t('workspace.workflowEditor.edit_code')">
-              <a-button type="text" size="small" @click="codeEditorModal.openEditor">
-                <template #icon>
-                  <Code />
-                </template>
-                <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
-                  @save="codeEditorModal.updateCode" />
-              </a-button>
-            </a-tooltip>
-            <a-tooltip :title="t('workspace.workflowEditor.test_run')">
-              <a-button type="text" size="small" @click="testRunModal.openTestModal">
-                <template #icon>
-                  <Bug />
-                </template>
-                <a-modal v-model:open="testRunModal.open"
-                  :title="`${t('workspace.workflowEditor.test_run')}: ${currentWorkflow.title}`" :footer="null"
-                  width="90vw" class="test-run-modal">
-                  <WorkflowUse v-if="testRunModal.open" :workflow="currentWorkflow" :isTemplate="false"
-                    style="flex: 1;" />
-                </a-modal>
-              </a-button>
-            </a-tooltip>
-            <a-button type="primary" @click="saveWorkflow" :loading="saving" :disabled="!!diagnosisRecordId">
-              <template #icon>
-                <Save />
-              </template>
-              <a-tooltip :title="diagnosisRecordId ? t('workspace.workflowEditor.cannot_save_when_diagnosing') : ''">
-                {{ t('common.save') }}
-              </a-tooltip>
-            </a-button>
+            <IconButton :text="t('workspace.workflowEditor.edit_code')" type="text" size="small" @click="codeEditorModal.openEditor">
+              <template #icon><Code /></template>
+            </IconButton>
+            <IconButton :text="t('workspace.workflowEditor.test_run')" type="text" size="small" @click="testRunModal.openTestModal">
+              <template #icon><Bug /></template>
+            </IconButton>
+            <IconButton :text="diagnosisRecordId ? t('workspace.workflowEditor.cannot_save_when_diagnosing') : t('common.save')" type="primary" @click="saveWorkflow" :loading="saving" :disabled="!!diagnosisRecordId">
+              <template #icon><Save /></template>
+            </IconButton>
             <a-modal v-model:open="saveCheckModalOpen" :footer="null">
               <template #title>
                 <a-typography-text type="warning">
@@ -1069,6 +1046,14 @@ const llmNodesCount = computed(() => {
 
             </a-modal>
           </a-space>
+          <CodeEditorModal language="json" v-model:open="codeEditorModal.open" v-model:code="codeEditorModal.code"
+            @save="codeEditorModal.updateCode" />
+          <a-modal v-model:open="testRunModal.open"
+            :title="`${t('workspace.workflowEditor.test_run')}: ${currentWorkflow.title}`" :footer="null"
+            width="90vw" class="test-run-modal">
+            <WorkflowUse v-if="testRunModal.open" :workflow="currentWorkflow" :isTemplate="false"
+              style="flex: 1;" />
+          </a-modal>
         </a-col>
       </a-row>
     </div>
@@ -1237,10 +1222,9 @@ const llmNodesCount = computed(() => {
             </a-typography-text>
           </div>
           <div class="collapse-button">
-            <a-button type="text" @click="onCollapse(!collapsed)">
-              <MenuFoldOne v-if="collapsed" class="trigger" />
-              <MenuUnfoldOne v-else class="trigger" />
-            </a-button>
+            <IconButton :text="t(collapsed ? 'workspace.taskAgentSpace.expand_sidebar' : 'workspace.taskAgentSpace.collapse_sidebar')" type="text" @click="onCollapse(!collapsed)">
+              <template #icon><MenuFoldOne v-if="collapsed" class="trigger" /><MenuUnfoldOne v-else class="trigger" /></template>
+            </IconButton>
           </div>
         </a-menu>
       </a-layout-sider>
@@ -1268,24 +1252,16 @@ const llmNodesCount = computed(() => {
             <Controls />
             <Background variant="dots" />
             <a-flex align="center" justify="center" class="vue-flow-toolbar">
-              <a-tooltip :title="t('workspace.workflowEditor.undo')">
-                <a-button type="text" :disabled="!canUndo" :aria-label="t('workspace.workflowEditor.undo')" @click="undo">
-                  <template #icon><Undo /></template>
-                </a-button>
-              </a-tooltip>
-              <a-tooltip :title="t('workspace.workflowEditor.redo')">
-                <a-button type="text" :disabled="!canRedo" :aria-label="t('workspace.workflowEditor.redo')" @click="redo">
-                  <template #icon><Redo /></template>
-                </a-button>
-              </a-tooltip>
+              <IconButton :text="t('workspace.workflowEditor.undo')" type="text" :disabled="!canUndo" :aria-label="t('workspace.workflowEditor.undo')" @click="undo">
+                <template #icon><Undo /></template>
+              </IconButton>
+              <IconButton :text="t('workspace.workflowEditor.redo')" type="text" :disabled="!canRedo" :aria-label="t('workspace.workflowEditor.redo')" @click="redo">
+                <template #icon><Redo /></template>
+              </IconButton>
               <VueFlowStyleSettings v-model="vueFlowStyleSettings" @save=onVueFlowStyleSettingsSave />
-              <a-tooltip :title="t('workspace.workflowEditor.layout_graph')">
-                <a-button type="text" @click="layoutGraph('LR')">
-                  <template #icon>
-                    <LayoutFive />
-                  </template>
-                </a-button>
-              </a-tooltip>
+              <IconButton :text="t('workspace.workflowEditor.layout_graph')" type="text" @click="layoutGraph('LR')">
+                <template #icon><LayoutFive /></template>
+              </IconButton>
             </a-flex>
           </VueFlow>
         </a-layout-content>
@@ -1561,17 +1537,4 @@ const llmNodesCount = computed(() => {
   flex-direction: column;
 }
 
-.test-run-modal .ant-modal-body::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.test-run-modal .ant-modal-body::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.test-run-modal .ant-modal-body::-webkit-scrollbar-track {
-  background: transparent;
-}
 </style>

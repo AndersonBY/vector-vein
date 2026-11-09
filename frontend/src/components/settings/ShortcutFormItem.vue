@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -76,14 +77,14 @@ onBeforeUnmount(() => {
       <a-input v-model:value="shortcut"
         :placeholder="loading ? t('settings.waiting_for_combo_key') : t('settings.shortcut_not_set')" disabled>
         <template #suffix>
-          <CloseOne theme="filled" @click="shortcut = ''" style="cursor: pointer;" />
+          <IconButton :text="t('common.reset')" @click="shortcut = ''"><template #icon><CloseOne /></template></IconButton>
         </template>
       </a-input>
-      <a-button type="text" :loading="loading" @click="startShortcutSetting">
+      <IconButton :text="t('settings.configure_shortcut')" :loading="loading" @click="startShortcutSetting">
         <template #icon>
           <Setting />
         </template>
-      </a-button>
+      </IconButton>
     </a-flex>
   </a-form-item>
 </template>

@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { ref, reactive, onBeforeMount, computed, watchEffect } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
@@ -248,9 +249,9 @@ const removeColumn = (index) => {
               <a-card v-if="tableInfo.add_method == 'table_file'"
                 :title="t('workspace.databaseTableCreate.uploaded_files')">
                 <template #extra>
-                  <a-button type="primary" @click="getTableSchema" :loading="checkingTableSchema">
-                    {{ t('workspace.databaseTableCreate.get_table_schema') }}
-                  </a-button>
+                  <IconButton :text="t('workspace.databaseTableCreate.get_table_schema')" type="text" @click="getTableSchema" :loading="checkingTableSchema">
+                    <template #icon><TableFile /></template>
+                  </IconButton>
                 </template>
                 <a-list size="small" :data-source="tableInfo.files">
                   <template #renderItem="{ item }">
@@ -261,10 +262,10 @@ const removeColumn = (index) => {
                   </template>
                 </a-list>
               </a-card>
-              <a-button v-else-if="tableInfo.add_method == 'sql'" type="primary" @click="getTableSchema"
+              <IconButton :text="t('workspace.databaseTableCreate.get_table_schema')" v-else-if="tableInfo.add_method == 'sql'" type="text" @click="getTableSchema"
                 :loading="checkingTableSchema">
-                {{ t('workspace.databaseTableCreate.get_table_schema') }}
-              </a-button>
+                <template #icon><TableFile /></template>
+              </IconButton>
               <a-table v-for="table in tableSchema" :columns="tableSchemaColumns" :data-source="table.columns"
                 :pagination="{ hideOnSinglePage: true }" style="width: 100%">
                 <template #title>
@@ -311,25 +312,20 @@ const removeColumn = (index) => {
                     <a-input-number v-model:value="record.max_length" :min="1" />
                   </template>
                   <template v-else-if="column.dataIndex == 'action'">
-                    <a-button type="text" @click="removeColumn(index)">
-                      <template #icon>
-                        <Delete />
-                      </template>
-                    </a-button>
+                    <IconButton :text="t('common.delete')" type="text" @click="removeColumn(index)">
+                      <template #icon><Delete /></template>
+                    </IconButton>
                   </template>
                 </template>
               </a-table>
-              <a-button @click="addColumn">
-                <template #icon>
-                  <Plus />
-                </template>
-                {{ t('workspace.databaseTableCreate.add_column') }}
-              </a-button>
+              <IconButton :text="t('workspace.databaseTableCreate.add_column')" @click="addColumn">
+                <template #icon><Plus /></template>
+              </IconButton>
             </template>
             <a-flex vertical gap="middle" v-else-if="tableInfo.add_method == 'sql'">
-              <a-button type="primary" @click="getTableSchema" :loading="checkingTableSchema">
-                {{ t('workspace.databaseTableCreate.get_table_schema') }}
-              </a-button>
+              <IconButton :text="t('workspace.databaseTableCreate.get_table_schema')" type="text" @click="getTableSchema" :loading="checkingTableSchema">
+                <template #icon><TableFile /></template>
+              </IconButton>
               <a-table v-for="table in tableSchema" :columns="tableSchemaColumns" :data-source="table.columns"
                 :pagination="{ hideOnSinglePage: true }" style="width: 100%">
                 <template #title>
@@ -362,10 +358,10 @@ const removeColumn = (index) => {
             <a-button :disabled="currentStep == 0" @click="currentStep -= 1">
               {{ t('common.previous_step') }}
             </a-button>
-            <a-button v-if="currentStep < 2" type="primary" :disabled="nextStepDisabled" @click="currentStep += 1">
+            <a-button v-if="currentStep < 2" type="default" :disabled="nextStepDisabled" @click="currentStep += 1">
               {{ t('common.next_step') }}
             </a-button>
-            <a-button v-else-if="currentStep == 2" type="primary" :loading="creating" @click="create">
+            <a-button v-else-if="currentStep == 2" type="default" :loading="creating" @click="create">
               {{ t('common.finish') }}
             </a-button>
           </a-flex>

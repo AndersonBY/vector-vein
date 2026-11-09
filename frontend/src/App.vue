@@ -82,10 +82,6 @@ Spin.setDefaultIndicator({
   --card-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   --card-hover-box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   --more-hover-background: #f5f5f5;
-  --conversation-list-background: #d5eef9;
-  --conversation-hover-background-image: linear-gradient(to left, rgb(200 224 234) 60%, rgba(0, 0, 0, 0));
-  --chat-button-selected-background-color: rgba(0, 0, 0, 0.06);
-  --chat-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
 }
 
 :root .theme-dark {
@@ -101,10 +97,6 @@ Spin.setDefaultIndicator({
   --card-box-shadow: 0 2px 8px rgba(128, 127, 127, 0.274);
   --card-hover-box-shadow: 0 4px 12px rgba(128, 127, 127, 0.274);
   --more-hover-background: #252525;
-  --conversation-list-background: #002130;
-  --conversation-hover-background-image: linear-gradient(to left, rgb(0 33 48) 60%, rgba(0, 0, 0, 0));
-  --chat-button-selected-background-color: rgba(255, 255, 255, 0.06);
-  --chat-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
 }
 
 .theme-dark .ant-menu.ant-menu-dark,
@@ -120,50 +112,8 @@ Spin.setDefaultIndicator({
   background: #007de4;
 }
 
-.ant-drawer-body::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.ant-drawer-body::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.ant-drawer-body::-webkit-scrollbar-track {
-  background: transparent;
-}
-
 .ant-popover-inner-content p:last-child {
   margin-bottom: 0px;
-}
-
-.custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-textarea::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-textarea::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-textarea::-webkit-scrollbar-track {
-  background: transparent;
 }
 
 .custom-hljs pre code.hljs {
@@ -269,17 +219,4 @@ body {
   margin-inline-start: 8px;
 }
 
-html::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-html::-webkit-scrollbar-thumb {
-  background: #CCCCCC;
-  border-radius: 6px;
-}
-
-html::-webkit-scrollbar-track {
-  background: transparent;
-}
 </style>

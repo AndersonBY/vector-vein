@@ -1,7 +1,9 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
+
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { PreviewOpen } from '@/icons'
+import { PreviewOpen, Refresh } from '@/icons'
 import { workflowAPI } from '@/api/workflow'
 import CanvasPreview from './CanvasPreview.vue'
 
@@ -63,7 +65,7 @@ onBeforeUnmount(() => { requestVersion++ })
     <template v-if="open">
       <a-skeleton v-if="loading" active :paragraph="{ rows: 6 }" />
       <a-alert v-else-if="failed" type="error" :message="t('workspace.canvasPreview.load_failed')">
-        <template #action><a-button size="small" @click="loadPreview">{{ t('workspace.canvasPreview.retry') }}</a-button></template>
+        <template #action><IconButton size="small" :text="t('workspace.canvasPreview.retry')" @click="loadPreview"><template #icon><Refresh /></template></IconButton></template>
       </a-alert>
       <CanvasPreview v-else-if="definition" :workflow="definition" height="65vh" />
     </template>

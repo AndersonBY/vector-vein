@@ -9,29 +9,25 @@ import { defineStore } from "pinia"
 
 export const useUserDatabasesStore = defineStore('userDatabases', {
   state: () => ({
-    userDatabases: JSON.parse(localStorage.getItem("userDatabases")) || [],
+    userDatabases: [],
   }),
   actions: {
     setUserDatabases(userDatabases) {
-      this.userDatabases = userDatabases
-      localStorage.setItem("userDatabases", JSON.stringify(this.userDatabases))
+      this.userDatabases = userDatabases || []
     },
     updateUserDatabases(userDatabase) {
       this.userDatabases = this.userDatabases.map((Database) => {
-        if (Database.vid === userDatabase.vid) {
+        if (Database.id === userDatabase.id) {
           return userDatabase
         }
         return Database
       })
-      localStorage.setItem("userDatabases", JSON.stringify(this.userDatabases))
     },
     addUserDatabase(userDatabase) {
       this.userDatabases.push(userDatabase)
-      localStorage.setItem("userDatabases", JSON.stringify(this.userDatabases))
     },
     deleteUserDatabase(vid) {
-      this.userDatabases = this.userDatabases.filter((Database) => Database.vid !== vid)
-      localStorage.setItem("userDatabases", JSON.stringify(this.userDatabases))
+      this.userDatabases = this.userDatabases.filter((Database) => Database.id !== vid)
     },
   },
 })

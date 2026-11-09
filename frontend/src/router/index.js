@@ -6,7 +6,7 @@
  */
 import { createRouter, createWebHashHistory } from 'vue-router'
 import { WorkspaceLayout } from '@/layouts'
-import { agentRoutes } from './modules/agent'
+import { taskAgentSpaceRoute } from './modules/taskAgent'
 import { dataSpaceRoute } from './modules/data'
 import { settingsRoute } from './modules/settings'
 import {
@@ -19,7 +19,7 @@ const workspaceRoutes = [
   workspaceRootRedirectRoute,
   workflowSpaceRoute,
   dataSpaceRoute,
-  ...agentRoutes,
+  taskAgentSpaceRoute,
 ]
 
 const routes = [

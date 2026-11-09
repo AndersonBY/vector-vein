@@ -9,7 +9,7 @@ export const workflowEditorRoute = {
 
 export const workspaceRootRedirectRoute = {
   path: '',
-  redirect: '/workflow',
+  redirect: { name: 'taskAgentWorkbench' },
 }
 
 export const workflowSpaceRoute = {

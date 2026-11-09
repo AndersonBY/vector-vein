@@ -1,83 +1,41 @@
 <script setup>
+import { useAttrs } from 'vue'
 
-const props = defineProps({
-  text: {
-    type: String,
-    required: false,
-    default: '',
-  },
-  block: {
-    type: Boolean,
-    default: false,
-  },
-  danger: {
-    type: Boolean,
-    default: false,
-  },
-  disabled: {
-    type: Boolean,
-    default: false,
-  },
-  ghost: {
-    type: Boolean,
-    default: false,
-  },
-  loading: {
-    type: Boolean,
-    default: false,
-  },
-  shape: {
-    type: String,
-    default: 'default',
-  },
-  size: {
-    type: String,
-    default: 'middle',
-  },
-  type: {
-    type: String,
-    default: 'default',
-  },
+defineOptions({ inheritAttrs: false })
+const attrs = useAttrs()
+defineProps({
+  text: { type: String, required: true },
+  block: Boolean,
+  danger: Boolean,
+  disabled: Boolean,
+  ghost: Boolean,
+  loading: Boolean,
+  shape: { type: String, default: 'default' },
+  size: { type: String, default: 'middle' },
+  type: { type: String, default: 'text' },
 })
 </script>
 
 <template>
-  <a-button class="icon-button" :block="block" :danger="danger" :disabled="disabled" :ghost="ghost" :loading="loading"
-    :shape="shape" :size="size" :type="type">
-    <template #icon>
-      <slot name="icon"></slot>
-    </template>
-    <span v-if="text.length > 0" class="icon-button-text">
-      {{ text }}
+  <span class="icon-button-root">
+  <a-tooltip :title="text" :trigger="['hover', 'focus']">
+    <span class="icon-button-trigger" :tabindex="disabled ? 0 : undefined" :aria-label="disabled ? text : undefined">
+      <a-button v-bind="attrs" class="icon-button" :block="block" :danger="danger" :disabled="disabled"
+        :ghost="ghost" :loading="loading" :shape="shape" :size="size" :type="type"
+        :aria-label="attrs['aria-label'] || text">
+        <template #icon><span class="icon-button-symbol" aria-hidden="true"><slot name="icon" /></span></template>
+      </a-button>
     </span>
-  </a-button>
+  </a-tooltip>
+  </span>
 </template>
 
-<style>
-.icon-button {
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-}
-
-.icon-button:hover {
-  gap: 2px;
-}
-
-.icon-button .icon-button-text {
-  max-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  transition: max-width 0.2s ease, opacity 0.2s ease;
-  opacity: 0;
-  transition-delay: 0s;
-  margin-inline-start: 0 !important;
-}
-
-.icon-button:hover .icon-button-text {
-  max-width: 2000px;
-  opacity: 1;
-  transition-delay: 0.2s;
-  margin-inline-start: 8px;
-}
+<style scoped>
+.icon-button-root, .icon-button-trigger { display: inline-flex; flex: 0 0 auto; vertical-align: middle; border-radius: 6px; }
+.icon-button.ant-btn { display: inline-flex; align-items: center; justify-content: center; padding: 0; font-size: 16px; }
+.icon-button.ant-btn:not(.ant-btn-block) { width: 32px; min-width: 32px; height: 32px; }
+.icon-button.ant-btn-sm:not(.ant-btn-block) { width: 28px; min-width: 28px; height: 28px; }
+.icon-button.ant-btn-lg:not(.ant-btn-block) { width: 40px; min-width: 40px; height: 40px; font-size: 18px; }
+.icon-button-symbol { display: inline-flex; align-items: center; justify-content: center; pointer-events: none; }
+.icon-button:focus-visible, .icon-button-trigger:focus-visible { outline: 2px solid var(--color-primary, #28c5e5); outline-offset: 2px; }
 </style>

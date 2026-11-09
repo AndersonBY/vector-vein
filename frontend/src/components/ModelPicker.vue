@@ -14,6 +14,8 @@ const props = defineProps({
   loading: Boolean,
   ready: { type: Boolean, default: true },
   saveSelection: { type: Function, default: null },
+  presets: { type: Object, default: null },
+  backends: { type: Object, default: null },
 })
 const model = defineModel('model', { type: String, default: '' })
 const modelProvider = defineModel('modelProvider', { type: String, default: '' })
@@ -22,7 +24,8 @@ const reasoningEffort = defineModel('reasoningEffort', { type: String, default: 
 const { t } = useI18n()
 const { token } = theme.useToken()
 const settings = useUserSettingsStore()
-const preferences = computed(() => settings.setting.data?.model_preferences || {})
+const preferences = computed(() => props.presets ?? settings.setting.data?.model_preferences ?? {})
+const modelBackends = computed(() => props.backends ?? settings.setting.data?.llm_settings?.backends)
 const dropdownOpen = ref(false)
 const modalOpen = ref(false)
 const draftProvider = ref('')
@@ -42,7 +45,7 @@ const selectedPreference = computed(() => {
 const modelLabel = (provider, value) => props.options.find(item => item.value === provider)?.children?.find(item => item.value === value)?.label || value
 const presetValid = key => validModelPair(props.options, preferences.value[key]?.model_provider, preferences.value[key]?.model)
 const presetDescription = key => presetValid(key) ? modelLabel(preferences.value[key].model_provider, preferences.value[key].model) : t('components.model_picker.not_configured')
-const effortOptions = computed(() => availableReasoningEfforts(settings.setting.data?.llm_settings?.backends, modelProvider.value, model.value))
+const effortOptions = computed(() => availableReasoningEfforts(modelBackends.value, modelProvider.value, model.value))
 const sliderIndex = ref(null)
 const effortIndex = computed(() => Math.max(0, effortOptions.value.indexOf(reasoningEffort.value)))
 const effortMarks = computed(() => Object.fromEntries(effortOptions.value.map((_, index) => [index, ''])))
@@ -70,9 +73,9 @@ const commit = async (selection, close = true) => {
     if (version === generation) saving.value = false
   }
 }
-const selection = (provider, value, preset = 'custom') => ({
+const selection = (provider, value, preset = 'custom', effort = reasoningEffort.value) => ({
   model_provider: provider, model: value, model_preference: preset,
-  reasoning_effort: availableReasoningEfforts(settings.setting.data?.llm_settings?.backends, provider, value).includes(reasoningEffort.value) ? reasoningEffort.value : 'default',
+  reasoning_effort: availableReasoningEfforts(modelBackends.value, provider, value).includes(effort) ? effort : 'default',
 })
 const menuClick = ({ key }) => {
   if (disabled.value) return
@@ -84,7 +87,7 @@ const menuClick = ({ key }) => {
     modalOpen.value = true
   } else if (presetValid(key)) {
     const preset = preferences.value[key]
-    commit(selection(preset.model_provider, preset.model, key))
+    commit(selection(preset.model_provider, preset.model, key, preset.reasoning_effort ?? reasoningEffort.value))
   }
 }
 const confirm = () => commit(selection(draftProvider.value, draftModel.value))

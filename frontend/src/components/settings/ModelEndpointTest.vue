@@ -1,4 +1,6 @@
 <script setup>
+import { PlayOne } from '@/icons'
+import IconButton from '@/components/IconButton.vue'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { settingAPI } from '@/api/user'
@@ -51,9 +53,7 @@ const { state, submit } = useModelEndpointTest(() => ({
       <a-form-item :label="t('settings.model_test_message')">
         <a-textarea v-model:value="message" :auto-size="{ minRows: 2, maxRows: 5 }" />
       </a-form-item>
-      <a-button class="model-test-button" :loading="state.loading" :disabled="!active || state.loading" @click="submit">
-        {{ t('settings.test_model_endpoint') }}
-      </a-button>
+      <IconButton :text="t('settings.test_model_endpoint')" class="model-test-button" :loading="state.loading" :disabled="!active || state.loading" @click="submit"><template #icon><PlayOne /></template></IconButton>
     </a-form>
     <div class="model-test-result" aria-live="polite" :aria-busy="state.loading">
       <p v-if="state.error" role="alert">{{ state.error }}</p>

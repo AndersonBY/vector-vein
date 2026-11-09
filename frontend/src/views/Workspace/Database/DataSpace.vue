@@ -1,9 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from "vue-router"
-import { Search } from '@/icons'
-import VectorDatabaseTable from "@/components/workspace/database/VectorDatabaseTable.vue"
+import KnowledgeBaseCatalog from "@/components/workspace/database/KnowledgeBaseCatalog.vue"
 import RelationalDatabaseTable from '@/components/workspace/database/RelationalDatabaseTable.vue'
 import WorkspacePageHero from '@/components/workspace/WorkspacePageHero.vue'
 import { getFullUrl } from "@/utils/util"
@@ -11,7 +10,8 @@ import { getFullUrl } from "@/utils/util"
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const activeKey = ref(route.query.tab ? route.query.tab : 'vector-database')
+const activeKey = ref(route.query.tab === 'relational-database' ? 'relational-database' : 'knowledge-bases')
+watch(() => route.query.tab, tab => { activeKey.value = tab === 'relational-database' ? tab : 'knowledge-bases' })
 
 const tabChange = async (key) => {
   await router.push(getFullUrl(route.path, { tab: key }))
@@ -27,18 +27,13 @@ const tabChange = async (key) => {
           <WorkspacePageHero
             :title="t('workspace.dataSpace.hero_title')"
             :description="t('workspace.dataSpace.hero_description')">
-            <template #actions>
-              <a-button @click="router.push({ name: 'DocumentQueryTest' })">
-                <Search />
-                {{ t('workspace.dataSpace.vector_search_title') }}
-              </a-button>
-            </template>
+
           </WorkspacePageHero>
 
           <a-tabs v-model:activeKey="activeKey" centered @change="tabChange">
-            <a-tab-pane key="vector-database" :tab="t('workspace.dataSpace.vector_database')">
+            <a-tab-pane key="knowledge-bases" :tab="t('knowledgeBase.title')">
               <a-card>
-                <VectorDatabaseTable />
+                <KnowledgeBaseCatalog />
               </a-card>
             </a-tab-pane>
             <a-tab-pane key="relational-database" :tab="t('workspace.dataSpace.relational_database')">

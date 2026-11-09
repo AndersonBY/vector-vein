@@ -1,0 +1,47 @@
+:root {
+  --scrollbar-thumb: #ccc;
+}
+
+.theme-dark,
+.dark-theme,
+:root:has(.theme-dark) {
+  --scrollbar-thumb: rgba(255, 255, 255, 0.22);
+}
+
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #ccc);
+  border-radius: 6px;
+}
+
+*::-webkit-scrollbar-track,
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+/* Ant Design's virtual lists draw their own scrollbars with inline styles. */
+.rc-virtual-list-scrollbar {
+  width: 6px !important;
+}
+
+.rc-virtual-list-scrollbar-thumb {
+  background: var(--scrollbar-thumb, #ccc) !important;
+  border-radius: 6px !important;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-thumb, #ccc) transparent;
+  }
+}

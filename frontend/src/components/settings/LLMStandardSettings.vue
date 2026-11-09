@@ -1,4 +1,5 @@
 <script setup>
+import IconButton from '@/components/IconButton.vue'
 import { computed, reactive, ref, toRaw } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message } from 'ant-design-vue'
@@ -179,14 +180,13 @@ const editEndpoint = index => {
       <a-flex
         v-if="filterModels === null || (filterModels.length !== null && (filterModels.length > 0 && filterModels.includes(model.id)))"
         gap="small" align="center">
-        <a-button type="text" block @click="editModel(model, index)">
-          {{ index }}: {{ model.id }}
-        </a-button>
-        <a-button type="text" @click="removeModel(index)">
+        <span style="flex: 1; overflow-wrap: anywhere">{{ index }}: {{ model.id }}</span>
+        <IconButton :text="t('common.edit')" @click="editModel(model, index)"><template #icon><Edit /></template></IconButton>
+        <IconButton :text="t('common.delete')" @click="removeModel(index)">
           <template #icon>
             <Delete fill="#ff4d4f" />
           </template>
-        </a-button>
+        </IconButton>
       </a-flex>
     </template>
     <a-button type="dashed" block @click="addNewModel">
@@ -224,26 +224,22 @@ const editEndpoint = index => {
                     <span> · {{ t('settings.endpoint_priority') }}: {{ endpointPriority(endpoint) }}</span>
                   </span>
                   <a-flex gap="small">
-                    <a-button type="text" size="small" :aria-label="t('settings.endpoint_move_up')"
+                    <IconButton :text="t('settings.endpoint_move_up')"
                       :disabled="index === 0 || endpointPriority(endpoint) !== endpointPriority(modelForm.endpoints[index - 1])"
-                      @click="moveEndpoint(index, -1)"><Up /></a-button>
-                    <a-button type="text" size="small" :aria-label="t('settings.endpoint_move_down')"
+                      @click="moveEndpoint(index, -1)"><template #icon><Up /></template></IconButton>
+                    <IconButton :text="t('settings.endpoint_move_down')"
                       :disabled="index === modelForm.endpoints.length - 1 || endpointPriority(endpoint) !== endpointPriority(modelForm.endpoints[index + 1])"
-                      @click="moveEndpoint(index, 1)"><Down /></a-button>
-                    <a-tooltip :title="t('common.edit')">
-                      <a-button type="text" size="small" :aria-label="t('common.edit')" @click="editEndpoint(index)">
+                      @click="moveEndpoint(index, 1)"><template #icon><Down /></template></IconButton>
+                    <IconButton :text="t('common.edit')" @click="editEndpoint(index)">
                         <template #icon>
                           <Edit />
                         </template>
-                      </a-button>
-                    </a-tooltip>
-                    <a-tooltip :title="t('common.delete')">
-                      <a-button type="text" size="small" danger :aria-label="t('common.delete')" @click="removeEndpoint(index)">
+                      </IconButton>
+                    <IconButton :text="t('common.delete')" danger @click="removeEndpoint(index)">
                         <template #icon>
                           <Delete />
                         </template>
-                      </a-button>
-                    </a-tooltip>
+                      </IconButton>
                   </a-flex>
                 </a-flex>
               </a-list-item>

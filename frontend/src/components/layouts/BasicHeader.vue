@@ -10,7 +10,7 @@ import {
   Setting,
   ToBottom,
   Translate,
-  Communication,
+  Robot,
   DatabaseSetting,
   ApplicationMenu,
   WholeSiteAccelerator,
@@ -76,19 +76,18 @@ const toggleDarkTheme = async () => {
 
 <template>
   <a-layout-header style="background: var(--component-background);padding: 0 20px;" class="basic-header">
-    <a-flex v-if="screenWidth > 960" align="middle" justify="space-between" :gutter="[16, 16]">
+    <a-flex v-if="screenWidth > 1200" align="middle" justify="space-between" :gutter="[16, 16]">
       <a-flex>
         <div class="logo">
           <img alt="VectorVein" :src="logoUrl" />
         </div>
 
-        <div :class="['header-button', selectedKeys[0] == 'agent' ? 'active-header-button' : '']">
-          <router-link :to="{ name: 'myAgents' }">
-            <a-button type="text" id="header-agent-button">
-              <template #icon>
-                <Communication />
-              </template>
-              {{ t('components.layout.basicHeader.agent') }}
+
+        <div :class="['header-button', selectedKeys[0] == 'task-agent' ? 'active-header-button' : '']">
+          <router-link :to="{ name: 'taskAgentWorkbench' }">
+            <a-button type="text" id="header-task-agent-button">
+              <template #icon><Robot /></template>
+              {{ t('components.layout.basicHeader.task_agent') }}
             </a-button>
           </router-link>
         </div>
@@ -176,13 +175,11 @@ const toggleDarkTheme = async () => {
         <div class="logo">
           <img alt="VectorVein" :src="logoUrl" />
         </div>
-        <div :class="['header-button', selectedKeys[0] == 'agent' ? 'active-header-button' : '']">
-          <router-link :to="{ name: 'myAgents' }">
-            <a-tooltip :title="t('components.layout.basicHeader.agent')">
-              <a-button type="text" id="header-agent-button">
-                <template #icon>
-                  <Communication />
-                </template>
+        <div :class="['header-button', selectedKeys[0] == 'task-agent' ? 'active-header-button' : '']">
+          <router-link :to="{ name: 'taskAgentWorkbench' }">
+            <a-tooltip :title="t('components.layout.basicHeader.task_agent')">
+              <a-button type="text" id="header-task-agent-button">
+                <template #icon><Robot /></template>
               </a-button>
             </a-tooltip>
           </router-link>
@@ -218,10 +215,10 @@ const toggleDarkTheme = async () => {
 
           <template #overlay>
             <a-menu>
-              <a-menu-item key="/agent/my-agents">
-                <router-link :to="{ name: 'myAgents' }">
+              <a-menu-item key="/task-agent">
+                <router-link :to="{ name: 'taskAgentWorkbench' }">
                   <a-button type="link">
-                    {{ t('components.layout.basicHeader.agent') }}
+                    {{ t('components.layout.basicHeader.task_agent') }}
                   </a-button>
                 </router-link>
               </a-menu-item>

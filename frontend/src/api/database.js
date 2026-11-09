@@ -6,14 +6,6 @@
  */
 import baseAPI from './base'
 
-export async function databaseAPI(action, parameter) {
-  return await baseAPI(`database__${action}`, parameter)
-}
-
-export async function databaseObjectAPI(action, parameter) {
-  return await baseAPI(`database_object__${action}`, parameter)
-}
-
 export async function relationalDatabaseAPI(action, parameter) {
   return await baseAPI(`relational_database__${action}`, parameter)
 }

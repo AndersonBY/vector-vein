@@ -16,12 +16,11 @@ test('settings and endpoint editor share durable save, retain failed drafts and 
   const initial = {llm_settings:{endpoints:[{id:'first',api_base:'http://localhost:1/v1',credentials:{}},
     {id:'second',api_base:'http://localhost:2/v1',credentials:{}}],backends:{local:{models:{}}}},
     custom_llms:{},model_preferences:{},shortcuts:{},api:{enabled:false}}
-  const state = {stored:copy(initial),calls:[],errors:[],successes:[],confirms:[],leave:null,published:[],catalog:[]}
+  const state = {stored:copy(initial),calls:[],errors:[],successes:[],confirms:[],leave:null,published:[],catalog:[],query:{section:'embedding_models'}}
   state.store = reactive({theme:ref('default'),setSetting:value=>state.published.push(copy(value))})
   state.request = async (action,payload) => {
     if (action==='get_default_settings') return {status:200,data:copy(initial)}
     if (action==='get') return {status:200,data:{id:1,data:copy(state.stored)}}
-    if (action==='list_microphones') return {status:200,data:[]}
     state.calls.push(copy(payload))
     state.stored=copy(payload.data)
     return {status:200,data:{id:1,data:copy(state.stored)}}
@@ -48,11 +47,11 @@ test('settings and endpoint editor share durable save, retain failed drafts and 
         if (id==='@/stores/modelCatalog') return '\0save-catalog'
         if (id==='@/utils/common') return '\0save-common'
         if (id==='@/utils/util') return '\0save-util'
-        if (id.startsWith('@/components/') && !id.endsWith('/EndpointSettings.vue')) return '\0save-child'
+        if (id.startsWith('@/components/') && id.endsWith('.vue') && !id.endsWith('/EndpointSettings.vue')) return '\0save-child'
       },load(id) {
         if (id==='\0save-ant') return 'export const message={error:x=>globalThis.__settingsSave.errors.push(x),success:x=>globalThis.__settingsSave.successes.push(x)};export const Modal={confirm:x=>globalThis.__settingsSave.confirms.push(x)}'
-        if (id==='\0save-router') return 'export const onBeforeRouteLeave=fn=>{globalThis.__settingsSave.leave=fn}'
-        if (id==='\0save-api') return 'export const settingAPI=(a,p)=>globalThis.__settingsSave.request(a,p);export const hardwareAPI=settingAPI'
+        if (id==='\0save-router') return 'export const useRoute=()=>({query:globalThis.__settingsSave.query}); export const onBeforeRouteLeave=fn=>{globalThis.__settingsSave.leave=fn}'
+        if (id==='\0save-api') return 'export const settingAPI=(a,p)=>globalThis.__settingsSave.request(a,p)'
         if (id==='\0save-store') return 'export const useUserSettingsStore=()=>globalThis.__settingsSave.store'
         if (id==='\0save-catalog') return 'export const useModelCatalogStore=()=>({setPayloadFromSettings:x=>globalThis.__settingsSave.catalog.push(x)})'
         if (id==='\0save-common') return 'export const getChatModelOptions=()=>[]'
@@ -79,7 +78,23 @@ test('settings and endpoint editor share durable save, retain failed drafts and 
     app.use(createI18n({legacy:false,locale:'en',messages:{en:JSON.parse(await readFile(new URL('../src/locales/en-US.json',import.meta.url),'utf8'))}}))
     app.mount({})
     await flush()
+    assert.deepEqual(page.selectedKeys.value,['embedding_models'],'direct embedding settings link selects the embedding models panel')
+    assert.deepEqual(page.settingForm.data.knowledge_retrieval.rerank, {provider:'', model:''})
+    assert.deepEqual(page.settingForm.data.llm_settings.rerank_backends, {})
     assert.equal(page.unsavedChanges.value,false)
+    page.settingForm.data.llm_settings.rerank_backends = {local:{models:{'rerank-key':{id:'runtime-id', enabled:true}},default_endpoint:null}}
+    page.settingForm.data.knowledge_retrieval.rerank = {provider:'local',model:'runtime-id'}
+    assert.equal(await page.saveSetting(),false)
+    assert.equal(state.calls.length,0)
+    page.settingForm.data.knowledge_retrieval.rerank = {provider:'local',model:'rerank-key'}
+    assert.equal(await page.saveSetting(),true)
+    assert.deepEqual(state.stored.knowledge_retrieval.rerank,{provider:'local',model:'rerank-key'})
+    page.settingForm.data.knowledge_retrieval.rerank = {provider:'',model:''}
+    assert.equal(await page.saveSetting(),true)
+    assert.deepEqual(state.stored.knowledge_retrieval.rerank,{provider:'',model:''})
+    state.calls.length=0
+    state.catalog.length=0
+    state.published.length=0
     editor.switchEndpoint(page.settingForm.data.llm_settings.endpoints[0],0)
     editor.endpointForm.api_base=''
     await flush()
@@ -121,7 +136,7 @@ test('settings and endpoint editor share durable save, retain failed drafts and 
     await flush()
     assert.equal(state.calls.at(-1).data.llm_settings.endpoints.length,2)
     // Other sections may be edited while a request is pending; their edits must remain dirty.
-    page.settingForm.data.agent={auto_title:true}
+    page.settingForm.data.output_folder='C:/fixture/output'
     success.resolve({status:200,data:{id:1,data:copy(state.calls.at(-1).data)}})
     assert.equal(await retry,true)
     await flush()
@@ -160,6 +175,42 @@ test('settings and endpoint editor share durable save, retain failed drafts and 
     page.selectedKeys.value=['embedding_models']
     await flush()
     assert.equal(page.unsavedChanges.value,false)
+
+    // External-source responses retain references instead of echoing credentials.
+    editor.switchEndpoint(page.settingForm.data.llm_settings.endpoints[0],0)
+    editor.endpointForm.api_key='synthetic-new-key'
+    state.request=async (action,payload)=>{
+      assert.equal(action,'update')
+      const data=copy(payload.data)
+      data.llm_settings.endpoints[0].api_key=''
+      data.llm_settings.endpoints[0]._saved_endpoint_id='first'
+      data.llm_settings.endpoints[0]._saved_secret_fields=['api_key']
+      state.stored=data
+      return {status:200,data:{id:1,data:copy(data)}}
+    }
+    assert.equal(await page.saveSetting(),true)
+    await flush()
+    assert.equal(page.unsavedChanges.value,false,'saved response becomes the canonical form and baseline')
+    assert.equal(page.settingForm.data.llm_settings.endpoints[0].api_key,'')
+    assert.doesNotMatch(JSON.stringify(state.published.at(-1)),/synthetic-new-key/)
+    editor.switchEndpoint(state.stored.llm_settings.endpoints[0],0)
+    assert.equal(editor.hasSavedSecret('api_key'),true)
+    let listed
+    state.request=async (action,payload)=>{
+      assert.equal(action,'list_models')
+      listed=copy(payload)
+      return {status:200,data:{models:{data:[{id:'listed-model'}]}}}
+    }
+    await editor.availableModelsState.list()
+    assert.equal(listed.endpoint._saved_endpoint_id,'first')
+    assert.deepEqual(listed.endpoint._saved_secret_fields,['api_key'])
+    assert.equal(listed.endpoint.api_key,'')
+    assert.equal(editor.availableModelsState.availableModels[0].id,'listed-model')
+    editor.editSecret('api_key')
+    assert.equal(editor.hasSavedSecret('api_key'),false,'editing then clearing a key must not restore the old key')
+    state.request=async ()=>({status:401,msg:'Endpoint rejected authentication'})
+    await editor.availableModelsState.list()
+    assert.equal(state.errors.at(-1),'Endpoint rejected authentication')
   } finally {
     app?.unmount()
     await server.close()

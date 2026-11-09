@@ -1,4 +1,6 @@
 <script setup>
+import { Refresh } from '@/icons'
+import IconButton from '@/components/IconButton.vue'
 import { ref, reactive, toRaw, computed, watch } from "vue"
 import { useI18n } from 'vue-i18n'
 import { message, Modal } from 'ant-design-vue'
@@ -32,14 +34,14 @@ const defaultParams = {
   credentials: '',
 }
 const endpointForm = reactive(deepCopy(defaultParams))
+const hasSavedSecret = key => endpointForm._saved_secret_fields?.includes(key)
+const editSecret = key => {
+  if (endpointForm._saved_secret_fields) {
+    endpointForm._saved_secret_fields = endpointForm._saved_secret_fields.filter(field => field !== key)
+  }
+}
 const originalFormHash = ref(0)
 const testBackend = computed(() => endpointForm.endpoint_type?.startsWith('anthropic') ? 'anthropic' : 'local')
-const endpointPresets = [
-  { key: 'ollama', label: 'Ollama', api_base: 'http://127.0.0.1:11434/v1', endpoint_type: 'openai' },
-  { key: 'lmstudio', label: 'LM Studio', api_base: 'http://127.0.0.1:1234/v1', endpoint_type: 'openai' },
-  { key: 'vllm', label: 'vLLM', api_base: 'http://127.0.0.1:8000/v1', endpoint_type: 'openai' },
-  { key: 'openai', label: 'OpenAI Compatible', api_base: 'https://api.openai.com/v1', endpoint_type: 'openai' },
-]
 
 const endpointFormRemove = (index) => {
   if (props.saving) return
@@ -157,25 +159,16 @@ const resetForm = () => {
   originalFormHash.value = hashObject(toRaw(endpointForm))
 }
 
-const applyPreset = (preset) => {
-  if (!endpointFormStatus.value) {
-    resetForm()
-  }
-  endpointForm.api_base = preset.api_base
-  endpointForm.endpoint_type = preset.endpoint_type
-  if (endpointForm.id === 'new-endpoint') {
-    endpointForm.id = preset.key
-  }
-}
-
 const availableModelsState = reactive({
   listing: false,
   list: async () => {
+    const endpoint = readEndpoint()
+    if (!endpoint) return
     availableModelsState.listing = true
     try {
-      const response = await settingAPI('list_models', { api_key: endpointForm.api_key, base_url: endpointForm.api_base })
+      const response = await settingAPI('list_models', { endpoint })
       if (response?.status !== 200) {
-        message.error(t('settings.list_models_failed'))
+        message.error(response?.msg || t('settings.list_models_failed'))
         return
       }
       availableModelsState.availableModels = (response?.data?.models?.data || []).map(item => ({ key: item.id, ...item }))
@@ -246,29 +239,25 @@ const availableModelsState = reactive({
 
 <template>
   <a-row :gutter="[12, 12]">
-    <a-col :sm="24" :md="8">
+    <a-col :xs="24" :md="8">
       <a-flex vertical gap="small">
-        <a-flex v-for="(endpoint, index) in endpoints" :key="endpoint.id" gap="small" align="center">
-          <a-button type="text" block :disabled="saving" @click="endpointFormEdit(endpoint, index)">
-            <a-typography-text ellipsis :content="endpoint.id" />
+        <a-flex v-for="(endpoint, index) in endpoints" :key="endpoint.id" class="endpoint-row" gap="small" align="center">
+          <a-button type="text" class="endpoint-select" :disabled="saving" :title="endpoint.id"
+            :aria-pressed="endpointFormStatus === 'edit' && endpointEditIndex === index" @click="endpointFormEdit(endpoint, index)">
+            <span class="endpoint-name">{{ endpoint.id }}</span>
           </a-button>
-          <a-button type="text" :disabled="saving" :aria-label="t('common.delete')" @click="endpointFormRemove(index)">
+          <IconButton :text="t('common.delete')" class="endpoint-delete" :disabled="saving" @click="endpointFormRemove(index)">
             <template #icon>
               <Delete fill="#ff4d4f" />
             </template>
-          </a-button>
+          </IconButton>
         </a-flex>
         <a-button type="dashed" block :disabled="saving" @click="addNewEndpoint">
           {{ t('settings.add_endpoint') }}
         </a-button>
       </a-flex>
     </a-col>
-    <a-col v-show="['edit', 'add'].includes(endpointFormStatus)" :sm="24" :md="16">
-      <a-flex wrap gap="small" style="margin-bottom: 12px;">
-        <a-button v-for="preset in endpointPresets" :key="preset.key" size="small" :disabled="saving" @click="applyPreset(preset)">
-          {{ preset.label }}
-        </a-button>
-      </a-flex>
+    <a-col v-show="['edit', 'add'].includes(endpointFormStatus)" :xs="24" :md="16">
       <a-form :disabled="saving" :label-col="{ span: 8 }" :wrapper-col="{ span: 16 }">
         <a-form-item :label="t('settings.endpoint_id')" :required="true">
           <a-input v-model:value="endpointForm.id" />
@@ -287,7 +276,9 @@ const availableModelsState = reactive({
           <a-input v-model:value="endpointForm.api_base" />
         </a-form-item>
         <a-form-item :label="t('settings.api_key')">
-          <a-input-password v-model:value="endpointForm.api_key" />
+          <a-input-password v-model:value="endpointForm.api_key" @change="editSecret('api_key')"
+            :placeholder="hasSavedSecret('api_key') ? t('settings.saved_secret_placeholder') : ''" />
+          <a-typography-text v-if="hasSavedSecret('api_key')" type="secondary">{{ t('settings.saved_secret_hint') }}</a-typography-text>
         </a-form-item>
         <a-form-item label="RPM">
           <a-input-number v-model:value="endpointForm.rpm" />
@@ -301,20 +292,16 @@ const availableModelsState = reactive({
         </a-form-item>
         <a-form-item :label="t('settings.credentials')"
           :required="['anthropic_vertex', 'anthropic_bedrock'].includes(endpointForm.endpoint_type)">
-          <a-textarea v-model:value="endpointForm.credentials" :placeholder="t('settings.credentials_placeholder')"
+          <a-textarea v-model:value="endpointForm.credentials" @change="editSecret('credentials')"
+            :placeholder="hasSavedSecret('credentials') ? t('settings.saved_secret_placeholder') : t('settings.credentials_placeholder')"
             :auto-size="{ minRows: 4, maxRows: 8 }" />
         </a-form-item>
         <a-form-item :label="t('settings.concurrent_requests')">
           <a-input-number v-model:value="endpointForm.concurrent_requests" />
         </a-form-item>
       </a-form>
-      <a-flex justify="space-between" gap="small">
-        <a-button block @click="availableModelsState.list" :disabled="saving" :loading="availableModelsState.listing">
-          {{ t('settings.list_models') }}
-        </a-button>
-        <a-button type="primary" block @click="saveSettings()" :loading="saving" :disabled="!endpointForm.id">
-          {{ t('settings.save') }}
-        </a-button>
+      <a-flex wrap justify="space-between" gap="small">
+        <IconButton :text="t('settings.list_models')" @click="availableModelsState.list" :disabled="saving" :loading="availableModelsState.listing"><template #icon><Refresh /></template></IconButton>
         <a-button :disabled="saving" @click="closeEditor">{{ t('settings.cancel_endpoint_edit') }}</a-button>
         <a-modal v-model:open="availableModelsState.modalOpen" :title="t('settings.available_models')">
           <a-table :dataSource="availableModelsState.availableModels" :columns="availableModelsState.columns"
@@ -345,3 +332,33 @@ const availableModelsState = reactive({
     </a-col>
   </a-row>
 </template>
+
+<style scoped>
+.endpoint-row {
+  min-width: 0;
+}
+
+.endpoint-select {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+}
+
+.endpoint-name {
+  display: block;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.endpoint-delete {
+  flex-shrink: 0;
+}
+
+.endpoint-select[aria-pressed="true"] {
+  color: var(--color-primary);
+  background: var(--more-hover-background);
+}
+</style>
