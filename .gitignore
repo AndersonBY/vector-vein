@@ -5,3 +5,9 @@
 /config.json
 /data/
 /log/
+
+# Local upgrade recovery archives and their bookkeeping.
+*-backup-before-v1.0.0-*.zip
+.*-v1-upgrade-backup.lock
+.v1-upgrade-backup.json
+.v1-backup-*/

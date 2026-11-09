@@ -17,7 +17,7 @@ VectorVein is a no-code AI workflow software inspired by [LangChain](https://git
 Desktop 1.0 brings a task-based Agent workspace with multi-directory Projects, Skills, MCP tools, configurable approval policies, scheduled tasks, notifications and system-tray support. Knowledge bases provide hierarchical document management, local indexing, embedding/reranking configuration, Vekai integration and read-only `.knowledge/` access through ordinary Agent file tools.
 
 > [!IMPORTANT]
-> Upgrading to 1.0 permanently removes the retired conversation Agent and its conversation/message history. Back up the application `data` directory before upgrading if you need those records. Task Agent replaces that module. Existing relational databases remain available; legacy vector datasets are imported into knowledge bases and may need explicit reindexing for semantic search.
+> Before upgrading an existing data directory to the 1.0 series, the application automatically creates and verifies a ZIP backup beside that directory. If backup fails, the upgrade stops before migration. The retired conversation Agent and its history are removed from the active database after backup; their original data remains in the archive. Existing relational databases remain available; legacy vector datasets are imported into knowledge bases and may need explicit reindexing for semantic search.
 
 See [Task Agent](docs/task-agent-runtime.md), [Skills and MCP](docs/task-agent-skills-mcp.md), [knowledge bases](docs/knowledge-bases.md), and [scheduling](docs/task-agent-scheduling.md).
 

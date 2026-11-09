@@ -39,3 +39,10 @@ Exit codes: 0 success, 1 workflow failure, 2 invalid arguments/configuration/inp
 Model node templates also accept max_output_tokens and max_concurrent_requests (positive integers; 0 or absent inherits configuration), endpoint_policy="first", and thinking_enabled=false for DeepSeek/Qwen. Schema failures retain validation diagnostics and invalid output in run_stats; invalid outputs are never cached as successes.
 
 Reproduce CLI tests with `python -m pytest tests/test_cli.py`. Help/version do not initialize a workspace.
+
+
+## Upgrade data protection
+
+CLI initialization and desktop startup run the same pre-upgrade backup guard before settings normalization or schema migration. Existing pre-1.0 data directories receive a verified sibling ZIP. SQLite files use online snapshots including committed WAL records; other files retain their content and standard ZIP metadata. Fresh or already-migrated databases skip this step.
+
+Backup failure returns a nonzero CLI result with `UpgradeBackupError` and stops migration. Correct storage-space, access or source-file issues and retry. A prior backup is not reused after source data changes. The backup directory marker is local bookkeeping, not a substitute for a readable, verified archive. The backup is never uploaded automatically.

@@ -150,7 +150,10 @@ def model_serializer(
 
 def run_migrations(fake: bool = False):
     from peewee_migrate import Router
+    from utilities.upgrade_backup import ensure_v1_upgrade_backup
 
+    if not fake:
+        ensure_v1_upgrade_backup(database)
     router = Router(database, migrate_dir="./migrations")
     router.run(fake=fake)
 

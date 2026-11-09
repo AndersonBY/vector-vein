@@ -1,9 +1,11 @@
 # @Author: Bi Ying
 # @Date:   2025-08-04
 # Integrated FastAPI + PyWebView main application
+from __future__ import annotations
 
 import os
 import sys
+from html import escape
 from pathlib import Path
 
 import webview
@@ -12,17 +14,25 @@ from webview.window import Window
 
 from bootstrap import APP_ROOT
 
-from utilities.config import config, cache
-from models import create_tables, run_migrations
-from celery_worker import CeleryWorkerManager
-from workflow_stream.server import WebSocketServer
-from fastapi_server import FastAPIServer
-from tts_server.server import tts_server
-from utilities.file_processing import static_file_server
-from utilities.general import LogServer, mprint
-from utilities.network import proxies_for_requests
-from utilities.shortcuts import shortcuts_listener
-from utilities.workflow import workflow_scheduler
+from utilities.upgrade_backup import UpgradeBackupError
+
+_upgrade_backup_error = None
+try:
+    from utilities.config import config, cache
+    from models import create_tables, run_migrations
+    from celery_worker import CeleryWorkerManager
+    from workflow_stream.server import WebSocketServer
+    from fastapi_server import FastAPIServer
+    from tts_server.server import tts_server
+    from utilities.file_processing import static_file_server
+    from utilities.general import LogServer, mprint
+    from utilities.network import proxies_for_requests
+    from utilities.shortcuts import shortcuts_listener
+    from utilities.workflow import workflow_scheduler
+except UpgradeBackupError as exc:
+    if __name__ != "__main__":
+        raise
+    _upgrade_backup_error = exc
 
 
 class MainServer:
@@ -344,6 +354,31 @@ class MainServer:
         webview.start(self.bind, [self.window], gui=gui_backend, debug=self.DEBUG, http_server=False)
 
 
-if __name__ == "__main__":
-    main_server = MainServer()
+def main():
+    try:
+        if _upgrade_backup_error is not None:
+            raise _upgrade_backup_error
+        main_server = MainServer()
+    except UpgradeBackupError as exc:
+        message = (
+            "升级前自动备份失败，旧数据未迁移。请检查磁盘空间、目录权限，"
+            "并关闭旧版程序后重试。\n\n" + str(exc)
+        )
+        print(message, file=sys.stderr)
+        webview.create_window(
+            "VectorVein 升级已中止",
+            html='<html lang="zh-CN"><meta charset="utf-8">'
+            '<body style="font-family:sans-serif;padding:24px">'
+            "<h2>升级已中止</h2><p>" + escape(message).replace("\n", "<br>") + "</p></body></html>",
+            width=600,
+            height=320,
+        )
+        gui_backend = "qt" if sys.platform.startswith("linux") else None
+        webview.start(gui=gui_backend, http_server=False)
+        return 1
     main_server.start()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

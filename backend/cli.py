@@ -111,7 +111,9 @@ def initialize():
     from models import create_tables, database
     from utilities.config import config, Settings
     from peewee_migrate import Router
+    from utilities.upgrade_backup import ensure_v1_upgrade_backup
     Path(config.data_path).mkdir(parents=True, exist_ok=True)
+    ensure_v1_upgrade_backup(database)
     router = Router(database, migrate_dir=str(APP_ROOT / "migrations"))
     router.run()
     create_tables()
@@ -242,20 +244,22 @@ def main(argv=None):
     if args.output_dir:
         os.environ["VECTORVEIN_OUTPUT_DIR"] = str(args.output_dir)
     os.chdir(args.workspace)
-    if args.group == "task-agent":
-        from task_agent.server import serve
-        return serve()
     code = 2
     try:
+        if args.group == "task-agent":
+            from task_agent.server import serve
+            return serve()
         with contextlib.redirect_stdout(sys.stderr):
             initialize()
             result, code = execute(args)
     except Exception as exc:
+        from utilities.upgrade_backup import UpgradeBackupError
+
         # Provider errors may contain credentials; only configuration errors expose a message.
         result = {"error": type(exc).__name__}
         if type(exc).__name__ == "ValidationError":
             result["message"] = "Configuration validation failed; check the selected settings and schema"
-        elif isinstance(exc, (ValueError, FileNotFoundError)):
+        elif isinstance(exc, (UpgradeBackupError, ValueError, FileNotFoundError)):
             result["message"] = str(exc)
     finally:
         if "utilities.config" in sys.modules:

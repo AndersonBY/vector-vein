@@ -17,7 +17,7 @@
 桌面版 1.0 以任务 Agent 为工作入口，支持多目录 Project、Skills、MCP 工具、可配置审批、定时任务、桌面通知和系统托盘。知识库支持层级文档管理、本机索引、嵌入与重排序模型、Vekai 服务，以及通过普通 Agent 文件工具访问只读 `.knowledge/` 虚拟目录。
 
 > [!IMPORTANT]
-> 升级到 1.0 会永久移除旧对话 Agent 模块及其对话、消息历史。如需保留，请在升级前备份程序的 `data` 目录。任务 Agent 将覆盖该模块的使用场景。已有关系数据库继续保留；旧向量数据集会导入知识库，语义检索可能需要手动重建索引。
+> 旧版升级到 1.0 系列时，程序会先把原数据目录自动压缩为同级 ZIP 备份，校验成功后才继续迁移；备份失败则中止升级。旧对话 Agent 及历史记录会从活动数据库移除，但原始数据保留在备份压缩包中。已有关系数据库继续保留；旧向量数据集会导入知识库，语义检索可能需要手动重建索引。
 
 实现说明：[任务 Agent](docs/task-agent-runtime.md)、[Skills 与 MCP](docs/task-agent-skills-mcp.md)、[知识库](docs/knowledge-bases.md)、[定时任务](docs/task-agent-scheduling.md)。
 

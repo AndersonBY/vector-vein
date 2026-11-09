@@ -26,6 +26,9 @@ def remove_cache(database):
 def migrate(migrator, database, *, fake=False):
     if fake:
         return
+    from utilities.upgrade_backup import ensure_v1_upgrade_backup
+
+    ensure_v1_upgrade_backup(database, legacy_only=True)
     database.execute_sql("PRAGMA secure_delete=ON")
     tables = set(database.get_tables())
     if "workflowrunrecord" in tables:
