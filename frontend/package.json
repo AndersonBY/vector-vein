@@ -42,8 +42,8 @@
     "markdown-it-github-alerts": "^1.0.1",
     "markdown-it-link-attributes": "^4.0.1",
     "markmap-common": "^0.18.9",
-    "markmap-lib": "^0.18.12",
-    "markmap-view": "^0.18.12",
+    "markmap-lib": "^0.18.13",
+    "markmap-view": "^0.18.13",
     "midi-player-js": "^2.0.17",
     "pele": "^1.13.0",
     "pinia": "^4.1.0",
@@ -67,7 +67,7 @@
     "prettier": "^3.9.10",
     "unplugin-vue-components": "^32.1.0",
     "vite": "^8.3.6",
-    "vue-eslint-parser": "^10.4.1"
+    "vue-eslint-parser": "^10.4.2"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

@@ -114,11 +114,11 @@ importers:
         specifier: ^0.18.9
         version: 0.18.9
       markmap-lib:
-        specifier: ^0.18.12
-        version: 0.18.12(markmap-common@0.18.9)
+        specifier: ^0.18.13
+        version: 0.18.13(markmap-common@0.18.9)
       markmap-view:
-        specifier: ^0.18.12
-        version: 0.18.12(markmap-common@0.18.9)
+        specifier: ^0.18.13
+        version: 0.18.13(markmap-common@0.18.9)
       midi-player-js:
         specifier: ^2.0.17
         version: 2.0.17
@@ -173,7 +173,7 @@ importers:
         version: 10.14.0
       eslint-plugin-vue:
         specifier: ^10.12.0
-        version: 10.12.0(eslint@10.14.0)(vue-eslint-parser@10.4.1(eslint@10.14.0))
+        version: 10.12.0(eslint@10.14.0)(vue-eslint-parser@10.4.2(eslint@10.14.0))
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
@@ -184,8 +184,8 @@ importers:
         specifier: ^8.3.6
         version: 8.3.6(yaml@2.9.1)
       vue-eslint-parser:
-        specifier: ^10.4.1
-        version: 10.4.1(eslint@10.14.0)
+        specifier: ^10.4.2
+        version: 10.4.2(eslint@10.14.0)
 
 packages:
 
@@ -1449,16 +1449,19 @@ packages:
 
   markmap-html-parser@0.18.11:
     resolution: {integrity: sha512-+kC5C4sCGntGUhGvTa5VIb5rtM75cSy/VCy3tzZoNAcn2qZGdgYvljN0WvjsOzrEzp+V6XKgwzO0u2TdzNAiOg==}
+    deprecated: Replaced by @markmap/* in 1.0.0. See https://markmap.js.org/docs/migration
     peerDependencies:
       markmap-common: '*'
 
-  markmap-lib@0.18.12:
-    resolution: {integrity: sha512-WCA4OT+b71jYg0e4PS/6NRKqihod5OpPsvw1jEGHQwCtqQrY/yXXCeRyuL3axOS5cMy5pV8BSl4CwKfJU1LxJg==}
+  markmap-lib@0.18.13:
+    resolution: {integrity: sha512-8ufvDRDxKu7aMeVaVZpCxcbpaJa96q+FdwzSDtb/tpPYPF9L6lO7t5X0kji6M3N1TAEFb2gzaVoe8EAbBTASYw==}
+    deprecated: Replaced by @markmap/* in 1.0.0. See https://markmap.js.org/docs/migration
     peerDependencies:
       markmap-common: '*'
 
-  markmap-view@0.18.12:
-    resolution: {integrity: sha512-D8bzT1YwIC/8rkbwm6WzigVUrpOAGv7ioEGTi1Lj+Oo8gO5sAm6hhli27jvTgUcZ9TwBeIWZ+dSUP+AupYUGlQ==}
+  markmap-view@0.18.13:
+    resolution: {integrity: sha512-FNzBzDZ81hR9TJ8MmpDxH1qhFWVqAHeCE2BkOW4GseDrymNTlXg5uLaiVl6PFAlB+O6mG6Gkbd+UsHuaOpgyKA==}
+    deprecated: Replaced by @markmap/* in 1.0.0. See https://markmap.js.org/docs/migration
     peerDependencies:
       markmap-common: '*'
 
@@ -1869,8 +1872,8 @@ packages:
       echarts: ^6.0.0
       vue: ^3.3.0
 
-  vue-eslint-parser@10.4.1:
-    resolution: {integrity: sha512-Gk6gRDj0n/fkRa3C3l0bBheoBckUq/Rs0F/TvMWIS6nzzx67amAViMe9CkNgsP2tXyQONvGiHQESHwFtZ3aYDA==}
+  vue-eslint-parser@10.4.2:
+    resolution: {integrity: sha512-WMpzulb50kb6snghzoGzS++62wcOszAk/piYcnvzdStM8Wni/BmogYltpoOFv2eK9hDbXxvwFQgnwZGpAoUfpA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
     peerDependencies:
       eslint: ^8.57.0 || ^9.0.0 || ^10.0.0
@@ -2942,7 +2945,7 @@ snapshots:
     optionalDependencies:
       eslint-config-prettier: 10.1.8(eslint@10.14.0)
 
-  eslint-plugin-vue@10.12.0(eslint@10.14.0)(vue-eslint-parser@10.4.1(eslint@10.14.0)):
+  eslint-plugin-vue@10.12.0(eslint@10.14.0)(vue-eslint-parser@10.4.2(eslint@10.14.0)):
     dependencies:
       '@eslint-community/eslint-utils': 4.10.1(eslint@10.14.0)
       eslint: 10.14.0
@@ -2950,7 +2953,7 @@ snapshots:
       nth-check: 2.1.1
       postcss-selector-parser: 7.1.7
       semver: 7.8.5
-      vue-eslint-parser: 10.4.1(eslint@10.14.0)
+      vue-eslint-parser: 10.4.2(eslint@10.14.0)
       xml-name-validator: 5.0.0
 
   eslint-scope@9.1.2:
@@ -3329,7 +3332,7 @@ snapshots:
       cheerio: 1.0.0
       markmap-common: 0.18.9
 
-  markmap-lib@0.18.12(markmap-common@0.18.9):
+  markmap-lib@0.18.13(markmap-common@0.18.9):
     dependencies:
       '@babel/runtime': 7.29.10
       '@vscode/markdown-it-katex': 1.1.2
@@ -3342,11 +3345,11 @@ snapshots:
       markdown-it-sup: 2.0.0
       markmap-common: 0.18.9
       markmap-html-parser: 0.18.11(markmap-common@0.18.9)
-      markmap-view: 0.18.12(markmap-common@0.18.9)
+      markmap-view: 0.18.13(markmap-common@0.18.9)
       prismjs: 1.30.0
       yaml: 2.9.1
 
-  markmap-view@0.18.12(markmap-common@0.18.9):
+  markmap-view@0.18.13(markmap-common@0.18.9):
     dependencies:
       '@babel/runtime': 7.29.10
       d3: 7.9.0
@@ -3676,7 +3679,7 @@ snapshots:
       echarts: 6.1.0
       vue: 3.5.45
 
-  vue-eslint-parser@10.4.1(eslint@10.14.0):
+  vue-eslint-parser@10.4.2(eslint@10.14.0):
     dependencies:
       debug: 4.4.3
       eslint: 10.14.0
