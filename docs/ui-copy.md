@@ -1,8 +1,7 @@
 # Desktop UI and settings
 
 Workspace list pages use a compact title, short description and action toolbar.
-Non-actionable hero statistics are omitted. Agent cards show their chat action
-without requiring hover. Brand colors and the existing component library remain
+Non-actionable hero statistics are omitted. Task Agent profiles expose their start-task action. Brand colors and the existing component library remain
 shared across pages.
 
 Settings has one persistent Save settings action. Endpoint editing uses the same

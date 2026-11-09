@@ -2,6 +2,8 @@
 
 Run `pdm run cli` in backend, or use the console executable `VectorVeinCLI` included beside the desktop executable in CLI-enabled builds. Commands write UTF-8 JSON to stdout; progress goes to stderr. No desktop window or separate Celery worker is required.
 
+The desktop starts `VectorVeinCLI --workspace WORKSPACE task-agent serve` as a child process. Its stdout is reserved for vv-agent App Server v5 JSON-RPC messages. The server uses the independent `data/task-agent/sessions.db` session store and does not initialize the workflow database. Desktop-owned task history is projected separately into `data/task-agent/tasks.db`.
+
 Global options precede the command:
 
 - `--workspace DIR`: directory containing config.json and data/. Defaults to the source backend or executable directory. Use the desktop workspace or an isolated experiment directory.

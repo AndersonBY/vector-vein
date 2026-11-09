@@ -9,6 +9,7 @@ import shutil
 import argparse
 import platform
 import subprocess
+import tomllib
 from pathlib import Path
 
 
@@ -56,7 +57,7 @@ def build_production(version):
         dist_migrations_path = APP_DIST_DIR / "migrations"
         if dist_migrations_path.exists():
             shutil.rmtree(dist_migrations_path)
-        shutil.copytree(MIGRATIONS_DIR, dist_migrations_path)
+        shutil.copytree(MIGRATIONS_DIR, dist_migrations_path, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
     system_name = platform.system().lower()
     if system_name == "darwin":
@@ -92,27 +93,45 @@ def build_development(version):
         dist_migrations_path = APP_DIST_DIR / "migrations"
         if dist_migrations_path.exists():
             shutil.rmtree(dist_migrations_path)
-        shutil.copytree(MIGRATIONS_DIR, dist_migrations_path)
+        shutil.copytree(MIGRATIONS_DIR, dist_migrations_path, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
 
 def build_frontend():
     run_cmd(["pnpm", "run", "build"], cwd=FRONTEND_DIR)
+    sync_frontend()
 
-    if WEB_DIR.exists():
-        shutil.rmtree(WEB_DIR)
+
+def sync_frontend():
+    dist_dir = FRONTEND_DIR / "dist"
+    index = dist_dir / "index.html"
+    if not index.is_file():
+        raise FileNotFoundError(index)
     WEB_DIR.mkdir(parents=True, exist_ok=True)
 
-    shutil.copytree(FRONTEND_DIR / "dist", WEB_DIR, dirs_exist_ok=True)
+    # Open windows still import previous hashed chunks. Publish the new entry only after its assets.
+    for item in dist_dir.iterdir():
+        if item == index:
+            continue
+        if item.is_dir():
+            shutil.copytree(item, WEB_DIR / item.name, dirs_exist_ok=True)
+        else:
+            shutil.copy2(item, WEB_DIR / item.name)
 
     assets_dir = FRONTEND_DIR / "src" / "assets"
     if assets_dir.exists():
         shutil.copytree(assets_dir, WEB_DIR / "assets", dirs_exist_ok=True)
+    staged_index = WEB_DIR / "index.html.next"
+    shutil.copy2(index, staged_index)
+    staged_index.replace(WEB_DIR / "index.html")
 
 
 def main():
+    with (BASE_DIR / "pyproject.toml").open("rb") as project_file:
+        project_version = tomllib.load(project_file)["project"]["version"]
     parser = argparse.ArgumentParser(description="Build software.")
     parser.add_argument(
-        "-v", "--version", default=os.getenv("VECTORVEIN_VERSION", "0.0.1"), help="version number, default: 0.0.1"
+        "-v", "--version", default=os.getenv("VECTORVEIN_VERSION", project_version),
+        help=f"version number, default: VECTORVEIN_VERSION or {project_version}"
     )
     parser.add_argument(
         "-t", "--type", default="production", help="build type: development(d) or production(p) or frontend(f)"

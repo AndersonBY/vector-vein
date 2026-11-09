@@ -1,20 +1,5 @@
 # Workflow execution recovery
 
-Chat workflow messages query the authoritative run as soon as they mount and
-continue polling while it is running, queued, stopping, or paused. Returning to
-a conversation shows current state and completed outputs without expanding
-execution details by default. Failure and feedback states expand their existing
-details. Responses belonging to an unmounted message or a different run are
-discarded. Conversation drafts are independent of workflow polling.
-
-Successful chat runs pass `record_id` to `message.append_answer`. The backend
-validates the finished run and its source message, projects the result before
-building model history, and serializes continuation creation. Each continuation
-stores `metadata.workflow_record_id`. A repeated request, or a source message
-that is no longer the conversation's current tail, returns
-`data.already_appended=true` without creating a message or changing the selected
-branch. The client refreshes history in that case.
-
 ## Process exit detection
 
 Each executing process holds a kernel file lock for its lifetime under
@@ -30,7 +15,6 @@ Completed node snapshots, output fields, artifacts, and timing are retained;
 unfinished timeline entries become failed. Stale active counts are cleared.
 Registered parents observe the child's failure through existing propagation.
 Late broker deliveries are rejected by the terminal-state admission guard.
-Failure to project a chat message cannot roll back the recovered run.
 
 Live owners, invalid ownership markers, inaccessible locks, legacy records with
 no owners, paused feedback checkpoints, and terminal runs are preserved.
@@ -41,7 +25,4 @@ terminated node and had not been checkpointed cannot be recovered.
 
 `backend/tests/test_workflow_recovery_integration.py` exercises real process
 locks, recovery and preservation cases, parent propagation, retained files,
-late delivery, terminal message projection, fast completion during submission,
-and idempotent chat continuation. `frontend/tests/chatFailures.test.js` covers
-mounted chat restoration, overlapping polls, stale responses, draft isolation,
-and late submission results.
+late delivery and fast completion during submission.

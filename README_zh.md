@@ -12,6 +12,15 @@
 
 向量脉络是受到 [LangChain](https://github.com/hwchase17/langchain) 以及 [langflow](https://github.com/logspace-ai/langflow) 的启发而开发的无代码 AI 工作流软件，旨在结合大语言模型的强大能力并让用户通过简单的拖拽即可实现各类日常工作流的智能化和自动化。
 
+## 桌面版 1.0
+
+桌面版 1.0 以任务 Agent 为工作入口，支持多目录 Project、Skills、MCP 工具、可配置审批、定时任务、桌面通知和系统托盘。知识库支持层级文档管理、本机索引、嵌入与重排序模型、Vekai 服务，以及通过普通 Agent 文件工具访问只读 `.knowledge/` 虚拟目录。
+
+> [!IMPORTANT]
+> 升级到 1.0 会永久移除旧对话 Agent 模块及其对话、消息历史。如需保留，请在升级前备份程序的 `data` 目录。任务 Agent 将覆盖该模块的使用场景。已有关系数据库继续保留；旧向量数据集会导入知识库，语义检索可能需要手动重建索引。
+
+实现说明：[任务 Agent](docs/task-agent-runtime.md)、[Skills 与 MCP](docs/task-agent-skills-mcp.md)、[知识库](docs/knowledge-bases.md)、[定时任务](docs/task-agent-scheduling.md)。
+
 ## 🌐 在线体验
 
 您可以在 [这里](https://vectorvein.com) 体验向量脉络的在线版本，无需下载安装。
@@ -85,11 +94,7 @@
 
 ### 快捷键设置
 
-为方便日常使用，您可以配置快捷键以快速开启和 Agent 的语音对话。通过快捷键启动即可直接通过语音识别与 Agent 对话。一定注意前提是语音识别服务已经正确配置完成。
-
-其中 **附带屏幕截图** 是指在开启聊天的同时对屏幕进行截图并作为附件上传到对话中。
-
-![快捷键设置](resources/images/shortcut-settings1-zh.jpg)
+可以在设置中配置全局快捷键，快速打开任务 Agent 工作台、工作流、计划任务或数据工作区。
 
 #### 关于本地的 Stable Diffusion API
 
@@ -290,7 +295,7 @@ pdm run build
 
 1. 先把 `backend/pyproject.toml` 里的 `project.version` 更新为目标版本号。
 2. 提交版本号修改。
-3. 创建并推送类似 `v0.4.3` 的 tag。
+3. 创建并推送类似 `v1.0.0` 的 tag。
 4. GitHub Actions 会自动构建 Windows、macOS、Linux 三个平台的 ZIP 包，并挂到同名 GitHub Release 下。
 
 如果 tag 版本号和 `backend/pyproject.toml` 里的版本号不一致，工作流会在打包前直接失败。

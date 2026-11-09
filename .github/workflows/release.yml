@@ -156,12 +156,9 @@ jobs:
       - name: Smoke-test packaged CLI
         working-directory: backend
         run: |
-          if [ -f cli.py ]; then
-            CLI="./dist/vector-vein/VectorVeinCLI"
-            if [ "${RUNNER_OS}" = "Windows" ]; then CLI="${CLI}.exe"; fi
-            "$CLI" --help
-            "$CLI" --workspace "${RUNNER_TEMP}/vectorvein-cli-smoke" init
-          fi
+          CLI="./dist/vector-vein/VectorVeinCLI"
+          if [ "${RUNNER_OS}" = "Windows" ]; then CLI="${CLI}.exe"; fi
+          python tests/task_agent_package_smoke.py "$CLI" "${{ steps.meta.outputs.version }}"
 
       - name: Upload packaged artifact
         uses: actions/upload-artifact@v7

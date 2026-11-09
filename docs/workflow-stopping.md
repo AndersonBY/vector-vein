@@ -20,9 +20,7 @@ Remaining pending or waiting timeline entries become `STOPPED`.
 incremental completed nodes and the timeline. It returns `200` with `msg=STOPPED`
 and the usual workflow snapshot for a stopped run. Clients must distinguish
 `FINISHED` from `STOPPED` instead of interpreting every `200` as successful
-completion. Run-record reads retain the actual status. Chat runs leave the
-running state using the existing workflow terminal message code, with
-`metadata.recordStatus=STOPPED` and a cancellation description.
+completion. Run-record reads retain the actual status.
 
 Task admission, active counts, child registration, stop requests, and terminal
 writes use the application's shared diskcache transaction. Final database

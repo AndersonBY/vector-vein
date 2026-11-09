@@ -65,7 +65,7 @@ continue from that checkpoint with a new generation. This recovery also covers
 automatic parent continuation. If work is already admitted, its current state
 is retained rather than claiming it was rolled back.
 
-## Nested workflows and chat
+## Nested workflows
 
 Invocation, selector, and loop nodes propagate a child pause without consuming
 polling retries. A paused parent's `pending_feedback_runs` contains child run
@@ -77,11 +77,6 @@ stop other child runs instead of leaving their human prompts pending. A parent m
 also have its own feedback nodes and requires those responses after its
 children finish. Stopping a paused parent stops pending children and prevents
 later resume.
-
-A paused chat workflow keeps the existing running-workflow message code and
-sets `metadata.recordStatus=PAUSED`. It does not append a model answer or claim
-workflow completion. Resume changes that metadata back to `RUNNING`; normal
-completion, failure, and stop projections still determine the terminal message.
 
 ## Verification and limits
 
@@ -97,3 +92,8 @@ Stage 8's operational limit remains: an unresponsive or abruptly terminated
 admitted worker requires investigation and is not silently declared drained.
 This checkpoint mechanism is specific to HumanFeedback and nested workflow
 waiting; it is not a general arbitrary-node replay facility.
+
+
+## Task Agent feedback identity
+
+Task Agent continuations additionally pass expected_generation and submission_id to resume_run. The generation is checked under the existing admission lock. A receipt containing the generation and answer digest is saved with the activated checkpoint in feedback_submissions. Identical retries return the existing run without republishing; changed bytes or a stale generation return 409. New runs clear these receipts along with other checkpoint state. Existing workflow callers can continue using their current resume API.

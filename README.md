@@ -12,6 +12,15 @@ Create powerful workflows with just drag and drop, without any programming.
 
 VectorVein is a no-code AI workflow software inspired by [LangChain](https://github.com/hwchase17/langchain) and [langflow](https://github.com/logspace-ai/langflow), designed to combine the powerful capabilities of large language models and enable users to easily achieve intelligent and automated workflows for various daily tasks.
 
+## Desktop 1.0
+
+Desktop 1.0 brings a task-based Agent workspace with multi-directory Projects, Skills, MCP tools, configurable approval policies, scheduled tasks, notifications and system-tray support. Knowledge bases provide hierarchical document management, local indexing, embedding/reranking configuration, Vekai integration and read-only `.knowledge/` access through ordinary Agent file tools.
+
+> [!IMPORTANT]
+> Upgrading to 1.0 permanently removes the retired conversation Agent and its conversation/message history. Back up the application `data` directory before upgrading if you need those records. Task Agent replaces that module. Existing relational databases remain available; legacy vector datasets are imported into knowledge bases and may need explicit reindexing for semantic search.
+
+See [Task Agent](docs/task-agent-runtime.md), [Skills and MCP](docs/task-agent-skills-mcp.md), [knowledge bases](docs/knowledge-bases.md), and [scheduling](docs/task-agent-scheduling.md).
+
 ## 🌐 Online Experience
 
 You can experience VectorVein's online version [here](https://vectorvein.ai/en), with no need to download or install.
@@ -85,11 +94,7 @@ When you need to perform vector searches using vector data, configure embedding 
 
 ### Shortcut Settings
 
-For ease of daily use, you can configure shortcuts to quickly initiate voice conversations with the Agent. By launching through the shortcut, you can directly interact with the Agent via speech recognition. It is important to ensure that the speech recognition service is correctly configured beforehand.
-
-**Include Screenshot** means that while starting the conversation, a screenshot of the screen will be taken and uploaded as an attachment to the conversation.
-
-![Shortcut Settings](resources/images/shortcut-settings1-en.jpg)
+Configure global shortcuts in Settings to open the Task Agent workbench, workflows, schedules, or data workspace.
 
 ### Notes
 
@@ -292,7 +297,7 @@ The repository now includes a GitHub Actions workflow at `.github/workflows/rele
 
 1. Update `backend/pyproject.toml` so `project.version` matches the release version you want to publish.
 2. Commit the version change.
-3. Create and push a tag like `v0.4.3`.
+3. Create and push a tag like `v1.0.0`.
 4. GitHub Actions will automatically build Windows, macOS, and Linux ZIP packages and attach them to the matching GitHub Release.
 
 If the tag version and `backend/pyproject.toml` version do not match, the workflow will fail fast before packaging.
