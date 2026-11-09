@@ -69,6 +69,7 @@ def test_profile_validates_tool_settings(tmp_path, values):
 
 def test_background_command_ownership_and_stop(tmp_path):
     import json
+    import sys
     import time
     from dataclasses import replace
     from vv_agent.tools.base import ToolContext
@@ -96,9 +97,16 @@ def test_background_command_ownership_and_stop(tmp_path):
         while stopped.metadata["status"] in {"stopping", "unknown"} and time.monotonic() < deadline:
             time.sleep(0.05)
             stopped = check_background_command(context, handle)
-        assert stopped.metadata["status"] == "stopped", stopped
         assert stopped.metadata["session_id"] == handle["session_id"]
-        assert stopped.metadata["exit_code"] is not None
-        assert check_background_command(context, handle).metadata["status"] == "stopped"
+        if sys.platform == "darwin":
+            # vv-agent has no macOS tree supervisor; it must not claim confirmed termination.
+            assert stopped.metadata["status"] in {"stopping", "unknown"}, stopped
+            assert stopped.metadata.get("exit_code") is None
+            assert "termination is unconfirmed" in json.loads(stopped.content)["message"]
+            assert check_background_command(context, handle).metadata["status"] in {"stopping", "unknown"}
+        else:
+            assert stopped.metadata["status"] == "stopped", stopped
+            assert stopped.metadata["exit_code"] is not None
+            assert check_background_command(context, handle).metadata["status"] == "stopped"
     finally:
         stop_background_command(context, handle)
