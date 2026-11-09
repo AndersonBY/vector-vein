@@ -173,6 +173,11 @@ jobs:
     needs: build
 
     steps:
+      - name: Checkout release notes
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.version && format('v{0}', inputs.version) || github.ref }}
+
       - name: Download packaged artifacts
         uses: actions/download-artifact@v8
         with:
@@ -196,9 +201,14 @@ jobs:
           if gh release view "${RELEASE_TAG}" --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1; then
             gh release upload "${RELEASE_TAG}" "${assets[@]}" --repo "${GITHUB_REPOSITORY}" --clobber
           else
+            notes_file="docs/releases/${RELEASE_TAG#v}.md"
+            notes_args=(--generate-notes)
+            if [ -f "${notes_file}" ]; then
+              notes_args=(--notes-file "${notes_file}")
+            fi
             gh release create "${RELEASE_TAG}" "${assets[@]}" \
               --repo "${GITHUB_REPOSITORY}" \
               --title "${RELEASE_TAG}" \
               --verify-tag \
-              --generate-notes
+              "${notes_args[@]}"
           fi
