@@ -1,307 +1,109 @@
 English | [简体中文](README_zh.md) | [日本語](README_ja.md)
 
-[![VectorVein](resources/images/vector-vein-with-text-primary-en.svg)](https://vectorvein.ai)
+<a href="https://vectorvein.com"><img src="resources/images/vector-vein-with-text-primary-en.svg" alt="VectorVein" width="360"></a>
 
-# 🔀 VectorVein
+# VectorVein
 
-Build your automation workflow with the power of AI and your personal knowledge base.
+**A local desktop application for Task Agents and visual workflows.**
 
-Create powerful workflows with just drag and drop, without any programming.
+Everyday work rarely lives in a single file. You often need to read across local project folders, cross-check rules or reference documents, process spreadsheet data, and turn the findings into a clean report or workbook. VectorVein brings autonomous Task Agents and reusable visual workflows into one desktop workspace: give an Agent a goal when the job involves exploring files, searching documents, and multi-step execution; build a visual workflow when you want a fixed sequence of steps for batch processing and document export—or attach any valid workflow to an Agent as a callable tool.
 
-[![Online Version of VectorVein](resources/images/demo-en.gif)](https://github.com/AndersonBY/vector-vein)
+![VectorVein Task Agent Workbench](resources/images/desktop-1.0/agent-workbench.png)
 
-VectorVein is a no-code AI workflow software inspired by [LangChain](https://github.com/hwchase17/langchain) and [langflow](https://github.com/logspace-ai/langflow), designed to combine the powerful capabilities of large language models and enable users to easily achieve intelligent and automated workflows for various daily tasks.
+[Download Desktop v1.0.2](https://github.com/AndersonBY/vector-vein/releases) · [Setup & Configuration Guide](docs/getting-started.md) · [Quickstart Tutorial](TUTORIAL.md) · [Cloud Edition](https://vectorvein.com) · [Online Docs](https://vectorvein.com/help/docs/introduction)
 
-## Desktop 1.0
+---
 
-Desktop 1.0 brings a task-based Agent workspace with multi-directory Projects, Skills, MCP tools, configurable approval policies, scheduled tasks, notifications and system-tray support. Knowledge bases provide hierarchical document management, local indexing, embedding/reranking configuration, Vekai integration and read-only `.knowledge/` access through ordinary Agent file tools.
+## See It in Action
+
+In the demonstration task pictured below, a local project folder holds a launch brief and 5 days of daily channel sales and refund records, while a mounted knowledge base stores the 5-day channel reporting definitions and return policies. We ask the Agent to analyze the autumn launch across channels using the knowledge base's reporting rules, write a report to `outputs/`, and cite its sources.
+
+From those sample files, the Agent calculates 649 total orders and ¥207,230 in net sales across the three channels, flags the 7-day return window caveat, and saves `outputs/渠道复盘.md`. Once completed, you can preview the formatted report, toggle its Markdown source, browse project files, and open the cited knowledge-base documents side by side in the workspace.
+
+![Previewing a completed report, toggling source view, and inspecting knowledge citations in the task workspace](resources/images/desktop-1.0/task-demo.gif)
+
+---
+
+## Key Capabilities
+
+### Task Workspace & Multi-Folder Projects
+
+VectorVein opens directly to the Task Agent Workbench. You can group one or more local folders into a Project (the first folder serves as the default working directory, and any additional folders act as allowed roots) so the Agent can search, read, and write project files within clear boundaries—or start a standalone task without selecting a Project.
+
+Inside a task, the conversation and the multi-tab workspace sit side by side. Generated reports, local code files, command output, tool results, and task plans maintained when needed by the model open in separate tabs. Even while a task is running or waiting for input, you can switch the active model, reasoning effort, or approval mode (ask every time, automatic risk review, or full access) from the bottom bar.
+
+![Task detail and side-by-side workspace](resources/images/desktop-1.0/task-workspace.png)
+
+### Hierarchical Knowledge Bases & Hybrid Search
+
+The Data space manages hierarchical Knowledge Bases alongside Relational Databases. Import folder trees or individual PDF, Word, Excel, PowerPoint, Markdown, and CSV files. VectorVein copies imported files into managed storage to extract text and build local indexes, leaving your original files on disk untouched—deleting an entry from a knowledge base never deletes your source file.
+
+Each knowledge base uses a built-in local Qdrant vector index and full-text search with no external database setup required, and includes one-click presets for local [Vekai](https://github.com/AndersonBY/vekai) embedding and reranking services. When mounted to an Agent, documents are accessible both through dedicated retrieval tools and as read-only `.knowledge/` virtual paths that can be previewed directly in the task workspace.
+
+![Hierarchical knowledge base management](resources/images/desktop-1.0/knowledge-base.png)
+
+![Browsing folders, previewing documents, and running hybrid search in a knowledge base](resources/images/desktop-1.0/knowledge-demo.gif)
+
+### Extending Agents with Skills, MCP & Workflows
+
+Save custom Agent profiles with tailored instructions, permissions, and configurable tools and capabilities:
+
+- **Skills**: Write `SKILL.md` bundles in the built-in editor or scan and import existing skills from `~/.agents/skills`, `~/.codex/skills`, and `~/.claude/skills`.
+- **MCP Servers**: Connect local or remote MCP servers, test connections to discover available tools, and enable specific tools per Agent or per task.
+- **Workflows as Tools**: Attach any valid (`VALID`) visual workflow to an Agent so the Agent can invoke it with structured inputs and link the run record to the task.
+
+![Agent Tools & Capabilities configuration card with a mounted skill](resources/images/desktop-1.0/agent-integrations.png)
+
+### Visual Scheduling & Background Runs
+
+Use the visual schedule editor to run recurring inspections, summaries, or workflow pipelines on daily, weekly, or custom intervals without writing Cron expressions. Agent schedules can either start a fresh task on every run or continue inside an existing task, with options to hide completed tasks from the main list and send native desktop notifications. On Windows, closing the window can minimize VectorVein to the system tray so schedules and indexing continue in the background.
+
+![Schedule run mode, timetable, and completion actions](resources/images/desktop-1.0/scheduled-tasks.png)
+
+### Visual Workflows & Structured Document Exports
+
+When a process follows a fixed sequence of steps, build a node graph in the visual workflow editor. Workflows can read multi-sheet Excel files with source row numbers preserved, validate LLM outputs against a JSON Schema with optional local caching, and export formatted multi-sheet `.xlsx` workbooks, structured `.docx` documents, and `.png` charts.
+
+Every workflow can be run from its clean daily-use screen, triggered via the local HTTP API (`http://127.0.0.1:8787` by default), or executed headlessly with `VectorVeinCLI`.
+
+![Visual workflow editor](resources/images/desktop-1.0/workflow-editor.png)
+
+---
+
+## Quick Start
+
+1. **Download & Launch**: Download the `v1.0.2` archive (`vector-vein-windows-v1.0.2.zip`, `vector-vein-mac-v1.0.2.zip`, or `vector-vein-linux-v1.0.2.zip`) from [GitHub Releases](https://github.com/AndersonBY/vector-vein/releases), extract it, and run `VectorVein`. The desktop UI supports English and Simplified Chinese (note: the screenshots above show the Chinese interface).
+2. **Configure a Model**: Open **Settings** in the top-right corner, add a cloud API endpoint (OpenAI, Anthropic, DeepSeek, Gemini, Qwen, etc.) or a local server (Ollama, LM Studio, vLLM), click **Test** to verify the connection, and save. (Application data is stored locally in `data/`; when you use a cloud model or external MCP service, task prompts and relevant context are sent to that configured provider.)
+3. **Start a Task**: Mount any desired Knowledge Bases or Skills on your Agent profile under **Agent**, then return to the **Workbench**, choose a Project (optional), Agent, and model preset, and enter your goal. See the [Setup & Configuration Guide](docs/getting-started.md) and [Quickstart Tutorial](TUTORIAL.md) for details.
 
 > [!IMPORTANT]
-> Before upgrading an existing data directory to the 1.0 series, the application automatically creates and verifies a ZIP backup beside that directory. If backup fails, the upgrade stops before migration. The retired conversation Agent and its history are removed from the active database after backup; their original data remains in the archive. Existing relational databases remain available; legacy vector datasets are imported into knowledge bases and may need explicit reindexing for semantic search.
+> **Upgrading from 0.x**: Exit any running 0.x instance (including the system tray process) before starting 1.0. On first launch, VectorVein automatically backs up your `data` directory to a sibling ZIP archive and verifies it before migrating your data; if the backup or verification fails, the upgrade stops immediately. After migration, legacy conversation Agent history is removed from the active database (and preserved in the backup ZIP), while Relational Databases are kept and legacy vector datasets are imported into Knowledge Bases. See the [Upgrade Guide](docs/getting-started.md#2-upgrading-from-0x-to-10).
 
-See [Task Agent](docs/task-agent-runtime.md), [Skills and MCP](docs/task-agent-skills-mcp.md), [knowledge bases](docs/knowledge-bases.md), and [scheduling](docs/task-agent-scheduling.md).
+---
 
-## 🌐 Online Experience
+## Documentation & Development
 
-You can experience VectorVein's online version [here](https://vectorvein.ai/en), with no need to download or install.
+- **Setup & Walkthroughs**: [Setup, Model Configuration & Upgrade Guide](docs/getting-started.md) · [Hands-On Tutorial](TUTORIAL.md) · [Window & System Tray](docs/desktop-window.md)
+- **Task Agent & Knowledge Bases**: [Task Agent Runtime](docs/task-agent-runtime.md) · [Skills & MCP](docs/task-agent-skills-mcp.md) · [Knowledge Bases & Vekai](docs/knowledge-bases.md) · [Agent Scheduling](docs/task-agent-scheduling.md) · [Model Selection](docs/model-selection.md) · [Endpoint Testing (ZH)](docs/model-endpoint-test.md)
+- **Visual Workflows & CLI**: [Reliable Data Workflows](docs/reliable-workflows.md) · [Workflow CLI](docs/cli.md) · [Node Timeline (ZH)](docs/workflow-timeline.md) · [Run Artifacts (ZH)](docs/workflow-artifacts.md) · [Canvas Preview (ZH)](docs/workflow-preview.md) · [Cooperative Stopping](docs/workflow-stopping.md) · [Crash Recovery](docs/workflow-recovery.md) · [Failure Diagnostics (ZH)](docs/workflow-failures.md) · [Human Feedback](docs/workflow-feedback.md) · [Schedule Editor](docs/workflow-scheduling.md) · [HTTP Request Node (ZH)](docs/http-request-node.md) · [Web Search Settings](docs/web-search.md)
+- **Releases**: [v1.0.2](docs/releases/1.0.2.md) · [v1.0.1](docs/releases/1.0.1.md) · [v1.0.0](docs/releases/1.0.0.md)
 
-Official website [Online Documentation](https://vectorvein.ai/help/docs/introduction)
+### Build from Source
 
-## 📦 Installation and Configuration
-
-### Installation
-
-After downloading VectorVein from [Release](https://github.com/AndersonBY/vector-vein/releases/), the program will create a "data" folder in the installation directory to store the database and static file resources.
-
-VectorVein is built using pywebview, based on the webview2 kernel, so you need to install the webview2 runtime. If the software cannot be opened, you may need to download the webview2 runtime manually from [https://developer.microsoft.com/en-us/microsoft-edge/webview2/](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
-
-> [!IMPORTANT]
-> If the software cannot be opened after decompression, please check if the downloaded compressed package .zip file is locked. You can solve this problem by right-clicking the compressed package and selecting "Unblock".
-
-### Configuration
-
-Most workflows and agents in the software involve the use of AI large language models, so you should at least provide a usable configuration for a large language model. For workflows, you can see which large language models are being used in the interface, as shown in the image below.
-
-![LLM used in workflow](resources/images/workflow-llm-use-en.jpg)
-
-#### API Endpoint Configuration
-
-Starting from v0.2.10, VectorVein separates API endpoints and large language model configurations, allowing multiple API endpoints for the same large language model.
-
-![API Endpoint Configuration](resources/images/endpoint-settings_en-US.jpg)
-
-After the software opens normally, click the open settings button, and you can configure the information for each API endpoint as needed, or add custom API endpoints. Currently, the API endpoints support OpenAI-compatible interfaces, which can be connected to locally running services such as LM-Studio, Ollama, vLLM, etc.
-
-> The API Base for LM-Studio is typically http://localhost:1234/v1/
-> 
-> The API Base for Ollama is typically http://localhost:11434/v1/
-
-#### Remote Large Language Model Interface Configuration
-
-Please configure the specific information for each model in the `Remote LLMs` tab.
-
-![LLM Settings](resources/images/remote-llms-settings_en-US.jpg)
-
-Click on any model to set its specific configuration, as shown below.
-
-![LLM Settings](resources/images/remote-llms-settings-2_en-US.jpg)
-
-> The `Model Key` is the standard name of the large model and generally does not need to be adjusted. The `Model ID` is the name used during actual deployment, which usually matches the `Model Key`. However, in deployments like Azure OpenAI, the `Model ID` is user-defined and therefore needs to be adjusted according to the actual situation.
->
-> Since the model IDs from different providers for the same model may vary, you can click the `Edit` button to configure the specific model ID under this endpoint, as shown in the figure below.
->
-> ![Endpoint Model ID Configuration](resources/images/endpoint-model-id-settings_en-US.jpg)
-
-#### Custom Large Language Model Interface Configuration
-
-If using a custom large language model, fill in the custom model configuration information on the `Custom LLMs` tab. Currently, interfaces compatible with OpenAI are supported, such as LM-Studio, Ollama, vLLM, etc.
-
-![Custom LLM Settings](resources/images/custom-llms-settings_en-US.jpg)
-
-First, add a custom model family, then add a custom model. Don't forget to click the `Save Settings` button.
-
-#### Speech Recognition Configuration
-
-Currently, speech recognition uses the OpenAI-compatible path. You can use the same configuration as the large language model or set up a speech recognition service compatible with the OpenAI API (such as Groq).
-
-![Speech Recognition Configuration](resources/images/asr-settings1-en.jpg)
-
-### Embedding Configuration
-
-When you need to perform vector searches using vector data, configure embedding backends in the `Embedding models` settings through the `vv-llm` `embedding_backends` scheme. Built-in OpenAI embeddings and custom request/response mappings are supported, so local services such as [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference) can be connected by configuring endpoints plus request/response mappings.
-
-![Local Embedding Settings](resources/images/embedding-settings1-en.jpg)
-
-### Shortcut Settings
-
-Configure global shortcuts in Settings to open the Task Agent workbench, workflows, schedules, or data workspace.
-
-### Notes
-
-#### About the local Stable Diffusion API
-
-To use your own local Stable Diffusion API, you need to add the parameter --api to the startup item of webui-user.bat, that is
-
-```
-set COMMANDLINE_ARGS=--api
-```
-
-## 💻 Usage
-
-### 🔌 API Access (New in v0.4.0)
-
-VectorVein now provides a local API service that allows you to call workflows programmatically. This enables integration with other applications and automation tools.
-
-#### API Features
-
-- **Local FastAPI Server**: Runs automatically when VectorVein starts
-- **RESTful Interface**: Standard HTTP endpoints for workflow operations
-- **Workflow Execution**: Run workflows with custom input parameters
-- **Status Monitoring**: Check workflow execution status and results
-- **OpenAPI Documentation**: Interactive API documentation at `/docs`
-
-#### API Endpoints
-
-The API service runs on `http://localhost:8787` (default port) and provides the following endpoints:
-
-- `GET /api/info` - Get API server information
-- `GET /api/workflow/list` - List all workflows
-- `GET /api/workflow/{workflow_id}` - Get workflow details
-- `POST /api/workflow/run` - Execute a workflow
-- `POST /api/workflow/check-status` - Check workflow execution status
-- `GET /health` - Health check endpoint
-
-#### Example Usage
-
-```python
-import requests
-
-# Run a workflow
-response = requests.post('http://localhost:8787/api/workflow/run', json={
-    'wid': 'your-workflow-id',
-    'input_fields': [
-        {'node_id': 'node1', 'field_name': 'input', 'value': 'Hello World'}
-    ],
-    'wait_for_completion': True
-})
-
-result = response.json()
-print(result['data'])  # Workflow output
-```
-
-For detailed API documentation, visit `http://localhost:8787/docs` after starting VectorVein.
-
-### Structured data and reliable execution
-
-Version 0.4.16 adds source-preserving multi-sheet workbook input, typed XLSX output, structured DOCX reports and automatic PNG charts. LLM nodes support local JSON Schema validation, bounded repairs and per-item result reuse. Failed batches stop downstream execution. See the [workflow guide and reproducible example](docs/reliable-workflows.md).
-
-### Workflow CLI
-
-Use `pdm run cli` from source, or the `VectorVeinCLI` console executable in CLI-enabled desktop builds, to create, validate, update and run workflows or inspect results. See the [CLI guide](docs/cli.md).
-
-### 📖 Basic Concepts
-
-A workflow represents a work task process, including input, output, and how input is processed to reach the output result.
-
-Examples:
-
-- **Translation Workflow**: The input is an English Word document, and the output is also a Word document. You can design a workflow to translate the input Chinese document and generate a Chinese document output.
-- **Mind Map Workflow**: If the output of the translation workflow is changed to a mind map, you can get a workflow that reads an English Word document and summarizes it into a Chinese mind map.
-- **Web Article Summary Workflow**: If the input of the mind map workflow is changed to a URL of a web article, you can get a workflow that reads a web article and summarizes it into a Chinese mind map.
-- **Automatic Classification of Customer Complaints Workflow**: The input is a table containing complaint content, and you can customize the keywords that need to be classified, so that the complaints can be automatically classified. The output is an automatically generated Excel table containing the classification results.
-
-### 🔎 User Interface
-
-Each workflow has a **User Interface** and an **Editor Interface**. The user interface is used for daily workflow operations, and the editor interface is used for workflow editing. Usually, after designing a workflow, you only need to run it in the user interface and do not need to modify it in the editor interface.
-
-![User Interface](resources/images/user-interface1-en.jpg)
-
-The user interface is shown above and is divided into three parts: input, output, and trigger (usually a run button). You can directly enter content for daily use, click the run button to see the output result.
-
-To view the executed workflow, click **Workflow Run Records**, as shown in the following figure.
-
-![Workflow Run Records](resources/images/workflow-record-en.jpg)
-
-### ✏️ Creating a Workflow
-
-You can add our official templates to your workflow or create a new one. It is recommended to familiarize yourself with the use of workflows using official templates at the beginning.
-
-![Workflow Editor Interface](resources/images/editor-en.jpg)
-
-The workflow editor interface is shown above. You can edit the name, tags, and detailed description at the top. The left side is the node list of the workflow, and the right is the canvas of the workflow. You can drag the desired node from the left side to the canvas, and then connect the node through the wire to form a workflow.
-
-You can view a tutorial on creating a simple crawler + AI summary mind map workflow [here](TUTORIAL.md).
-
-You can also try this [online interactive tutorial](https://vectorvein.ai/workspace/workflow/editor/tutorial).
-
-## 🛠️ Development and Deployment
-
-### Environment Requirements
-
-- Backend
-  - Python 3.8 ~ Python 3.11
-  - [PDM](https://pdm.fming.dev/latest/#installation) installed
-
-- Frontend
-  - Vue3
-  - Vite
-
-### Project Development
-
-Copy and modify backend/.env.example to .env file, this is the basic environment variable information, which will be used during development and packaging.
-
-Run the following command in the **backend** directory to install dependencies:
-
-#### Windows
-```bash
-pdm install
-```
-
-#### Mac
-```bash
-pdm install -G mac
-```
-
-Normally, PDM will automatically find the system's Python and create a virtual environment and install dependencies.
-
-After installation, run the following command to start the backend development server and see the running effect:
+Requires **Python `>=3.12, <3.13`** (with [PDM](https://pdm.fming.dev/latest/#installation)), **Node.js 22**, and **pnpm 10**.
 
 ```bash
+cd frontend && pnpm install
+cd ../backend && cp .env.example .env
+pdm install          # On macOS: pdm install -G mac
+pdm run build-front
 pdm run dev
 ```
 
-For backend quality checks, you can run the following commands in the `backend` directory:
+See the **[Development, Testing & Build Guide](docs/development.md)** for test commands, database migrations, and packaging instructions.
 
-```bash
-pdm run test
-pdm run lint
-pdm run typecheck
-```
+---
 
-If you need to modify the frontend code, you need to run the following command in the **frontend** directory to install dependencies:
+## License
 
-```bash
-pnpm install
-```
-
-Before submitting frontend changes, run the following quality checks in the **frontend** directory:
-
-```bash
-pnpm run lint
-pnpm exec vite build
-```
-
-> When pulling the project code for the first time, you also need to run `pnpm install` to install the front-end dependencies.
->
-> If you don't need to develop any front-end code at all, you can directly copy the `web` folder from the release version into the `backend` folder.
-
-After the frontend dependencies are installed, you need to compile the frontend code into the static file directory of the backend. A shortcut instruction has been provided in the project. Run the following command in the **backend** directory to pack and copy the frontend resources:
-
-```bash
-pdm run build-front
-```
-
-### Database Structure Changes
-
-> [!WARNING]
-> Before making changes to the database structure, please back up your database (located at `my_database.db` in your configured `data` directory), otherwise you may lose data.
-
-If you have modified the model structure in `backend/models`, you need to run the following commands in the `backend` directory to update the database structure:
-
-First, enter the Python environment:
-
-```bash
-pdm run python
-```
-
-```python
-from models import create_migrations
-create_migrations("migration_name")  # Name according to the changes made
-```
-
-After the operation, a new migration file will be generated in the `backend/migrations` directory, with the filename format `xxx_migration_name.py`. It is recommended to check the content of the migration file first to ensure it is correct, and then restart the main program. The main program will automatically execute the migration.
-
-### Software Packaging
-
-The project uses pyinstaller for packaging. Run the following command in the **backend** directory to package it into an executable file:
-
-```bash
-pdm run build
-```
-
-After packaging, the executable file will be generated in the**backend/dist** directory.
-
-### Automated GitHub Releases
-
-The repository now includes a GitHub Actions workflow at `.github/workflows/release.yml` for tagged releases.
-
-1. Update `backend/pyproject.toml` so `project.version` matches the release version you want to publish.
-2. Commit the version change.
-3. Create and push a tag like `v1.0.0`.
-4. GitHub Actions will automatically build Windows, macOS, and Linux ZIP packages and attach them to the matching GitHub Release.
-
-If the tag version and `backend/pyproject.toml` version do not match, the workflow will fail fast before packaging.
-
-## 📄 License
-
-VectorVein is an open-source software that supports personal non-commercial use. Please refer to [LICENSE](LICENSE.md) for specific agreements.
+VectorVein is distributed under the **VectorVein License** solely for non-commercial research purposes. See [LICENSE](LICENSE.md) for the full license terms and restrictions.

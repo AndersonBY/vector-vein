@@ -1,305 +1,109 @@
- [English](README.md) | 简体中文 | [日本語](README_ja.md)
+[English](README.md) | 简体中文 | [日本語](README_ja.md)
 
- [![向量脉络](resources/images/vector-vein-with-text-primary-zh.svg)](https://vectorvein.com)
+<a href="https://vectorvein.com"><img src="resources/images/vector-vein-with-text-primary-zh.svg" alt="向量脉络 VectorVein" width="360"></a>
 
-# 🔀 向量脉络 VectorVein
+# 向量脉络 VectorVein
 
-利用 AI 的力量构建您的个人知识库+自动化工作流程。
+**运行在本地桌面上的任务 Agent 与可视化工作流工具。**
 
-无需编程，只需拖拽即可创建强大的工作流，自动化所有任务。
+日常工作里，很多事情需要同时翻阅本地几个文件夹、对照既定文档口径、跑一段数据统计，最后落成一份有据可查的报告或表格。VectorVein 将自主执行任务的 Agent 与固定步骤的可视化工作流放在同一个桌面应用里：需要读文件、查资料、多步推进时直接向 Agent 下达目标；需要按固定规则反复批处理或生成标准文档时使用工作流，也可以把可用工作流直接挂载给 Agent 调用。
 
- [![在线版向量脉络](resources/images/demo-zh.gif)](https://github.com/AndersonBY/vector-vein)
+![VectorVein 任务 Agent 工作台](resources/images/desktop-1.0/agent-workbench.png)
 
-向量脉络是受到 [LangChain](https://github.com/hwchase17/langchain) 以及 [langflow](https://github.com/logspace-ai/langflow) 的启发而开发的无代码 AI 工作流软件，旨在结合大语言模型的强大能力并让用户通过简单的拖拽即可实现各类日常工作流的智能化和自动化。
+[下载桌面版 v1.0.2](https://github.com/AndersonBY/vector-vein/releases) · [安装与配置指南](docs/getting-started_zh.md) · [上手教程](TUTORIAL_zh.md) · [在线版](https://vectorvein.com) · [在线文档](https://vectorvein.com/help/docs/introduction)
 
-## 桌面版 1.0
+---
 
-桌面版 1.0 以任务 Agent 为工作入口，支持多目录 Project、Skills、MCP 工具、可配置审批、定时任务、桌面通知和系统托盘。知识库支持层级文档管理、本机索引、嵌入与重排序模型、Vekai 服务，以及通过普通 Agent 文件工具访问只读 `.knowledge/` 虚拟目录。
+## 用一个示例任务看它怎么工作
+
+以下方截图中的“秋季上新渠道复盘”示例任务为例：本地项目目录中放着活动简报与 5 天的渠道销售及退款明细，知识库中存放着跨渠道统计口径与退换货规则。我们只需让 Agent“分析这次秋季上新的渠道表现，结合知识库里的统计口径整理一份包含渠道对比、结论和下一步建议的报告，保存到 `outputs/` 并附上引用来源”。
+
+Agent 读取本地数据并检索知识库口径后，核算出 5 天内共 649 笔订单、207,230 元净销售额的各渠道表现，将生成的 `outputs/渠道复盘.md` 写入项目目录。任务完成后，可以在右侧工作区直接预览报告与源码、切换本地文件，或点开引用的知识库文档核对原文。
+
+![已完成任务的报告预览、源码切换与引用来源查看](resources/images/desktop-1.0/task-demo.gif)
+
+---
+
+## 核心功能
+
+### 任务工作区与多目录 Project
+
+启动应用后默认进入任务 Agent 工作台。你可以将本机的一个或多个文件夹建为一个 Project（首个目录作为默认工作目录，其余作为附加允许目录），让 Agent 在授权范围内跨目录搜索和读写项目文件；也可以不绑定 Project 直接发起独立任务。
+
+进入任务详情页后，对话流与右侧多标签工作区并排展示。生成的代码、Markdown 报告、命令输出、工具结果以及模型按需维护的任务计划都可以分标签打开。任务运行或等待期间，依然可以随时在底部切换模型、推理强度和审批模式（每次询问 / 自动风险审查 / 完全允许）。
+
+![任务详情与并排工作区](resources/images/desktop-1.0/task-workspace.png)
+
+### 层级知识库与混合检索
+
+数据空间内置了层级知识库，同时保留原有的关系数据库管理。你可以按文件夹层级导入 PDF、Word、Excel、PPT、Markdown、CSV 等常见文档；程序会将源文件复制到受管存储中提取文本并建立本机索引，不会修改或删除你原有的本地文件。
+
+知识库直接内置本机 Qdrant 向量索引与全文检索，无需单独部署外部向量数据库，并可在设置中一键接入本地 [Vekai](https://github.com/AndersonBY/vekai) 嵌入与重排序服务。挂载知识库后，Agent 既能调用专用检索工具，也能通过只读的 `.knowledge/` 虚拟路径直接读取和预览文档提取文本。
+
+![层级知识库管理](resources/images/desktop-1.0/knowledge-base.png)
+
+![知识库目录浏览、文档预览与混合检索演示](resources/images/desktop-1.0/knowledge-demo.gif)
+
+### Skills、MCP 与工作流工具扩展
+
+你可以为不同工作角色保存专属的 Agent 预设，在 Agent 的“工具与能力”面板中按需组合知识库与三类扩展能力：
+
+- **Skills 技能包**：支持在应用内直接编写 `SKILL.md`，或从本机 `~/.agents/skills`、`~/.codex/skills`、`~/.claude/skills` 目录扫描导入已有技能。
+- **MCP 服务接入**：支持连接本地或远程 MCP 服务，先测试连接发现工具，再按需勾选启用具体工具。
+- **挂载可用工作流**：工作流空间中状态有效（Valid）的工作流可直接挂载为 Agent 工具，由 Agent 按输入参数发起调用并关联运行记录。
+
+![Agent 工具与能力配置卡片（已挂载周报技能）](resources/images/desktop-1.0/agent-integrations.png)
+
+### 定时任务与后台运行
+
+需要定期执行的巡检、日报或数据汇总，可以在定时任务页面通过可视化周期编辑器设定运行时间，无需手写 Cron 表达式。你可以选择每次创建新任务，或在同一个已有任务中延续上下文继续执行，并按需开启完成后自动隐藏与系统桌面通知。在 Windows 系统下，关闭窗口可最小化到系统托盘，保持后台调度与索引继续运行。
+
+![定时任务的运行模式、时间表与完成动作设置](resources/images/desktop-1.0/scheduled-tasks.png)
+
+### 可视化工作流与结构化文档输出
+
+当业务流程步骤固定、需要反复执行时，可以在工作流画布中通过拖拽节点搭建流水线。工作流支持读取保留来源行号的多工作表 Excel、为大语言模型节点配置 JSON Schema 输出校验与结果缓存，并直接导出带格式的多表 `.xlsx`、结构化 `.docx` 文档以及 `.png` 图表。
+
+除了在桌面界面运行，所有工作流都可以通过内置的本地 HTTP API（默认 `http://127.0.0.1:8787`）或随包附带的 `VectorVeinCLI` 命令行工具直接调用。
+
+![可视化工作流编辑器](resources/images/desktop-1.0/workflow-editor.png)
+
+---
+
+## 快速开始
+
+1. **下载运行**：前往 [GitHub Releases](https://github.com/AndersonBY/vector-vein/releases) 下载对应系统的 `v1.0.2` 压缩包（`vector-vein-windows-v1.0.2.zip`、`vector-vein-mac-v1.0.2.zip` 或 `vector-vein-linux-v1.0.2.zip`），解压后运行 `VectorVein`。桌面界面支持简体中文与英文切换。
+2. **配置模型**：打开右上角 **设置**，在 API 端点中配置你常用的云端模型服务（如 OpenAI、DeepSeek、Anthropic、Gemini、通义千问等）或本机推理服务（Ollama、LM Studio、vLLM），点击 **测试** 验证连通后保存。（应用数据默认保存在本地 `data/` 目录；当你在任务或工作流中选用云端模型或外部服务时，对应请求内容会发送至所选服务商。）
+3. **开始使用**：如需挂载知识库或技能，可在左侧 **Agent** 页面编辑或新建 Agent 预设；回到 **工作台** 后，选择目标 Project（可选）、Agent 与模型预设，输入目标即可开始。详细步骤请参考 [安装与配置指南](docs/getting-started_zh.md) 与 [上手教程](TUTORIAL_zh.md)。
 
 > [!IMPORTANT]
-> 旧版升级到 1.0 系列时，程序会先把原数据目录自动压缩为同级 ZIP 备份，校验成功后才继续迁移；备份失败则中止升级。旧对话 Agent 及历史记录会从活动数据库移除，但原始数据保留在备份压缩包中。已有关系数据库继续保留；旧向量数据集会导入知识库，语义检索可能需要手动重建索引。
+> **从 0.x 旧版本升级提示**：升级前请先完全退出旧版程序（含系统托盘进程）。1.0 首次启动时会先将原 `data` 目录自动打包为同级 ZIP 备份并校验，校验通过后才会执行数据迁移；若备份或校验失败则会立即中止升级。升级完成后，旧版对话 Agent 历史会从当前活动库移除（完整保留在备份 ZIP 中），原有关系数据库继续保留，旧向量数据集会导入为知识库。详见 [升级说明](docs/getting-started_zh.md#2-从-0x-升级到-10-系列)。
 
-实现说明：[任务 Agent](docs/task-agent-runtime.md)、[Skills 与 MCP](docs/task-agent-skills-mcp.md)、[知识库](docs/knowledge-bases.md)、[定时任务](docs/task-agent-scheduling.md)。
+---
 
-## 🌐 在线体验
+## 专题文档与开发指南
 
-您可以在 [这里](https://vectorvein.com) 体验向量脉络的在线版本，无需下载安装。
+- **安装与教程**：[安装、模型配置与升级指南](docs/getting-started_zh.md) · [快速上手教程](TUTORIAL_zh.md) · [窗口与系统托盘](docs/desktop-window.md)
+- **任务 Agent 与知识库**：[任务 Agent 运行时](docs/task-agent-runtime.md) · [Skills 与 MCP 集成](docs/task-agent-skills-mcp.md) · [知识库与 Vekai 检索](docs/knowledge-bases.md) · [Agent 定时任务](docs/task-agent-scheduling.md) · [模型选择与预设](docs/model-selection.md) · [端点在线测试](docs/model-endpoint-test.md)
+- **可视化工作流与 CLI**：[结构化数据工作流](docs/reliable-workflows.md) · [CLI 命令行工具](docs/cli.md) · [节点时间线](docs/workflow-timeline.md) · [运行产物列表](docs/workflow-artifacts.md) · [画布只读预览](docs/workflow-preview.md) · [协作式停止](docs/workflow-stopping.md) · [异常恢复](docs/workflow-recovery.md) · [失败诊断](docs/workflow-failures.md) · [人工反馈续跑](docs/workflow-feedback.md) · [周期调度器](docs/workflow-scheduling.md) · [HTTP 请求节点](docs/http-request-node.md) · [联网搜索设置](docs/web-search.md)
+- **版本记录**：[v1.0.2](docs/releases/1.0.2.md) · [v1.0.1](docs/releases/1.0.1.md) · [v1.0.0](docs/releases/1.0.0.md)
 
-官方网站 [在线文档](https://vectorvein.com/help/docs/introduction)
+### 源码开发
 
-## 📦 安装及配置
-
-### 安装
-
-在 [Release 页下载](https://github.com/AndersonBY/vector-vein/releases/) 后打开 VectorVein 软件，初次打开时程序会在安装目录下创建 data 文件夹，用于存放数据库及静态文件资源。
-
-软件采用了 pywebview 搭建，基于 webview2 内核，因此需要安装 webview2 运行时，如果出现软件无法打开，可能需要手动下载 webview2 运行时，下载地址： [https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/](https://developer.microsoft.com/zh-cn/microsoft-edge/webview2/)
-
-> [!IMPORTANT]
-> 如果解压缩后无法运行，请检查下载下来的压缩包 .zip 文件是否被锁定，可以通过右键点击压缩包选择“解除锁定”来解决。
-
-### 配置
-
-软件的大部分工作流、Agent 都会涉及 AI 大语言模型的使用，因此您应该至少提供一个大语言模型的可用配置。对于工作流您可以在使用界面看到其使用了哪些大语言模型，如下图。
-
-![工作流使用的 LLM](resources/images/workflow-llm-use-zh.jpg)
-
-#### API 端点配置
-
-从 v0.2.10 开始，向量脉络将 API 端点和大语言模型配置分开，同一个大语言模型可以有多个 API 端点。
-
-![API 端点配置](resources/images/endpoint-settings_zh-CN.jpg)
-
-软件正常打开后点击打开设置按钮，您可以根据需要配置每个 API 端点的信息，也可以新增自定义的 API 端点。目前的 API 端点支持 OpenAI 兼容的接口，可接入本地运行的如 LM-Studio、Ollama、vLLM 等。
-
-> LM-Studio 的 API Base 通常为 http://localhost:1234/v1/
-> 
-> Ollama 的 API Base 通常为 http://localhost:11434/v1/
-
-#### 远程大语言模型接口配置
-
-请在 `远程大语言模型` 标签页配置每个模型的具体信息。
-
-![LLM 设置](resources/images/remote-llms-settings_zh-CN.jpg)
-
-单击任意模型后可以设置该模型的具体配置，如下图。
-
-![LLM 设置](resources/images/remote-llms-settings-2_zh-CN.jpg)
-
-> 其中 `模型 Key` 是大模型的标准名称，一般不需要调整。`模型 ID` 是实际部署时的名称，一般情况下与 `模型 Key` 一致，但是在 Azure OpenAI 等部署中 `模型 ID` 是由用户自定义的，因此需要根据实际情况调整。
->
-> 由于同一模型的不同提供商的模型 ID 可能不同，您可以点击 `编辑` 按钮来配置该端点下该模型的具体模型 ID，如下图。
->
-> ![端点模型 ID 配置](resources/images/endpoint-model-id-settings_zh-CN.jpg)
-
-#### 自定义大语言模型接口配置
-
-如果使用自定义大语言模型在 `自定义大语言模型` 标签页填入自定义的模型配置信息。目前支持 OpenAI 兼容的接口，如 LM-Studio、Ollama、vLLM 等。
-
-![自定义 LLM 设置](resources/images/custom-llms-settings_zh-CN.jpg)
-
-首先增加自定义模型系列，然后增加自定义模型。不要忘记点击 `保存设置` 按钮。
-
-#### 语音识别配置
-
-目前语音识别统一走 OpenAI 兼容路径。可以直接复用大语言模型配置，也可以接入与 OpenAI API 兼容的语音识别服务（如 Groq）。
-
-![语音识别配置](resources/images/asr-settings1-zh.jpg)
-
-#### 嵌入配置
-
-当您需要使用向量数据进行向量搜索时，可以在设置的 `嵌入模型` 中通过 `vv-llm` 的 `embedding_backends` 方案来配置嵌入后端。当前支持内置 OpenAI Embedding，也支持通过自定义 request/response mapping 接入本地服务，例如自行部署的 [text-embeddings-inference](https://github.com/huggingface/text-embeddings-inference)。
-
-![本地嵌入设置](resources/images/embedding-settings1-zh.jpg)
-
-### 快捷键设置
-
-可以在设置中配置全局快捷键，快速打开任务 Agent 工作台、工作流、计划任务或数据工作区。
-
-#### 关于本地的 Stable Diffusion API
-
-为了能够使用您自己本地运行的 Stable Diffusion API，您需要在 webui-user.bat 的启动项加上参数 --api，即
-
-```
-set COMMANDLINE_ARGS=--api
-```
-
-## 💻 使用方式
-
-### 🔌 API 访问（v0.4.0 新功能）
-
-向量脉络现在提供本地 API 服务，允许您通过编程方式调用工作流。这使得与其他应用程序和自动化工具的集成成为可能。
-
-#### API 功能特性
-
-- **本地 FastAPI 服务器**：VectorVein 启动时自动运行
-- **RESTful 接口**：标准的 HTTP 端点用于工作流操作
-- **工作流执行**：使用自定义输入参数运行工作流
-- **状态监控**：检查工作流执行状态和结果
-- **OpenAPI 文档**：在 `/docs` 提供交互式 API 文档
-
-#### API 端点
-
-API 服务运行在 `http://localhost:8787`（默认端口），提供以下端点：
-
-- `GET /api/info` - 获取 API 服务器信息
-- `GET /api/workflow/list` - 列出所有工作流
-- `GET /api/workflow/{workflow_id}` - 获取工作流详情
-- `POST /api/workflow/run` - 执行工作流
-- `POST /api/workflow/check-status` - 检查工作流执行状态
-- `GET /health` - 健康检查端点
-
-#### 使用示例
-
-```python
-import requests
-
-# 运行工作流
-response = requests.post('http://localhost:8787/api/workflow/run', json={
-    'wid': 'your-workflow-id',
-    'input_fields': [
-        {'node_id': 'node1', 'field_name': 'input', 'value': 'Hello World'}
-    ],
-    'wait_for_completion': True
-})
-
-result = response.json()
-print(result['data'])  # 工作流输出
-```
-
-启动 VectorVein 后，访问 `http://localhost:8787/docs` 查看详细的 API 文档。
-
-### 结构化数据与可靠执行
-
-从 v0.4.16 起，文件读取支持保留来源行号的多工作表 JSON，文档节点支持多表 XLSX、结构化 DOCX 和自动 PNG 图表。LLM 节点可配置 JSON Schema 校验、有限修复和逐项结果缓存；批次失败会阻止后续步骤。详见 [使用与复现说明](docs/reliable-workflows.md)。
-
-### 命令行工作流
-
-源码环境可用 `pdm run cli`，支持创建、验证、修改、运行工作流和查询运行结果；含 CLI 的桌面包另提供 `VectorVeinCLI` 控制台程序。支持独立工作区和外部模型配置，使用方式见 [CLI 文档](docs/cli.md)。
-
-### 📖 基本概念
-
-一个工作流代表了一个工作任务流程，包含了输入、输出以及工作流的触发方式。你可以任意定义输入是什么，输出是什么，以及输入是如何处理并到达输出结果的。
-
-几个例子：
-
--   **翻译工作流**，输入是一个英文的 Word 文档，输出也是 Word 文档，你可以设计工作流将输入的中文文档翻译后生成中文文档。
--   **思维导图工作流**，如果将翻译工作流的输出改为思维导图，那么你就可以得到一个读取英文 Word 文档并总结为中文思维导图的工作流。
--   **网络文章摘要工作流**，如果将思维导图工作流的输入改为网络文章的 URL，那么你就可以得到一个读取网络文章并总结为中文思维导图的工作流。
--   **客户差评自动分类工作流**，输入是一个包含差评内容的表格，并自定义需要分类的关键词，即可自动将差评分类，输出就是自动生成包含分类结果的 Excel 表格。
-
-### 🔎 使用界面
-
-每个工作流都有一个**使用界面**和一个**编辑界面**，使用界面用于日常运行工作流，编辑界面用于编辑工作流。通常而言一个设计好的工作流您平时只需要在使用界面中运行即可，不需要再去编辑界面中修改。
-
-![使用界面](resources/images/user-interface1-zh.jpg)
-
-使用界面如上所示，分为输入、输出、触发器 ( 通常是一个运行按钮 ) 三个部分。日常使用可以直接输入内容，点击运行按钮即可在输出看到结果。
-
-想查看运行过的工作流可以点击【工作流运行记录】，如下图所示。
-
-![工作流运行记录](resources/images/workflow-record-zh.jpg)
-
-### ✏️ 创建工作流
-
-您可以添加我们提供的官方模板到自己的工作流中，也可以自己创建一个新的工作流。刚开始时建议先用官方模板熟悉一下工作流的使用。
-
-![工作流编辑界面](resources/images/editor-zh.jpg)
-
-工作流编辑界面如上图所示，顶部可以编辑名称、标签以及详细描述。左侧是工作流的节点列表，右侧是工作流的画布，您可以从左侧找到想要的节点拖拽到画布中，然后通过连线连接节点，形成工作流。
-
-您可以查看一个简易的 爬虫 + AI 总结思维导图工作流的 [创建教学](TUTORIAL_zh.md) 。
-
-还可以试一下这个 [在线互动教程](https://vectorvein.com/workspace/workflow/editor/tutorial) 。
-
-## 🛠️ 开发部署
-
-### 环境要求
-
-- 后端
-  - Python 3.8 ~ Python 3.11
-  - 安装 [PDM](https://pdm.fming.dev/latest/#installation)
-
-- 前端
-  - Vue3
-  - Vite
-
-### 项目开发
-
-将 backend/.env.example 复制并修改为 .env 文件，这是基础的环境变量信息，在开发和打包时会用到。
-
-在 **backend** 目录下运行以下命令安装依赖：
-
-#### Windows
-```bash
-pdm install
-```
-
-#### Mac
-```bash
-pdm install -G mac
-```
-
-正常来说 PDM 会自动找到系统的 Python 并创建虚拟环境以及安装依赖。
-
-安装完成后运行以下命令启动后端开发服务即可看到运行效果：
+本地开发需要 **Python `>=3.12, <3.13`**（配合 [PDM](https://pdm.fming.dev/latest/#installation)）、**Node.js 22** 与 **pnpm 10**。
 
 ```bash
+cd frontend && pnpm install
+cd ../backend && cp .env.example .env
+pdm install          # macOS 请运行: pdm install -G mac
+pdm run build-front
 pdm run dev
 ```
 
-后端质量检查命令也统一放在 `backend` 目录下：
+测试、代码检查、数据库迁移与打包发布流程详见 **[开发、测试与构建发布指南](docs/development_zh.md)**。
 
-```bash
-pdm run test
-pdm run lint
-pdm run typecheck
-```
+---
 
-如果需要修改前端代码，需要在 **frontend** 目录下运行以下命令安装依赖：
+## 许可证
 
-```bash
-pnpm install
-```
-
-提交前端改动前，建议在 **frontend** 目录下先运行以下质量检查命令：
-
-```bash
-pnpm run lint
-pnpm exec vite build
-```
-
-> 初次拉取项目代码也需要运行 `pnpm install` 安装前端依赖。
-> 
-> 如果完全不需要开发前端代码，可以直接从发行版中把 `web` 文件夹复制到 `backend` 文件夹下。
-
-前端依赖安装完成后需要将前端代码编译到后端的静态文件目录中，项目已提供了快捷指令，在 **backend** 目录下运行以下命令实现前端资源打包及拷贝：
-
-```bash
-pdm run build-front
-```
-
-### 数据库结构变更
-
-> [!WARNING]
-> 进行数据库结构变更时，请先备份数据库（在您配置的 data 目录下的 `my_database.db`），否则可能会导致数据丢失。
-
-如果修改了 `backend/models` 下的模型结构，需要在 `backend` 目录下运行以下命令进行数据库结构变更：
-
-首先进入 Python 环境：
-
-```bash
-pdm run python
-```
-
-```python
-from models import create_migrations
-create_migrations("migration_name")  # 根据变更内容命名
-```
-
-操作完成后会在 `backend/migrations` 目录下生成一个新的迁移文件，迁移文件名称为 `xxx_migration_name.py`。建议先检查迁移文件内容是否正确，然后重新运行主程序，主程序会自动执行迁移。
-
-### 软件打包
-
-项目采用 pyinstaller 进行打包，在 **backend** 目录下运行以下命令即可打包成可执行文件：
-
-```bash
-pdm run build
-```
-
-打包完成后会在 **backend/dist** 目录下生成可执行文件。
-
-### GitHub 自动发布
-
-仓库现在新增了 `.github/workflows/release.yml`，用于在推送版本标签后自动发布 Release。
-
-1. 先把 `backend/pyproject.toml` 里的 `project.version` 更新为目标版本号。
-2. 提交版本号修改。
-3. 创建并推送类似 `v1.0.0` 的 tag。
-4. GitHub Actions 会自动构建 Windows、macOS、Linux 三个平台的 ZIP 包，并挂到同名 GitHub Release 下。
-
-如果 tag 版本号和 `backend/pyproject.toml` 里的版本号不一致，工作流会在打包前直接失败。
-
-## 📄 协议
-
-向量脉络是一个开源的软件，支持个人非商业使用，具体协议请参考 [LICENSE](LICENSE.md) 。
+向量脉络（VectorVein）基于 **VectorVein License** 授权发布，仅供非商业研究用途（solely for non-commercial research purposes）。完整授权条款与限制请参阅 [LICENSE](LICENSE.md)。

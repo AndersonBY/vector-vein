@@ -1,124 +1,179 @@
-After experimenting with some pre-made workflow templates, you might want to create your own. This guide will assist you in that process.
+English | [简体中文](TUTORIAL_zh.md) | [日本語](TUTORIAL_ja.md)
 
-You can also directly try our interactive tutorial [online](https://vectorvein.ai/workspace/workflow/tutorial).
+# VectorVein Hands-On Tutorial
 
-## ✌️ General Approach
+Once you have completed the [Setup & Model Configuration](docs/getting-started.md), this walkthrough guides you through the two core ways of working in VectorVein 1.0:
 
-#### UI Design
+1. **Part 1: Completing local tasks with Task Agents, Multi-Folder Projects, and Knowledge Bases**
+2. **Part 2: Building a Visual Workflow from scratch—and attaching it to an Agent as a callable tool**
 
-First and foremost, when designing workflows, the goal is to make similar future processes more efficient. Therefore, consider what information might change each time the workflow runs. Extract this mutable information as inputs for each workflow execution, while static information can be hardcoded during editing and hidden from the user interface.
+You can also try the web-based [Interactive Workflow Tutorial](https://vectorvein.com/workspace/workflow/tutorial) anytime.
 
-The design on the left in the image below is less concise than the right, as the template information remains constant and doesn't need to be displayed.
+---
+
+## Part 1: Working with Task Agents, Projects & Knowledge Bases
+
+### 1. Create a Multi-Directory Project (Optional)
+
+When your work spans more than one folder on disk (for example, a campaign data folder plus an archive folder, or a frontend repository plus a backend repository), start by creating a **Project**:
+
+1. In the left **Task Agent sidebar**, click the `+` button next to **Projects**.
+2. Use the native folder picker to select one or more local directories:
+   - The **first directory** becomes the default working directory where new files are written by default.
+   - Any **additional directories** are mounted as allowed roots that the Agent can read and search across.
+3. You can also leave the Project selector empty on the Workbench to run a standalone task.
+
+![Task Agent Workbench](./resources/images/desktop-1.0/agent-workbench.png)
+
+### 2. Import a Knowledge Base & Mount It on an Agent Profile
+
+If you have reference documents you consult repeatedly—such as reporting definitions, service rules, PDF contracts, Excel ledgers, or Markdown docs—store them in a **Knowledge Base** and bind them to an Agent profile:
+
+1. Click **Data** in the top navigation bar, create a new **Knowledge Base**, and choose an embedding model configured in Settings (or your local [Vekai](https://github.com/AndersonBY/vekai) service).
+2. Create folders inside the knowledge base and import files or entire directory trees. VectorVein automatically extracts text, chunks content, and indexes it in the built-in local Qdrant store and full-text search.
+
+![Hierarchical Knowledge Base](./resources/images/desktop-1.0/knowledge-base.png)
+
+3. Return to **Task Agent -> Agent** to view the built-in General Agent or create specialized Agent profiles for recurring roles:
+
+![Agent Profiles List](./resources/images/desktop-1.0/agents-list.png)
+
+4. Open an Agent profile and use the **Tools & Capabilities** panel to mount Knowledge Bases, local Skills, valid workflows, or MCP tools:
+
+![Agent Tools & Capabilities Panel](./resources/images/desktop-1.0/agent-integrations.png)
+
+### 3. Pick an Agent, Launch a Task & Inspect Results Side by Side
+
+1. On the **Workbench**, click the Project and Agent selectors above the input box. The **Select Agent** modal lets you search profiles, filter by capability, and preview the selected Agent's model, permissions, and instructions:
+
+![Select Agent Modal](./resources/images/desktop-1.0/agent-picker.png)
+
+2. Verify the **Model / Reasoning Effort** and **Approval Mode** in the bottom bar, then enter a concrete goal and send it—for example:
+   > "Analyze the channel performance for this autumn launch using the reporting definitions in the knowledge base, compile a report with channel comparisons, conclusions, and next steps, save it to `outputs/`, and cite your sources."
+3. Submitting the task opens the **side-by-side Task Detail view**:
+   - **Left conversation & execution stream**: Follow the Agent's tool calls, any task plan it maintains as needed, inline confirmation forms, and the final summary (such as the 649 orders and ¥207,230 net sales calculated from the 5-day sample dataset).
+   - **Right multi-tab workspace**: Click the generated `渠道复盘.md` tab or any cited `.knowledge/` file to preview rendered Markdown, switch to source view, or verify the original reference text right beside the conversation.
+   - **Live adjustments**: Switch models, reasoning effort, or approval modes from the bottom bar while the task is running or waiting for input.
+
+![Task Detail and Multi-Tab Workspace](./resources/images/desktop-1.0/task-workspace.png)
+
+### 4. Import Skills, Connect MCP Servers, or Schedule Runs
+
+- **Import Local Skills**: Open **Skills** in the left sidebar, click Import, and choose **Local Agents** to scan and import existing skills from `~/.agents/skills`, `~/.codex/skills`, or `~/.claude/skills`.
+- **Connect MCP Servers**: Open **MCP**, save a server configuration, click **Test connection** to discover tools, and enable the tools you want.
+- **Schedule Recurring Tasks**: Open **Schedules** to configure whether each trigger creates a new task or continues inside an existing task, set the repeat timetable visually, and optionally hide completed tasks or send a desktop notification.
+
+![Scheduled Task Configuration Form](./resources/images/desktop-1.0/scheduled-tasks.png)
+
+---
+
+## Part 2: Building a Visual Workflow from Scratch (and Attaching It to an Agent)
+
+When a process follows a fixed sequence of steps—such as scraping a web page, formatting a prompt, and generating both a Markdown summary and a mind map, or reading files and exporting a formatted `.docx` report—a **Visual Workflow** lets you lock in the pipeline for repeatable execution.
+
+### 1. Core Workflow Design Principles
+
+#### Separate the Run Interface from the Editor Canvas
+
+Every workflow has two views: the **Editor Canvas** where you wire nodes together, and the **Run Interface** used for day-to-day execution.
+
+A simple rule of thumb: **Only expose inputs that change from run to run (such as a target URL or input file) by enabling their eyeball icon. Keep static prompt templates and fixed parameters inside the canvas.**
+
+In the comparison below, the right-hand Run Interface is much cleaner because static template instructions remain hidden inside the canvas:
 
 ![Input Design Comparison](./resources/images/input-compare_en-US.jpg)
 
-#### Workflow Development Philosophy
+#### Build and Test Incrementally
 
-When starting to design a workflow, avoid trying to do everything at once. Begin with a simple version containing just a few nodes, then iterate gradually. Always test the workflow after adding and connecting a few nodes to check for issues before proceeding. This approach helps you identify problems earlier in the development process, saving time compared to finding them after completion.
+Start with two or three nodes, save, and test-run before adding the next stage. Incremental testing makes it easy to verify data flow at every step.
 
-## 🏫 Rapid Development Tutorial
+---
 
-I'll demonstrate how to quickly develop a workflow using a simple **Translation + AI Summary Mind Map** example. Through this tutorial, you'll learn the basics of the workflow editor and some fundamental concepts, along with some best practices.
+### 2. Step-by-Step: Web Scraper + AI Mind Map Workflow
 
-1. Create a new empty workflow and click **More Actions** -> **Edit** on the workflow details page to open the editor.
+Let's build a complete workflow that scrapes an article URL, summarizes it with an LLM, and outputs both Markdown text and an interactive mind map.
 
-2. From the left panel, drag the **Trigger > Button Trigger** node onto the canvas.
+#### Step 1: Add a Trigger and a Text Output Node
 
-3. Next, find the **Output > Text** node and drag it onto the canvas.
+1. Open the **Workflow** space, create a new blank workflow, and click **More Actions -> Edit** to open the canvas.
+2. Drag **Triggers -> Button Trigger** from the left sidebar onto the canvas.
+3. Drag **Output -> Text** onto the canvas. Enter `Hello` in `Text Content` and `Output Title` in `Text Header`.
 
-4. In the **Text** node's text content handle, type a message like `Hello`, and in the text title handle, write a title such as `Output Title`.
+Your canvas should look like this:
+![Tutorial 1](./resources/images/tutorial1_en-US.jpg)
 
-At this point, your canvas should look like this:
-![Tutorial Step 1](./resources/images/tutorial1_en-US.jpg)
+> **Note**: **Button Trigger** simply sits on the canvas and does not need to be wired to other nodes. The `Text Header` field labels the output section when multiple outputs are displayed.
 
-> Note: The **Button Trigger** usually just needs to be placed on the canvas. It functions as a special node that **doesn't require** connection to other nodes.
->
-> Note: The **Text Title** in **Text** node is used as a title that appears in the user interface. When you have multiple text contents to display, you can use this title to differentiate them.
-
-Let's now click on **UI Design** to preview the user interface. You'll notice a button in the trigger area and some text content in the output area, as shown in the following image:
+Click **Interface Design** at the top to preview the Run Interface:
 ![Tutorial 2](./resources/images/tutorial2_en-US.jpg)
 
-Next, return to the **Workflow Canvas** page and find the **Text Processing -> Template Compose** node from the left panel. Drag it onto the canvas. The **Template Compose** node combines multiple text contents into a single text based on a predefined template. The canvas should now look like this:
-![Tutorial 3](./resources/images/tutorial3_en-US.jpg)
+#### Step 2: Combine Variables with Template Compose
 
-Click on the **Template Compose** node to add variables. In the opened drawer, enter a variable name `Title` and click **Add**. Then, input another variable name `Body`, select the input type as a multi-line text box, and click **Add**. Your **Template Compose** node should now appear as follows:
-![Tutorial 4](./resources/images/tutorial4_en-US.jpg)
+1. Switch back to the **Workflow Canvas** and drag in **Text Processing -> Template Compose**:
+   ![Tutorial 3](./resources/images/tutorial3_en-US.jpg)
+2. Click **Add Field** on the **Template Compose** node to add a single-line `Title` variable and a multi-line `Body` variable:
+   ![Tutorial 4](./resources/images/tutorial4_en-US.jpg)
+3. Reference variables in the template using `{{variable_name}}` (or drag variable tags directly into the template box):
+   ```markdown
+   # {{Title}}
+   ---
+   {{Body}}
+   ```
+   ![Tutorial 5](./resources/images/tutorial5_en-US.jpg)
+4. Drag a connection from the output handle of **Template Compose** to the `Text Content` input handle of the **Text** node:
+   ![Tutorial 6](./resources/images/tutorial6_en-US.jpg)
+5. Enable the **eyeball** icons next to `Title` and `Body`, click **Save**, and test-run the workflow in the Run Interface:
+   ![Tutorial 7](./resources/images/tutorial7_en-US.jpg)
 
-Now, write some content in the template to indicate how to concatenate the text into the desired format. When using variables in the template, use the `{{variable_name}}` syntax. For example, to combine the title and the body into a complete text, the template could be written like this:
+> **Note**: Because **Template Compose** is now connected to the **Text** node's `Text Content` handle, the connected output overrides the static `Hello` default.
 
-```
-{{Title}}
+#### Step 3: Connect a Web Text Crawler
 
----
+1. Reopen the editor canvas and drag in **Web Crawlers -> Text Crawler**.
+2. Connect the crawler's webpage title and body outputs to `Title` and `Body` on **Template Compose**, and turn off the eyeball icons on **Template Compose** (leaving only the crawler's URL input visible in the Run Interface):
+   ![Tutorial 8](./resources/images/tutorial8_en-US.jpg)
+3. Click **Save**, enter an article URL (for example, [What is Azure OpenAI Service?](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)), and click **Run**:
+   ![Tutorial 9](./resources/images/tutorial9_en-US.jpg)
 
-{{Body}}
-```
+#### Step 4: Add an LLM Node and Mind Map Output
 
-This combines the title and body into a complete text content. Your **Template Compose** node should now look like this:
-![Tutorial 5](./resources/images/tutorial5_en-US.jpg)
+1. Reopen the editor and update **Template Compose** so it formats a prompt for the model:
+   ```markdown
+   # {{Title}}
+   {{Body}}
 
-> Note: The variable names in the template must match the ones you defined above. Otherwise, the concatenation will fail.
->
-> Tip: You can drag the variable names and inserted into the template.
+   ---
 
-Next, drag an output cable from the **Template Compose** node to the **Text** node's text content handle. This connection in the workflow signifies that the text content generated by the **Template Compose** node will be input to the **Text** node's text content handle. Your canvas should now resemble this:
-![Tutorial 6](./resources/images/tutorial6_en-US.jpg)
+   Summary:
+   ```
+2. Drag an **LLM** node (such as Universal LLM, DeepSeek, or OpenAI) onto the canvas between **Template Compose** and **Text**.
+3. Rewire the connection from **Template Compose** into the LLM node's `Input Prompt` handle, then connect the LLM output to the **Text** node (you can also delete any selected edge with `Backspace`):
+   ![Tutorial 10](./resources/images/tutorial10_en-US.gif)
+   ![Tutorial 11](./resources/images/tutorial11_en-US.jpg)
+4. Save and run the workflow with an article URL to verify the AI summary:
+   ![Tutorial 12](./resources/images/tutorial12_en-US.jpg)
+5. Back in the editor, drag **Output -> Mind Map** onto the canvas and connect a second line from the LLM node's output handle to the **Mind Map** node's `Markdown Content` handle:
+   ![Tutorial 13](./resources/images/tutorial13_en-US.jpg)
+6. Update the **Template Compose** prompt to request a multi-level Markdown mind map:
+   ```markdown
+   {{Title}}
+   {{Body}}
 
-Now, click to enable the eyeball icons for the title and body on the right, and click **Save** to return to the interface. Enter a title and body in the input box, then run the workflow. The synthesized result will appear on the right, as shown below. This is a simple Template Compose workflow. The title and body we input on the left replace the placeholders in the template, which are then combined into a complete text and displayed in the right-hand text content area.
-![Tutorial 7](./resources/images/tutorial7_en-US.jpg)
+   ---
 
-> Note: If you look closely, you'll notice that the **Text** node's text content handle originally contained the words `Hello`. However, these don't appear after running the workflow. This is because the output from the **Template Compose** node is connected to the **Text** node's text content handle, so the workflow uses that content during execution. If no connection exists, it would display the node's default content.
-
-Let's continue by adding a web scraping feature. From the left, find the **Web Crawlers -> Text Crawler** node and drag it onto the canvas. Then, connect the **Text Crawler**'s webpage title and webpage body text outputs to the **Template Compose** node's title and body inputs, respectively. Disable the eyeball icons for the title and body on the **Template Compose** node. Your canvas should now look like this:
-![Tutorial 8](./resources/images/tutorial8_en-US.jpg)
-
-Click the **Save** button to return to the interface. Enter a URL in the input box (for example: [What is Azure OpenAI Service?](https://learn.microsoft.com/en-us/azure/ai-services/openai/overview)) and click **Run**. The scraped webpage title and main content will combine to display on the right, as shown in the following image. This is a simple workflow for a text crawler.
-![Tutorial 9](./resources/images/tutorial9_en-US.jpg)
-
-Reopen the editing page. Next, we need to modify the template for template compose to turn it into an AI prompt. Change the template of the **Template Compose** node to the following content:
-
-```markdown
-# {{Title}}
-{{Body}}
-
----
-
-Summary:
-```
-
-> Note: In most cases, we use template compose to create automated prompt templates for AI models to generate content.
-
-Now, we'll add the crucial AI component, dragging the **LLMs -> OpenAI** node (feel free to try other AI models) into the flow and positioning it between the **Template Compose** and **Text** nodes.
-
-Next, we need to change the connection from **Template Compose** to **Text** to the **Input Prompt** handle of the **OpenAI** node. To alter the connection, place the cursor near the endpoint, wait for the cursor to turn into a crosshair, then press and hold the left mouse button to drag the connection to the desired handle, and release the mouse button. Here's a visual guide:
-![Tutorial 10](./resources/images/tutorial10_en-US.gif)
-
-> Note: To delete a connection, select it and press the Backspace key on your keyboard.
-
-Make sure your canvas nodes resemble the layout below, then save the workflow and return to the user interface:
-![Tutorial 11](./resources/images/tutorial11_en-US.jpg)
-
-With a URL of an article input, running the workflow will generate an AI-created article summary, as shown below. This is a basic workflow for AI-generated article summarization.
-![Tutorial 12](./resources/images/tutorial12_en-US.jpg)
-
-> Note: In this simple workflow, we don't have a specific handling for long articles, so if the linked content is too long, the AI model might not process it, leading to no output. If you're interested in handling long articles, check out the official workflow templates for a solution, like the **🔀 Web Summary Mind Map**.
-
-Back in the editing page, let's extend the workflow to output both Markdown text and a mind map. Drag the **Output -> Mind Map** node into the flow, then connect a new line from the **OpenAI** node's output handle to the **Mind Map** node's Markdown content handle, as shown below:
-![Tutorial 13](./resources/images/tutorial13_en-US.jpg)
-
-To enable the AI model to generate a hierarchical mind map, modify the **Template Compose** node's template content:
-```markdown
-{{Title}}
-{{Body}}
+   Please summarize the above article into a multi-level mind map using Markdown format.
+   ```
+7. Save and run again to get both the Markdown outline and an interactive mind map:
+   ![Tutorial 14](./resources/images/tutorial14_en-US.jpg)
+8. Finally, give your workflow a clear name, tags, and description in the top-left corner:
+   ![Tutorial 15](./resources/images/tutorial15_en-US.jpg)
 
 ---
 
-Please summarize the above article into a multi-level mind map using Markdown format.
-```
+### 3. Next Step: Attach Your Workflow to a Task Agent
 
-> Note: To achieve the best output, you may need to adjust the test template content multiple times. For example, we deliberately added a keyword `multi-level` here, so the AI model will be more inclined to output a hierarchical, multi-level mind map.
+Once saved in a valid (`VALID`) state, your workflow can be triggered from the desktop UI, a visual schedule, the local HTTP API (`http://127.0.0.1:8787`), `VectorVeinCLI`, or **directly by a Task Agent**:
 
-After saving and rerunning the workflow, you can get an AI-generated Markdown-format mind map, as shown in the figure below. This is a simple crawler + AI mind map workflow.
-![Tutorial 14](./resources/images/tutorial14_en-US.jpg)
-
-For a well-designed workflow, don't forget to modify the name, tags, and description in the upper left corner for easier future access.![Tutorial 15](./resources/images/tutorial15_en-US.jpg)
+1. Open **Task Agent -> Agent** and select your Agent profile.
+2. Under **Tools & Capabilities -> Callable Workflows**, check the valid workflow you created and save.
+3. Next time you ask the Agent to process a list of URLs or run that pipeline, it can invoke the workflow with structured inputs and link the run record directly inside your task detail view.
