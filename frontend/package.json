@@ -56,7 +56,7 @@
     "vue-echarts": "^8.3.2",
     "vue-i18n": "^11.4.19",
     "vue-markdown-render": "^3.0.0",
-    "vue-router": "^5.5.0"
+    "vue-router": "^5.5.1"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.16.1",
